@@ -896,6 +896,9 @@
 </div>
 
 <script>
+// กรองข้อความก่อนใส่ HTML (ใช้ตัวเดียวกับ firebase-layer.js) / jsArg = ค่าที่ใส่เป็นสตริงใน onclick="fn('...')"
+const esc = FBL.esc;
+const jsArg = v => esc(String(v==null?'':v).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,'\\n'));
 /* ============================================================
    BASE DATE / STAFF (shared reference with ระบบที่ 1)
    ============================================================ */
@@ -972,7 +975,7 @@ function populateLogin(){
   const logoutBtn = document.getElementById('logout-btn');
   const s = __getSharedSession();
   if(s && s.name){
-    badge.innerHTML = s.name + (s.position ? '<span class="um-position">ตำแหน่ง '+s.position+'</span>' : '') + ((window.FBL && FBL.permBadgeHtml) ? FBL.permBadgeHtml() : '');
+    badge.innerHTML = esc(s.name) + (s.position ? '<span class="um-position">ตำแหน่ง '+esc(s.position)+'</span>' : '') + ((window.FBL && FBL.permBadgeHtml) ? FBL.permBadgeHtml() : '');
     badge.className = 'pill ' + (isAdmin() ? 'pill-ok' : 'pill-warn');
     if(logoutBtn) logoutBtn.style.display = 'flex';
   } else {
@@ -1134,13 +1137,13 @@ function renderMaterials(){
     const st = matStatus(m);
     const pill = isNeg ? '<span class="pill pill-critical">⚠ ยอดติดลบ — ตรวจสอบข้อมูล</span>' : st==='low' ? '<span class="pill pill-danger">ต่ำกว่าจุดสั่งซื้อ — แจ้งจัดซื้อ</span>' : st==='watch' ? '<span class="pill pill-warn">ใกล้ถึงจุดสั่งซื้อ</span>' : '<span class="pill pill-ok">ปกติ</span>';
     const acctPill = m.accountType==='นอกบัญชี' ? '<span class="pill pill-neutral">นอกบัญชี</span>' : '<span class="pill pill-neutral">ในบัญชี</span>';
-    const nameCell = editing ? `<input class="edit-input" type="text" value="${m.name.replace(/"/g,'&quot;')}" data-edit-name style="width:100%">` : m.name;
-    const unitCell = editing ? `<input class="edit-input" type="text" value="${m.unit.replace(/"/g,'&quot;')}" data-edit-unit style="width:100%">` : m.unit;
+    const nameCell = editing ? `<input class="edit-input" type="text" value="${esc(m.name)}" data-edit-name style="width:100%">` : esc(m.name);
+    const unitCell = editing ? `<input class="edit-input" type="text" value="${esc(m.unit)}" data-edit-unit style="width:100%">` : esc(m.unit);
     const reorderCell = editing
       ? `<input class="edit-input" type="number" step="0.01" value="${m.reorder}" data-edit-reorder style="width:100%">`
       : fmtNum(m.reorder,1);
     const stockCell = editing
-      ? `<input class="edit-input" type="number" step="0.01" value="${stock}" data-edit-stock data-code="${m.code}" style="width:100%;font-weight:600;">`
+      ? `<input class="edit-input" type="number" step="0.01" value="${stock}" data-edit-stock data-code="${esc(m.code)}" style="width:100%;font-weight:600;">`
       : `<span style="font-weight:600;color:${isNeg?'var(--danger)':'var(--navy-900)'}">${fmtNum(stock,1)}</span>`;
     return `<tr data-idx="${i}">
       <td class="mv-name">${nameCell}</td>
@@ -1149,7 +1152,7 @@ function renderMaterials(){
       <td class="mv-center num">${stockCell}</td>
       <td class="mv-center">${reorderCell}</td>
       <td class="mv-center mv-status">${pill}</td>
-      <td class="mv-center"><button type="button" class="hist-icon-btn" title="ดูประวัติเบิก-จ่าย" onclick="openItemHistoryModal('material','${m.code}')">🕘</button></td>
+      <td class="mv-center"><button type="button" class="hist-icon-btn" title="ดูประวัติเบิก-จ่าย" onclick="openItemHistoryModal('material','${jsArg(m.code)}')">🕘</button></td>
     </tr>`;
   }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--ink-400);padding:20px;">ไม่พบรายการ</td></tr>';
   const acctTotal = materials.filter(m=>(m.accountType||'ในบัญชี')===acctType).length;
@@ -1166,7 +1169,7 @@ function renderMaterials(){
   if(banner){
     banner.classList.toggle('hidden', negItems.length===0);
     if(negItems.length>0){
-      banner.innerHTML = `⚠ พบ ${negItems.length} รายการที่ยอดคงเหลือติดลบ (${negItems.slice(0,5).map(m=>m.name).join(', ')}${negItems.length>5?' และอื่นๆ':''}) — มักเกิดจากยอดเบิกที่บันทึกไว้มากกว่ายอดที่มีจริง เช่น กรอกจำนวนผิดหรือบันทึกซ้ำ กด "✎ แก้ไขรายการ" ด้านบนแล้วแก้ยอดคงเหลือให้ตรงกับที่นับได้จริง ระบบจะบันทึกเป็นรายการปรับปรุงในบัญชี พ.1-02 ของวันนี้โดยอัตโนมัติ`;
+      banner.innerHTML = `⚠ พบ ${negItems.length} รายการที่ยอดคงเหลือติดลบ (${negItems.slice(0,5).map(m=>esc(m.name)).join(', ')}${negItems.length>5?' และอื่นๆ':''}) — มักเกิดจากยอดเบิกที่บันทึกไว้มากกว่ายอดที่มีจริง เช่น กรอกจำนวนผิดหรือบันทึกซ้ำ กด "✎ แก้ไขรายการ" ด้านบนแล้วแก้ยอดคงเหลือให้ตรงกับที่นับได้จริง ระบบจะบันทึกเป็นรายการปรับปรุงในบัญชี พ.1-02 ของวันนี้โดยอัตโนมัติ`;
     }
   }
   document.getElementById('mat-foot').textContent = `ยอดคงเหลือคำนวณจากบัญชี พ.1-02`;
@@ -1318,10 +1321,10 @@ function fuelHistoryReceivesHtml(){
   const body = rows.map(t=>{
     if(__fuelHistEditId===t.id){
       return `<tr class="fh-row-edit">
-        <td><input type="date" id="fh-edit-date" value="${t.date||''}"></td>
-        <td><input type="text" id="fh-edit-ref" value="${t.ref||''}" placeholder="เลขที่ใบรับ"></td>
-        <td><input type="number" step="0.01" class="no-spin" id="fh-edit-liters" value="${t.liters||''}"></td>
-        <td><input type="number" step="0.01" class="no-spin" id="fh-edit-price" value="${t.unitPrice||''}" placeholder="บาท/ลิตร"></td>
+        <td><input type="date" id="fh-edit-date" value="${esc(t.date||'')}"></td>
+        <td><input type="text" id="fh-edit-ref" value="${esc(t.ref||'')}" placeholder="เลขที่ใบรับ"></td>
+        <td><input type="number" step="0.01" class="no-spin" id="fh-edit-liters" value="${esc(t.liters||'')}"></td>
+        <td><input type="number" step="0.01" class="no-spin" id="fh-edit-price" value="${esc(t.unitPrice||'')}" placeholder="บาท/ลิตร"></td>
         <td style="white-space:nowrap;">
           <button type="button" class="btn btn-sm btn-ok" onclick="saveFuelReceiveEdit(${t.id})">💾 บันทึก</button>
           <button type="button" class="btn btn-sm btn-ghost" onclick="cancelFuelReceiveEdit()">ยกเลิก</button>
@@ -1330,7 +1333,7 @@ function fuelHistoryReceivesHtml(){
     }
     return `<tr>
       <td>${fmtDate(t.date)}</td>
-      <td>${t.ref || '—'}</td>
+      <td>${esc(t.ref || '—')}</td>
       <td class="num">${fmtNum(t.liters,1)}</td>
       <td class="num">${t.unitPrice ? fmtNum(t.unitPrice,2) : '—'}</td>
       <td style="white-space:nowrap;">
@@ -1476,10 +1479,10 @@ function renderItemHistoryModal(){
   const totalIssued = mks.reduce((s,mk)=>s+itemHistMonthSummary(mk).issued,0);
 
   const summaryHtml = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
-    <div class="stat-card"><div class="bar"></div><div class="label">ยกมาต้นปีงบ</div><div class="val" style="font-size:16px;">${fmtNum(firstSummary.opening,1)} ${unit}</div></div>
-    <div class="stat-card"><div class="bar" style="background:var(--success);"></div><div class="label">รับเข้ารวม</div><div class="val" style="font-size:16px;color:var(--success);">+${fmtNum(totalReceived,1)} ${unit}</div></div>
-    <div class="stat-card"><div class="bar" style="background:var(--danger);"></div><div class="label">เบิกจ่ายรวม</div><div class="val" style="font-size:16px;color:var(--danger);">−${fmtNum(totalIssued,1)} ${unit}</div></div>
-    <div class="stat-card"><div class="bar"></div><div class="label">คงเหลือล่าสุด</div><div class="val" style="font-size:16px;${lastSummary.closing<0?'color:var(--danger);':''}">${fmtNum(lastSummary.closing,1)} ${unit}</div></div>
+    <div class="stat-card"><div class="bar"></div><div class="label">ยกมาต้นปีงบ</div><div class="val" style="font-size:16px;">${fmtNum(firstSummary.opening,1)} ${esc(unit)}</div></div>
+    <div class="stat-card"><div class="bar" style="background:var(--success);"></div><div class="label">รับเข้ารวม</div><div class="val" style="font-size:16px;color:var(--success);">+${fmtNum(totalReceived,1)} ${esc(unit)}</div></div>
+    <div class="stat-card"><div class="bar" style="background:var(--danger);"></div><div class="label">เบิกจ่ายรวม</div><div class="val" style="font-size:16px;color:var(--danger);">−${fmtNum(totalIssued,1)} ${esc(unit)}</div></div>
+    <div class="stat-card"><div class="bar"></div><div class="label">คงเหลือล่าสุด</div><div class="val" style="font-size:16px;${lastSummary.closing<0?'color:var(--danger);':''}">${fmtNum(lastSummary.closing,1)} ${esc(unit)}</div></div>
   </div>`;
 
   let prevClosing = null;
@@ -1489,23 +1492,23 @@ function renderItemHistoryModal(){
     const monthLabel = monthNamesTh[m-1]+' '+(y+543);
     const isFirst = prevClosing===null;
     const adjustNote = (!isFirst && Math.abs(s.opening - prevClosing) > 1e-9)
-      ? `<div class="hist-adjust">🔧 ปรับปรุงยอดยกมา ${fmtNum(s.opening,1)} ${unit} (จากคงเหลือเดือนก่อน ${fmtNum(prevClosing,1)} ${unit})</div>` : '';
+      ? `<div class="hist-adjust">🔧 ปรับปรุงยอดยกมา ${fmtNum(s.opening,1)} ${esc(unit)} (จากคงเหลือเดือนก่อน ${fmtNum(prevClosing,1)} ${esc(unit)})</div>` : '';
     prevClosing = s.closing;
     const moved = s.received!==0 || s.issued!==0 || adjustNote;
     if(!moved){
-      return `<div class="hist-month-row hist-month-flat"><span class="hist-month-name">${monthLabel}</span><span class="hist-month-flat-note">ไม่มีการเคลื่อนไหว — คงเหลือ ${fmtNum(s.closing,1)} ${unit}</span></div>`;
+      return `<div class="hist-month-row hist-month-flat"><span class="hist-month-name">${monthLabel}</span><span class="hist-month-flat-note">ไม่มีการเคลื่อนไหว — คงเหลือ ${fmtNum(s.closing,1)} ${esc(unit)}</span></div>`;
     }
     const receivedTxs = s.txs.filter(t=>t.kind==='receive').slice().sort((a,b)=>a.date.localeCompare(b.date));
     const receivedSumFromTxs = receivedTxs.reduce((sum,t)=>sum+(__histKind==='fuel'?(t.liters||0):(t.qty||0)),0);
     const receivedIsOverride = Math.abs(receivedSumFromTxs - s.received) > 1e-9;
     const issuedTxs = s.txs.filter(t=>t.kind==='issue').slice().sort((a,b)=>a.date.localeCompare(b.date));
     const receiveLines = receivedIsOverride
-      ? (s.received!==0 ? [{date:null, html:`<div class="hist-entry"><span class="hist-badge hist-badge-in">รับเข้า</span><span class="hist-entry-date">—</span><span class="hist-entry-note">ยอดรวมทั้งเดือน (ปรับยอดรวม)</span><span class="hist-entry-qty hist-qty-in">+${fmtNum(s.received,1)} ${unit}</span></div>`}] : [])
-      : receivedTxs.map(t=>({date:t.date, html:`<div class="hist-entry"><span class="hist-badge ${isAdjustmentTx(t)?'hist-badge-adjust':'hist-badge-in'}">${isAdjustmentTx(t)?'🔧 ปรับยอด':'รับเข้า'}</span><span class="hist-entry-date">${fmtDate(t.date)}</span><span class="hist-entry-note">${(t.ref?'เลขที่ใบรับ '+t.ref+' — ':'')+(t.note||'').replace(ADJUSTMENT_NOTE_PREFIX,'')}</span><span class="hist-entry-qty hist-qty-in">+${fmtNum(__histKind==='fuel'?t.liters:t.qty,1)} ${unit}</span></div>`}));
-    const issueLines = issuedTxs.map(t=>({date:t.date, html:`<div class="hist-entry"><span class="hist-badge ${isAdjustmentTx(t)?'hist-badge-adjust':'hist-badge-out'}">${isAdjustmentTx(t)?'🔧 ปรับยอด':'เบิกจ่าย'}</span><span class="hist-entry-date">${fmtDate(t.date)}</span><span class="hist-entry-note">${(t.vehicle?vehicleShortName(t.vehicle)+' — ':'')+(t.note||'').replace(ADJUSTMENT_NOTE_PREFIX,'')}</span><span class="hist-entry-qty hist-qty-out">−${fmtNum(__histKind==='fuel'?t.liters:t.qty,1)} ${unit}</span></div>`}));
+      ? (s.received!==0 ? [{date:null, html:`<div class="hist-entry"><span class="hist-badge hist-badge-in">รับเข้า</span><span class="hist-entry-date">—</span><span class="hist-entry-note">ยอดรวมทั้งเดือน (ปรับยอดรวม)</span><span class="hist-entry-qty hist-qty-in">+${fmtNum(s.received,1)} ${esc(unit)}</span></div>`}] : [])
+      : receivedTxs.map(t=>({date:t.date, html:`<div class="hist-entry"><span class="hist-badge ${isAdjustmentTx(t)?'hist-badge-adjust':'hist-badge-in'}">${isAdjustmentTx(t)?'🔧 ปรับยอด':'รับเข้า'}</span><span class="hist-entry-date">${fmtDate(t.date)}</span><span class="hist-entry-note">${esc((t.ref?'เลขที่ใบรับ '+t.ref+' — ':'')+(t.note||'').replace(ADJUSTMENT_NOTE_PREFIX,''))}</span><span class="hist-entry-qty hist-qty-in">+${fmtNum(__histKind==='fuel'?t.liters:t.qty,1)} ${esc(unit)}</span></div>`}));
+    const issueLines = issuedTxs.map(t=>({date:t.date, html:`<div class="hist-entry"><span class="hist-badge ${isAdjustmentTx(t)?'hist-badge-adjust':'hist-badge-out'}">${isAdjustmentTx(t)?'🔧 ปรับยอด':'เบิกจ่าย'}</span><span class="hist-entry-date">${fmtDate(t.date)}</span><span class="hist-entry-note">${esc((t.vehicle?vehicleShortName(t.vehicle)+' — ':'')+(t.note||'').replace(ADJUSTMENT_NOTE_PREFIX,''))}</span><span class="hist-entry-qty hist-qty-out">−${fmtNum(__histKind==='fuel'?t.liters:t.qty,1)} ${esc(unit)}</span></div>`}));
     const entryLines = receiveLines.concat(issueLines).sort((a,b)=> (a.date||'').localeCompare(b.date||'')).map(e=>e.html).join('');
     return `<div class="hist-month-block">
-      <div class="hist-month-head"><span class="hist-month-name">${monthLabel}</span><span class="hist-month-range">ยกมา ${fmtNum(s.opening,1)} → คงเหลือ ${fmtNum(s.closing,1)} ${unit}</span></div>
+      <div class="hist-month-head"><span class="hist-month-name">${monthLabel}</span><span class="hist-month-range">ยกมา ${fmtNum(s.opening,1)} → คงเหลือ ${fmtNum(s.closing,1)} ${esc(unit)}</span></div>
       ${adjustNote}
       ${entryLines}
     </div>`;
@@ -1717,8 +1720,8 @@ function renderRecvItemList(rid, matches){
   if(!listEl) return;
   const hl = __recvItemHighlight[rid] ?? -1;
   listEl.innerHTML = matches.length ? matches.map((m,i)=>`
-    <div class="combo-item${i===hl?' hl':''}" data-code="${m.code}" onmousedown="pickRecvItem(${rid},'${m.code.replace(/'/g,"\\'")}')">
-      <span class="nm">${m.name}</span><span class="un">${m.unit} · คงเหลือ ${fmtNum(currentStock(m),1)}</span>
+    <div class="combo-item${i===hl?' hl':''}" data-code="${esc(m.code)}" onmousedown="pickRecvItem(${rid},'${jsArg(m.code)}')">
+      <span class="nm">${esc(m.name)}</span><span class="un">${esc(m.unit)} · คงเหลือ ${fmtNum(currentStock(m),1)}</span>
     </div>`).join('') : `<div class="combo-empty">ไม่พบวัสดุที่ตรงกับคำค้นหา</div>`;
 }
 function onRecvItemInput(rid){
@@ -1922,7 +1925,7 @@ function newMaterialFormHtml(){
       </div>
       <div class="seg-hint" id="nm-accttype-hint">เบิกจากแขวง มีการตรวจสอบ</div>
       <input type="hidden" id="nm-accttype" value="ในบัญชี">
-      <input type="hidden" id="nm-code" value="${initCode}">
+      <input type="hidden" id="nm-code" value="${esc(initCode)}">
     </div>
     <div class="f-row"><label>ชื่อรายการวัสดุ</label><input type="text" id="nm-name" placeholder="เช่น ยางมะตอย CRS-2"></div>
     <div class="two-col">
@@ -1995,12 +1998,12 @@ function vehicleGroupHtml(list, fuelTypeLabel){
   const rows = list.map(v=>{
     const code = vehicleRegNo(v.label);
     const typeName = vehicleShortName(v.label);
-    const rate = v.fuelRate!=null && v.fuelRate!=='' ? `${fmtNum(v.fuelRate,1)} ${v.fuelRateUnit||''}`.trim() : '—';
+    const rate = v.fuelRate!=null && v.fuelRate!=='' ? `${fmtNum(v.fuelRate,1)} ${esc(v.fuelRateUnit||'')}`.trim() : '—';
     return `<tr>
-      <td class="veh-code">${code}</td>
-      <td style="font-weight:600;">${typeName}</td>
-      <td>${v.note||'—'}</td>
-      <td>${v.fuelType||'—'}</td>
+      <td class="veh-code">${esc(code)}</td>
+      <td style="font-weight:600;">${esc(typeName)}</td>
+      <td>${esc(v.note||'—')}</td>
+      <td>${esc(v.fuelType||'—')}</td>
       <td class="num">${rate}</td>
       <td class="num">${v.monthlyRent!=null ? fmtNum(v.monthlyRent,0)+' บาท' : '—'}</td>
       <td>${isAdmin()?`<button class="btn btn-ghost btn-sm" onclick="openVehicleModal(${v.id})" title="แก้ไข">✎</button>`:''}</td>
@@ -2064,12 +2067,12 @@ function openVehicleModal(id){
   document.getElementById('veh-modal-body').innerHTML = `
     <input type="hidden" id="vm-id" value="${v?v.id:''}">
     <div style="margin-bottom:12px;"><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">ชื่อ/ประเภทเครื่องจักร-รถ</label>
-      <input class="edit-input" id="vm-typename" value="${typeName.replace(/"/g,'&quot;')}" placeholder="เช่น รถขุดตัก"></div>
+      <input class="edit-input" id="vm-typename" value="${esc(typeName)}" placeholder="เช่น รถขุดตัก"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
       <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">รหัส/เลขทะเบียน</label>
-        <input class="edit-input" id="vm-code" value="${code.replace(/"/g,'&quot;')}" placeholder="เช่น 82-6156-16-6"></div>
+        <input class="edit-input" id="vm-code" value="${esc(code)}" placeholder="เช่น 82-6156-16-6"></div>
       <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">ผู้รับผิดชอบ</label>
-        <input class="edit-input" id="vm-operator" value="${operator.replace(/"/g,'&quot;')}" placeholder="ชื่อผู้รับผิดชอบ"></div>
+        <input class="edit-input" id="vm-operator" value="${esc(operator)}" placeholder="ชื่อผู้รับผิดชอบ"></div>
     </div>
     <div style="margin-bottom:12px;"><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">ชนิดเชื้อเพลิงหลัก</label>
       <div class="seg-toggle" id="vm-fueltype-toggle">
@@ -2077,13 +2080,13 @@ function openVehicleModal(id){
         <button type="button" class="seg-btn${(v&&v.fuelType==='เบนซิน')?' active':''}" data-fv="เบนซิน" onclick="onVmFuelBtn(this)">เบนซิน</button>
         <button type="button" class="seg-btn${(v&&!v.fuelType)?' active':''}" data-fv="" onclick="onVmFuelBtn(this)">ไม่ใช้เชื้อเพลิง</button>
       </div>
-      <input type="hidden" id="vm-fueltype" value="${v?(v.fuelType||''):'ดีเซล'}">
+      <input type="hidden" id="vm-fueltype" value="${esc(v?(v.fuelType||''):'ดีเซล')}">
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
       <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">อัตราสิ้นเปลืองน้ำมัน</label>
         <input type="number" step="0.1" min="0" class="edit-input" id="vm-fuelrate" value="${v&&v.fuelRate!=null?v.fuelRate:''}" placeholder="เช่น 3.5"></div>
       <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">หน่วย</label>
-        <input class="edit-input" id="vm-fuelrateunit" value="${v?(v.fuelRateUnit||'ลิตร/ชม.'):'ลิตร/ชม.'}" placeholder="ลิตร/ชม. หรือ กม./ลิตร"></div>
+        <input class="edit-input" id="vm-fuelrateunit" value="${esc(v?(v.fuelRateUnit||'ลิตร/ชม.'):'ลิตร/ชม.')}" placeholder="ลิตร/ชม. หรือ กม./ลิตร"></div>
     </div>
     <div style="margin-bottom:6px;"><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">ค่าเช่า/บำรุงรักษา ต่อเดือน (บาท) — รับข้อมูลจากแขวง (งานปรับซ่อม) ทุกเดือน</label>
       <input type="number" step="0.01" min="0" class="edit-input" id="vm-rent" value="${v&&v.monthlyRent!=null?v.monthlyRent:''}" placeholder="0.00"></div>
@@ -2215,9 +2218,9 @@ function renderVehicleRequests(){
     const distance = (r.mileageStart!=null && r.mileageEnd!=null && r.mileageEnd!=='' && r.mileageStart!=='') ? (parseFloat(r.mileageEnd)-parseFloat(r.mileageStart)) : null;
     return `<tr>
       <td>${fmtDate(r.requestDate)}</td>
-      <td>${r.requesterName||'—'}</td>
-      <td style="font-weight:600;">${r.vehicleLabel?vehicleShortName(r.vehicleLabel)+' ('+vehicleRegNo(r.vehicleLabel)+')':'—'}</td>
-      <td>${dest}</td>
+      <td>${esc(r.requesterName||'—')}</td>
+      <td style="font-weight:600;">${esc(r.vehicleLabel?vehicleShortName(r.vehicleLabel)+' ('+vehicleRegNo(r.vehicleLabel)+')':'—')}</td>
+      <td>${esc(dest)}</td>
       <td>${fmtDate(r.dateFrom)} – ${fmtDate(r.dateTo)}</td>
       <td class="num">${r.mileageStart!=null&&r.mileageStart!==''?fmtNum(r.mileageStart,0):'—'} – ${r.mileageEnd!=null&&r.mileageEnd!==''?fmtNum(r.mileageEnd,0):'—'}</td>
       <td class="num">${distance!=null?fmtNum(distance,0):'—'}</td>
@@ -2232,14 +2235,14 @@ function openVehReqModal(id){
   if(!isAdmin()) return;
   const r = id!=null ? vehicleRequests.find(x=>x.id===id) : null;
   document.getElementById('vehreq-modal-title').textContent = r ? 'แก้ไขใบขอใช้รถส่วนกลาง (พ.4-08)' : 'สร้างใบขอใช้รถส่วนกลาง (พ.4-08)';
-  const vehOpts = '<option value="">— เลือกรถ/เครื่องจักร —</option>' + vehicles.map(v=>`<option value="${v.label.replace(/"/g,'&quot;')}" ${r&&r.vehicleLabel===v.label?'selected':''}>${vehicleShortName(v.label)} (${vehicleRegNo(v.label)})</option>`).join('');
+  const vehOpts = '<option value="">— เลือกรถ/เครื่องจักร —</option>' + vehicles.map(v=>`<option value="${esc(v.label)}" ${r&&r.vehicleLabel===v.label?'selected':''}>${esc(vehicleShortName(v.label))} (${esc(vehicleRegNo(v.label))})</option>`).join('');
   vrRouteSelected = r ? (r.routeNos ? r.routeNos.slice() : (r.routeNo ? [r.routeNo] : [])) : [];
   document.getElementById('vehreq-modal-body').innerHTML = `
     <input type="hidden" id="vr-id" value="${r?r.id:''}">
-    <input type="hidden" id="vr-approver" value="${r?(r.approverName||'').replace(/"/g,'&quot;'):''}">
+    <input type="hidden" id="vr-approver" value="${r?esc(r.approverName):''}">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
       <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">วันที่ขอใช้</label>
-        <input type="date" class="edit-input" id="vr-reqdate" value="${r?r.requestDate:toLocalISODate(TODAY)}" onchange="onVehReqDateFromChange()"></div>
+        <input type="date" class="edit-input" id="vr-reqdate" value="${esc(r?r.requestDate:toLocalISODate(TODAY))}" onchange="onVehReqDateFromChange()"></div>
       <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">รถ/เครื่องจักรที่ขอใช้</label>
         <div class="combo" id="vr-vehicle-combo">
           <input type="text" id="vr-vehicle-search" class="edit-input" placeholder="พิมพ์ทะเบียนหรือชื่อเพื่อค้นหา" autocomplete="off"
@@ -2252,16 +2255,16 @@ function openVehReqModal(id){
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
       <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">ผู้ขอใช้รถ (พนักงานขับรถ)</label>
         <div class="combo" id="vr-requester-combo">
-          <input class="edit-input" id="vr-requester" value="${r?(r.requesterName||'').replace(/"/g,'&quot;'):''}" placeholder="ขึ้นอัตโนมัติเมื่อเลือกรถ" autocomplete="off"
+          <input class="edit-input" id="vr-requester" value="${r?esc(r.requesterName):''}" placeholder="ขึ้นอัตโนมัติเมื่อเลือกรถ" autocomplete="off"
             oninput="onVrRequesterInput()" onfocus="onVrRequesterInput()" onkeydown="onVrRequesterKeydown(event)"
             onblur="setTimeout(function(){const l=document.getElementById('vr-requester-list'); if(l) l.classList.add('hidden');},150)">
           <div class="combo-list hidden" id="vr-requester-list"></div>
         </div></div>
       <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">ตำแหน่ง</label>
-        <input class="edit-input" id="vr-position" value="${r?(r.requesterPosition||'').replace(/"/g,'&quot;'):'พขร.'}" placeholder="พขร."></div>
+        <input class="edit-input" id="vr-position" value="${r?esc(r.requesterPosition):'พขร.'}" placeholder="พขร."></div>
     </div>
     <div style="margin-bottom:12px;"><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">จำนวนคนนั่ง</label>
-      <input type="number" min="1" class="edit-input" id="vr-passengers" value="${r?r.passengers:''}" placeholder="1" style="max-width:160px;"></div>
+      <input type="number" min="1" class="edit-input" id="vr-passengers" value="${esc(r?r.passengers:'')}" placeholder="1" style="max-width:160px;"></div>
     <div style="margin-bottom:12px;"><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">สายทางที่ปฏิบัติงาน</label>
       <div class="combo" id="vr-route-combo">
         <input type="text" id="vr-route-search" class="edit-input" placeholder="พิมพ์เลขสายทางเพื่อค้นหา — เลือกได้มากกว่า 1 สายทาง" autocomplete="off"
@@ -2272,7 +2275,7 @@ function openVehReqModal(id){
       <div id="vr-route-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
     </div>
     <div style="margin-bottom:12px;"><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">เพื่อ (วัตถุประสงค์/ภารกิจ)</label>
-      <input class="edit-input" id="vr-purpose" value="${r?(r.purpose||'').replace(/"/g,'&quot;'):''}" placeholder="วัตถุประสงค์การใช้รถ"></div>
+      <input class="edit-input" id="vr-purpose" value="${r?esc(r.purpose):''}" placeholder="วัตถุประสงค์การใช้รถ"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:6px;">
       <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">เลขไมล์ก่อนออกเดินทาง</label>
         <input type="number" step="1" class="edit-input" id="vr-mistart" value="${r&&r.mileageStart!=null?r.mileageStart:''}" placeholder="ดึงอัตโนมัติเมื่อเลือกรถ/วันที่"></div>
@@ -2343,8 +2346,8 @@ function renderVrVehicleList(matches){
   if(!listEl) return;
   const hl = __vrVehHighlight;
   listEl.innerHTML = matches.length ? matches.map((v,i)=>`
-    <div class="combo-item${i===hl?' hl':''}" data-label="${v.label.replace(/"/g,'&quot;')}" onmousedown="pickVrVehicle('${v.label.replace(/'/g,"\\'")}')">
-      <span class="nm">${vehicleShortName(v.label)}</span><span class="un">${vehicleRegNo(v.label)}</span>
+    <div class="combo-item${i===hl?' hl':''}" data-label="${esc(v.label)}" onmousedown="pickVrVehicle('${jsArg(v.label)}')">
+      <span class="nm">${esc(vehicleShortName(v.label))}</span><span class="un">${esc(vehicleRegNo(v.label))}</span>
     </div>`).join('') : `<div class="combo-empty">ไม่พบเครื่องจักร/ยานพาหนะที่ตรงกับคำค้นหา</div>`;
 }
 function onVrVehicleInput(){
@@ -2412,8 +2415,8 @@ function renderVrReqList(matches){
   if(!listEl) return;
   const hl = __vrReqHighlight;
   listEl.innerHTML = matches.length ? matches.map((s,i)=>`
-    <div class="combo-item${i===hl?' hl':''}" data-name="${s.name.replace(/"/g,'&quot;')}" data-role="${(s.role||'').replace(/"/g,'&quot;')}" onmousedown="pickVrRequester('${s.name.replace(/'/g,"\\'")}','${(s.role||'').replace(/'/g,"\\'")}')">
-      <span class="nm">${s.name}</span><span class="un">${s.role||''}</span>
+    <div class="combo-item${i===hl?' hl':''}" data-name="${esc(s.name)}" data-role="${esc(s.role)}" onmousedown="pickVrRequester('${jsArg(s.name)}','${jsArg((s.role||''))}')">
+      <span class="nm">${esc(s.name)}</span><span class="un">${esc(s.role||'')}</span>
     </div>`).join('') : `<div class="combo-empty">ไม่พบชื่อที่ตรงกับคำค้นหา — พิมพ์ต่อได้หากเป็นบุคคลภายนอกทะเบียน</div>`;
 }
 function onVrRequesterInput(){
@@ -2477,8 +2480,8 @@ function renderVrRouteList(matches){
   if(!listEl) return;
   const hl = __vrRouteHighlight;
   listEl.innerHTML = matches.length ? matches.map((x,i)=>`
-    <div class="combo-item${i===hl?' hl':''}" data-code="${x.code}" onmousedown="addVrRoute('${x.code.replace(/'/g,"\\'")}')">
-      <span class="nm">${x.label}</span>
+    <div class="combo-item${i===hl?' hl':''}" data-code="${esc(x.code)}" onmousedown="addVrRoute('${jsArg(x.code)}')">
+      <span class="nm">${esc(x.label)}</span>
     </div>`).join('') : `<div class="combo-empty">ไม่พบสายทางที่ตรงกับคำค้นหา หรือเลือกครบแล้ว</div>`;
 }
 function onVrRouteInput(){
@@ -2506,7 +2509,7 @@ function renderVrRouteChips(){
   if(!el) return;
   el.innerHTML = vrRouteSelected.length ? vrRouteSelected.map(code=>{
     const label = code==='__other__' ? 'อื่นๆ' : ('ทล.'+code);
-    return `<span class="route-chip">${label}<button type="button" class="rc-x" onmousedown="removeVrRoute('${code.replace(/'/g,"\\'")}')" title="ลบ">✕</button></span>`;
+    return `<span class="route-chip">${esc(label)}<button type="button" class="rc-x" onmousedown="removeVrRoute('${jsArg(code)}')" title="ลบ">✕</button></span>`;
   }).join('') : `<span style="font-size:12px;color:var(--ink-400);">ยังไม่ได้เลือกสายทาง</span>`;
 }
 function onVrRouteKeydown(e){
@@ -2625,20 +2628,20 @@ function printVehReq(id){
       <div style="margin-top:14px;line-height:2;">
         วันที่ ${fmtDateFull(r.requestDate)}<br>
         เรียน หัวหน้าหมวดทางหลวงเชิงเนิน<br>
-        ข้าพเจ้า ${r.requesterName||'.........................'} ตำแหน่ง ${r.requesterPosition||'.........................'}
+        ข้าพเจ้า ${r.requesterName?esc(r.requesterName):'.........................'} ตำแหน่ง ${r.requesterPosition?esc(r.requesterPosition):'.........................'}
         หน่วยงาน หมวดทางหลวงเชิงเนิน แขวงทางหลวงระยอง<br>
-        ขออนุญาตใช้รถ ${r.vehicleLabel?vehicleShortName(r.vehicleLabel)+' ทะเบียน '+vehicleRegNo(r.vehicleLabel):'.........................'}
-        สายทางที่ปฏิบัติงาน ${routeLine}<br>
-        เพื่อ ${r.purpose||'.........................'} มีคนนั่ง ${r.passengers!=null?r.passengers:'....'} คน<br>
+        ขออนุญาตใช้รถ ${r.vehicleLabel?esc(vehicleShortName(r.vehicleLabel)+' ทะเบียน '+vehicleRegNo(r.vehicleLabel)):'.........................'}
+        สายทางที่ปฏิบัติงาน ${esc(routeLine)}<br>
+        เพื่อ ${r.purpose?esc(r.purpose):'.........................'} มีคนนั่ง ${r.passengers!=null?r.passengers:'....'} คน<br>
         ในวันที่ ${fmtDateFull(r.dateFrom)} ถึงวันที่ ${fmtDateFull(r.dateTo)}<br>
-        พนักงานขับรถ ${r.driverName||'.........................'}<br>
+        พนักงานขับรถ ${r.driverName?esc(r.driverName):'.........................'}<br>
         เลขไมล์ก่อนออกเดินทาง ${r.mileageStart!=null?fmtNum(r.mileageStart,0):'.........................'} กม.
         เลขไมล์เมื่อกลับ ${r.mileageEnd!=null?fmtNum(r.mileageEnd,0):'.........................'} กม.
         ระยะทางรวม ${distance!=null?fmtNum(distance,0):'.........................'} กม.
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:40px;">
-        <div>ลงชื่อ .................................  ผู้ขอใช้รถ<br><br>( ${r.requesterName||'...................................................'} )</div>
-        <div>ลงชื่อ .................................  หัวหน้าหน่วยงาน/ผู้แทน<br><br>( ${r.approverName||'...................................................'} )</div>
+        <div>ลงชื่อ .................................  ผู้ขอใช้รถ<br><br>( ${r.requesterName?esc(r.requesterName):'...................................................'} )</div>
+        <div>ลงชื่อ .................................  หัวหน้าหน่วยงาน/ผู้แทน<br><br>( ${r.approverName?esc(r.approverName):'...................................................'} )</div>
       </div>
     </div>`;
   printForm('print-vehreq');
@@ -2676,7 +2679,7 @@ function renderLedgerLockControls(){
   const lock = ledgerLocks[mk];
   let html;
   if(lock){
-    html = `<span class="pill pill-neutral" title="ล็อกโดย ${(lock.lockedBy||'').replace(/"/g,'&quot;')} เมื่อ ${String(lock.lockedAt||'').slice(0,10)}">🔒 ล็อกแล้ว</span>`
+    html = `<span class="pill pill-neutral" title="ล็อกโดย ${esc(lock.lockedBy)} เมื่อ ${String(lock.lockedAt||'').slice(0,10)}">🔒 ล็อกแล้ว</span>`
       + (isOwnerRole() ? `<button class="btn btn-ghost btn-sm" onclick="toggleLedgerLock()">ปลดล็อก</button>` : '');
   } else {
     html = isAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="toggleLedgerLock()">🔒 ล็อกเดือนนี้</button>` : '';
@@ -3056,7 +3059,7 @@ function reviewDraftReport(kind){
         <div style="background:var(--danger-bg);color:var(--danger);border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;">
           ⚠ หลังบันทึกแล้ว รายการต่อไปนี้จะมียอดคงเหลือติดลบ — กรุณาตรวจสอบตัวเลขที่กรอกอีกครั้งก่อนยืนยัน
           <ul style="margin:8px 0 0;padding-left:18px;">
-            ${negMaterials.map(x=>`<li>${x.name} — จะเหลือ ${fmtNum(x.resultStock,1)} ${x.unit}</li>`).join('')}
+            ${negMaterials.map(x=>`<li>${esc(x.name)} — จะเหลือ ${fmtNum(x.resultStock,1)} ${esc(x.unit)}</li>`).join('')}
             ${negFuel.map(x=>`<li>น้ำมัน${x.ft} — จะเหลือ ${fmtNum(x.resultClosing,1)} ล.</li>`).join('')}
           </ul>
         </div>` : `<div style="background:var(--success-bg);color:var(--success);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;">✓ ตรวจสอบแล้ว ไม่มีรายการใดจะมียอดติดลบจากการแก้ไขครั้งนี้</div>`}
@@ -3474,8 +3477,8 @@ function renderReportFuel(mk){
   const days = workdaysInMonthArr(mk);
   const dayTotals = {}; days.forEach(d=>dayTotals[d.day]=0);
 
-  const headDayCells = days.map((d,i)=>`<th data-di="${i}"${d.hol?` class="hol" title="${d.hol}"`:''}>${String(d.day).padStart(2,'0')}</th>`).join('');
-  const headDowCells = days.map((d,i)=>`<th data-di="${i}"${d.hol?` class="hol" title="${d.hol}"`:''}>${d.dow}</th>`).join('');
+  const headDayCells = days.map((d,i)=>`<th data-di="${i}"${d.hol?` class="hol" title="${esc(d.hol)}"`:''}>${String(d.day).padStart(2,'0')}</th>`).join('');
+  const headDowCells = days.map((d,i)=>`<th data-di="${i}"${d.hol?` class="hol" title="${esc(d.hol)}"`:''}>${d.dow}</th>`).join('');
 
   let bodyRows = '';
   fuelTypes.forEach((ft,gi)=>{
@@ -3493,7 +3496,7 @@ function renderReportFuel(mk){
     const recvDayCells = days.map((d,i)=>{
       const v0 = recvByDay[d.day];
       const titleParts = v0 ? recvTxsThisMonth.filter(t=>+t.date.slice(8,10)===d.day).map(t=>t.ref?`เลขที่ใบรับ ${t.ref}: ${fmtNum(t.liters,1)} ล.`:`รับเข้า ${fmtNum(t.liters,1)} ล.`).join('; ') : '';
-      return `<td class="daycell${d.hol?' hol':''}${v0?' recv-cell':''}" data-di="${i}"${titleParts?` title="${titleParts.replace(/"/g,'&quot;')}"`:''}><span>${v0!=null?fmtNum(v0,1):''}</span></td>`;
+      return `<td class="daycell${d.hol?' hol':''}${v0?' recv-cell':''}" data-di="${i}"${titleParts?` title="${esc(titleParts)}"`:''}><span>${v0!=null?fmtNum(v0,1):''}</span></td>`;
     }).join('');
     // ผ่าน 1 รอบก่อนเพื่อรวมยอดเบิกจริง+ฉบับร่างของทุกคันในประเภทน้ำมันนี้ ก่อนสร้างแถวสรุปหัวกลุ่ม (ให้ยอด "รวมเดือนนี้/คงเหลือ" หัวกลุ่มพรีวิวรวมฉบับร่างด้วย)
     let ftEffIssuedTotal = 0;
@@ -3524,22 +3527,22 @@ function renderReportFuel(mk){
         const leaveTitle = leave ? `ผู้รับผิดชอบลา (${leave.type}) — อนุมัติแล้ว` : '';
         let cellContent;
         if(admin){
-          cellContent = `<input type="number" min="0" step="0.1" value="${v0!=null?v0:''}" class="${isDirty?'cell-dirty':''}${leave&&v0==null?' leave-input':''}" placeholder="${leave&&v0==null?'X':''}" data-kind="fuel" data-fueltype="${ft}" data-vehicle="${v.label.replace(/"/g,'&quot;')}" data-date="${date}" oninput="onFuelCellDraftInput(this)" onfocus="onGridCellFocus(this)" onblur="onGridCellBlur(this)"${leaveTitle?` title="${leaveTitle.replace(/"/g,'&quot;')}"`:''}>`;
+          cellContent = `<input type="number" min="0" step="0.1" value="${v0!=null?v0:''}" class="${isDirty?'cell-dirty':''}${leave&&v0==null?' leave-input':''}" placeholder="${leave&&v0==null?'X':''}" data-kind="fuel" data-fueltype="${ft}" data-vehicle="${esc(v.label)}" data-date="${date}" oninput="onFuelCellDraftInput(this)" onfocus="onGridCellFocus(this)" onblur="onGridCellBlur(this)"${leaveTitle?` title="${esc(leaveTitle)}"`:''}>`;
         } else if(v0!=null){
           cellContent = `<span>${fmtNum(v0,1)}</span>`;
         } else if(leave){
-          cellContent = `<span class="leave-x" title="${leaveTitle.replace(/"/g,'&quot;')}">X</span>`;
+          cellContent = `<span class="leave-x" title="${esc(leaveTitle)}">X</span>`;
         } else {
           cellContent = `<span></span>`;
         }
-        return `<td class="daycell${d.hol?' hol':''}${leave&&v0==null?' leave-cell':''}" data-di="${i}"${leave&&v0==null?` title="${leaveTitle.replace(/"/g,'&quot;')}"`:''}>${cellContent}</td>`;
+        return `<td class="daycell${d.hol?' hol':''}${leave&&v0==null?' leave-cell':''}" data-di="${i}"${leave&&v0==null?` title="${esc(leaveTitle)}"`:''}>${cellContent}</td>`;
       }).join('');
       vehicleRowsHtml.push(`<tr><td class="stuck1">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
-          <span style="display:flex;align-items:center;gap:6px;"><span class="fuel-veh-icon">⛽</span>${vehicleShortName(v.label)}</span>
-          <span style="color:var(--ink-400);font-weight:400;font-size:11px;flex:none;">${vehicleRegNo(v.label)}</span>
+          <span style="display:flex;align-items:center;gap:6px;"><span class="fuel-veh-icon">⛽</span>${esc(vehicleShortName(v.label))}</span>
+          <span style="color:var(--ink-400);font-weight:400;font-size:11px;flex:none;">${esc(vehicleRegNo(v.label))}</span>
         </div>
-        <div style="color:var(--ink-400);font-weight:400;font-size:11px;">${v.note||'—'}</div>
+        <div style="color:var(--ink-400);font-weight:400;font-size:11px;">${esc(v.note||'—')}</div>
       </td><td></td><td></td>
         ${dayCells}
         <td class="${numClass(effTotal)}">${effTotal?fmtNum(effTotal,1):''}</td><td></td></tr>`);
@@ -3573,8 +3576,8 @@ function renderReportFuel(mk){
             }
           }
           const cellContent = admin
-            ? `<input type="text" value="${val!=null?String(val).replace(/"/g,'&quot;'):''}" class="${warnClass.trim()}" data-mi-vehicle="${v.label.replace(/"/g,'&quot;')}" data-mi-date="${date}" oninput="onMileageInput(this)" onfocus="onGridCellFocus(this)" onblur="onMileageBlur(this)"${warnTitle?` title="${warnTitle.replace(/"/g,'&quot;')}"`:''}>`
-            : `<span class="${warnClass.trim()}"${warnTitle?` title="${warnTitle.replace(/"/g,'&quot;')}"`:''}>${val!=null?val:''}${warnClass?' ⚠️':''}</span>`;
+            ? `<input type="text" value="${val!=null?esc(String(val)):''}" class="${warnClass.trim()}" data-mi-vehicle="${esc(v.label)}" data-mi-date="${date}" oninput="onMileageInput(this)" onfocus="onGridCellFocus(this)" onblur="onMileageBlur(this)"${warnTitle?` title="${esc(warnTitle)}"`:''}>`
+            : `<span class="${warnClass.trim()}"${warnTitle?` title="${esc(warnTitle)}"`:''}>${esc(val!=null?val:'')}${warnClass?' ⚠️':''}</span>`;
           return `<td class="daycell${d.hol?' hol':''}${warnClass}" data-di="${i}">${cellContent}</td>`;
         }).join('');
         vehicleRowsHtml.push(`<tr class="mileage-row"><td class="stuck1"><span class="mi-label"><span class="mi-icon">📏</span>เลขไมล์</span></td><td></td><td></td>${miCells}<td></td><td></td></tr>`);
@@ -3582,7 +3585,7 @@ function renderReportFuel(mk){
         const routeCells = days.map((d,i)=>{
           const date = dateStrFor(mk,d.day);
           const label = routeLabelForVehicleDate(v.label, date);
-          return `<td class="daycell${d.hol?' hol':''}" data-di="${i}">${label?`<span style="color:var(--ink-500);font-size:11px;font-weight:600;">${label}</span>`:''}</td>`;
+          return `<td class="daycell${d.hol?' hol':''}" data-di="${i}">${label?`<span style="color:var(--ink-500);font-size:11px;font-weight:600;">${esc(label)}</span>`:''}</td>`;
         }).join('');
         vehicleRowsHtml.push(`<tr class="mileage-row route-row"><td class="stuck1"><span class="mi-label"><span class="mi-icon">🛣️</span>สายทาง</span></td><td></td><td></td>${routeCells}<td></td><td></td></tr>`);
       }
@@ -3636,8 +3639,8 @@ function renderReportMaterial(mk){
     return true;
   }).sort((a,b)=>a.name.localeCompare(b.name,'th'));
 
-  const headDayCells = days.map((d,i)=>`<th data-di="${i}"${d.hol?` class="hol" title="${d.hol}"`:''}>${String(d.day).padStart(2,'0')}</th>`).join('');
-  const headDowCells = days.map((d,i)=>`<th data-di="${i}"${d.hol?` class="hol" title="${d.hol}"`:''}>${d.dow}</th>`).join('');
+  const headDayCells = days.map((d,i)=>`<th data-di="${i}"${d.hol?` class="hol" title="${esc(d.hol)}"`:''}>${String(d.day).padStart(2,'0')}</th>`).join('');
+  const headDowCells = days.map((d,i)=>`<th data-di="${i}"${d.hol?` class="hol" title="${esc(d.hol)}"`:''}>${d.dow}</th>`).join('');
 
   const bodyRows = list.map(m=>{
     const s = materialMonthSummary(m.code, mk);
@@ -3663,18 +3666,18 @@ function renderReportMaterial(mk){
       const date = dateStrFor(mk,d.day);
       const isDirty = Object.prototype.hasOwnProperty.call(draftMatCells, m.code+'|'+date);
       const cellContent = admin
-        ? `<input type="number" min="0" step="0.1" value="${v0!=null?v0:''}" class="${isDirty?'cell-dirty':''}" data-kind="mat" data-code="${m.code}" data-date="${date}" oninput="onMatCellDraftInput(this)" onfocus="onGridCellFocus(this)" onblur="onGridCellBlur(this)">`
+        ? `<input type="number" min="0" step="0.1" value="${v0!=null?v0:''}" class="${isDirty?'cell-dirty':''}" data-kind="mat" data-code="${esc(m.code)}" data-date="${date}" oninput="onMatCellDraftInput(this)" onfocus="onGridCellFocus(this)" onblur="onGridCellBlur(this)">`
         : `<span>${v0!=null?fmtNum(v0,1):''}</span>`;
       return `<td class="daycell${d.hol?' hol':''}" data-di="${i}">${cellContent}</td>`;
     }).join('');
     const openCell = (admin && repMatEditMode)
-      ? `<td class="num-col"><input type="number" step="0.01" value="${s.opening}" data-open-code="${m.code}" style="max-width:90px" onfocus="onGridCellFocus(this)" onblur="onGridCellBlur(this)"></td>`
+      ? `<td class="num-col"><input type="number" step="0.01" value="${s.opening}" data-open-code="${esc(m.code)}" style="max-width:90px" onfocus="onGridCellFocus(this)" onblur="onGridCellBlur(this)"></td>`
       : `<td class="${numClass(s.opening)}">${fmtNum(s.opening,1)}</td>`;
     const recvCell = (admin && repMatEditMode)
-      ? `<td class="num-col"><input type="number" step="0.01" value="${s.received}" data-recv-code="${m.code}" style="max-width:90px" onfocus="onGridCellFocus(this)" onblur="onGridCellBlur(this)"></td>`
+      ? `<td class="num-col"><input type="number" step="0.01" value="${s.received}" data-recv-code="${esc(m.code)}" style="max-width:90px" onfocus="onGridCellFocus(this)" onblur="onGridCellBlur(this)"></td>`
       : `<td class="${numClass(s.received)}">${fmtNum(s.received,1)}</td>`;
-    return `<tr><td class="stuck1 numcell"><span class="rt">${m.name}</span></td>
-      <td class="stuck2 unit-col">${m.unit}</td>${openCell}${recvCell}
+    return `<tr><td class="stuck1 numcell"><span class="rt">${esc(m.name)}</span></td>
+      <td class="stuck2 unit-col">${esc(m.unit)}</td>${openCell}${recvCell}
       ${dayCells}
       <td class="${numClass(effIssued)}">${effIssued?fmtNum(effIssued,1):''}</td><td class="${numClass(effClosing)}">${fmtNum(effClosing,1)}</td></tr>`;
   }).join('');
@@ -3847,7 +3850,7 @@ function populateEc1wVehicleSelect(){
   const sel = document.getElementById('ec1w-veh-select');
   if(!sel) return;
   const cur = sel.value;
-  sel.innerHTML = vehicles.map(v=>`<option value="${v.label.replace(/"/g,'&quot;')}">${vehicleShortName(v.label)} (${vehicleRegNo(v.label)})</option>`).join('');
+  sel.innerHTML = vehicles.map(v=>`<option value="${esc(v.label)}">${esc(vehicleShortName(v.label))} (${esc(vehicleRegNo(v.label))})</option>`).join('');
   if(cur && vehicles.some(v=>v.label===cur)) sel.value = cur;
   const searchEl = document.getElementById('ec1w-veh-search');
   if(searchEl && document.activeElement !== searchEl){
@@ -3872,8 +3875,8 @@ function renderEc1wVehList(matches){
   if(!listEl) return;
   const hl = __ec1wVehHighlight;
   listEl.innerHTML = matches.length ? matches.map((v,i)=>`
-    <div class="combo-item${i===hl?' hl':''}" data-label="${v.label.replace(/"/g,'&quot;')}" onmousedown="pickEc1wVeh('${v.label.replace(/'/g,"\\'")}')">
-      <span class="nm">${vehicleShortName(v.label)}</span><span class="un">${vehicleRegNo(v.label)}</span>
+    <div class="combo-item${i===hl?' hl':''}" data-label="${esc(v.label)}" onmousedown="pickEc1wVeh('${jsArg(v.label)}')">
+      <span class="nm">${esc(vehicleShortName(v.label))}</span><span class="un">${esc(vehicleRegNo(v.label))}</span>
     </div>`).join('') : `<div class="combo-empty">ไม่พบเครื่องจักร/ยานพาหนะที่ตรงกับคำค้นหา</div>`;
 }
 function onEc1wVehInput(){
@@ -3924,7 +3927,7 @@ function onEc1wVehKeydown(e){
 function ec1wLocCell(l, field, vehicle, date){
   const locs = (l && l.locations && l.locations.length) ? l.locations : ((vehicle && date) ? dailyWorkOrderLocationsForVehicleDate(vehicle, date) : []);
   if(!locs || !locs.length) return '-';
-  return locs.map(x=> field==='route' ? (x.route?('ทล.'+x.route):(x.officeLabel?x.officeLabel:(x.km?'อื่นๆ':'-'))) : (x.km||'-') ).join('<br>');
+  return locs.map(x=> esc(field==='route' ? (x.route?('ทล.'+x.route):(x.officeLabel?x.officeLabel:(x.km?'อื่นๆ':'-'))) : (x.km||'-')) ).join('<br>');
 }
 function renderMachinery(){
   populateEc1wVehicleSelect();
@@ -3934,8 +3937,8 @@ function renderMachinery(){
   const admin = isAdmin();
 
   document.getElementById('ec1w-form-head').innerHTML = vehicle ? `<div style="display:flex;flex-wrap:wrap;gap:6px 20px;">
-      <div><b>หมายเลขเครื่องจักร-ยานพาหนะ:</b> ${vehicleRegNo(vehicle)}</div>
-      <div><b>ผู้รับผิดชอบเครื่องจักร:</b> ${(vehicles.find(x=>x.label===vehicle)||{}).note || '—'}</div>
+      <div><b>หมายเลขเครื่องจักร-ยานพาหนะ:</b> ${esc(vehicleRegNo(vehicle))}</div>
+      <div><b>ผู้รับผิดชอบเครื่องจักร:</b> ${esc((vehicles.find(x=>x.label===vehicle)||{}).note || '—')}</div>
       <div><b>สัปดาห์:</b> ${fmtDate(dates[0])} – ${fmtDate(dates[6])}</div>
     </div>` : '<span style="color:var(--ink-400);">ยังไม่มีเครื่องจักร/ยานพาหนะในระบบ</span>';
 
@@ -3947,7 +3950,7 @@ function renderMachinery(){
     const benzine = fuelForVehicleDate(vehicle, date, 'เบนซิน');
     const diesel = fuelForVehicleDate(vehicle, date, 'ดีเซล');
     const meter = meterForVehicleDate(vehicle, date);
-    const editBtn = admin ? `<button class="btn btn-ghost btn-sm" onclick="openMachineryLogModal('${vehicle.replace(/'/g,"\\'")}','${date}')" title="บันทึก/แก้ไข">${l?'✎':'+'}</button>` : '';
+    const editBtn = admin ? `<button class="btn btn-ghost btn-sm" onclick="openMachineryLogModal('${jsArg(vehicle)}','${date}')" title="บันทึก/แก้ไข">${l?'✎':'+'}</button>` : '';
     return `<tr${isHol?' class="ec1w-hol"':''}>
       <td class="ec1w-left">${dow}<br><span style="color:var(--ink-400);font-size:11px;">${fmtDate(date)}</span></td>
       <td>${dayOff?'/':'-'}</td>
@@ -3958,16 +3961,16 @@ function renderMachinery(){
       <td>${l&&l.hrC?fmtNum(l.hrC,1):'-'}</td>
       <td>${l&&l.hrV?fmtNum(l.hrV,1):'-'}</td>
       <td>${l&&l.hrO?fmtNum(l.hrO,1):'-'}</td>
-      <td class="ec1w-left">${l&&l.otherUnitCode?l.otherUnitCode:'-'}</td>
+      <td class="ec1w-left">${esc(l&&l.otherUnitCode?l.otherUnitCode:'-')}</td>
       <td>${l&&l.hrF?fmtNum(l.hrF,1):'-'}</td>
       <td>${l&&l.hrR?fmtNum(l.hrR,1):'-'}</td>
       <td>${l&&l.hrS?fmtNum(l.hrS,1):'-'}</td>
-      <td class="ec1w-left">${l&&l.otherReason?l.otherReason:'-'}</td>
+      <td class="ec1w-left">${esc(l&&l.otherReason?l.otherReason:'-')}</td>
       <td>${benzine?fmtNum(benzine,1):'-'}</td>
       <td>${diesel?fmtNum(diesel,1):'-'}</td>
       <td>-</td>
-      <td>${meter!=null?meter:'-'}</td>
-      <td class="ec1w-left">${l&&l.note?l.note:'-'}</td>
+      <td>${esc(meter!=null?meter:'-')}</td>
+      <td class="ec1w-left">${esc(l&&l.note?l.note:'-')}</td>
       <td>${editBtn}</td>
     </tr>`;
   }).join('');
@@ -4017,47 +4020,47 @@ function openMachineryLogModal(vehicle, date){
   const lbl = 'style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;"';
   document.getElementById('ec1w-modal-title').textContent = (l?'แก้ไข':'บันทึก')+'ข้อมูล EC1-W — วัน'+EC1W_DOW_FULL[new Date(date+'T00:00:00').getDay()]+'ที่ '+fmtDate(date);
   document.getElementById('ec1w-modal-body').innerHTML = `
-    <input type="hidden" id="em-vehicle" value="${vehicle.replace(/"/g,'&quot;')}">
+    <input type="hidden" id="em-vehicle" value="${esc(vehicle)}">
     <input type="hidden" id="em-date" value="${date}">
-    <div class="foot-note" style="margin:0 0 12px;padding:0;border:none;">${vehicleShortName(vehicle)} (${vehicleRegNo(vehicle)})</div>
+    <div class="foot-note" style="margin:0 0 12px;padding:0;border:none;">${esc(vehicleShortName(vehicle))} (${esc(vehicleRegNo(vehicle))})</div>
     <div style="margin-bottom:12px;"><label ${lbl}>พนักงานขับ/ควบคุม (ตามที่รายงาน)</label>
-      <input class="edit-input" id="em-driver" value="${(l?l.driver:(v&&v.note)||'').replace(/"/g,'&quot;')}" placeholder="ชื่อพนักงานขับรถ"></div>
+      <input class="edit-input" id="em-driver" value="${esc(l?l.driver:(v&&v.note)||'')}" placeholder="ชื่อพนักงานขับรถ"></div>
     <div style="margin-bottom:4px;"><label ${lbl}>สถานที่ปฏิบัติงาน (สายทาง / กม.)</label></div>
     ${locFromDaily?`<div style="margin:0 0 8px;padding:6px 10px;background:var(--paper-100);border-radius:6px;font-size:11.5px;color:var(--ink-500);">🔗 ดึงมาจากใบสั่งการรายวันของระบบงานสถิติฯ อัตโนมัติ — ตรวจสอบและแก้ไขได้ตามจริง</div>`:''}
     <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:10px;margin-bottom:4px;">
       <select class="edit-input" id="em-route1" onchange="validateRouteKm('em-route1','em-km1','em-msg1')">${routeOptionsHtml(loc1.route)}</select>
-      <input class="edit-input" id="em-km1" value="${(loc1.km||'').replace(/"/g,'&quot;')}" placeholder="กม. เช่น 247+902" oninput="validateRouteKm('em-route1','em-km1','em-msg1')">
+      <input class="edit-input" id="em-km1" value="${esc(loc1.km)}" placeholder="กม. เช่น 247+902" oninput="validateRouteKm('em-route1','em-km1','em-msg1')">
     </div>
     <div id="em-msg1" style="margin-bottom:8px;"></div>
     <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:10px;margin-bottom:4px;">
       <select class="edit-input" id="em-route2" onchange="validateRouteKm('em-route2','em-km2','em-msg2')">${routeOptionsHtml(loc2.route)}</select>
-      <input class="edit-input" id="em-km2" value="${(loc2.km||'').replace(/"/g,'&quot;')}" placeholder="สายทางที่ 2 (ถ้ามี)" oninput="validateRouteKm('em-route2','em-km2','em-msg2')">
+      <input class="edit-input" id="em-km2" value="${esc(loc2.km)}" placeholder="สายทางที่ 2 (ถ้ามี)" oninput="validateRouteKm('em-route2','em-km2','em-msg2')">
     </div>
     <div id="em-msg2" style="margin-bottom:12px;"></div>
     <div style="margin-bottom:4px;"><label ${lbl}>ชั่วโมงปฏิบัติงาน</label></div>
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px;">
-      <div><label ${lbl}>W</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hw" value="${l&&l.hrW?l.hrW:''}"></div>
-      <div><label ${lbl}>M</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hm" value="${l&&l.hrM?l.hrM:''}"></div>
-      <div><label ${lbl}>C</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hc" value="${l&&l.hrC?l.hrC:''}"></div>
-      <div><label ${lbl}>V</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hv" value="${l&&l.hrV?l.hrV:''}"></div>
-      <div><label ${lbl}>O</label><input type="number" step="0.5" min="0" class="edit-input" id="em-ho" value="${l&&l.hrO?l.hrO:''}"></div>
+      <div><label ${lbl}>W</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hw" value="${esc(l&&l.hrW?l.hrW:'')}"></div>
+      <div><label ${lbl}>M</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hm" value="${esc(l&&l.hrM?l.hrM:'')}"></div>
+      <div><label ${lbl}>C</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hc" value="${esc(l&&l.hrC?l.hrC:'')}"></div>
+      <div><label ${lbl}>V</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hv" value="${esc(l&&l.hrV?l.hrV:'')}"></div>
+      <div><label ${lbl}>O</label><input type="number" step="0.5" min="0" class="edit-input" id="em-ho" value="${esc(l&&l.hrO?l.hrO:'')}"></div>
     </div>
     <div style="margin-bottom:12px;"><label ${lbl}>รหัสหน่วยงานที่ปฏิบัติงานอื่นๆ (สำหรับชั่วโมง O)</label>
-      <input class="edit-input" id="em-ounit" value="${l&&l.otherUnitCode?l.otherUnitCode.replace(/"/g,'&quot;'):''}" placeholder="เช่น รหัสหน่วยงานที่ขอยืมเครื่องจักร"></div>
+      <input class="edit-input" id="em-ounit" value="${l&&l.otherUnitCode?esc(l.otherUnitCode):''}" placeholder="เช่น รหัสหน่วยงานที่ขอยืมเครื่องจักร"></div>
     <div style="margin-bottom:4px;"><label ${lbl}>ชั่วโมงที่ไม่ปฏิบัติงาน</label></div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;">
-      <div><label ${lbl}>F</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hf" value="${l&&l.hrF?l.hrF:''}"></div>
-      <div><label ${lbl}>R</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hr" value="${l&&l.hrR?l.hrR:''}"></div>
-      <div><label ${lbl}>S</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hs" value="${l&&l.hrS?l.hrS:''}"></div>
+      <div><label ${lbl}>F</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hf" value="${esc(l&&l.hrF?l.hrF:'')}"></div>
+      <div><label ${lbl}>R</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hr" value="${esc(l&&l.hrR?l.hrR:'')}"></div>
+      <div><label ${lbl}>S</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hs" value="${esc(l&&l.hrS?l.hrS:'')}"></div>
     </div>
     <div style="margin-bottom:12px;"><label ${lbl}>สาเหตุอื่นๆ ที่ไม่ปฏิบัติงาน</label>
-      <input class="edit-input" id="em-reason" value="${l&&l.otherReason?l.otherReason.replace(/"/g,'&quot;'):''}" placeholder="เช่น รอซ่อม, ฝนตก"></div>
+      <input class="edit-input" id="em-reason" value="${l&&l.otherReason?esc(l.otherReason):''}" placeholder="เช่น รอซ่อม, ฝนตก"></div>
     <div style="margin-bottom:12px;"><label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-600);">
       <input type="checkbox" id="em-dayoff" ${dayOffChecked?'checked':''}> วันหยุด (/)</label></div>
     <div style="margin-bottom:6px;"><label ${lbl}>หมายเหตุ</label>
-      <textarea class="edit-input" id="em-note" rows="2" placeholder="หมายเหตุเพิ่มเติม">${l&&l.note?l.note:''}</textarea></div>
+      <textarea class="edit-input" id="em-note" rows="2" placeholder="หมายเหตุเพิ่มเติม">${esc(l&&l.note?l.note:'')}</textarea></div>
     ${(v && v.fuelType==='เบนซิน') ? '' : `<div style="margin-bottom:6px;"><label ${lbl}>มิเตอร์เลิกงาน (เลขไมล์) — ใช้ค่าเดียวกับแถว 📏 เลขไมล์ในตาราง พ.1-03</label>
-      <input class="edit-input" id="em-mileage" value="${(meterForVehicleDate(vehicle,date)!=null?String(meterForVehicleDate(vehicle,date)):'').replace(/"/g,'&quot;')}" placeholder="ตัวเลข หรือ เช่น ชำรุด"></div>`}
+      <input class="edit-input" id="em-mileage" value="${esc(meterForVehicleDate(vehicle,date)!=null?String(meterForVehicleDate(vehicle,date)):'')}" placeholder="ตัวเลข หรือ เช่น ชำรุด"></div>`}
     <div class="foot-note" style="margin:6px 0 0;padding:8px 0 0;border-top:1px solid var(--line);">น้ำมันเชื้อเพลิงที่เติมของวันนี้เชื่อมโยงจากใบสั่งการ/ตาราง พ.1-03 อัตโนมัติ (แก้ไขที่นั่น) — ดีเซล ${fmtNum(fuelForVehicleDate(vehicle,date,'ดีเซล'),1)} ล. · เบนซิน ${fmtNum(fuelForVehicleDate(vehicle,date,'เบนซิน'),1)} ล.</div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
       ${l?`<button type="button" class="btn btn-danger" onclick="removeMachineryLog(${l.id})">ลบรายการนี้</button>`:''}
@@ -4148,15 +4151,15 @@ function printMachinery(){
     const diesel = fuelForVehicleDate(vehicle, date, 'ดีเซล');
     const meter = meterForVehicleDate(vehicle, date);
     return `<tr><td>${dow} ${fmtDate(date)}</td><td>${isHol?'/':''}</td><td>${ec1wLocCell(l,'route').replace(/<br>/g,' / ')}</td><td>${ec1wLocCell(l,'km').replace(/<br>/g,' / ')}</td>
-      <td>${l&&l.hrW||''}</td><td>${l&&l.hrM||''}</td><td>${l&&l.hrC||''}</td><td>${l&&l.hrV||''}</td><td>${l&&l.hrO||''}</td><td>${l&&l.otherUnitCode||''}</td>
-      <td>${l&&l.hrF||''}</td><td>${l&&l.hrR||''}</td><td>${l&&l.hrS||''}</td><td>${l&&l.otherReason||''}</td>
-      <td>${benzine||''}</td><td>${diesel||''}</td><td>${meter!=null?meter:''}</td><td>${l&&l.note||''}</td></tr>`;
+      <td>${esc(l&&l.hrW||'')}</td><td>${esc(l&&l.hrM||'')}</td><td>${esc(l&&l.hrC||'')}</td><td>${esc(l&&l.hrV||'')}</td><td>${esc(l&&l.hrO||'')}</td><td>${esc(l&&l.otherUnitCode||'')}</td>
+      <td>${esc(l&&l.hrF||'')}</td><td>${esc(l&&l.hrR||'')}</td><td>${esc(l&&l.hrS||'')}</td><td>${esc(l&&l.otherReason||'')}</td>
+      <td>${benzine||''}</td><td>${diesel||''}</td><td>${esc(meter!=null?meter:'')}</td><td>${esc(l&&l.note||'')}</td></tr>`;
   }).join('');
   document.getElementById('print-ec1w').innerHTML = `
     <div class="official-form" style="font-size:11px;">
       <div class="form-code">EC1-W</div>
       <div class="form-title">รายงานการปฏิบัติงานของเครื่องจักรและยานพาหนะ (รายสัปดาห์)</div>
-      <div class="form-org">กรมทางหลวง แขวงทางหลวงระยอง หมวดทางหลวงเชิงเนิน 426 — เครื่องจักร/ยานพาหนะ ${vehicleRegNo(vehicle)} — สัปดาห์ ${fmtDate(dates[0])} – ${fmtDate(dates[6])}</div>
+      <div class="form-org">กรมทางหลวง แขวงทางหลวงระยอง หมวดทางหลวงเชิงเนิน 426 — เครื่องจักร/ยานพาหนะ ${esc(vehicleRegNo(vehicle))} — สัปดาห์ ${fmtDate(dates[0])} – ${fmtDate(dates[6])}</div>
       <table class="of-table">
         <thead><tr><th>วัน/เดือน/ปี</th><th>วันหยุด</th><th>สายทาง</th><th>กม.</th><th>W</th><th>M</th><th>C</th><th>V</th><th>O</th><th>รหัสหน่วยงานอื่นๆ</th><th>F</th><th>R</th><th>S</th><th>สาเหตุอื่นๆ</th><th>เบนซิน</th><th>ดีเซล</th><th>มิเตอร์เลิกงาน</th><th>หมายเหตุ</th></tr></thead>
         <tbody>${rows}</tbody>
@@ -4274,7 +4277,7 @@ function extractAllKm(text){
 function routeOptionsHtml(selected){
   const routes = getControlledRoutes();
   let opts = '<option value="">— เลือกสายทางที่ควบคุม —</option>';
-  opts += routes.map(r=>`<option value="${r.routeNo}" ${selected===r.routeNo?'selected':''}>ทล.${r.routeNo} — ${r.section} (${routeRangeLabel(r)})</option>`).join('');
+  opts += routes.map(r=>`<option value="${esc(r.routeNo)}" ${selected===r.routeNo?'selected':''}>ทล.${esc(r.routeNo)} — ${esc(r.section)} (${routeRangeLabel(r)})</option>`).join('');
   opts += `<option value="__other__" ${selected==='__other__'?'selected':''}>อื่นๆ / นอกฐานข้อมูลควบคุม</option>`;
   return opts;
 }
@@ -4294,7 +4297,7 @@ function validateRouteKm(routeSelId, kmInputId, msgId){
   }
   const route = findRoute(routeNo);
   if(!route){
-    msg.innerHTML = `<span class="hazard-soft" style="font-size:12px;">⚠ ลงข้อมูลผิดพลาด: ไม่พบหมายเลขสายทาง "${routeNo}" ในฐานข้อมูลสายทางที่หมวดควบคุม (ดูรายการที่ระบบรองที่ 2 หัวข้อ "ทางหลวงควบคุม")</span>`;
+    msg.innerHTML = `<span class="hazard-soft" style="font-size:12px;">⚠ ลงข้อมูลผิดพลาด: ไม่พบหมายเลขสายทาง "${esc(routeNo)}" ในฐานข้อมูลสายทางที่หมวดควบคุม (ดูรายการที่ระบบรองที่ 2 หัวข้อ "ทางหลวงควบคุม")</span>`;
     return;
   }
   const kms = extractAllKm(kmInput.value);
@@ -4304,9 +4307,9 @@ function validateRouteKm(routeSelId, kmInputId, msgId){
   }
   const bad = kms.filter(k=>!kmInRoute(route,k));
   if(bad.length){
-    msg.innerHTML = `<span class="hazard-soft" style="font-size:12px;">⚠ ลงข้อมูลผิดพลาด: กม.${bad.map(kmFmt).join(', ')} อยู่นอกช่วงที่หมวดควบคุมของ ทล.${route.routeNo} (${routeRangeLabel(route)}) กรุณาตรวจสอบเลข กม.</span>`;
+    msg.innerHTML = `<span class="hazard-soft" style="font-size:12px;">⚠ ลงข้อมูลผิดพลาด: กม.${bad.map(kmFmt).join(', ')} อยู่นอกช่วงที่หมวดควบคุมของ ทล.${esc(route.routeNo)} (${routeRangeLabel(route)}) กรุณาตรวจสอบเลข กม.</span>`;
   } else {
-    msg.innerHTML = `<span style="color:var(--success);font-size:12px;">✓ กม. อยู่ในช่วงควบคุมของ ทล.${route.routeNo} (${route.section})</span>`;
+    msg.innerHTML = `<span style="color:var(--success);font-size:12px;">✓ กม. อยู่ในช่วงควบคุมของ ทล.${esc(route.routeNo)} (${esc(route.section)})</span>`;
   }
 }
 function routeKmHasError(routeSelId, kmInputId){

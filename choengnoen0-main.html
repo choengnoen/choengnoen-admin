@@ -664,6 +664,18 @@
             <div id="import-progress" class="muted small" style="margin-top:10px;white-space:pre-line;"></div>
           </div>
         </div>
+        <div class="section" id="staffpriv-section" style="display:none;">
+          <div class="section-head"><h2>ข้อมูลส่วนตัวบุคลากร (PDPA) — เจ้าของระบบ</h2></div>
+          <div style="padding:18px 20px;">
+            <div class="hint-box">แยก เบอร์โทร ที่อยู่ วันเกิด ผู้ติดต่อฉุกเฉิน กรุ๊ปเลือด โรค วุฒิ ไปเก็บในตารางแยกที่อ่านได้เฉพาะเจ้าของ/หมวด/ผู้ช่วยหมวด/ผู้มีสิทธิ์ระบบ 1 (แก้ไข-ดู) ทำตามลำดับ: <b>① ตรวจสถานะ → ② ย้ายข้อมูล → (ทดสอบให้แน่ใจ) → ③ ลบข้อมูลเดิม</b> ปุ่ม ①② รันซ้ำได้ปลอดภัย ไม่ลบอะไร · ปุ่ม ③ ลบฟิลด์ส่วนตัวออกจากตารางเดิมถาวร (ควรส่งออกไฟล์สำรองก่อน) และจะไม่ลบถ้ายังย้ายไม่ครบ</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button class="btn btn-ghost" id="btn-sp-status" onclick="staffPrivStatus()">① ตรวจสถานะ</button>
+              <button class="btn btn-primary" id="btn-sp-migrate" onclick="staffPrivMigrate()">② ย้ายข้อมูลส่วนตัว</button>
+              <button class="btn btn-ghost" id="btn-sp-cleanup" onclick="staffPrivCleanup()" style="color:#b42318;">③ ลบข้อมูลส่วนตัวเดิมออกจากตารางบุคลากร</button>
+            </div>
+            <div id="staffpriv-result" class="muted small" style="margin-top:10px;white-space:pre-line;"></div>
+          </div>
+        </div>
         <div class="section">
           <div class="section-head"><h2>ทางลัด</h2></div>
           <div style="padding:18px 20px;display:flex;gap:10px;flex-wrap:wrap;">
@@ -713,6 +725,8 @@
    ============================================================ */
 const TODAY = new Date();
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// ค่าที่ใส่เป็นสตริงใน onclick="fn('...')" : กรองแบบ JS ก่อน แล้วกรอง HTML ทับอีกชั้น
+const jsArg = v => esc(String(v==null?'':v).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,'\\n'));
 const MONTH_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const MONTH_FULL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 function fmtDate(iso){ if(!iso) return '—'; const d=new Date(String(iso).slice(0,10)+'T00:00:00'); if(isNaN(d)) return esc(iso); return d.getDate()+' '+MONTH_SHORT[d.getMonth()]+' '+String(d.getFullYear()+543).slice(2); }
@@ -782,6 +796,7 @@ function applyTabVisibility(){
   document.getElementById('tab-backup').style.display = (can('export')||FBL.isOwner()) ? '' : 'none';
   document.getElementById('btn-add-user').style.display = FBL.isOwner() ? '' : 'none';
   document.getElementById('import-section').style.display = FBL.isOwner() ? '' : 'none';
+  document.getElementById('staffpriv-section').style.display = FBL.isOwner() ? '' : 'none';
   document.getElementById('btn-export-xlsx').disabled = !can('export');
   document.getElementById('btn-export-json').disabled = !can('export');
 }
@@ -1018,10 +1033,10 @@ function setAlertAssignee(id, label){
 function alertRowHTML(o){
   const st = __alertState[o.id] || {};
   const done = o.checklist && st.doneFor === o.checkKey;
-  const safeLabel = String(o.task).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
-  const check = o.checklist ? `<input type="checkbox" class="a-check" ${done?'checked':''} title="ทำเครื่องหมายว่าดำเนินการแล้ว" onchange="toggleAlertDone('${o.id}','${o.checkKey}')">` : '';
+  const safeLabel = jsArg(o.task);
+  const check = o.checklist ? `<input type="checkbox" class="a-check" ${done?'checked':''} title="ทำเครื่องหมายว่าดำเนินการแล้ว" onchange="toggleAlertDone('${jsArg(o.id)}','${jsArg(o.checkKey)}')">` : '';
   const assignee = st.assignee || '';
-  const asg = o.noAssign ? '' : `<span class="a-assignee${assignee?' filled':''}" onclick="setAlertAssignee('${o.id}','${safeLabel}')">${assignee ? '👤 '+esc(assignee) : '+ มอบหมาย'}</span>`;
+  const asg = o.noAssign ? '' : `<span class="a-assignee${assignee?' filled':''}" onclick="setAlertAssignee('${jsArg(o.id)}','${safeLabel}')">${assignee ? '👤 '+esc(assignee) : '+ มอบหมาย'}</span>`;
   return `<div class="alert-row${done?' a-done':''}"><div class="a-left">${check}<div><div class="a-task">${esc(o.task)}</div><div class="a-detail">${o.detailHTML || esc(o.detail)}</div></div></div><div class="a-right">${asg}${o.pillHTML}</div></div>`;
 }
 function computeAlerts(){
@@ -1235,7 +1250,7 @@ function renderUsers(){
     const r = FBL.ROLES[u.role] || FBL.ROLES.staff;
     const pr = seePresence ? presenceOf(u) : null;
     if(pr && pr.on) onlineCount++;
-    const photo = u.photo ? `background-image:url('${u.photo}')` : '';
+    const photo = u.photo ? esc(`background-image:url('${u.photo}')`) : '';
     const chips = `<div class="acc-chips">
         <span class="acc-chip ${u.perm.main?'acc-edit':'acc-none'}" title="ระบบหลัก">หลัก ${u.perm.main?'✓':'—'}</span>
         ${FBL.SUB_KEYS.map(k=>`<span class="acc-chip ${accCls(u.perm[k])}" title="${esc(FBL.SECTIONS[k].label)}">${k.slice(1)} ${accSym(u.perm[k])}</span>`).join('')}
@@ -1244,14 +1259,14 @@ function renderUsers(){
     const status = !u.active ? '<span class="role-chip off">ระงับการใช้งาน</span>'
       : (pr ? `<span class="small ${pr.on?'':'muted'}" style="${pr.on?'color:var(--success);font-weight:600':''}">${pr.on?'● ':''}${esc(pr.text)}</span>` : '<span class="small muted">ใช้งาน</span>');
     const acts = owner ? `<div class="row-actions">
-        <button class="btn btn-ghost btn-sm" onclick="openUserModal('${u.uid}')">แก้ไข</button>
-        <button class="btn btn-ghost btn-sm" onclick="resetPw('${u.uid}')">ตั้งรหัสผ่านใหม่</button>
-        ${u.role!=='owner' ? `<button class="btn btn-danger btn-sm" onclick="removeUser('${u.uid}')">ลบ</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="openUserModal('${jsArg(u.uid)}')">แก้ไข</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetPw('${jsArg(u.uid)}')">ตั้งรหัสผ่านใหม่</button>
+        ${u.role!=='owner' ? `<button class="btn btn-danger btn-sm" onclick="removeUser('${jsArg(u.uid)}')">ลบ</button>` : ''}
       </div>` : '';
     return `<tr class="${u.active?'':'inactive'}">
       <td><div class="u-avatar" style="${photo}">${u.photo?'':esc(initials(u.name))}${pr?`<span class="dot ${pr.on?'on':''}"></span>`:''}</div></td>
       <td><div class="u-name">${esc(u.name)}</div><div class="u-sub">${u.position?esc(u.position):'—'}</div></td>
-      <td><span class="role-chip ${u.role}">${r.icon} ${esc(r.label)}</span>${u.role==='staff' && u.sections.length ? `<div class="u-sub" style="margin-top:4px">ส่วนงาน: ${u.sections.map(k=>k.slice(1)).join(', ')}</div>` : ''}</td>
+      <td><span class="role-chip ${u.role}">${r.icon} ${esc(r.label)}</span>${u.role==='staff' && u.sections.length ? `<div class="u-sub" style="margin-top:4px">ส่วนงาน: ${u.sections.map(k=>esc(k.slice(1))).join(', ')}</div>` : ''}</td>
       <td>${chips}</td>
       <td>${status}</td>
       <td>${acts}</td>
@@ -1292,12 +1307,12 @@ function openUserModal(uid){
     </div>
     <div class="two-col">
       <div class="f-row">${u ? `<label>สถานะบัญชี</label><select id="um-active" ${isOwnerRec?'disabled':''}><option value="1" ${u.active?'selected':''}>ใช้งาน</option><option value="0" ${u.active?'':'selected'}>ระงับการใช้งาน (ล็อกอินไม่ได้)</option></select>`
-        : `<label>ตั้งรหัสผ่านเริ่มต้น (อย่างน้อย 6 ตัว)</label><input id="um-password" type="text" autocomplete="off">`}</div>
+        : `<label>ตั้งรหัสผ่านเริ่มต้น (อย่างน้อย 8 ตัว)</label><input id="um-password" type="text" autocomplete="off">`}</div>
     </div>
     <div class="f-row">
       <label>รูปโปรไฟล์ (ไม่บังคับ)</label>
       <div style="display:flex;align-items:center;gap:14px;">
-        <div id="um-photo-preview" class="u-avatar" style="width:56px;height:56px;font-size:14px;${UM.photo?`background-image:url('${UM.photo}')`:''}">${UM.photo?'':'?'}</div>
+        <div id="um-photo-preview" class="u-avatar" style="width:56px;height:56px;font-size:14px;${UM.photo?esc(`background-image:url('${UM.photo}')`):''}">${UM.photo?'':'?'}</div>
         <input type="file" id="um-photo-input" accept="image/*" onchange="handlePhotoPick(event)">
         ${UM.photo ? '<button type="button" class="btn btn-ghost btn-sm" onclick="clearPhoto()">ลบรูป</button>' : ''}
       </div>
@@ -1369,7 +1384,7 @@ async function saveUserModal(){
       showToast('บันทึกข้อมูลผู้ใช้งานแล้ว');
     } else {
       payload.password = document.getElementById('um-password').value;
-      if(String(payload.password).length < 6){ throw new Error('รหัสผ่านเริ่มต้นต้องยาวอย่างน้อย 6 ตัวอักษร'); }
+      if(String(payload.password).length < 8){ throw new Error('รหัสผ่านเริ่มต้นต้องยาวอย่างน้อย 8 ตัวอักษร'); }
       await FBL.addMember(payload);
       showToast('เพิ่มผู้ใช้งานแล้ว — แจ้งชื่อผู้ใช้และรหัสผ่านให้เจ้าตัว');
     }
@@ -1384,11 +1399,11 @@ async function saveUserModal(){
 function resetPw(uid){
   const u = TEAM.find(x=>x.uid===uid); if(!u) return;
   openGenModal('ตั้งรหัสผ่านใหม่ — '+u.name,
-    `<div class="f-row"><label>รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)</label><input id="rp-input" type="text" autocomplete="off"></div>
+    `<div class="f-row"><label>รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)</label><input id="rp-input" type="text" autocomplete="off"></div>
      <div class="hint-box">ระบบจะสร้างบัญชีล็อกอินใหม่ให้เบื้องหลัง (ข้อจำกัดของ Firebase) ผลกับผู้ใช้เหมือนเปลี่ยนรหัสผ่าน — ชื่อผู้ใช้และสิทธิ์เดิมยังอยู่ครบ</div>`,
     [{label:'ยกเลิก'}, {label:'บันทึกรหัสผ่านใหม่', cls:'btn-primary', onClick: async ()=>{
       const v = document.getElementById('rp-input').value;
-      if(v.length<6) throw new Error('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร');
+      if(v.length<8) throw new Error('รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร');
       await FBL.resetMemberPassword(uid, v);
       showToast('ตั้งรหัสผ่านใหม่ให้ '+u.name+' แล้ว');
     }}]);
@@ -1492,9 +1507,9 @@ function renderTrash(){
         ${extra}
       </div>
       <div class="row-actions">
-        <button class="btn btn-ghost btn-sm" onclick="showTrashDetail('${g.id}')">ดูข้อมูล</button>
-        ${canR ? `<button class="btn btn-ok btn-sm" onclick="restoreGroup('${g.id}')">↺ กู้คืน</button>` : ''}
-        ${canP ? `<button class="btn btn-danger btn-sm" onclick="purgeGroup('${g.id}')">ลบถาวร</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="showTrashDetail('${jsArg(g.id)}')">ดูข้อมูล</button>
+        ${canR ? `<button class="btn btn-ok btn-sm" onclick="restoreGroup('${jsArg(g.id)}')">↺ กู้คืน</button>` : ''}
+        ${canP ? `<button class="btn btn-danger btn-sm" onclick="purgeGroup('${jsArg(g.id)}')">ลบถาวร</button>` : ''}
       </div>
     </div>`;
   }).join('') : '<div class="empty">ถังขยะว่างเปล่า</div>';
@@ -1586,8 +1601,9 @@ async function exportAllExcel(){
     const wb = XLSX.utils.book_new();
     Object.keys(all).forEach(t=>{
       const cfg = FBL.TABLES[t];
-      const rows = all[t].map(r=>{ const o={}; cfg.columns.forEach(c=>{ const v=r[c]; o[c] = (v!==null && typeof v==='object') ? JSON.stringify(v) : v; }); return o; });
-      const ws = rows.length ? XLSX.utils.json_to_sheet(rows, {header:cfg.columns}) : XLSX.utils.aoa_to_sheet([cfg.columns]);
+      const cols = FBL.allColumns(t); // staff รวมคอลัมน์ข้อมูลส่วนตัวที่แยกไปอีกตาราง
+      const rows = all[t].map(r=>{ const o={}; cols.forEach(c=>{ const v=r[c]; o[c] = (v!==null && typeof v==='object') ? JSON.stringify(v) : v; }); return o; });
+      const ws = rows.length ? XLSX.utils.json_to_sheet(rows, {header:cols}) : XLSX.utils.aoa_to_sheet([cols]);
       XLSX.utils.book_append_sheet(wb, ws, t.slice(0,31));
     });
     XLSX.writeFile(wb, `ระบบบริหารหมวด-ทุกตาราง-${stamp()}.xlsx`);
@@ -1617,6 +1633,32 @@ async function runImport(){
     prog.textContent = report.length ? ('นำเข้าสำเร็จ:\n• ' + report.join('\n• ')) : 'ไม่พบชีตที่ชื่อตรงกับตารางในระบบ (ตรวจสอบว่าเลือกไฟล์ถูกต้อง)';
     loadAll();
   });
+}
+
+/* ---------- ข้อมูลส่วนตัวบุคลากร (แผน 4) ---------- */
+function spStatusText(s){
+  return `บุคลากรทั้งหมด ${s.total} คน · มีข้อมูลส่วนตัวที่ตารางแยกแล้ว ${s.privateDocs} คน\nยังมีข้อมูลส่วนตัวค้างในตารางเดิม ${s.legacy} คน (ในนี้ยังย้ายไม่ครบ ${s.pending} คน)` + (s.pending===0 && s.legacy>0 ? '\n✅ ย้ายครบแล้ว — ทดสอบหน้าบุคลากรให้แน่ใจ แล้วกด ③ เพื่อลบของเดิมได้' : (s.legacy===0 ? '\n✅ ไม่มีข้อมูลส่วนตัวค้างในตารางเดิมแล้ว' : '\n➡ กด ② ย้ายข้อมูลส่วนตัว'));
+}
+async function staffPrivRun(btnId, fn){
+  const btn = document.getElementById(btnId), out = document.getElementById('staffpriv-result'); const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = 'กำลังทำงาน...'; out.textContent = '';
+  try{ out.textContent = await fn(); }catch(e){ out.textContent = '⚠️ ' + e.message; }
+  btn.disabled = false; btn.textContent = orig;
+}
+function staffPrivStatus(){ staffPrivRun('btn-sp-status', async ()=> spStatusText(await FBL.staffPrivateStatus())); }
+function staffPrivMigrate(){
+  confirmBox('ย้ายข้อมูลส่วนตัวบุคลากร', 'คัดลอกข้อมูลส่วนตัวไปตารางแยก (ไม่ลบของเดิม ไม่ทับข้อมูลที่แก้ไว้ในตารางแยก)\nดำเนินการต่อหรือไม่?', 'ย้ายข้อมูล', ()=>
+    staffPrivRun('btn-sp-migrate', async ()=>{
+      const r = await FBL.migrateStaffPrivate();
+      return `ย้ายเสร็จ: สร้างใหม่ ${r.created} คน · เติมข้อมูลที่ขาด ${r.filled} คน · ไม่ต้องย้าย ${r.unchanged} คน\n\n` + spStatusText(await FBL.staffPrivateStatus());
+    }));
+}
+function staffPrivCleanup(){
+  confirmBox('ลบข้อมูลส่วนตัวเดิม', 'ลบเบอร์โทร ที่อยู่ วันเกิด ฯลฯ ออกจากตารางบุคลากรเดิมถาวร (ข้อมูลอยู่ที่ตารางแยกแล้ว)\nกู้คืนไม่ได้ — ได้ส่งออกไฟล์สำรองและทดสอบหน้าบุคลากรแล้วใช่หรือไม่?', 'ลบถาวร', ()=>
+    staffPrivRun('btn-sp-cleanup', async ()=>{
+      const r = await FBL.cleanupStaffLegacy();
+      return `ลบข้อมูลส่วนตัวเดิมออกจากตารางบุคลากรแล้ว ${r.cleaned} คน\n\n` + spStatusText(await FBL.staffPrivateStatus());
+    }));
 }
 
 /* ============================================================

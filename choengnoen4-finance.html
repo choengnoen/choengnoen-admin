@@ -621,6 +621,9 @@
 <div class="print-only" id="print-area"></div>
 
 <script>
+// กรองข้อความก่อนใส่ HTML (ใช้ตัวเดียวกับ firebase-layer.js) / jsArg = ค่าที่ใส่เป็นสตริงใน onclick="fn('...')"
+const esc = FBL.esc;
+const jsArg = v => esc(String(v==null?'':v).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,'\\n'));
 /* ============================================================
    DATA MODEL
    ============================================================ */
@@ -1045,7 +1048,7 @@ function populateLogin(){
   const logoutBtn = document.getElementById('logout-btn');
   const s = __getSharedSession();
   if(s && s.name){
-    badge.innerHTML = s.name + (s.position ? '<span class="um-position">ตำแหน่ง '+s.position+'</span>' : '') + ((window.FBL && FBL.permBadgeHtml) ? FBL.permBadgeHtml() : '');
+    badge.innerHTML = esc(s.name) + (s.position ? '<span class="um-position">ตำแหน่ง '+esc(s.position)+'</span>' : '') + ((window.FBL && FBL.permBadgeHtml) ? FBL.permBadgeHtml() : '');
     badge.className = 'pill ' + (isAdmin() ? 'pill-ok' : 'pill-warn');
     if(logoutBtn) logoutBtn.style.display = 'flex';
   } else {
@@ -1223,9 +1226,9 @@ function renderLaborSummary(){
       <td style="text-align:center;">${fmtMoney(r.total)}</td>
       <td style="text-align:center;"><b>${fmtMoney(r.net)}</b></td>
       <td style="text-align:center;">
-        <span class="pill ${r.info.cls}" style="cursor:pointer;" onclick="toggleLaborSentFor('${r.cyc}', ${!laborSentStatus[r.cyc]})" title="คลิกเพื่อ${laborSentStatus[r.cyc]?'ยกเลิกการทำเครื่องหมาย':'ทำเครื่องหมายว่าส่งแล้ว'}">${r.info.label}</span>
+        <span class="pill ${r.info.cls}" style="cursor:pointer;" onclick="toggleLaborSentFor('${jsArg(r.cyc)}', ${!laborSentStatus[r.cyc]})" title="คลิกเพื่อ${laborSentStatus[r.cyc]?'ยกเลิกการทำเครื่องหมาย':'ทำเครื่องหมายว่าส่งแล้ว'}">${r.info.label}</span>
       </td>
-      <td style="text-align:center;"><button class="btn btn-ghost btn-sm no-print" onclick="jumpToLaborCycle('${r.cyc}')">ดูรายละเอียด</button></td>
+      <td style="text-align:center;"><button class="btn btn-ghost btn-sm no-print" onclick="jumpToLaborCycle('${jsArg(r.cyc)}')">ดูรายละเอียด</button></td>
     </tr>`).join('');
   document.getElementById('labor-summary-table').innerHTML = thead + '<tbody>' + tbody + '</tbody>';
 }
@@ -1244,7 +1247,7 @@ function populateLaborCycles(){
   const fy = Number(document.getElementById('labor-fy').value) || currentFiscalYear();
   const cycles = cyclesInFiscalYear(fy);
   const prevValue = sel.value;
-  sel.innerHTML = cycles.slice().reverse().map(c=>`<option value="${c}">${cycleLabel(c)}</option>`).join('');
+  sel.innerHTML = cycles.slice().reverse().map(c=>`<option value="${esc(c)}">${cycleLabel(c)}</option>`).join('');
   // ถ้ารอบเดิมที่เลือกอยู่ยังอยู่ในปีงบประมาณใหม่ ให้คงไว้ ไม่งั้นเลือกรอบล่าสุดของปีนั้นแทน
   sel.value = cycles.includes(prevValue) ? prevValue : (cycles[cycles.length-1] || '');
 }
@@ -1270,7 +1273,7 @@ function renderLabor(){
     const dow = new Date(cy,cm-1,d).getDay();
     const isHol = holidaySet.has(d);
     const cls = isHol ? 'day-hol' : (dow===6) ? 'day-off' : '';
-    thead += `<th class="day-th ${cls}" ${isHol?`title="${holidayNameOn(cyc,d)}"`:''}>${d}<div class="day-dow">${THAI_DOW_ABBR[dow]}</div></th>`;
+    thead += `<th class="day-th ${cls}" ${isHol?`title="${esc(holidayNameOn(cyc,d))}"`:''}>${d}<div class="day-dow">${THAI_DOW_ABBR[dow]}</div></th>`;
   });
   thead += `<th class="col-center">วันทำงาน</th><th class="col-center">ยอดเงิน</th><th class="ss-col col-center">หักประกันสังคม<br>5%</th><th class="col-center">รับจริง</th></tr></thead>`;
 
@@ -1283,11 +1286,11 @@ function renderLabor(){
     const ss = Math.round(amount*0.05);
     const net = amount-ss;
     total += amount; totalSS += ss; totalNet += net;
-    tbody += `<tr><td class="idx-col col-center">${idx+1}</td><td class="p-name name-col">${emp.name}<div class="p-sub">${emp.role}${emp.duty?` · ปฏิบัติหน้าที่${emp.duty}`:''}</div></td><td class="col-center">${fmtMoney(emp.rate)}</td>`;
+    tbody += `<tr><td class="idx-col col-center">${idx+1}</td><td class="p-name name-col">${esc(emp.name)}<div class="p-sub">${esc(emp.role)}${emp.duty?` · ปฏิบัติหน้าที่${esc(emp.duty)}`:''}</div></td><td class="col-center">${fmtMoney(emp.rate)}</td>`;
     visibleDays.forEach(d=>{
       const c = codes[d-1];
       const isHol = holidaySet.has(d);
-      tbody += `<td class="att-cell ${isHol?'att-hol':''}" ${isHol?`title="${holidayNameOn(cyc,d)} — จ่ายเสมือนมาปฏิบัติงาน"`:''}><button class="${codeClass(c)}" disabled>${c}</button></td>`;
+      tbody += `<td class="att-cell ${isHol?'att-hol':''}" ${isHol?`title="${esc(holidayNameOn(cyc,d))} — จ่ายเสมือนมาปฏิบัติงาน"`:''}><button class="${codeClass(c)}" disabled>${c}</button></td>`;
     });
     tbody += `<td class="col-center"><b>${workDays}</b></td><td class="col-center"><b>${fmtMoney(amount)}</b></td><td class="ss-col col-center">${ss.toLocaleString('en-US')}</td><td class="col-center"><b>${fmtMoney(net)}</b></td></tr>`;
   });
@@ -1306,7 +1309,7 @@ function printPaymentEvidence(){
     const workDays = att[emp.name].filter(c=>WORKDAY_CODES.has(c)).length;
     const amount = workDays*emp.rate;
     total+=amount;
-    rows += `<tr><td>${i+1}</td><td style="text-align:left;padding-left:6px;">${emp.name}</td><td>${workDays}</td><td>${fmtMoney(amount)}</td><td></td></tr>`;
+    rows += `<tr><td>${i+1}</td><td style="text-align:left;padding-left:6px;">${esc(emp.name)}</td><td>${workDays}</td><td>${fmtMoney(amount)}</td><td></td></tr>`;
   });
   const html = `
     <div class="official-form">
@@ -1354,9 +1357,9 @@ function renderOT(){
   let rows = otRequests.map((o,i)=>{
     const overdue = o.status==='awaiting_report' && o.approvedOn && daysUntil(new Date(new Date(o.approvedOn).getTime()+5*86400000).toISOString().slice(0,10))<0;
     return `<tr>
-      <td><b>${o.no}</b><div class="p-sub">${fmtDateTH(o.date)} · ${o.time}</div></td>
-      <td>${o.name}</td>
-      <td style="max-width:220px;">${o.task}</td>
+      <td><b>${esc(o.no)}</b><div class="p-sub">${fmtDateTH(o.date)} · ${esc(o.time)}</div></td>
+      <td>${esc(o.name)}</td>
+      <td style="max-width:220px;">${esc(o.task)}</td>
       <td>${fmtMoney(o.amount)}</td>
       <td>${otStatusPill(o.status)}${overdue?'<div class="p-sub" style="color:var(--danger);margin-top:4px;">เลยกำหนดรายงานผล 5 วัน</div>':''}${otSteps(o)}</td>
       <td class="no-print">${otActionButtons(o,i)}</td>
@@ -1365,7 +1368,7 @@ function renderOT(){
   document.getElementById('ot-table').innerHTML = `<thead><tr><th>เลขที่เอกสาร</th><th>ผู้ขอปฏิบัติงาน</th><th>ลักษณะงาน</th><th>จำนวนเงิน</th><th>สถานะ / ขั้นตอน</th><th>การดำเนินการ</th></tr></thead><tbody>${rows}</tbody>`;
 
   const sel = document.getElementById('ot-name');
-  sel.innerHTML = laborRoster.map(e=>`<option value="${e.name}">${e.name}</option>`).join('');
+  sel.innerHTML = laborRoster.map(e=>`<option value="${esc(e.name)}">${esc(e.name)}</option>`).join('');
 }
 function otActionButtons(o,i){
   if(!isAdmin()) return '';
@@ -1446,13 +1449,13 @@ function printOTApproval(i){
     <div class="official-form">
       <div class="form-title">บันทึกข้อความ</div>
       <p>ส่วนราชการ หมวดทางหลวงเชิงเนิน แขวงทางหลวงระยอง</p>
-      <p>ที่ ${o.no} &nbsp;&nbsp; วันที่ ${fmtDateTH(TODAY.toISOString().slice(0,10))}</p>
+      <p>ที่ ${esc(o.no)} &nbsp;&nbsp; วันที่ ${fmtDateTH(TODAY.toISOString().slice(0,10))}</p>
       <p>เรื่อง ขออนุมัติปฏิบัติงานนอกเวลาราชการ</p>
       <p>เรียน หัวหน้าหมวดทางหลวงเชิงเนิน</p>
-      <p>&nbsp;&nbsp;&nbsp;&nbsp;ด้วย ${o.name} มีความประสงค์ขออนุมัติปฏิบัติงานนอกเวลาราชการ ในวันที่ ${fmtDateTH(o.date)} เวลา ${o.time} เพื่อดำเนินการ${o.task} จึงเรียนมาเพื่อโปรดพิจารณาอนุมัติ</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;ด้วย ${esc(o.name)} มีความประสงค์ขออนุมัติปฏิบัติงานนอกเวลาราชการ ในวันที่ ${fmtDateTH(o.date)} เวลา ${esc(o.time)} เพื่อดำเนินการ${esc(o.task)} จึงเรียนมาเพื่อโปรดพิจารณาอนุมัติ</p>
       <table class="of-table">
         <thead><tr><th>ผู้ปฏิบัติงาน</th><th>วัน/เวลา</th><th>ลักษณะงาน</th><th>ค่าตอบแทน (บาท)</th></tr></thead>
-        <tbody><tr><td>${o.name}</td><td>${fmtDateTH(o.date)}<br>${o.time}</td><td>${o.task}</td><td>${fmtMoney(o.amount)}</td></tr></tbody>
+        <tbody><tr><td>${esc(o.name)}</td><td>${fmtDateTH(o.date)}<br>${esc(o.time)}</td><td>${esc(o.task)}</td><td>${fmtMoney(o.amount)}</td></tr></tbody>
       </table>
       <div class="sig-block">
         <p>ลงชื่อ .......................................... ผู้ขออนุมัติ</p>
@@ -1469,7 +1472,7 @@ function printOTReport(i){
       <div class="form-org">หมวดทางหลวงเชิงเนิน แขวงทางหลวงระยอง จังหวัดระยอง</div>
       <table class="of-table">
         <thead><tr><th>เลขที่เอกสาร</th><th>ชื่อผู้ปฏิบัติงาน</th><th>วันที่/เวลา</th><th>ลักษณะงาน</th><th>จำนวนเงิน (บาท)</th><th>ลายมือชื่อผู้รับเงิน</th></tr></thead>
-        <tbody><tr><td>${o.no}</td><td>${o.name}</td><td>${fmtDateTH(o.date)}<br>${o.time}</td><td>${o.task}</td><td>${fmtMoney(o.amount)}</td><td></td></tr></tbody>
+        <tbody><tr><td>${esc(o.no)}</td><td>${esc(o.name)}</td><td>${fmtDateTH(o.date)}<br>${esc(o.time)}</td><td>${esc(o.task)}</td><td>${fmtMoney(o.amount)}</td><td></td></tr></tbody>
       </table>
       <p>รวมเป็นเงินทั้งสิ้น .................................................. บาท</p>
       <div class="sig-block">
@@ -1486,7 +1489,7 @@ function printOTReport(i){
    ============================================================ */
 function populateBudgetCycles(){
   const sel = document.getElementById('budget-cycle');
-  sel.innerHTML = cycleList().map(c=>`<option value="${c}">${cycleLabel(c)}</option>`).join('');
+  sel.innerHTML = cycleList().map(c=>`<option value="${esc(c)}">${cycleLabel(c)}</option>`).join('');
 }
 function renderBudget(){
   const cyc = document.getElementById('budget-cycle').value || currentCycle();
@@ -1671,7 +1674,7 @@ function renderUtility(){
       else if(dleft<=5) dueBadge = `<span class="pill pill-warn">อีก ${dleft} วันครบกำหนด</span>`;
     }
     return `<tr>
-      <td>${b.type}</td>
+      <td>${esc(b.type)}</td>
       <td>${cycleLabel(b.cycle)}</td>
       <td>${fmtMoney(b.amount)}</td>
       <td>${fmtDateTH(b.due)}</td>
@@ -1783,7 +1786,7 @@ function renderUtilReport(){
       <td>${fmtMoney(r.bt['ค่าโทรศัพท์'])}</td>
       <td><b>${fmtMoney(r.total)}</b></td>
       <td>${r.paidCount===4?'<span class="pill pill-ok">ครบ 4 บิล</span>':`<span class="pill pill-warn">${r.paidCount}/4</span>`}</td>
-      <td>${isAdmin()?`<span class="pill ${r.reported?'pill-ok':'pill-neutral'}" style="cursor:pointer;" onclick="toggleDistrictReport('${r.cy}')">${r.reported?'รายงานแล้ว':'ยังไม่รายงาน'}</span>`:(r.reported?'<span class="pill pill-ok">รายงานแล้ว</span>':'<span class="pill pill-neutral">ยังไม่รายงาน</span>')}</td>
+      <td>${isAdmin()?`<span class="pill ${r.reported?'pill-ok':'pill-neutral'}" style="cursor:pointer;" onclick="toggleDistrictReport('${jsArg(r.cy)}')">${r.reported?'รายงานแล้ว':'ยังไม่รายงาน'}</span>`:(r.reported?'<span class="pill pill-ok">รายงานแล้ว</span>':'<span class="pill pill-neutral">ยังไม่รายงาน</span>')}</td>
     </tr>`).join('');
   const totalElec = records.reduce((s,r)=>s+r.bt['ค่าไฟฟ้า'],0);
   const totalWater = records.reduce((s,r)=>s+r.bt['ค่าน้ำประปา'],0);
@@ -1994,8 +1997,8 @@ function renderWaterTable(){
       <td class="wtr-b">${r.subBUsage!=null?r.subBUsage.toLocaleString('th-TH')+(r.subBOverridden?' <span class="pill pill-neutral" title="กรอกหน่วยใช้น้ำเอง (ค่าจากบิลจริง/ตัวเลขที่ยืนยันแล้ว)">ปรับเอง</span>':''):'<span class="pill pill-neutral">รอข้อมูล</span>'}</td>
       <td class="wtr-b">${r.subBCost!=null?fmtMoney(r.subBCost):'—'}</td>
       <td class="wtr-b">${r.subBPaid?fmtDateShortTH(r.subBPaid):'—'}</td>
-      <td>${r.note||''}${(r.subADuplicate||r.subBDuplicate)?' <span class="pill pill-danger" title="เลขมิเตอร์เท่ากับเดือนก่อนเป๊ะ น่าจะยังไม่ได้อัปเดตค่าที่อ่านจริงของเดือนนี้">⚠️ เลขซ้ำเดือนก่อน</span>':(r.anomaly?' <span class="pill pill-danger">ตรวจสอบเลขมิเตอร์</span>':'')}</td>
-      <td class="no-print">${isAdmin()?`<button class="btn btn-ghost btn-sm" onclick="editWater('${r.cycle}')">✏️ แก้ไข</button> <button class="btn btn-danger btn-sm" onclick="deleteWater('${r.cycle}')">🗑️ ลบ</button>`:''}</td>
+      <td>${esc(r.note||'')}${(r.subADuplicate||r.subBDuplicate)?' <span class="pill pill-danger" title="เลขมิเตอร์เท่ากับเดือนก่อนเป๊ะ น่าจะยังไม่ได้อัปเดตค่าที่อ่านจริงของเดือนนี้">⚠️ เลขซ้ำเดือนก่อน</span>':(r.anomaly?' <span class="pill pill-danger">ตรวจสอบเลขมิเตอร์</span>':'')}</td>
+      <td class="no-print">${isAdmin()?`<button class="btn btn-ghost btn-sm" onclick="editWater('${jsArg(r.cycle)}')">✏️ แก้ไข</button> <button class="btn btn-danger btn-sm" onclick="deleteWater('${jsArg(r.cycle)}')">🗑️ ลบ</button>`:''}</td>
     </tr>`).join('');
   const totalMainUsage = rows.reduce((s,r)=>s+(r.mainUsage||0),0);
   const totalSubAUsage = rows.reduce((s,r)=>s+(r.subAUsage||0),0);

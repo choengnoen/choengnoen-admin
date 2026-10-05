@@ -772,6 +772,9 @@
 <div class="print-only" id="print-registry"></div>
 
 <script>
+// กรองข้อความก่อนใส่ HTML (ใช้ตัวเดียวกับ firebase-layer.js) / jsArg = ค่าที่ใส่เป็นสตริงใน onclick="fn('...')"
+const esc = FBL.esc;
+const jsArg = v => esc(String(v==null?'':v).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,'\\n'));
 /* ============================================================
    DATA
    ============================================================ */
@@ -875,7 +878,7 @@ function formatKmDisplay(km){
 function routeOptionsHtml(selected){
   const routes = getControlledRoutes();
   let opts = '<option value="">— เลือกสายทางที่ควบคุม —</option>';
-  opts += routes.map(r=>`<option value="${r.routeNo}" ${selected===r.routeNo?'selected':''}>ทล.${r.routeNo}</option>`).join('');
+  opts += routes.map(r=>`<option value="${esc(r.routeNo)}" ${selected===r.routeNo?'selected':''}>ทล.${esc(r.routeNo)}</option>`).join('');
   opts += `<option value="__other__" ${selected==='__other__'?'selected':''}>อื่นๆ / นอกฐานข้อมูลควบคุม</option>`;
   return opts;
 }
@@ -898,7 +901,7 @@ function populateComplaintRouteFilter(){
   let opts = '<option value="all">ทุกสายทาง</option>';
   opts += usedRoutes.map(rt=>{
     const match = routes.find(r=>'ทล.'+r.routeNo===rt);
-    return `<option value="${rt}">${formatRouteDisplay(rt)}${match?' — '+match.section:''}</option>`;
+    return `<option value="${esc(rt)}">${esc(formatRouteDisplay(rt))}${match?' — '+esc(match.section):''}</option>`;
   }).join('');
   el.innerHTML = opts;
   el.value = [...el.options].some(o=>o.value===prev) ? prev : 'all';
@@ -923,7 +926,7 @@ function validateRouteKm(routeSelId, kmInputId, msgId){
   }
   const route = findRoute(routeNo);
   if(!route){
-    msg.innerHTML = `<span class="hazard" style="font-size:12px;">⚠ ไม่พบหมายเลขสายทาง "${routeNo}" ในฐานข้อมูลสายทางที่หมวดควบคุม</span>`;
+    msg.innerHTML = `<span class="hazard" style="font-size:12px;">⚠ ไม่พบหมายเลขสายทาง "${esc(routeNo)}" ในฐานข้อมูลสายทางที่หมวดควบคุม</span>`;
     return;
   }
   const kms = extractAllKm(kmInput.value);
@@ -933,9 +936,9 @@ function validateRouteKm(routeSelId, kmInputId, msgId){
   }
   const bad = kms.filter(k=>!kmInRoute(route,k));
   if(bad.length){
-    msg.innerHTML = `<span class="hazard" style="font-size:12px;">⚠ กม.${bad.map(kmFmt).join(', ')} อยู่นอกช่วงที่หมวดควบคุมของ ทล.${route.routeNo} (${routeRangeLabel(route)}) กรุณาตรวจสอบเลข กม.</span>`;
+    msg.innerHTML = `<span class="hazard" style="font-size:12px;">⚠ กม.${bad.map(kmFmt).join(', ')} อยู่นอกช่วงที่หมวดควบคุมของ ทล.${esc(route.routeNo)} (${routeRangeLabel(route)}) กรุณาตรวจสอบเลข กม.</span>`;
   } else {
-    msg.innerHTML = `<span style="color:var(--success);font-size:12px;">✓ กม. อยู่ในช่วงควบคุมของ ทล.${route.routeNo} (${route.section})</span>`;
+    msg.innerHTML = `<span style="color:var(--success);font-size:12px;">✓ กม. อยู่ในช่วงควบคุมของ ทล.${esc(route.routeNo)} (${esc(route.section)})</span>`;
   }
 }
 function routeKmHasError(routeSelId, kmInputId){
@@ -1161,7 +1164,7 @@ function renderDocMonthOptions(){
   if(!sel) return;
   const prev = sel.value || 'all';
   const keys = [...new Set(docs.map(docMonthKey).filter(Boolean))].sort().reverse();
-  sel.innerHTML = '<option value="all">ทุกเดือน</option>' + keys.map(k=>`<option value="${k}">${monthKeyLabel(k)}</option>`).join('');
+  sel.innerHTML = '<option value="all">ทุกเดือน</option>' + keys.map(k=>`<option value="${esc(k)}">${esc(monthKeyLabel(k))}</option>`).join('');
   if(!__docMonthFilterInitialized){
     __docMonthFilterInitialized = true;
     sel.value = keys.length ? keys[0] : 'all';
@@ -1238,7 +1241,7 @@ function populateLogin(){
   const logoutBtn = document.getElementById('logout-btn');
   const s = __getSharedSession();
   if(s && s.name){
-    badge.innerHTML = s.name + (s.position ? '<span class="um-position">ตำแหน่ง '+s.position+'</span>' : '') + ((window.FBL && FBL.permBadgeHtml) ? FBL.permBadgeHtml() : '');
+    badge.innerHTML = esc(s.name) + (s.position ? '<span class="um-position">ตำแหน่ง '+esc(s.position)+'</span>' : '') + ((window.FBL && FBL.permBadgeHtml) ? FBL.permBadgeHtml() : '');
     badge.className = 'pill ' + (isAdmin() ? 'pill-ok' : 'pill-warn');
     if(logoutBtn) logoutBtn.style.display = 'flex';
   } else {
@@ -1335,7 +1338,7 @@ document.querySelectorAll('.sec-tab').forEach(t=>{
    ============================================================ */
 function complaintStatusPill(st){
   const map = {'รอดำเนินการ':'pill-warn','กำลังดำเนินการ':'pill-neutral','รอหน่วยงานภายนอกดำเนินการ':'pill-warn','ดำเนินการแล้วเสร็จ':'pill-ok'};
-  return `<span class="pill ${map[st]||'pill-neutral'}">${st||'ยังไม่ระบุ'}</span>`;
+  return `<span class="pill ${map[st]||'pill-neutral'}">${esc(st||'ยังไม่ระบุ')}</span>`;
 }
 function complaintDaysElapsed(dateISO){
   if(!dateISO) return null;
@@ -1355,11 +1358,11 @@ function renderComplaints(){
     return `<tr style="cursor:pointer;" onclick="openComplaintDetail(${i})" title="กดเพื่อดูรายละเอียด">
       <td>${idx+1}</td>
       <td>${c.date?fmtDate(c.date):'—'}</td>
-      <td>${c.receiveNo||'—'}</td>
-      <td>${formatRouteDisplay(c.route)||'—'}</td>
-      <td>${formatKmDisplay(c.km)||'—'}</td>
-      <td style="max-width:220px">${c.subject||''}</td>
-      <td>${c.remark||'—'}</td>
+      <td>${esc(c.receiveNo||'—')}</td>
+      <td>${esc(formatRouteDisplay(c.route)||'—')}</td>
+      <td>${esc(formatKmDisplay(c.km)||'—')}</td>
+      <td style="max-width:220px">${esc(c.subject||'')}</td>
+      <td>${esc(c.remark||'—')}</td>
       <td>${complaintStatusPill(c.status)}</td>
       <td>${daysDisp}</td>
     </tr>`;
@@ -1440,10 +1443,10 @@ function complaintTimelineHtml(c){
     return `<div style="position:relative;padding:0 0 16px 22px;">
       <div style="position:absolute;left:0;top:2px;width:12px;height:12px;border-radius:50%;background:${n.dotColor};border:2px solid #fff;box-shadow:0 0 0 1px var(--line);"></div>
       <div style="font-size:11.5px;color:var(--ink-400);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-        <span>${n.date?fmtDate(n.date):'—'} · ${n.label}</span>
+        <span>${n.date?fmtDate(n.date):'—'} · ${esc(n.label)}</span>
         ${n.statusAfter?complaintStatusPill(n.statusAfter):''}
       </div>
-      <div style="font-size:13.5px;color:var(--ink-900);margin-top:2px;">${n.note||''}</div>
+      <div style="font-size:13.5px;color:var(--ink-900);margin-top:2px;">${esc(n.note||'')}</div>
       ${daysLabel?`<div style="font-size:11px;color:var(--ink-400);margin-top:2px;">${daysLabel}</div>`:''}
     </div>`;
   }).join('');
@@ -1489,11 +1492,11 @@ function renderComplaintModal(data){
     body.innerHTML = `
       <div class="detail-grid" style="grid-template-columns:repeat(2,1fr);">
         <div><div class="d-label">วันที่</div><div class="d-val">${data.date?fmtDate(data.date):'—'}</div></div>
-        <div><div class="d-label">เลขรับแขวง</div><div class="d-val">${data.receiveNo||'—'}</div></div>
-        <div><div class="d-label">สายทาง</div><div class="d-val">${formatRouteDisplay(data.route)?formatRouteDisplay(data.route)+complaintRouteNameSuffix(data.route):'—'}</div></div>
-        <div><div class="d-label">กม.</div><div class="d-val">${formatKmDisplay(data.km)||'—'}</div></div>
-        <div style="grid-column:1/-1;"><div class="d-label">เรื่อง</div><div class="d-val">${data.subject||'—'}</div></div>
-        <div style="grid-column:1/-1;"><div class="d-label">หมายเหตุ</div><div class="d-val">${data.remark||'—'}</div></div>
+        <div><div class="d-label">เลขรับแขวง</div><div class="d-val">${esc(data.receiveNo||'—')}</div></div>
+        <div><div class="d-label">สายทาง</div><div class="d-val">${formatRouteDisplay(data.route)?esc(formatRouteDisplay(data.route)+complaintRouteNameSuffix(data.route)):'—'}</div></div>
+        <div><div class="d-label">กม.</div><div class="d-val">${esc(formatKmDisplay(data.km)||'—')}</div></div>
+        <div style="grid-column:1/-1;"><div class="d-label">เรื่อง</div><div class="d-val">${esc(data.subject||'—')}</div></div>
+        <div style="grid-column:1/-1;"><div class="d-label">หมายเหตุ</div><div class="d-val">${esc(data.remark||'—')}</div></div>
         <div><div class="d-label">สถานะความคืบหน้า</div><div>${complaintStatusPill(data.status)}</div></div>
       </div>
       <div style="margin-top:16px;">
@@ -1522,15 +1525,15 @@ function renderComplaintModal(data){
   } else {
     body.innerHTML = `
       <div class="two-col">
-        <div class="f-row"><label>วันที่รับเรื่อง</label><input type="date" class="edit-input" id="cp-date" value="${data.date||''}"></div>
-        <div class="f-row"><label>เลขรับแขวง</label><input class="edit-input" id="cp-receiveno" value="${data.receiveNo||''}" placeholder="เช่น ทล.ระยอง 123/2569"></div>
+        <div class="f-row"><label>วันที่รับเรื่อง</label><input type="date" class="edit-input" id="cp-date" value="${esc(data.date||'')}"></div>
+        <div class="f-row"><label>เลขรับแขวง</label><input class="edit-input" id="cp-receiveno" value="${esc(data.receiveNo||'')}" placeholder="เช่น ทล.ระยอง 123/2569"></div>
       </div>
       <div class="two-col">
-        <div class="f-row"><label>สายทาง</label><input class="edit-input" id="cp-route" value="${data.route||''}" placeholder="เช่น ทล.3191"></div>
-        <div class="f-row"><label>กม.</label><input class="edit-input" id="cp-km" value="${data.km||''}" placeholder="เช่น 14+200"></div>
+        <div class="f-row"><label>สายทาง</label><input class="edit-input" id="cp-route" value="${esc(data.route||'')}" placeholder="เช่น ทล.3191"></div>
+        <div class="f-row"><label>กม.</label><input class="edit-input" id="cp-km" value="${esc(data.km||'')}" placeholder="เช่น 14+200"></div>
       </div>
-      <div class="f-row"><label>เรื่อง</label><input class="edit-input" id="cp-subject" value="${data.subject||''}" placeholder="เช่น ถนนชำรุด เป็นหลุมบ่อ"></div>
-      <div class="f-row"><label>หมายเหตุ</label><input class="edit-input" id="cp-remark" value="${data.remark||''}" placeholder="ไม่บังคับ"></div>
+      <div class="f-row"><label>เรื่อง</label><input class="edit-input" id="cp-subject" value="${esc(data.subject||'')}" placeholder="เช่น ถนนชำรุด เป็นหลุมบ่อ"></div>
+      <div class="f-row"><label>หมายเหตุ</label><input class="edit-input" id="cp-remark" value="${esc(data.remark||'')}" placeholder="ไม่บังคับ"></div>
       ${complaintModalMode==='edit'?`
       <div class="f-row"><label>สถานะความคืบหน้า</label><select class="edit-input" id="cp-status">
         ${COMPLAINT_STATUS_OPTIONS.map(s=>`<option value="${s}" ${data.status===s?'selected':''}>${s}</option>`).join('')}
@@ -1584,7 +1587,7 @@ function deleteComplaint(){
   if(!c) return;
   showConfirm({
     title:'ลบคำร้องทุกข์',
-    message:`ยืนยันลบคำร้องทุกข์เรื่อง <b>"${c.subject||''}"</b> (เลขรับแขวง ${c.receiveNo||'—'})?`,
+    message:`ยืนยันลบคำร้องทุกข์เรื่อง <b>"${esc(c.subject||'')}"</b> (เลขรับแขวง ${esc(c.receiveNo||'—')})?`,
     warn:'การลบไม่สามารถย้อนกลับได้',
     onConfirm: async ()=>{
       try{
@@ -1611,7 +1614,7 @@ const PTYPE_BADGE = {
 };
 function ptypeBadge(ptype){
   const b = PTYPE_BADGE[ptype] || PTYPE_BADGE['ลูกจ้างชั่วคราว'];
-  return `<div class="p-avatar" style="background:${b.bg};" title="${ptype}">${b.svg}</div>`;
+  return `<div class="p-avatar" style="background:${b.bg};" title="${esc(ptype)}">${b.svg}</div>`;
 }
 
 const STAFF_TAB_LABELS = {all:'ทั้งหมด', 'ข้าราชการ':'ข้าราชการ', 'ลูกจ้างประจำ':'ลูกจ้างประจำ', 'พนักงานราชการ':'พนักงานราชการ', 'ลูกจ้างชั่วคราว':'ลูกจ้างชั่วคราว'};
@@ -1649,9 +1652,9 @@ function renderStaff(){
   indices.forEach(i=>{
     const s = staff[i];
     html += `<tr style="cursor:pointer;" ondblclick="openStaffDetail(${i})" title="ดับเบิ้ลคลิกเพื่อดูรายละเอียด">
-      <td><div class="person">${ptypeBadge(s.ptype)}<div><div class="p-name">${s.name}</div>${s.nickname?`<div class="p-sub">(${s.nickname})</div>`:''}</div></div></td>
-      <td>${s.role||'<span style="color:var(--ink-400);font-size:12.5px">ยังไม่ระบุ</span>'}${s.duty?` <span class="pill pill-warn" style="font-size:10.5px;">ปฏิบัติหน้าที่${s.duty}</span>`:''}${(()=>{const el=__leaveEligibleDate(s); if(!el || TODAY.toISOString().slice(0,10)>=el) return ''; return ` <span class="pill pill-danger" style="font-size:10.5px;" title="ยังไม่มีสิทธิ์ลาถึง ${fmtDate(el)}">🔒 ทดลองงาน</span>`;})()}${(()=>{const ri=__retirementInfo(s); if(!ri || s.status!=='ok') return ''; return ri.status==='overdue' ? ` <span class="pill pill-danger" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ</span>` : ` <span class="pill pill-warn" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ</span>`;})()}</td>
-      <td><span class="pill pill-neutral">${s.ptype}</span></td>
+      <td><div class="person">${ptypeBadge(s.ptype)}<div><div class="p-name">${esc(s.name)}</div>${s.nickname?`<div class="p-sub">(${esc(s.nickname)})</div>`:''}</div></div></td>
+      <td>${s.role?esc(s.role):'<span style="color:var(--ink-400);font-size:12.5px">ยังไม่ระบุ</span>'}${s.duty?` <span class="pill pill-warn" style="font-size:10.5px;">ปฏิบัติหน้าที่${esc(s.duty)}</span>`:''}${(()=>{const el=__leaveEligibleDate(s); if(!el || TODAY.toISOString().slice(0,10)>=el) return ''; return ` <span class="pill pill-danger" style="font-size:10.5px;" title="ยังไม่มีสิทธิ์ลาถึง ${fmtDate(el)}">🔒 ทดลองงาน</span>`;})()}${(()=>{const ri=__retirementInfo(s); if(!ri || s.status!=='ok') return ''; return ri.status==='overdue' ? ` <span class="pill pill-danger" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ</span>` : ` <span class="pill pill-warn" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ</span>`;})()}</td>
+      <td><span class="pill pill-neutral">${esc(s.ptype)}</span></td>
       <td>${s.status==='resigned'?'<span class="pill pill-danger">● ลาออก</span>':'<span class="pill pill-ok">● ปฏิบัติงาน</span>'}</td>
     </tr>`;
   });
@@ -1684,47 +1687,47 @@ function renderStaffDetailModal(){
   const s = staff[i];
   const body = document.getElementById('sd-body');
   const foot = document.getElementById('sd-foot');
-  document.getElementById('sd-title').innerHTML = staffDetailEditing ? `✏️ แก้ไขข้อมูล — ${s.name}` : `👤 ${s.name}`;
+  document.getElementById('sd-title').innerHTML = staffDetailEditing ? `✏️ แก้ไขข้อมูล — ${esc(s.name)}` : `👤 ${esc(s.name)}`;
   if(staffDetailEditing){
     body.innerHTML = `
       <div class="two-col">
-        <div class="f-row"><label>ชื่อ-สกุล</label><input class="edit-input" id="sd-name" value="${s.name}"></div>
-        <div class="f-row"><label>ชื่อเล่น</label><input class="edit-input" id="sd-nickname" value="${s.nickname||''}"></div>
+        <div class="f-row"><label>ชื่อ-สกุล</label><input class="edit-input" id="sd-name" value="${esc(s.name)}"></div>
+        <div class="f-row"><label>ชื่อเล่น</label><input class="edit-input" id="sd-nickname" value="${esc(s.nickname||'')}"></div>
       </div>
       <div class="two-col">
-        <div class="f-row"><label>ตำแหน่งทางราชการ</label><input class="edit-input" id="sd-role" value="${s.role||''}"></div>
+        <div class="f-row"><label>ตำแหน่งทางราชการ</label><input class="edit-input" id="sd-role" value="${esc(s.role||'')}"></div>
         <div class="f-row"><label>ประเภทบุคลากร</label><select class="edit-input" id="sd-ptype">
           ${['ข้าราชการ','ลูกจ้างประจำ','พนักงานราชการ','ลูกจ้างชั่วคราว'].map(p=>`<option ${p===s.ptype?'selected':''}>${p}</option>`).join('')}
         </select></div>
       </div>
-      <div class="f-row"><label>หน้าที่พิเศษ (ถ้ามี เช่น ปฏิบัติหน้าที่ยาม)</label><input class="edit-input" id="sd-duty" value="${s.duty||''}" placeholder="ไม่มี"></div>
+      <div class="f-row"><label>หน้าที่พิเศษ (ถ้ามี เช่น ปฏิบัติหน้าที่ยาม)</label><input class="edit-input" id="sd-duty" value="${esc(s.duty||'')}" placeholder="ไม่มี"></div>
       <div class="two-col">
         <div class="f-row"><label>สถานะ</label><select class="edit-input" id="sd-status">
           <option value="ok" ${s.status==='ok'?'selected':''}>ปฏิบัติงาน</option>
           <option value="resigned" ${s.status==='resigned'?'selected':''}>ลาออก</option>
         </select></div>
-        <div class="f-row"><label>วันเกิด</label><input type="date" class="edit-input" id="sd-birth" value="${s.birth||''}"></div>
+        <div class="f-row"><label>วันเกิด</label><input type="date" class="edit-input" id="sd-birth" value="${esc(s.birth||'')}"></div>
       </div>
       <div class="two-col">
-        <div class="f-row"><label>วันที่เริ่มงาน</label><input type="date" class="edit-input" id="sd-startdate" value="${s.startDate||''}"></div>
+        <div class="f-row"><label>วันที่เริ่มงาน</label><input type="date" class="edit-input" id="sd-startdate" value="${esc(s.startDate||'')}"></div>
         <div class="f-row" style="align-self:end;font-size:12px;color:var(--ink-400);padding-bottom:8px;">* ใช้คำนวณสิทธิ์การลาของตำแหน่ง "คนงาน" (ไม่มีสิทธิ์ลาภายใน 6 เดือนแรก)</div>
       </div>
       <div class="two-col">
-        <div class="f-row"><label>อัตราค่าจ้าง/วัน (บาท)</label><input type="number" class="edit-input" id="sd-rate" value="${s.rate??''}"></div>
-        <div class="f-row"><label>ไซส์เสื้อ</label><input class="edit-input" id="sd-shirt" value="${s.shirt||''}"></div>
+        <div class="f-row"><label>อัตราค่าจ้าง/วัน (บาท)</label><input type="number" class="edit-input" id="sd-rate" value="${esc(s.rate??'')}"></div>
+        <div class="f-row"><label>ไซส์เสื้อ</label><input class="edit-input" id="sd-shirt" value="${esc(s.shirt||'')}"></div>
       </div>
       <div class="two-col">
-        <div class="f-row"><label>ข้อมูลการรักษาพยาบาล</label><input class="edit-input" id="sd-med" value="${s.med||''}"></div>
-        <div class="f-row"><label>กรุ๊ปเลือด</label><input class="edit-input" id="sd-blood" value="${s.bloodType||''}" placeholder="เช่น O, A, B, AB"></div>
+        <div class="f-row"><label>ข้อมูลการรักษาพยาบาล</label><input class="edit-input" id="sd-med" value="${esc(s.med||'')}"></div>
+        <div class="f-row"><label>กรุ๊ปเลือด</label><input class="edit-input" id="sd-blood" value="${esc(s.bloodType||'')}" placeholder="เช่น O, A, B, AB"></div>
       </div>
       <div class="two-col">
-        <div class="f-row"><label>เบอร์โทรศัพท์</label><input class="edit-input" id="sd-phone" value="${s.phone||''}"></div>
-        <div class="f-row"><label>วุฒิการศึกษา</label><input class="edit-input" id="sd-education" value="${s.education||''}"></div>
+        <div class="f-row"><label>เบอร์โทรศัพท์</label><input class="edit-input" id="sd-phone" value="${esc(s.phone||'')}"></div>
+        <div class="f-row"><label>วุฒิการศึกษา</label><input class="edit-input" id="sd-education" value="${esc(s.education||'')}"></div>
       </div>
-      <div class="f-row"><label>ที่อยู่ปัจจุบัน</label><input class="edit-input" id="sd-address" value="${s.address||''}"></div>
+      <div class="f-row"><label>ที่อยู่ปัจจุบัน</label><input class="edit-input" id="sd-address" value="${esc(s.address||'')}"></div>
       <div class="two-col">
-        <div class="f-row"><label>ผู้ติดต่อฉุกเฉิน</label><input class="edit-input" id="sd-emergency-contact" value="${s.emergencyContact||''}" placeholder="ชื่อ-สกุล / ความสัมพันธ์"></div>
-        <div class="f-row"><label>เบอร์โทรผู้ติดต่อฉุกเฉิน</label><input class="edit-input" id="sd-emergency-phone" value="${s.emergencyPhone||''}"></div>
+        <div class="f-row"><label>ผู้ติดต่อฉุกเฉิน</label><input class="edit-input" id="sd-emergency-contact" value="${esc(s.emergencyContact||'')}" placeholder="ชื่อ-สกุล / ความสัมพันธ์"></div>
+        <div class="f-row"><label>เบอร์โทรผู้ติดต่อฉุกเฉิน</label><input class="edit-input" id="sd-emergency-phone" value="${esc(s.emergencyPhone||'')}"></div>
       </div>
     `;
     foot.style.justifyContent = 'flex-end';
@@ -1736,22 +1739,22 @@ function renderStaffDetailModal(){
     const age = ageFromBirth(s.birth);
     body.innerHTML = `
       <div class="detail-grid" style="grid-template-columns:repeat(2,1fr);">
-        <div><div class="d-label">ชื่อ-สกุล</div><div class="d-val">${s.name}</div></div>
-        <div><div class="d-label">ชื่อเล่น</div><div class="d-val">${s.nickname||'—'}</div></div>
-        <div><div class="d-label">ตำแหน่งทางราชการ</div><div class="d-val">${s.role||'—'}${s.duty?` <span class="pill pill-warn">ปฏิบัติหน้าที่${s.duty}</span>`:''}${(()=>{const ri=__retirementInfo(s); if(!ri || s.status!=='ok') return ''; return ri.status==='overdue' ? ` <span class="pill pill-danger" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ (${fmtDate(ri.date)})</span>` : ` <span class="pill pill-warn" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ (${fmtDate(ri.date)})</span>`;})()}</div></div>
-        <div><div class="d-label">ประเภทบุคลากร</div><div class="d-val">${s.ptype}</div></div>
+        <div><div class="d-label">ชื่อ-สกุล</div><div class="d-val">${esc(s.name)}</div></div>
+        <div><div class="d-label">ชื่อเล่น</div><div class="d-val">${esc(s.nickname||'—')}</div></div>
+        <div><div class="d-label">ตำแหน่งทางราชการ</div><div class="d-val">${esc(s.role||'—')}${s.duty?` <span class="pill pill-warn">ปฏิบัติหน้าที่${esc(s.duty)}</span>`:''}${(()=>{const ri=__retirementInfo(s); if(!ri || s.status!=='ok') return ''; return ri.status==='overdue' ? ` <span class="pill pill-danger" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ (${fmtDate(ri.date)})</span>` : ` <span class="pill pill-warn" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ (${fmtDate(ri.date)})</span>`;})()}</div></div>
+        <div><div class="d-label">ประเภทบุคลากร</div><div class="d-val">${esc(s.ptype)}</div></div>
         <div><div class="d-label">สถานะ</div><div class="d-val">${s.status==='resigned'?'<span class="pill pill-danger">● ลาออก</span>':'<span class="pill pill-ok">● ปฏิบัติงาน</span>'}</div></div>
         <div><div class="d-label">วันเกิด / อายุ</div><div class="d-val">${s.birth?fmtDateFull(s.birth)+' ('+age+' ปี)':'—'}</div></div>
         <div><div class="d-label">วันที่เริ่มงาน</div><div class="d-val">${s.startDate?fmtDate(s.startDate):'—'}${(()=>{const el=__leaveEligibleDate(s); if(!el) return ''; const restricted = TODAY.toISOString().slice(0,10) < el; return restricted ? ` <span class="pill pill-warn">ยังไม่มีสิทธิ์ลา (ถึง ${fmtDate(el)})</span>` : ` <span class="pill pill-ok">มีสิทธิ์ลาแล้ว</span>`;})()}</div></div>
         <div><div class="d-label">อัตราค่าจ้าง/วัน</div><div class="d-val">${s.rate?fmtMoney(s.rate)+' บาท':'—'}</div></div>
-        <div><div class="d-label">ไซส์เสื้อ</div><div class="d-val">${s.shirt||'—'}</div></div>
-        <div><div class="d-label">ข้อมูลการรักษาพยาบาล</div><div class="d-val">${s.med||'—'}</div></div>
-        <div><div class="d-label">กรุ๊ปเลือด</div><div class="d-val">${s.bloodType||'—'}</div></div>
-        <div><div class="d-label">เบอร์โทรศัพท์</div><div class="d-val">${s.phone||'—'}</div></div>
-        <div><div class="d-label">วุฒิการศึกษา</div><div class="d-val">${s.education||'—'}</div></div>
-        <div style="grid-column:1/-1;"><div class="d-label">ที่อยู่ปัจจุบัน</div><div class="d-val">${s.address||'—'}</div></div>
-        <div><div class="d-label">ผู้ติดต่อฉุกเฉิน</div><div class="d-val">${s.emergencyContact||'—'}</div></div>
-        <div><div class="d-label">เบอร์โทรผู้ติดต่อฉุกเฉิน</div><div class="d-val">${s.emergencyPhone||'—'}</div></div>
+        <div><div class="d-label">ไซส์เสื้อ</div><div class="d-val">${esc(s.shirt||'—')}</div></div>
+        <div><div class="d-label">ข้อมูลการรักษาพยาบาล</div><div class="d-val">${esc(s.med||'—')}</div></div>
+        <div><div class="d-label">กรุ๊ปเลือด</div><div class="d-val">${esc(s.bloodType||'—')}</div></div>
+        <div><div class="d-label">เบอร์โทรศัพท์</div><div class="d-val">${esc(s.phone||'—')}</div></div>
+        <div><div class="d-label">วุฒิการศึกษา</div><div class="d-val">${esc(s.education||'—')}</div></div>
+        <div style="grid-column:1/-1;"><div class="d-label">ที่อยู่ปัจจุบัน</div><div class="d-val">${esc(s.address||'—')}</div></div>
+        <div><div class="d-label">ผู้ติดต่อฉุกเฉิน</div><div class="d-val">${esc(s.emergencyContact||'—')}</div></div>
+        <div><div class="d-label">เบอร์โทรผู้ติดต่อฉุกเฉิน</div><div class="d-val">${esc(s.emergencyPhone||'—')}</div></div>
       </div>
     `;
     foot.style.justifyContent = isAdmin() ? 'space-between' : 'flex-end';
@@ -1770,7 +1773,7 @@ function deleteStaffDetail(){
   if(!s) return;
   showConfirm({
     title:'ลบข้อมูลเจ้าหน้าที่',
-    message:`ยืนยันลบข้อมูลของ <b>"${s.name}"</b> ออกจากฐานข้อมูลบุคลากร?`,
+    message:`ยืนยันลบข้อมูลของ <b>"${esc(s.name)}"</b> ออกจากฐานข้อมูลบุคลากร?`,
     warn:'การลบไม่สามารถย้อนกลับได้ ประวัติการลาและรายการอื่นที่เคยอ้างอิงชื่อนี้จะยังคงอยู่ แต่จะไม่เชื่อมกับข้อมูลบุคลากรนี้อีก',
     onConfirm: async ()=>{
       try{
@@ -1895,7 +1898,7 @@ function __filterNameSuggest(){
   if(!q){ box.innerHTML=''; box.classList.add('hidden'); return; }
   const names = [...new Set(activeStaff().map(s=>s.name))].filter(n=>n.toLowerCase().includes(q.toLowerCase()));
   if(!names.length){ box.innerHTML=''; box.classList.add('hidden'); return; }
-  box.innerHTML = names.slice(0,8).map(n=>`<div class="ac-item" title="${n}" onmousedown="__pickName('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('');
+  box.innerHTML = names.slice(0,8).map(n=>`<div class="ac-item" title="${esc(n)}" onmousedown="__pickName('${jsArg(n)}')">${esc(n)}</div>`).join('');
   box.classList.remove('hidden');
 }
 function __pickName(name){
@@ -1918,7 +1921,7 @@ function __filterCoverSuggest(){
   if(!q){ box.innerHTML=''; box.classList.add('hidden'); return; }
   const names = [...new Set(activeStaff().map(s=>s.name))].filter(n=>n.toLowerCase().includes(q.toLowerCase()));
   if(!names.length){ box.innerHTML=''; box.classList.add('hidden'); return; }
-  box.innerHTML = names.slice(0,8).map(n=>`<div class="ac-item" title="${n}" onmousedown="__pickCover('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('');
+  box.innerHTML = names.slice(0,8).map(n=>`<div class="ac-item" title="${esc(n)}" onmousedown="__pickCover('${jsArg(n)}')">${esc(n)}</div>`).join('');
   box.classList.remove('hidden');
 }
 function __pickCover(name){
@@ -2069,7 +2072,7 @@ function renderHolidayModalBody(){
     const idx = publicHolidays.indexOf(h);
     return `<tr>
       <td style="white-space:nowrap;">${fmtDate(h.date)}</td>
-      <td>${h.name||'—'}</td>
+      <td>${esc(h.name||'—')}</td>
       <td>${isAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="removeHoliday(${idx})">🗑</button>` : ''}</td>
     </tr>`;
   }).join('') || `<tr><td colspan="3" style="text-align:center;color:var(--ink-400);padding:16px;">ยังไม่มีข้อมูลวันหยุดในระบบ</td></tr>`;
@@ -2159,7 +2162,7 @@ function removeHoliday(idx){
   if(!h) return;
   showConfirm({
     title:'ลบวันหยุดนักขัตฤกษ์',
-    message:`ยืนยันลบ "${fmtDate(h.date)} ${h.name||''}" ออกจากรายการวันหยุด?`,
+    message:`ยืนยันลบ "${fmtDate(h.date)} ${esc(h.name||'')}" ออกจากรายการวันหยุด?`,
     onConfirm: async ()=>{
       try{
         await apiPost('delete', 'public_holidays', null, h.date);
@@ -2254,7 +2257,7 @@ function __canCancelLeave(r){
 function __leaveRowHTML(r,i){
   return `
     <tr>
-      <td class="p-name">${r.name}</td><td>${r.type}</td><td>${fmtDate(r.from)} – ${fmtDate(r.to)}</td>
+      <td class="p-name">${esc(r.name)}</td><td>${esc(r.type)}</td><td>${fmtDate(r.from)} – ${fmtDate(r.to)}</td>
       <td>${r.status==='cancelled' ? '<span class="pill pill-neutral">ยกเลิกแล้ว</span>' : '<span class="pill pill-ok">บันทึกแล้ว</span>'}</td>
       <td class="lr-actions-cell">
         <button class="btn btn-ghost btn-sm" onclick="printLeaveForm(${i})">🖶 พิมพ์ใบลา</button>
@@ -2324,7 +2327,7 @@ function deleteLeaveRequest(i){
   };
   showConfirm({
     title:'ลบรายการลา',
-    message:`ยืนยันลบรายการลาของ <b>"${r.name}"</b><br><b>${r.type} ${fmtDate(r.from)} – ${fmtDate(r.to)}</b><br>ทิ้งทั้งหมด?`,
+    message:`ยืนยันลบรายการลาของ <b>"${esc(r.name)}"</b><br><b>${esc(r.type)} ${fmtDate(r.from)} – ${fmtDate(r.to)}</b><br>ทิ้งทั้งหมด?`,
     warn:'ใช้สำหรับกรณีกรอกผิดพลาดหรือรายการซ้ำเท่านั้น หากพนักงานต้องการยกเลิกวันลาตามปกติ กรุณาใช้ปุ่ม "ใบขอยกเลิกวันลา" แทน\nการลบไม่สามารถย้อนกลับได้ และจะลบสถิติการลาที่เกี่ยวข้องออกจากทะเบียนคุมลา (จ.3-03) ด้วย',
     onConfirm:doDelete
   });
@@ -2458,14 +2461,14 @@ function buildForm306(name, s, from, to, days, cover, contact, stats, fy){
     <div class="writeline">(เขียนที่) หมวดทางหลวงเชิงเนิน<br>วันที่ ${td.day} เดือน ${td.monthFull} พ.ศ. ${td.yearBE}</div>
     <p>เรื่อง &nbsp;ขอลาพักผ่อน</p>
     <p>เรียน &nbsp;ผอ.ขท.ระยอง</p>
-    <p>ข้าพเจ้า <span class="dotted">${name}</span> ตำแหน่ง <span class="dotted">${s.role||'&nbsp;'}</span></p>
+    <p>ข้าพเจ้า <span class="dotted">${esc(name)}</span> ตำแหน่ง <span class="dotted">${s.role?esc(s.role):'&nbsp;'}</span></p>
     <p>สังกัด <span class="dotted">แขวงทางหลวงระยอง หมวดทางหลวงเชิงเนิน</span></p>
     <p>มีวันลาพักผ่อนสะสม <span class="dotted">${carried}</span> วันทำการ มีสิทธิลาพักผ่อนประจำปีนี้อีก ๑๐ วันทำการ รวมเป็น <span class="dotted">${rightYear}</span> วันทำการ</p>
     <p>ขอลาพักผ่อนตั้งแต่วันที่ <span class="dotted">${fmtDate(from)}</span> ถึงวันที่ <span class="dotted">${fmtDate(to)}</span> มีกำหนด <span class="dotted">${days}</span> วันทำการ</p>
-    <p>ในระหว่างลาขออนุมัติและสั่งการให้&nbsp; นาย&nbsp; นาง&nbsp; นางสาว <span class="dotted">${cover||'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
-    <p>ตำแหน่ง <span class="dotted">${cover?(staff.find(x=>x.name===cover)?.role||''):''}</span> เป็นผู้ &nbsp;${checkbox('รักษาราชการแทน', !!cover)} &nbsp;☐ รักษาการในตำแหน่ง</p>
-    <p>ติดต่อข้าพเจ้าได้ที่ <span class="dotted">${contact||'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
-    <div class="sig-block">ขอแสดงความนับถือ<br><br><br>(ลงชื่อ) .......................................................<br>( ${name} )</div>
+    <p>ในระหว่างลาขออนุมัติและสั่งการให้&nbsp; นาย&nbsp; นาง&nbsp; นางสาว <span class="dotted">${cover?esc(cover):'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
+    <p>ตำแหน่ง <span class="dotted">${cover?esc(staff.find(x=>x.name===cover)?.role||''):''}</span> เป็นผู้ &nbsp;${checkbox('รักษาราชการแทน', !!cover)} &nbsp;☐ รักษาการในตำแหน่ง</p>
+    <p>ติดต่อข้าพเจ้าได้ที่ <span class="dotted">${contact?esc(contact):'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
+    <div class="sig-block">ขอแสดงความนับถือ<br><br><br>(ลงชื่อ) .......................................................<br>( ${esc(name)} )</div>
     <div class="two-box">
       <div>
         <b>สถิติการลาในปีงบประมาณ</b>
@@ -2507,18 +2510,18 @@ function buildForm305(name, s, type, from, to, days, reason, cover, contact, sta
     <div class="writeline">(เขียนที่) หมวดทางหลวงเชิงเนิน<br>วันที่ ${td.day} เดือน ${td.monthFull} พ.ศ. ${td.yearBE}</div>
     <p>เรื่อง &nbsp;ขอลา${typeLabel}</p>
     <p>เรียน &nbsp;ผอ.ขท.ระยอง</p>
-    <p>ข้าพเจ้า <span class="dotted">${name}</span> ตำแหน่ง <span class="dotted">${s.role||'&nbsp;'}</span></p>
+    <p>ข้าพเจ้า <span class="dotted">${esc(name)}</span> ตำแหน่ง <span class="dotted">${s.role?esc(s.role):'&nbsp;'}</span></p>
     <p>สังกัด <span class="dotted">แขวงทางหลวงระยอง หมวดทางหลวงเชิงเนิน</span></p>
     <p>ขอลา &nbsp;${checkbox('ป่วย',type==='ป่วย')}</p>
-    <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${checkbox('กิจส่วนตัว',type==='กิจ')} &nbsp;เนื่องจาก <span class="dotted">${reason||'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${checkbox('กิจส่วนตัว',type==='กิจ')} &nbsp;เนื่องจาก <span class="dotted">${reason?esc(reason):'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
     <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${checkbox('คลอดบุตร',type==='คลอดบุตร')}</p>
     <p>ตั้งแต่วันที่ <span class="dotted">${fmtDate(from)}</span> ถึงวันที่ <span class="dotted">${fmtDate(to)}</span> มีกำหนด <span class="dotted">${days}</span> วัน</p>
     <p>ข้าพเจ้าได้ลา ${checkbox('ป่วย',false)} ${checkbox('กิจส่วนตัว',false)} ${checkbox('คลอดบุตร',false)} ครั้งสุดท้ายตั้งแต่วันที่ <span class="dotted">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> ถึงวันที่ <span class="dotted">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> มีกำหนด <span class="dotted">&nbsp;&nbsp;&nbsp;</span> วัน ในระหว่างลาขออนุมัติและสั่งการให้</p>
-    <p>&nbsp;นาย&nbsp; นาง&nbsp; นางสาว <span class="dotted">${cover||'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
-    <p>ตำแหน่ง <span class="dotted">${cover?(staff.find(x=>x.name===cover)?.role||''):''}</span> เป็นผู้ &nbsp;${checkbox('รักษาราชการแทน', !!cover)}</p>
+    <p>&nbsp;นาย&nbsp; นาง&nbsp; นางสาว <span class="dotted">${cover?esc(cover):'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
+    <p>ตำแหน่ง <span class="dotted">${cover?esc(staff.find(x=>x.name===cover)?.role||''):''}</span> เป็นผู้ &nbsp;${checkbox('รักษาราชการแทน', !!cover)}</p>
     <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;☐ รักษาการในตำแหน่ง</p>
-    <p>และติดต่อข้าพเจ้าได้ที่ <span class="dotted">${contact||'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
-    <div class="sig-block">ขอแสดงความนับถือ<br><br><br>(ลงชื่อ) .......................................................<br>( ${name} )</div>
+    <p>และติดต่อข้าพเจ้าได้ที่ <span class="dotted">${contact?esc(contact):'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
+    <div class="sig-block">ขอแสดงความนับถือ<br><br><br>(ลงชื่อ) .......................................................<br>( ${esc(name)} )</div>
     <div class="two-box">
       <div>
         <b>สถิติการลาในปีงบประมาณนี้</b>
@@ -2559,15 +2562,15 @@ function printCancelForm(i){
   <div class="official-form">
     <div class="form-title">แบบใบขอยกเลิกวันลา</div>
     <div class="writeline">(เขียนที่) หมวดทางหลวงเชิงเนิน<br>วันที่ .......... เดือน .............................. พ.ศ. ...................</div>
-    <p>เรื่อง &nbsp;ขอยกเลิกวันลา${r.type}</p>
+    <p>เรื่อง &nbsp;ขอยกเลิกวันลา${esc(r.type)}</p>
     <p>เรียน &nbsp;หัวหน้าหมวดทางหลวงเชิงเนิน</p>
-    <p>ตามที่ข้าพเจ้า <span class="dotted">${r.name}</span> ตำแหน่ง <span class="dotted">${s.role||'&nbsp;'}</span></p>
+    <p>ตามที่ข้าพเจ้า <span class="dotted">${esc(r.name)}</span> ตำแหน่ง <span class="dotted">${s.role?esc(s.role):'&nbsp;'}</span></p>
     <p>สังกัด <span class="dotted">หมวดทางหลวงเชิงเนิน แขวงทางหลวงระยอง กรมทางหลวง</span></p>
-    <p>ได้รับอนุญาตให้ลา${r.type} ตั้งแต่วันที่ <span class="dotted">${fmtDate(r.from)}</span> ถึงวันที่ <span class="dotted">${fmtDate(r.to)}</span> รวม <span class="dotted">${days}</span> วัน นั้น</p>
-    <p>เนื่องจาก <span class="dotted">${reason||'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
-    <p>จึงขอยกเลิกวันลา${r.type} จำนวน <span class="dotted">${days}</span> (วัน)</p>
+    <p>ได้รับอนุญาตให้ลา${esc(r.type)} ตั้งแต่วันที่ <span class="dotted">${fmtDate(r.from)}</span> ถึงวันที่ <span class="dotted">${fmtDate(r.to)}</span> รวม <span class="dotted">${days}</span> วัน นั้น</p>
+    <p>เนื่องจาก <span class="dotted">${reason?esc(reason):'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
+    <p>จึงขอยกเลิกวันลา${esc(r.type)} จำนวน <span class="dotted">${days}</span> (วัน)</p>
     <p>ตั้งแต่วันที่ <span class="dotted">${fmtDate(r.from)}</span> ถึงวันที่ <span class="dotted">${fmtDate(r.to)}</span></p>
-    <div class="sig-block">ขอแสดงความนับถือ<br><br><br>(ลงชื่อ) .......................................................<br>( ${r.name} )</div>
+    <div class="sig-block">ขอแสดงความนับถือ<br><br><br>(ลงชื่อ) .......................................................<br>( ${esc(r.name)} )</div>
     <p style="margin-top:20px;"><b>ความเห็นผู้บังคับบัญชา</b></p>
     <p>..............................................................................................................................................</p>
     <p>..............................................................................................................................................</p>
@@ -2603,7 +2606,7 @@ function __filterRegNameSuggest(){
   if(!q){ box.innerHTML=''; box.classList.add('hidden'); return; }
   const items = staff.filter(s=>s.name.toLowerCase().includes(q.toLowerCase()));
   if(!items.length){ box.innerHTML=''; box.classList.add('hidden'); return; }
-  box.innerHTML = items.slice(0,8).map(s=>`<div class="ac-item" title="${s.name}${s.status==='resigned'?' (ลาออก)':''}" onmousedown="__pickRegName('${s.name.replace(/'/g,"\\'")}')">${s.name}${s.status==='resigned'?' (ลาออก)':''}</div>`).join('');
+  box.innerHTML = items.slice(0,8).map(s=>`<div class="ac-item" title="${esc(s.name)}${s.status==='resigned'?' (ลาออก)':''}" onmousedown="__pickRegName('${jsArg(s.name)}')">${esc(s.name)}${s.status==='resigned'?' (ลาออก)':''}</div>`).join('');
   box.classList.remove('hidden');
 }
 function __pickRegName(name){
@@ -2640,7 +2643,7 @@ function __filterRangeNameSuggest(){
   if(!q){ box.innerHTML=''; box.classList.add('hidden'); return; }
   const names = [...new Set(staff.map(s=>s.name))].filter(n=>n.toLowerCase().includes(q.toLowerCase()));
   if(!names.length){ box.innerHTML=''; box.classList.add('hidden'); return; }
-  box.innerHTML = names.slice(0,8).map(n=>`<div class="ac-item" title="${n}" onmousedown="__pickRangeName('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('');
+  box.innerHTML = names.slice(0,8).map(n=>`<div class="ac-item" title="${esc(n)}" onmousedown="__pickRangeName('${jsArg(n)}')">${esc(n)}</div>`).join('');
   box.classList.remove('hidden');
 }
 function __pickRangeName(name){
@@ -2676,8 +2679,8 @@ function searchLeaveRange(){
     return;
   }
   const rows = recs.map(r => `<tr>
-      <td>${r.name}</td>
-      <td>${r.type}</td>
+      <td>${esc(r.name)}</td>
+      <td>${esc(r.type)}</td>
       <td>${fmtDate(r.from)}</td>
       <td>${fmtDate(r.to)}</td>
       <td>${daysBetween(r.from,r.to)}</td>
@@ -2723,8 +2726,8 @@ function registryOnscreenHTML(name, fy){
       <div class="person">
         ${name ? ptypeBadge(s.ptype||'ลูกจ้างชั่วคราว') : ''}
         <div>
-          <div class="p-name" style="font-size:15px;">${name || 'ยังไม่ได้เลือกพนักงาน'}</div>
-          <div class="p-sub">${s.ptype || (name ? 'ไม่พบข้อมูลประเภทบุคลากร' : 'พิมพ์ชื่อด้านบนเพื่อค้นหา')}${s.status==='resigned' ? ' · ลาออกแล้ว' : ''}</div>
+          <div class="p-name" style="font-size:15px;">${name ? esc(name) : 'ยังไม่ได้เลือกพนักงาน'}</div>
+          <div class="p-sub">${esc(s.ptype) || (name ? 'ไม่พบข้อมูลประเภทบุคลากร' : 'พิมพ์ชื่อด้านบนเพื่อค้นหา')}${s.status==='resigned' ? ' · ลาออกแล้ว' : ''}</div>
         </div>
       </div>
     </div>
@@ -2771,7 +2774,7 @@ function registryPrintHTML(name, fy){
   }).join('');
   if(!rows) rows = `<tr><td colspan="8" style="color:#888;">ไม่มีข้อมูลการลาในปีงบประมาณนี้</td></tr>`;
   return `
-    <p>ชื่อ. <b>${name}</b> &nbsp;&nbsp; ${ptypeCk('ข้าราชการ')} &nbsp;&nbsp; ${ptypeCk('พนักงานราชการ')}<br>
+    <p>ชื่อ. <b>${esc(name)}</b> &nbsp;&nbsp; ${ptypeCk('ข้าราชการ')} &nbsp;&nbsp; ${ptypeCk('พนักงานราชการ')}<br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${ptypeCk('ลูกจ้างประจำ')} &nbsp;&nbsp; ${ptypeCk('ลูกจ้างชั่วคราว')}</p>
     <p>ปีงบประมาณ <b>${fy}</b></p>
     <table class="of-table" style="font-size:11.5px;">

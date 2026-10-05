@@ -109,7 +109,10 @@
      section = ส่วนงานเจ้าของตาราง (ใช้ตัดสินสิทธิ์แก้ไข) / trash:false = ลบแล้วไม่ต้องเข้าถังขยะ (ข้อมูลเชิงเทคนิค)
      ====================================================================== */
   const TABLES = {
-    staff: { section: 's1', label: 'บุคลากร', idField: 'id', idPrefix: 'STF', columns: ['id', 'name', 'role', 'duty', 'ptype', 'rate', 'status', 'startDate', 'birth', 'lastUpdated', 'nickname', 'shirt', 'med', 'phone', 'address', 'education', 'emergencyContact', 'emergencyPhone', 'bloodType'], numericFields: ['rate'] },
+    // แผน 4: ข้อมูลส่วนตัว (privateCols) เก็บแยกในตาราง staff_private (อ่านได้เฉพาะเจ้าของ/หมวด/ผู้ช่วย/ผู้มีสิทธิ์ระบบ 1 แก้ไข-ดู)
+    // หน้าเว็บยังเรียก apiGet/apiPost('staff') เหมือนเดิม — ชั้นนี้แยก/รวมให้เอง; columns = เฉพาะส่วนที่อ่านข้ามระบบได้
+    staff: { section: 's1', label: 'บุคลากร', idField: 'id', idPrefix: 'STF', columns: ['id', 'name', 'role', 'duty', 'ptype', 'rate', 'status', 'startDate', 'lastUpdated', 'nickname', 'shirt'], numericFields: ['rate'], privateTable: 'staff_private', privateCols: ['birth', 'med', 'phone', 'address', 'education', 'emergencyContact', 'emergencyPhone', 'bloodType'] },
+    staff_private: { section: 's1', label: 'ข้อมูลส่วนตัวบุคลากร', idField: 'id', idPrefix: null, columns: ['id', 'birth', 'med', 'phone', 'address', 'education', 'emergencyContact', 'emergencyPhone', 'bloodType', 'lastUpdated'], numericFields: [], trash: false },
     leave_requests: { section: 's1', label: 'การลา', idField: 'id', idPrefix: 'LV', columns: ['id', 'name', 'type', 'from', 'to', 'days', 'reason', 'cover', 'contact', 'status', 'recordedDate', 'advanceDays', 'lastUpdated'], numericFields: ['days', 'advanceDays'] },
     public_holidays: { section: 's1', label: 'วันหยุดนักขัตฤกษ์', idField: 'date', idPrefix: null, columns: ['date', 'name', 'lastUpdated'], numericFields: [] },
     complaints: { section: 's1', label: 'คำร้องทุกข์', idField: 'id', idPrefix: 'CPL', columns: ['id', 'date', 'receiveNo', 'route', 'km', 'subject', 'remark', 'status', 'lastUpdated', 'updatesJson'], numericFields: [] },
@@ -143,6 +146,28 @@
   // ตารางที่ระบบรองที่ 2 เขียนข้ามไปได้ด้วย (ใบสั่งการรายวันตัดวัสดุ/น้ำมันจากคลังของระบบที่ 3)
   const CROSS_WRITE = { material_transactions: ['s2'], fuel_transactions: ['s2'] };
   FBL.TABLES = TABLES;
+  // คอลัมน์ทั้งหมดของตารางเมื่อรวมส่วนที่แยกไปเก็บที่ตารางข้อมูลส่วนตัว (ใช้ส่งออก Excel)
+  FBL.allColumns = function (table) { const c = TABLES[table]; return c ? c.columns.concat(c.privateCols || []) : []; };
+  // รวมแถว staff กับ staff_private (ถ้ามีเอกสารส่วนตัวของคนนั้น ถือเป็นค่าจริง; ไม่มี → ใช้ค่าเดิมที่ค้างอยู่ใน staff จนกว่าจะล้าง)
+  function mergeStaffPrivate(rows, privRows) {
+    const by = {};
+    (privRows || []).forEach(function (p) { by[String(p.id)] = p; });
+    const cols = TABLES.staff.privateCols;
+    return rows.map(function (r) {
+      const p = by[String(r.id)];
+      if (p) cols.forEach(function (c) { r[c] = p[c]; });
+      return r;
+    });
+  }
+  // แยกค่าส่วนตัวออกจากข้อมูลที่หน้าเว็บส่งมา — undefined = ไม่แตะ; fill = เติมค่าว่างให้คอลัมน์ที่ไม่ได้ส่ง (ตอนเพิ่มคนใหม่)
+  function pickPrivate(cfg, d, fill) {
+    const out = {};
+    let any = false;
+    cfg.privateCols.forEach(function (c) {
+      if (d[c] !== undefined) { out[c] = d[c]; any = true; } else if (fill) out[c] = '';
+    });
+    return (any || fill) ? out : null;
+  }
 
   /* ======================================================================
      สถานะเริ่มต้น / ตรวจค่า config
@@ -162,7 +187,7 @@
       'auth/user-not-found': 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
       'auth/too-many-requests': 'ลองผิดหลายครั้งเกินไป กรุณารอสักครู่แล้วลองใหม่',
       'auth/network-request-failed': 'เชื่อมต่ออินเทอร์เน็ตไม่ได้ ตรวจสอบสัญญาณแล้วลองใหม่',
-      'auth/weak-password': 'รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร',
+      'auth/weak-password': 'รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร',
       'auth/email-already-in-use': 'เกิดบัญชีซ้ำโดยบังเอิญ กรุณาลองอีกครั้ง',
       'auth/requires-recent-login': 'กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่ก่อนเปลี่ยนรหัสผ่าน',
       'auth/operation-not-allowed': 'ยังไม่ได้เปิดการเข้าสู่ระบบแบบ Email/Password ใน Firebase Console',
@@ -388,7 +413,7 @@
       '<div class="fbl-note">ยังไม่มีเจ้าของระบบ — ผู้ที่ตั้งค่าตรงนี้คนแรกจะเป็น <b>เจ้าของระบบ</b> (สิทธิ์เต็ม + จัดการผู้ใช้งาน) และประตูนี้จะปิดถาวรทันทีหลังตั้งค่าเสร็จ</div>' +
       '<div class="fbl-field"><label class="fbl-label">ชื่อ-นามสกุล</label><input class="fbl-input" id="fbl-b-name" placeholder="เช่น นางสาวนันท์นภัสธ์ รัตนเสถียร"></div>' +
       '<div class="fbl-field"><label class="fbl-label">ตำแหน่ง</label><input class="fbl-input" id="fbl-b-pos" placeholder="เช่น ผช.ม.เชิงเนิน"></div>' +
-      '<div class="fbl-field"><label class="fbl-label">ตั้งรหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label><input class="fbl-input" id="fbl-b-pass" type="password" autocomplete="new-password">' + pwToggleHtml('fbl-b-pass') + '</div>' +
+      '<div class="fbl-field"><label class="fbl-label">ตั้งรหัสผ่าน (อย่างน้อย 8 ตัวอักษร)</label><input class="fbl-input" id="fbl-b-pass" type="password" autocomplete="new-password">' + pwToggleHtml('fbl-b-pass') + '</div>' +
       '<div class="fbl-err" id="fbl-b-err"></div>' +
       '<button class="fbl-btn" id="fbl-b-btn">ตั้งให้ฉันเป็นเจ้าของระบบ</button>'
     );
@@ -477,6 +502,7 @@
     FBL.apiGet = async function () { return []; };
     FBL.apiGetMultiple = async function (ts) { const o = {}; (ts || []).forEach(function (t) { o[t] = []; }); return o; };
     FBL.apiPost = async function () { throw new Error('ยังไม่ได้ตั้งค่า Firebase'); };
+    FBL.apiBatch = async function () { throw new Error('ยังไม่ได้ตั้งค่า Firebase'); };
     FBL.canEdit = function () { return false; };
     FBL.can = function () { return false; };
     FBL.legacySession = function () { return null; };
@@ -508,8 +534,13 @@
   // แก้ไขข้อมูลในระบบ sec ได้ไหม (sec = 's1'..'s4')
   FBL.canEdit = function (sec) { return !!(FBL.user && (FBL.user.role === 'owner' || FBL.user.perm[sec || FBL.page] === 'edit')); };
   FBL.canView = function (sec) { return !!(FBL.user && (FBL.user.role === 'owner' || (sec === 'main' ? FBL.user.perm.main : FBL.user.perm[sec] !== 'none'))); };
+  // อ่านข้อมูลส่วนตัวบุคลากรได้ไหม — ต้องตรงกับ canReadStaffPrivate() ใน firestore.rules
+  FBL.canReadStaffPrivate = function () {
+    const u = FBL.user;
+    return !!(u && (u.role === 'owner' || u.role === 'chief' || u.role === 'assistant' || u.perm.s1 === 'edit' || u.perm.s1 === 'view'));
+  };
   // สิทธิ์พิเศษ: delete / restore / purge / viewLog / unlockLedger / export
-  FBL.can = function (flag) { return !!(FBL.user && (FBL.user.role === 'owner' || FBL.user.perm[flag] === true)); };
+  FBL.can =function (flag) { return !!(FBL.user && (FBL.user.role === 'owner' || FBL.user.perm[flag] === true)); };
   function canWriteTable(table) {
     const sec = sectionOf(table);
     if (!sec) return false;
@@ -543,7 +574,7 @@
     wrap.style.background = 'rgba(7,27,48,.6)';
     wrap.innerHTML = '<div class="fbl-card" style="max-width:380px">' +
       '<div class="fbl-head">เปลี่ยนรหัสผ่านของฉัน</div>' +
-      '<div class="fbl-field"><label class="fbl-label">รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)</label><input class="fbl-input" id="fbl-cp-1" type="password" autocomplete="new-password">' + pwToggleHtml('fbl-cp-1') + '</div>' +
+      '<div class="fbl-field"><label class="fbl-label">รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)</label><input class="fbl-input" id="fbl-cp-1" type="password" autocomplete="new-password">' + pwToggleHtml('fbl-cp-1') + '</div>' +
       '<div class="fbl-field"><label class="fbl-label">ยืนยันรหัสผ่านใหม่</label><input class="fbl-input" id="fbl-cp-2" type="password" autocomplete="new-password"></div>' +
       '<div class="fbl-err" id="fbl-cp-err"></div>' +
       '<button class="fbl-btn" id="fbl-cp-ok">บันทึกรหัสผ่านใหม่</button>' +
@@ -554,7 +585,7 @@
     wrap.querySelector('#fbl-cp-ok').onclick = async function () {
       const a = wrap.querySelector('#fbl-cp-1').value, b = wrap.querySelector('#fbl-cp-2').value;
       const err = wrap.querySelector('#fbl-cp-err');
-      if (a.length < 6) { err.textContent = 'รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร'; return; }
+      if (a.length < 8) { err.textContent = 'รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร'; return; }
       if (a !== b) { err.textContent = 'รหัสผ่านสองช่องไม่ตรงกัน'; return; }
       this.disabled = true; this.textContent = 'กำลังบันทึก...';
       try { await FBL.changeMyPassword(a); close(); alert('เปลี่ยนรหัสผ่านเรียบร้อยแล้ว'); }
@@ -646,7 +677,7 @@
       FBL.user = null;
       writeCachedProfile(null);
       writeLegacySession();
-      if (hadUser && cached) { location.reload(); return; } // แคชเก่าแต่หลุดล็อกอินแล้ว → เริ่มใหม่ให้สะอาด
+      if (hadUser && cached && !FBL._leaving) { location.reload(); return; } // แคชเก่าแต่หลุดล็อกอินแล้ว → เริ่มใหม่ให้สะอาด
       onDomReady(function () { showLogin(); });
       return;
     }
@@ -699,8 +730,130 @@
     FBL.user = null;
     writeLegacySession();
     try { await auth.signOut(); } catch (e) { /* ข้าม */ }
-    location.reload();
+    // โหลดหน้าใหม่ทำที่ IDLE-GUARD หลังล้างแคชเสร็จ
   };
+
+  /* ==== IDLE-GUARD v1 — ออกจากระบบอัตโนมัติเมื่อไม่ได้ใช้งาน + ล้างข้อมูลแคชในเครื่อง (โค้ดชุดเดียวกันทุกระบบ ห้ามแก้เฉพาะระบบ) ====
+     - นับเวลาจากเมาส์/แป้นพิมพ์/แตะจอ รวมทุกแท็บของระบบเดียวกัน (แชร์ผ่าน localStorage)
+     - เตือนก่อนออก (ไม่ขัดจังหวะ ไม่ดึงโฟกัสจากช่องที่กำลังพิมพ์) แล้วออกจากระบบ: signOut → terminate → clearPersistence → โหลดหน้าใหม่
+     - ทดสอบ: ตั้ง localStorage 'fbl_idle_test' = "วินาทีออก,วินาทีเตือน" (ใช้ได้เฉพาะ "ลดเวลา" ลง ไม่ทำให้ยาวขึ้น) */
+  (function (FBL, auth, db, pid) {
+    var IDLE_MIN = 60, WARN_MIN = 5;
+    var idleMs = IDLE_MIN * 60000, warnMs = WARN_MIN * 60000;
+    try {
+      var tst = String(localStorage.getItem('fbl_idle_test') || '').split(',');
+      if (+tst[0] > 0) { idleMs = Math.min(idleMs, +tst[0] * 1000); warnMs = Math.min(warnMs, (+tst[1] > 0 ? +tst[1] : +tst[0] / 3) * 1000, idleMs - 1000); }
+    } catch (e) { /* ข้าม */ }
+    var K_ACT = 'fbl_idle_act_' + pid, K_OUT = 'fbl_idle_out_' + pid, K_DONE = 'fbl_idle_done_' + pid;
+    var lastLocal = 0, lastWrite = 0, warnEl = null, shield = null, leaving = false, inFlight = null, leader = false;
+
+    function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+    function lsGet(k) { try { return +localStorage.getItem(k) || 0; } catch (e) { return 0; } }
+    function lsSet(k, v) { try { localStorage.setItem(k, String(v)); } catch (e) { /* ข้าม */ } }
+    function lastActive() { return Math.max(lastLocal, lsGet(K_ACT)); }
+    function touch() {
+      var n = Date.now(); lastLocal = n;
+      if (n - lastWrite > 3000) { lastWrite = n; lsSet(K_ACT, n); }
+      if (warnEl) hideWarn();
+    }
+    var staleOnLoad = lsGet(K_ACT) > 0 && Date.now() - lsGet(K_ACT) >= idleMs; // เปิดหน้าขึ้นมาตอนที่ค้างไม่ได้ใช้งานเกินกำหนดแล้ว
+    if (!lsGet(K_ACT)) lsSet(K_ACT, Date.now()); // ครั้งแรกที่ใช้ระบบนี้ในเครื่อง — ยังไม่มีบันทึก ถือว่าเริ่มนับจากตอนนี้
+
+    /* ---------- กล่องเตือน ---------- */
+    function dirtyCount() {
+      var n = 0;
+      try {
+        var els = document.querySelectorAll('input:not([type=password]):not([type=hidden]):not([type=file]):not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),textarea');
+        for (var i = 0; i < els.length; i++) { var el = els[i]; if (el.offsetParent !== null && !el.readOnly && !el.disabled && el.value !== el.defaultValue) n++; }
+      } catch (e) { /* ข้าม */ }
+      return n;
+    }
+    function fmt(ms) { var s = Math.max(0, Math.ceil(ms / 1000)), m = Math.floor(s / 60); return m + ':' + ('0' + (s % 60)).slice(-2); }
+    function showWarn(left) {
+      if (!warnEl) {
+        warnEl = document.createElement('div');
+        warnEl.setAttribute('role', 'alert');
+        warnEl.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:2147483000;max-width:340px;background:#fff8e1;color:#4a3300;border:2px solid #f59e0b;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.35);padding:14px 16px;font:14px/1.5 system-ui,"Sarabun","Noto Sans Thai",sans-serif';
+        warnEl.innerHTML = '<div style="font-weight:700;margin-bottom:4px">⏱ ไม่มีการใช้งานสักครู่</div>' +
+          '<div>ระบบจะออกจากระบบอัตโนมัติใน <b data-idle-left></b> เพื่อความปลอดภัยของข้อมูล</div>' +
+          '<div data-idle-dirty style="display:none;margin-top:6px;color:#b45309;font-weight:600"></div>' +
+          '<button type="button" data-idle-stay style="margin-top:10px;width:100%;padding:8px;border:0;border-radius:8px;background:#f59e0b;color:#fff;font:inherit;font-weight:700;cursor:pointer">ยังใช้งานอยู่ — อยู่ต่อ</button>';
+        warnEl.querySelector('[data-idle-stay]').onclick = function () { touch(); };
+        // ไม่ดึงโฟกัสออกจากช่องที่กำลังพิมพ์: กดปุ่มนี้ด้วยเมาส์ไม่ย้ายโฟกัส
+        warnEl.addEventListener('mousedown', function (e) { e.preventDefault(); });
+        (document.body || document.documentElement).appendChild(warnEl);
+      }
+      warnEl.querySelector('[data-idle-left]').textContent = fmt(left);
+      var d = dirtyCount(), dEl = warnEl.querySelector('[data-idle-dirty]');
+      if (d > 0) { dEl.style.display = 'block'; dEl.textContent = 'อาจมีข้อมูลที่กรอกค้างอยู่ ' + d + ' ช่อง — กดบันทึกก่อนครบเวลา ไม่เช่นนั้นข้อมูลจะหาย'; }
+      else dEl.style.display = 'none';
+    }
+    function hideWarn() { if (warnEl) { warnEl.remove(); warnEl = null; } }
+    function showShield() {
+      if (shield) return;
+      shield = document.createElement('div');
+      shield.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:#0b2540;color:#fff;display:flex;align-items:center;justify-content:center;font:600 18px system-ui,"Sarabun","Noto Sans Thai",sans-serif';
+      shield.textContent = 'กำลังออกจากระบบและล้างข้อมูลในเครื่อง...';
+      (document.body || document.documentElement).appendChild(shield);
+    }
+
+    /* ---------- ออกจากระบบ + ล้างแคช ---------- */
+    async function wipe() {
+      try { await db.terminate(); } catch (e) { /* ข้าม */ }
+      for (var i = 0; i < 8; i++) {
+        try { await db.clearPersistence(); return true; } catch (e) { await sleep(500); }
+      }
+      console.warn('ล้างแคชในเครื่องไม่สำเร็จ (อาจมีแท็บอื่นเปิดระบบนี้ค้างอยู่)');
+      return false;
+    }
+    var origLogout = FBL.logout;
+    FBL.logout = function () {
+      if (inFlight) return inFlight;
+      var args = arguments;
+      leaving = true; leader = true; FBL._leaving = true;
+      hideWarn(); showShield();
+      inFlight = (async function () {
+        setTimeout(function () { location.reload(); }, 25000); // กันค้าง
+        lsSet(K_OUT, Date.now());                    // บอกแท็บอื่นของระบบนี้ให้ปิดฐานข้อมูล (ไม่งั้นล้างแคชไม่ได้)
+        // ส่งข้อมูลที่ค้างรอส่งขึ้นเซิร์ฟเวอร์ให้เสร็จก่อน ไม่งั้นการล้างแคชจะทำให้ข้อมูลที่เพิ่งบันทึกตอนออฟไลน์หาย
+        try { await Promise.race([db.waitForPendingWrites(), sleep(5000)]); } catch (e) { /* ข้าม */ }
+        try { await origLogout.apply(FBL, args); } catch (e) { /* ข้าม */ }
+        try { await auth.signOut(); } catch (e) { /* ข้าม */ }
+        await wipe();
+        lsSet(K_DONE, Date.now());
+        location.reload();
+        await new Promise(function () { });          // ไม่ให้โค้ดหลังปุ่มออกจากระบบทำงานต่อระหว่างโหลดหน้าใหม่
+      })();
+      return inFlight;
+    };
+
+    // แท็บอื่นของระบบเดียวกัน: ปิดฐานข้อมูลแล้วรอแท็บที่กดออกล้างเสร็จ จึงโหลดใหม่
+    window.addEventListener('storage', function (e) {
+      if (e.key === K_OUT && e.newValue && !leader && !leaving) {
+        leaving = true; FBL._leaving = true; showShield();
+        try { db.terminate().catch(function () { }); } catch (x) { /* ข้าม */ }
+        setTimeout(function () { location.reload(); }, 15000);
+      } else if (e.key === K_DONE && e.newValue && !leader && leaving) {
+        location.reload();
+      }
+    });
+
+    /* ---------- นับเวลาไม่ใช้งาน ---------- */
+    ['mousemove', 'mousedown', 'pointerdown', 'keydown', 'touchstart', 'wheel', 'scroll', 'click'].forEach(function (t) {
+      window.addEventListener(t, touch, { passive: true, capture: true });
+    });
+    // เหตุการณ์ล็อกอินครั้งแรกหลังเปิดหน้า: ถ้าเป็นเซสชันเก่าที่ค้างมานานเกินกำหนด ให้ออกจากระบบทันที (ไม่ให้แค่ขยับเมาส์แล้วเข้าได้เลย)
+    auth.onAuthStateChanged(function (u) { if (u && staleOnLoad && !leaving) FBL.logout(); staleOnLoad = false; });
+    function tick() {
+      if (leaving || !auth.currentUser) { if (!auth.currentUser) hideWarn(); return; }
+      var idle = Date.now() - lastActive();
+      if (idle >= idleMs) FBL.logout();
+      else if (idle >= idleMs - warnMs) showWarn(idleMs - idle);
+      else if (warnEl) hideWarn();
+    }
+    setInterval(tick, 1000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) tick(); });
+  })(FBL, auth, db, firebaseConfig.projectId);
 
   // เปลี่ยนรหัสผ่านของตัวเอง
   FBL.changeMyPassword = async function (newPassword) {
@@ -874,7 +1027,8 @@
     const cfg = TABLES[table];
     const json = cfg.jsonFields || [];
     const row = {};
-    cfg.columns.forEach(function (c) {
+    // privateCols: ค่าเดิมที่ยังค้างในตาราง staff (ก่อนย้าย/ล้าง) — อ่านไว้ให้ ถ้ามีใน staff_private จะถูกทับตอนรวมแถว
+    (cfg.privateCols ? cfg.columns.concat(cfg.privateCols) : cfg.columns).forEach(function (c) {
       let v = data[c];
       if (v === undefined || v === null) v = '';
       if (json.indexOf(c) !== -1 && typeof v === 'string' && v) {
@@ -1028,6 +1182,10 @@
         const batch = db.batch();
         if (action === 'add') batch.set(ref, Object.assign(toDoc(cfg, d, true), { _c: Date.now() }));
         else batch.set(ref, toDoc(cfg, d, false), { merge: true });
+        if (cfg.privateTable) { // ข้อมูลส่วนตัวไปอีกตาราง ในชุดเดียวกัน
+          const pd = pickPrivate(cfg, d, action === 'add');
+          if (pd) batch.set(db.collection(cfg.privateTable).doc(docKey(d[cfg.idField])), Object.assign({ id: d[cfg.idField], lastUpdated: d.lastUpdated }, pd), { merge: true });
+        }
         batch.set(logRef(), logEntry(action, table, d[cfg.idField], summaryOf(action, table, d[cfg.idField], d)));
         await batch.commit();
         return d;
@@ -1045,11 +1203,23 @@
         } catch (e) { before = null; }
         const batch = db.batch();
         batch.delete(ref);
+        // บุคลากร: ลบข้อมูลส่วนตัวไปพร้อมกัน และเก็บเข้าถังขยะในรายการเดียวกัน (กู้คืนแล้วได้ครบ)
+        let trashData = before ? toDoc(cfg, before, false) : null;
+        if (cfg.privateTable) {
+          const pref = db.collection(cfg.privateTable).doc(key);
+          let pdata = null;
+          try { const ps = await pref.get(); if (ps.exists) pdata = ps.data(); } catch (e) { pdata = null; }
+          if (trashData) cfg.privateCols.forEach(function (c) {
+            const v = pdata && pdata[c] !== undefined ? pdata[c] : before[c];
+            if (v !== undefined && v !== null && v !== '') trashData[c] = v;
+          });
+          batch.delete(pref);
+        }
         const useTrash = cfg.trash !== false && options.trash !== false && before;
         if (useTrash) {
           batch.set(db.collection('trash').doc(), {
             table: table, docKey: key, rowId: String(id), section: cfg.section,
-            data: JSON.stringify(toDoc(cfg, before, false)), created: created,
+            data: JSON.stringify(trashData), created: created,
             label: summaryOf('delete', table, id, before).replace(/^ลบ \(ย้ายไปถังขยะ\) /, ''),
             groupId: deleteGroupId(),
             deletedAt: nowIso(), deletedTs: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1065,6 +1235,165 @@
       if (e && e.code) throw new Error(thErr(e));
       throw e;
     }
+  };
+
+  /* ======================================================================
+     บันทึกหลายคำสั่งเป็นชุดเดียว (atomic) — สำเร็จทั้งหมด หรือไม่เกิดอะไรเลย
+     ใช้กับใบสั่งการรายวัน: ใบสั่งการ + รายการตัดน้ำมัน/วัสดุของคลัง ต้องเข้าไปพร้อมกันเสมอ
+     ====================================================================== */
+  const BATCH_MAX_WRITES = 500; // เพดานของ Firestore ต่อ 1 batch
+
+  // สร้างรหัสใหม่ล่วงหน้า (ให้รายการลูกอ้างถึงรหัสของใบสั่งการได้ก่อนบันทึก)
+  FBL.newId = function (table) {
+    const cfg = TABLES[table];
+    if (!cfg || !cfg.idPrefix) throw new Error('ตาราง ' + table + ' สร้างรหัสอัตโนมัติไม่ได้');
+    return autoId(cfg.idPrefix);
+  };
+
+  // หารายการตัดน้ำมัน/วัสดุที่ผูกกับใบสั่งการนี้ "จากเซิร์ฟเวอร์โดยตรง" (ไม่พึ่งข้อมูลที่โหลดค้างในหน้า)
+  // ถ้าเน็ตหลุดจะ error ทันที — ผู้เรียกต้องยกเลิกการบันทึก ไม่ใช่ข้ามไป (ไม่งั้นยอดจะซ้ำ)
+  FBL.findDailyOrderTx = async function (orderId) {
+    await FBL.ready;
+    const key = String(orderId);
+    try {
+      const res = await Promise.all(['fuel_transactions', 'material_transactions'].map(function (t) {
+        return db.collection(t).where('relatedDailyWorkOrderId', '==', key).get({ source: 'server' });
+      }));
+      return {
+        fuel: res[0].docs.map(function (d) { return toRow('fuel_transactions', d.data()); }),
+        material: res[1].docs.map(function (d) { return toRow('material_transactions', d.data()); })
+      };
+    } catch (e) { throw new Error(thErr(e)); }
+  };
+
+  // apiBatch([{ action:'add'|'update'|'delete', table, data, id, options }, ...])
+  // คืน array ผลลัพธ์ตามลำดับคำสั่ง (add/update = ข้อมูลที่บันทึก, delete = {deleted, key} หรือ {deleted:false, skipped:true} ถ้าไม่มีรายการนั้นอยู่แล้ว)
+  // ตรวจสิทธิ์/ข้อมูลทุกคำสั่งก่อนส่ง; ส่งทั้งชุดใน batch เดียวพร้อมถังขยะและ activity_log แบบเดียวกับ apiPost
+  FBL.apiBatch = async function (ops) {
+    await FBL.ready;
+    if (!Array.isArray(ops) || !ops.length) return [];
+    lastLocalWrite = Date.now();
+    try {
+      const plan = [];
+      for (let i = 0; i < ops.length; i++) {
+        const op = ops[i] || {};
+        const cfg = TABLES[op.table];
+        const options = op.options || {};
+        if (!cfg) throw new Error('ไม่รู้จักตาราง: ' + op.table);
+        if (!canWriteTable(op.table)) throw new Error('บัญชีของคุณไม่มีสิทธิ์แก้ไขข้อมูลใน "' + SECTIONS[cfg.section].label + '"');
+        if (cfg.privateTable) throw new Error('ตาราง ' + op.table + ' ไม่รองรับการบันทึกแบบชุด (ใช้ apiPost)');
+        if (op.action === 'add' || op.action === 'update') {
+          const d = clone(op.data || {});
+          if (op.action === 'add' && cfg.idPrefix && !d[cfg.idField]) d[cfg.idField] = autoId(cfg.idPrefix);
+          if (d[cfg.idField] === undefined || d[cfg.idField] === '' || d[cfg.idField] === null) throw new Error('คำสั่งที่ ' + (i + 1) + ': ไม่มีค่า ' + cfg.idField);
+          castNumeric(cfg, d);
+          d.lastUpdated = nowIso();
+          plan.push({ action: op.action, table: op.table, cfg: cfg, d: d });
+        } else if (op.action === 'delete') {
+          if (op.id === undefined || op.id === null || op.id === '') throw new Error('คำสั่งที่ ' + (i + 1) + ': ไม่ได้ส่งรหัสรายการที่จะลบมา');
+          if (!canDeleteRow(op.table)) throw new Error('บัญชีของคุณไม่มีสิทธิ์ลบข้อมูล (ติดต่อเจ้าของระบบ)');
+          const key = docKey(op.id);
+          const ref = db.collection(op.table).doc(key);
+          // ต้องรู้ข้อมูลก่อนลบเพื่อเก็บลงถังขยะ — อ่านจากเซิร์ฟเวอร์ ถ้าอ่านไม่ได้ให้หยุดทั้งชุด (apiPost ธรรมดาจะข้ามถังขยะ แต่ชุดนี้ห้ามทำเงียบๆ)
+          const snap = await ref.get({ source: 'server' });
+          if (!snap.exists) { plan.push({ skipped: true, id: op.id }); continue; }
+          plan.push({ action: 'delete', table: op.table, cfg: cfg, id: op.id, key: key, ref: ref,
+            before: toRow(op.table, snap.data()), created: snap.get('_c') || 0,
+            useTrash: cfg.trash !== false && options.trash !== false });
+        } else {
+          throw new Error('ไม่รู้จัก action: ' + op.action);
+        }
+      }
+      // นับจำนวนการเขียนจริงก่อนส่ง (ข้อมูล + ถังขยะ + ประวัติ)
+      let writes = 0;
+      plan.forEach(function (p) { if (!p.skipped) writes += 2 + (p.action === 'delete' && p.useTrash ? 1 : 0); });
+      if (writes > BATCH_MAX_WRITES) throw new Error('รายการมากเกินไปสำหรับการบันทึกครั้งเดียว (' + writes + ' คำสั่ง เกิน ' + BATCH_MAX_WRITES + ') — ไม่ได้บันทึกอะไรเลย');
+
+      const batch = db.batch();
+      const results = [];
+      plan.forEach(function (p) {
+        if (p.skipped) { results.push({ deleted: false, skipped: true, key: p.id }); return; }
+        if (p.action === 'delete') {
+          batch.delete(p.ref);
+          if (p.useTrash) {
+            batch.set(db.collection('trash').doc(), {
+              table: p.table, docKey: p.key, rowId: String(p.id), section: p.cfg.section,
+              data: JSON.stringify(toDoc(p.cfg, p.before, false)), created: p.created,
+              label: summaryOf('delete', p.table, p.id, p.before).replace(/^ลบ \(ย้ายไปถังขยะ\) /, ''),
+              groupId: deleteGroupId(),
+              deletedAt: nowIso(), deletedTs: firebase.firestore.FieldValue.serverTimestamp(),
+              deletedByUid: FBL.user.uid, deletedBy: FBL.user.name, page: FBL.page
+            });
+          }
+          batch.set(logRef(), logEntry('delete', p.table, p.id, p.useTrash ? summaryOf('delete', p.table, p.id, p.before) : ('ลบ ' + p.cfg.label + ' (' + p.id + ')')));
+          results.push({ deleted: true, key: p.id });
+        } else {
+          const ref = db.collection(p.table).doc(docKey(p.d[p.cfg.idField]));
+          if (p.action === 'add') batch.set(ref, Object.assign(toDoc(p.cfg, p.d, true), { _c: Date.now() }));
+          else batch.set(ref, toDoc(p.cfg, p.d, false), { merge: true });
+          batch.set(logRef(), logEntry(p.action, p.table, p.d[p.cfg.idField], summaryOf(p.action, p.table, p.d[p.cfg.idField], p.d)));
+          results.push(p.d);
+        }
+      });
+      await batch.commit();
+      return results;
+    } catch (e) {
+      if (e && e.code) throw new Error(thErr(e));
+      throw e;
+    }
+  };
+
+  // ตรวจรายการตัดน้ำมัน/วัสดุของใบสั่งการที่อาจซ้ำหรือค้าง — อ่านอย่างเดียว ไม่แก้/ไม่ลบอะไร ให้คนตรวจเอง
+  // คืน { orders, orphans:[], duplicates:[], missing:[] }
+  //   orphans    = รายการตัดคลังที่ relatedDailyWorkOrderId ชี้ไปใบสั่งการที่ไม่มีอยู่แล้ว
+  //   duplicates = ใบสั่งการที่มีรายการตัดมากกว่าที่ใบสั่งการระบุไว้ (ชนิดเดียวกันมากกว่าจำนวนแถว หรือจำนวนรวมเกิน)
+  //   missing    = ใบสั่งการที่ระบุเบิกแต่ไม่พบรายการตัดในคลัง (ข้อมูลหาย)
+  FBL.auditDailyOrderTx = async function () {
+    const data = await FBL.apiGetMultiple(['daily_work_orders', 'fuel_transactions', 'material_transactions']);
+    const orders = {};
+    data.daily_work_orders.forEach(function (o) { orders[String(o.id)] = o; });
+    const out = { orders: data.daily_work_orders.length, orphans: [], duplicates: [], missing: [] };
+    const num = function (v) { return Number(v) || 0; };
+    function parseList(v) { if (Array.isArray(v)) return v; try { const x = JSON.parse(v || '[]'); return Array.isArray(x) ? x : []; } catch (e) { return []; } }
+    const byOrder = {}; // orderId → { fuel:{itemKey:[tx]}, mat:{itemKey:[tx]} }
+    function bucket(oid) { return byOrder[oid] || (byOrder[oid] = { fuel: {}, mat: {} }); }
+    data.fuel_transactions.forEach(function (t) {
+      const oid = String(t.relatedDailyWorkOrderId || ''); if (!oid) return;
+      if (!orders[oid]) { out.orphans.push({ table: 'fuel_transactions', id: t.id, orderId: oid, date: t.date, item: t.vehicleId, qty: num(t.qty) }); return; }
+      const b = bucket(oid).fuel; (b[t.vehicleId] = b[t.vehicleId] || []).push(t);
+    });
+    data.material_transactions.forEach(function (t) {
+      const oid = String(t.relatedDailyWorkOrderId || ''); if (!oid) return;
+      if (!orders[oid]) { out.orphans.push({ table: 'material_transactions', id: t.id, orderId: oid, date: t.date, item: t.materialId, qty: num(t.qty) }); return; }
+      const b = bucket(oid).mat; (b[t.materialId] = b[t.materialId] || []).push(t);
+    });
+    Object.keys(orders).forEach(function (oid) {
+      const o = orders[oid];
+      const have = byOrder[oid] || { fuel: {}, mat: {} };
+      // ที่ใบสั่งการระบุไว้ — น้ำมันนับเฉพาะรถที่มีลิตร > 0, วัสดุนับเฉพาะแถวที่ qty > 0
+      const want = { fuel: {}, mat: {} };
+      parseList(o.machineryJson).forEach(function (v) {
+        if (num(v.liters) > 0) { const w = want.fuel[v.label] = want.fuel[v.label] || { rows: 0, qty: 0 }; w.rows++; w.qty += num(v.liters); }
+      });
+      parseList(o.materialsJson).forEach(function (p) {
+        if (num(p.qty) > 0) { const w = want.mat[p.code] = want.mat[p.code] || { rows: 0, qty: 0 }; w.rows++; w.qty += num(p.qty); }
+      });
+      [['fuel', 'fuel_transactions'], ['mat', 'material_transactions']].forEach(function (k) {
+        const kind = k[0], table = k[1];
+        const items = {};
+        Object.keys(have[kind]).forEach(function (x) { items[x] = 1; });
+        Object.keys(want[kind]).forEach(function (x) { items[x] = 1; });
+        Object.keys(items).forEach(function (item) {
+          const txs = have[kind][item] || [];
+          const w = want[kind][item] || { rows: 0, qty: 0 };
+          const got = txs.reduce(function (s, t) { return s + num(t.qty); }, 0);
+          const base = { table: table, orderId: oid, date: o.date, item: item, wantRows: w.rows, wantQty: w.qty, gotRows: txs.length, gotQty: got, ids: txs.map(function (t) { return t.id; }) };
+          if (txs.length > w.rows || got > w.qty + 1e-9) out.duplicates.push(base);
+          else if (txs.length < w.rows || got < w.qty - 1e-9) out.missing.push(base);
+        });
+      });
+    });
+    return out;
   };
 
   /* ======================================================================
@@ -1093,6 +1422,10 @@
         let data = {};
         try { data = JSON.parse(it.data || '{}'); } catch (e) { data = {}; }
         batch.set(db.collection(it.table).doc(it.docKey), Object.assign(toDoc(cfg, data, true), { _c: it.created || Date.now() }));
+        if (cfg.privateTable) {
+          const pd = pickPrivate(cfg, data, true);
+          batch.set(db.collection(cfg.privateTable).doc(it.docKey), Object.assign({ id: data[cfg.idField], lastUpdated: nowIso() }, pd), { merge: true });
+        }
         batch.delete(db.collection('trash').doc(it.__id));
         batch.set(logRef(), logEntry('restore', it.table, it.rowId, 'กู้คืน ' + (it.label || it.rowId)));
       });
@@ -1191,10 +1524,13 @@
      ====================================================================== */
   FBL.exportAll = async function () {
     if (!FBL.can('export')) throw new Error('บัญชีของคุณไม่มีสิทธิ์ส่งออกข้อมูล');
-    const names = Object.keys(TABLES);
+    const names = Object.keys(TABLES).filter(function (t) { return t !== 'staff_private'; }); // รวมเข้ากับ staff (ส่งออกครบทุกคอลัมน์)
     const out = {};
     await Promise.all(names.map(watch));
     names.forEach(function (t) { out[t] = clone(subs[t].rows); });
+    if (FBL.canReadStaffPrivate()) {
+      try { await watch('staff_private'); out.staff = mergeStaffPrivate(out.staff, clone(subs.staff_private.rows)); } catch (e) { console.warn('export: อ่านข้อมูลส่วนตัวบุคลากรไม่ได้', e); }
+    }
     return out;
   };
 
@@ -1229,11 +1565,13 @@
         castNumeric(cfg, d);
         if (!d.lastUpdated) d.lastUpdated = nowIso();
         // _c = ลำดับแถวเดิมในชีต (ให้หน้าเว็บเรียงรายการเหมือนเดิม)
-        writes.push({ ref: db.collection(table).doc(docKey(d[cfg.idField])), data: Object.assign(toDoc(cfg, d, true), { _c: importBase + writes.length }) });
+        const w = { ref: db.collection(table).doc(docKey(d[cfg.idField])), data: Object.assign(toDoc(cfg, d, true), { _c: importBase + writes.length }) };
+        if (cfg.privateTable) w.priv = { ref: db.collection(cfg.privateTable).doc(docKey(d[cfg.idField])), data: Object.assign({ id: d[cfg.idField], lastUpdated: d.lastUpdated }, pickPrivate(cfg, d, true)) };
+        writes.push(w);
       });
       for (let i = 0; i < writes.length; i += 400) {
         const batch = db.batch();
-        writes.slice(i, i + 400).forEach(function (w) { batch.set(w.ref, w.data); });
+        writes.slice(i, i + 400).forEach(function (w) { batch.set(w.ref, w.data); if (w.priv) batch.set(w.priv.ref, w.priv.data, { merge: true }); });
         try { await batch.commit(); } catch (e) { throw new Error(thErr(e)); }
         if (progress) progress(cfg.label + ': ' + Math.min(i + 400, writes.length) + '/' + writes.length);
       }
@@ -1358,9 +1696,18 @@
   loadMasterClient();
 
   const baseApiGet = FBL.apiGet, baseApiGetMultiple = FBL.apiGetMultiple, baseRows = FBL.rows, baseLoaded = FBL.loaded, baseApiPost = FBL.apiPost;
+  // บุคลากร (แผน 4): อ่าน staff แล้วรวมกับ staff_private ให้เองถ้าสิทธิ์อ่านได้ — อ่านไม่ได้ก็ไม่ล้ม ได้เฉพาะส่วนที่อ่านข้ามระบบได้
+  const STAFF = 'staff', STAFF_PRIV = 'staff_private';
+  let staffPrivDenied = false;
+  async function loadStaffPrivate() {
+    if (staffPrivDenied || !FBL.canReadStaffPrivate()) return false;
+    try { await baseApiGet(STAFF_PRIV); return true; } catch (e) { staffPrivDenied = true; console.warn('อ่านข้อมูลส่วนตัวบุคลากรไม่ได้ (ไม่มีสิทธิ์)', e); return false; }
+  }
+  async function withPrivate(rows) { return (await loadStaffPrivate()) ? mergeStaffPrivate(rows, baseRows(STAFF_PRIV)) : rows; }
   FBL.apiGet = async function (table) {
     if (table === MASTER_TABLE && await masterReady()) return clone(masterRouteRows);
     if (table === JOB_TABLE && await masterJobsReady()) return masterJobRows();
+    if (table === STAFF) return withPrivate(await baseApiGet(table));
     return baseApiGet(table);
   };
   FBL.apiGetMultiple = async function (tables) {
@@ -1369,12 +1716,90 @@
     const out = await baseApiGetMultiple(tables.filter(function (t) { return !(useMaster && t === MASTER_TABLE) && !(useJobs && t === JOB_TABLE); }));
     if (useMaster) out[MASTER_TABLE] = clone(masterRouteRows);
     if (useJobs) out[JOB_TABLE] = await masterJobRows();
+    if (out[STAFF]) out[STAFF] = await withPrivate(out[STAFF]);
     return out;
   };
   FBL.rows = function (table) {
     if (table === MASTER_TABLE && masterRouteRows) return clone(masterRouteRows);
     if (table === JOB_TABLE && masterWorkCodes) return toAdminJobRows(masterWorkCodes, baseRows(JOB_TABLE));
+    if (table === STAFF) return baseLoaded(STAFF_PRIV) ? mergeStaffPrivate(baseRows(STAFF), baseRows(STAFF_PRIV)) : baseRows(STAFF);
     return baseRows(table);
+  };
+
+  /* ---------- ย้าย/ล้างข้อมูลส่วนตัวบุคลากร (เจ้าของระบบ — ปุ่มในหน้า "สำรองข้อมูล") ---------- */
+  const PRIV_COLS = TABLES.staff.privateCols;
+  function hasVal(v) { return v !== undefined && v !== null && v !== ''; }
+  async function readStaffBoth() {
+    if (!FBL.isOwner()) throw new Error('เฉพาะเจ้าของระบบเท่านั้น');
+    await FBL.ready;
+    try {
+      const res = await Promise.all([db.collection(STAFF).get({ source: 'server' }), db.collection(STAFF_PRIV).get({ source: 'server' })]);
+      const priv = {};
+      res[1].docs.forEach(function (d) { priv[d.id] = d.data(); });
+      return { staff: res[0].docs, priv: priv };
+    } catch (e) { throw new Error(thErr(e)); }
+  }
+  // นับสถานะ — อ่านอย่างเดียว
+  FBL.staffPrivateStatus = async function () {
+    const x = await readStaffBoth();
+    let legacy = 0, pending = 0;
+    x.staff.forEach(function (d) {
+      const s = d.data();
+      if (!PRIV_COLS.some(function (c) { return hasVal(s[c]); })) return;
+      legacy++;
+      const cur = x.priv[d.id];
+      if (PRIV_COLS.some(function (c) { return hasVal(s[c]) && !(cur && c in cur); })) pending++;
+    });
+    return { total: x.staff.length, privateDocs: Object.keys(x.priv).length, legacy: legacy, pending: pending };
+  };
+  // ขั้น 1: คัดลอกข้อมูลส่วนตัวจาก staff → staff_private (ไม่ลบของเดิม; ไม่ทับค่าที่มีอยู่แล้วใน staff_private; รันซ้ำได้)
+  FBL.migrateStaffPrivate = async function () {
+    const x = await readStaffBoth();
+    const writes = [];
+    let created = 0, filled = 0;
+    x.staff.forEach(function (d) {
+      const s = d.data(), cur = x.priv[d.id], add = {};
+      PRIV_COLS.forEach(function (c) { if (hasVal(s[c]) && !(cur && hasVal(cur[c]))) add[c] = s[c]; });
+      if (!Object.keys(add).length) return;
+      add.id = hasVal(s.id) ? s.id : d.id;
+      add.lastUpdated = nowIso();
+      writes.push({ ref: db.collection(STAFF_PRIV).doc(d.id), data: add });
+      if (cur) filled++; else created++;
+    });
+    try {
+      for (let i = 0; i < writes.length; i += 400) {
+        const batch = db.batch();
+        writes.slice(i, i + 400).forEach(function (w) { batch.set(w.ref, w.data, { merge: true }); });
+        await batch.commit();
+      }
+      if (writes.length) await db.collection('activity_log').add(logEntry('import', STAFF_PRIV, '', 'ย้ายข้อมูลส่วนตัวบุคลากรไปตารางแยก: สร้าง ' + created + ' เติม ' + filled + ' รายการ'));
+    } catch (e) { throw new Error(thErr(e)); }
+    return { total: x.staff.length, created: created, filled: filled, unchanged: x.staff.length - writes.length };
+  };
+  // ขั้น 3 (หลังยืนยันว่าใช้งานได้): ลบฟิลด์ส่วนตัวออกจากตาราง staff — ตรวจก่อนว่าทุกค่าที่จะลบมีที่เก็บใน staff_private แล้ว ถ้าไม่ครบจะไม่ลบอะไรเลย
+  FBL.cleanupStaffLegacy = async function () {
+    const x = await readStaffBoth();
+    const problems = [];
+    x.staff.forEach(function (d) {
+      const s = d.data(), cur = x.priv[d.id];
+      if (PRIV_COLS.some(function (c) { return hasVal(s[c]) && !(cur && c in cur); })) problems.push(s.name || d.id);
+    });
+    if (problems.length) throw new Error('ยังย้ายไม่ครบ ไม่ได้ลบอะไร — กดปุ่ม "ย้ายข้อมูลส่วนตัว" อีกครั้งก่อน (' + problems.slice(0, 5).join(', ') + (problems.length > 5 ? ' ฯลฯ' : '') + ')');
+    const del = firebase.firestore.FieldValue.delete();
+    const targets = x.staff.filter(function (d) { const s = d.data(); return PRIV_COLS.some(function (c) { return c in s; }); });
+    try {
+      for (let i = 0; i < targets.length; i += 400) {
+        const batch = db.batch();
+        targets.slice(i, i + 400).forEach(function (d) {
+          const upd = {};
+          PRIV_COLS.forEach(function (c) { if (c in d.data()) upd[c] = del; });
+          batch.update(d.ref, upd);
+        });
+        await batch.commit();
+      }
+      if (targets.length) await db.collection('activity_log').add(logEntry('update', STAFF, '', 'ลบข้อมูลส่วนตัวเดิมออกจากตารางบุคลากร ' + targets.length + ' รายการ (ย้ายไปตารางแยกแล้ว)'));
+    } catch (e) { throw new Error(thErr(e)); }
+    return { cleaned: targets.length };
   };
   FBL.loaded = function (table) {
     if (table === MASTER_TABLE && masterRouteRows) return true;
@@ -1395,5 +1820,13 @@
       throw new Error('แก้ไขได้ที่ฐานข้อมูลกลาง (ไม่ได้บันทึกในระบบนี้)');
     }
     return baseApiPost(action, table, data, id, options);
+  };
+  // ชุดคำสั่งเดียว (apiBatch) ห้ามแตะข้อมูลที่ย้ายไปแก้ที่ฐานข้อมูลกลางแล้ว
+  const baseApiBatch = FBL.apiBatch;
+  FBL.apiBatch = async function (ops) {
+    (ops || []).forEach(function (o) {
+      if (o && (o.table === MASTER_TABLE || o.table === JOB_TABLE)) throw new Error('ตาราง ' + o.table + ' แก้ไขได้ที่ฐานข้อมูลกลางเท่านั้น');
+    });
+    return baseApiBatch(ops);
   };
 })();

@@ -821,6 +821,7 @@
             </h2>
             <div class="toolbar">
               <div class="search-box">🔍 <input id="dw-search" placeholder="ค้นหารหัสงาน / สถานที่"></div>
+              <button class="btn btn-ghost" onclick="openDwTxAudit()" title="แสดงรายการตัดน้ำมัน/วัสดุที่อาจซ้ำหรือค้าง (ดูอย่างเดียว ไม่ลบอัตโนมัติ)">🔎 ตรวจยอดคลังซ้ำ</button>
               <button class="btn btn-primary" onclick="toggleDailyForm()">+ บันทึกใบสั่งการรายวัน</button>
             </div>
           </div>
@@ -862,6 +863,8 @@
                 <div class="f-row"><label>หน่วย</label><select id="dw-unit"></select></div>
               </div>
               <div id="dw-loc-msg" style="margin:-8px 0 4px;"></div>
+              <div id="dw-case-banner" class="hidden" style="margin:0 0 8px;padding:8px 12px;border:1px solid var(--line);border-left:4px solid #e0620f;border-radius:7px;background:#fff7ee;font-size:12.5px;"></div>
+              <div class="f-row"><label>หมายเหตุ / อ้างอิงเคส (ไม่บังคับ)</label><input id="dw-note" maxlength="300" placeholder="เช่น ซ่อมราวกันอันตรายหลังอุบัติเหตุ" autocomplete="off"></div>
               <div class="qty-pending-row" style="margin:-4px 0 4px;">
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="dw-qty-pending" onchange="onDwQtyPendingToggle()"> ยังไม่ทราบปริมาณงาน (รอหัวหน้าหมวด/ช่างระบุภายหลัง — เสมียนไม่ต้องประมาณเอง)</label>
               </div>
@@ -1308,6 +1311,9 @@
 </div>
 
 <script>
+// กรองข้อความก่อนใส่ HTML (ใช้ตัวเดียวกับ firebase-layer.js) / jsArg = ค่าที่ใส่เป็นสตริงใน onclick="fn('...')"
+const esc = FBL.esc;
+const jsArg = v => esc(String(v==null?'':v).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,'\\n'));
 /* ============================================================
    DATA
    ============================================================ */
@@ -1334,6 +1340,8 @@ function apiCurrentUsername(){ return (window.FBL && FBL.user && FBL.user.name) 
 async function apiGet(table){ return FBL.apiGet(table); }
 async function apiGetMultiple(tableNames){ return FBL.apiGetMultiple(tableNames); }
 async function apiPost(action, table, data, id, options){ return FBL.apiPost(action, table, data, id, options); }
+/* หลายคำสั่งเป็นชุดเดียว: สำเร็จทั้งหมดหรือไม่เกิดอะไรเลย (ใช้กับใบสั่งการ + รายการตัดคลัง) */
+async function apiBatch(ops){ return FBL.apiBatch(ops); }
 /* ============ จบส่วนเชื่อมต่อฐานข้อมูลกลาง ============ */
 
 /* ---- Thai-format custom date inputs (native <input type=date> stays the source of truth; a styled overlay box shows "9 ก.ค. 2569") ---- */
@@ -1489,7 +1497,7 @@ function dwoFromApi(row){
     parts: Array.isArray(row.materialsJson) ? row.materialsJson : [],
     qty:Number(row.workQuantity)||0, qtyPending:!!row.qtyPending, unit:row.unit||'',
     material:Number(row.materialCost)||0, labor:Number(row.laborCost)||0,
-    rent:Number(row.rentCost)||0, fuel:Number(row.fuelCost)||0 };
+    rent:Number(row.rentCost)||0, fuel:Number(row.fuelCost)||0, note:row.note||'' };
 }
 function dwoToApi(d){
   return { id:d.__backendId, fiscalYear:fyOfDate(d.date), date:d.date, jobCode:d.code,
@@ -1498,7 +1506,7 @@ function dwoToApi(d){
     staffJson:d.staff||[], staffLabel:d.staffLabel||'', materialsJson:d.parts||[],
     machineryJson:d.vehicles||[], vehicleLabelsText:d.vehicle||'',
     laborCost:d.labor||0, materialCost:d.material||0, rentCost:d.rent||0, fuelCost:d.fuel||0,
-    totalCost:(d.material||0)+(d.labor||0)+(d.rent||0)+(d.fuel||0), note:'' };
+    totalCost:(d.material||0)+(d.labor||0)+(d.rent||0)+(d.fuel||0), note:d.note||'' };
 }
 /* ข้อมูลใบสั่งการรายวันจริงย้ายไปอยู่ที่ Google Sheets แท็บ "daily_work_orders" แล้ว
    หน้านี้โหลดจาก API ตอนเปิดหน้าเสมอ ดูฟังก์ชัน loadDailyWorkOrdersFromApi() ด้านล่าง */
@@ -1598,11 +1606,11 @@ function pickRefCode(code){
 }
 function refdataRowHtml(r){
   const hasCost = unitCostRecords.some(u=>u.code===r.code);
-  return `<div class="refdata-row ${__refSelectedCode===r.code?'active':''}" data-code="${r.code}" onclick="pickRefCode('${r.code}')">
+  return `<div class="refdata-row ${__refSelectedCode===r.code?'active':''}" data-code="${esc(r.code)}" onclick="pickRefCode('${jsArg(r.code)}')">
     <span class="refdata-status-dot ${hasCost?'has':'none'}"></span>
     <div style="min-width:0;">
-      <div class="code">${r.code}</div>
-      <div class="name">${r.name}</div>
+      <div class="code">${esc(r.code)}</div>
+      <div class="name">${esc(r.name)}</div>
     </div>
   </div>`;
 }
@@ -1629,7 +1637,7 @@ function renderJobCodeRef(){
     if(!(label in groupIdx)){ groupIdx[label] = groups.length; groups.push({label, rows:[]}); }
     groups[groupIdx[label]].rows.push(r);
   });
-  el.innerHTML = groups.map(g=>`<div class="refdata-group-label">${g.label}</div>${g.rows.map(refdataRowHtml).join('')}`).join('')
+  el.innerHTML = groups.map(g=>`<div class="refdata-group-label">${esc(g.label)}</div>${g.rows.map(refdataRowHtml).join('')}`).join('')
     || '<div style="padding:20px;text-align:center;color:var(--ink-400);font-size:12.5px;">ไม่พบรายการ</div>';
 
   renderRefDetail();
@@ -1642,21 +1650,21 @@ document.querySelectorAll('[data-jctab]').forEach(t=>t.addEventListener('click',
 function ucFormulaTableHtml(r){
   const t = ucRecordTotals(r);
   const unitLabel = (r.unit||'').split(',')[0].trim() || 'หน่วย';
-  const laborRows = (r.laborRows||[]).map(x=>`<tr><td>${x.type}</td><td class="num">${fmtNum(x.count,0)}</td><td class="num">${fmtNum(x.rate,2)}</td><td class="num">${fmtNum(x.count*x.rate,2)}</td></tr>`).join('')
+  const laborRows = (r.laborRows||[]).map(x=>`<tr><td>${esc(x.type)}</td><td class="num">${fmtNum(x.count,0)}</td><td class="num">${fmtNum(x.rate,2)}</td><td class="num">${fmtNum(x.count*x.rate,2)}</td></tr>`).join('')
     || '<tr><td colspan="4" style="text-align:center;color:var(--ink-400);">ไม่มีข้อมูล</td></tr>';
   const matRows = (r.materialRows||[]).map(x=>{
     const m = getMaterialsX().find(mm=>mm.code===x.code);
     const qty = x.useRate*(r.qtyPerDay||0);
-    return `<tr><td>${m?m.name:x.code}</td><td class="num">${fmtNum(x.useRate,4)}</td><td class="num">${fmtNum(qty,2)}</td><td>${m?m.unit:''}</td><td class="num">${fmtNum(x.price,2)}</td><td class="num">${fmtNum(qty*x.price,2)}</td></tr>`;
+    return `<tr><td>${esc(m?m.name:x.code)}</td><td class="num">${fmtNum(x.useRate,4)}</td><td class="num">${fmtNum(qty,2)}</td><td>${esc(m?m.unit:'')}</td><td class="num">${fmtNum(x.price,2)}</td><td class="num">${fmtNum(qty*x.price,2)}</td></tr>`;
   }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--ink-400);">ไม่มีข้อมูล</td></tr>';
   const vehRows = (r.vehicleRows||[]).map(x=>{
     const v = getVehiclesX().find(vv=>vv.id===x.vehId);
-    return `<tr><td>${v?v.label:'—'}</td><td class="num">${fmtNum(x.liters,2)}</td><td class="num">${fmtNum(x.fuelPrice,2)}</td><td class="num">${fmtNum(x.liters*x.fuelPrice,2)}</td><td class="num">${fmtNum(x.rentPerDay,2)}</td></tr>`;
+    return `<tr><td>${esc(v?v.label:'—')}</td><td class="num">${fmtNum(x.liters,2)}</td><td class="num">${fmtNum(x.fuelPrice,2)}</td><td class="num">${fmtNum(x.liters*x.fuelPrice,2)}</td><td class="num">${fmtNum(x.rentPerDay,2)}</td></tr>`;
   }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--ink-400);">ไม่มีข้อมูล</td></tr>';
   return `
     <div style="display:flex;gap:20px;margin-bottom:12px;flex-wrap:wrap;">
-      <div style="font-size:11.5px;color:var(--ink-600);">ปีงบประมาณ: <b style="color:var(--ink-900);">${r.fy}</b></div>
-      <div style="font-size:11.5px;color:var(--ink-600);">ปริมาณงาน/วัน: <b style="color:var(--ink-900);">${fmtNum(r.qtyPerDay,2)} ${unitLabel}</b></div>
+      <div style="font-size:11.5px;color:var(--ink-600);">ปีงบประมาณ: <b style="color:var(--ink-900);">${esc(r.fy)}</b></div>
+      <div style="font-size:11.5px;color:var(--ink-600);">ปริมาณงาน/วัน: <b style="color:var(--ink-900);">${fmtNum(r.qtyPerDay,2)} ${esc(unitLabel)}</b></div>
     </div>
     <div style="font-family:'Kanit';font-size:11px;font-weight:600;color:var(--orange-600);margin-bottom:5px;">1) ค่าแรงงาน / วัน</div>
     <table class="uc-formula-table"><thead><tr><th>แรงงาน</th><th>จำนวน (คน)</th><th>อัตรา/วัน</th><th>เป็นเงิน (บาท)</th></tr></thead><tbody>${laborRows}</tbody></table>
@@ -1675,7 +1683,7 @@ function ucFormulaTableHtml(r){
       <div style="display:flex;align-items:baseline;gap:10px;">
         <span style="font-size:12px;color:var(--ink-600);">ค่างานต่อหน่วย = รวม/วัน ÷ ปริมาณงาน/วัน =</span>
         <span style="font-family:'Kanit';font-size:24px;font-weight:700;color:var(--navy-900);">${fmtNum(t.unitCost,2)}</span>
-        <span style="font-size:12px;color:var(--ink-600);">บาท/${unitLabel}</span>
+        <span style="font-size:12px;color:var(--ink-600);">บาท/${esc(unitLabel)}</span>
       </div>
       <div style="display:flex;gap:18px;margin-top:8px;font-size:10.5px;color:var(--ink-400);flex-wrap:wrap;">
         <span>แรงงาน ${fmtNum(r.qtyPerDay>0?t.labor/r.qtyPerDay:0,2)} บาท/หน่วย</span>
@@ -1698,8 +1706,8 @@ function jcDisplayInfo(rec){
   /* ลักษณะงานจากฐานกลางเป็นข้อความหลายบรรทัด ("หมายถึง ..." ตามด้วย "- กรณี ...") — คงการขึ้นบรรทัดตามต้นฉบับ */
   if(rec.desc) descHtml = `<div style="white-space:pre-line;">${String(rec.desc).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
   else if(kids.length) descHtml = 'ประกอบด้วยรหัสงานย่อย:<ul style="margin:4px 0 0;padding-left:20px;">' +
-    kids.map(k=>`<li><a href="javascript:void(0)" onclick="pickRefCode('${k.code}')" style="color:var(--navy-900);">${k.code}</a> ${k.name}${k.unit?` <span style="color:var(--ink-400);">(${k.unit})</span>`:''}</li>`).join('') + '</ul>';
-  else descHtml = rec.parentName ? `อยู่ในหมวด ${rec.parent} ${rec.parentName}` : '—';
+    kids.map(k=>`<li><a href="javascript:void(0)" onclick="pickRefCode('${jsArg(k.code)}')" style="color:var(--navy-900);">${esc(k.code)}</a> ${esc(k.name)}${k.unit?` <span style="color:var(--ink-400);">(${esc(k.unit)})</span>`:''}</li>`).join('') + '</ul>';
+  else descHtml = rec.parentName ? `อยู่ในหมวด ${esc(rec.parent)} ${esc(rec.parentName)}` : '—';
   return { unit, output, descHtml };
 }
 /* ฝั่งขวา: การ์ดรายละเอียดรหัสงาน + การ์ด UNIT COST (ทุกอัตราย่อยของรหัสที่เลือก เรียงเป็นตารางสูตรเต็มทุกแถว) */
@@ -1714,21 +1722,21 @@ function renderRefDetail(){
   const variants = unitCostRecords.filter(u=>u.code===rec.code);
   const info = jcDisplayInfo(rec);
   const ucHtml = variants.length
-    ? variants.map(r=>`<div class="uc-variant-card"><div class="uc-variant-title"><span>${r.variantLabel ? r.variantLabel : 'อัตรามาตรฐาน'}</span><span><button class="btn btn-ghost btn-sm" onclick="openUcForm(${r.no})">แก้ไข</button> <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="deleteUcEntry(${r.no})">ลบ</button></span></div>${ucFormulaTableHtml(r)}</div>`).join('')
+    ? variants.map(r=>`<div class="uc-variant-card"><div class="uc-variant-title"><span>${esc(r.variantLabel ? r.variantLabel : 'อัตรามาตรฐาน')}</span><span><button class="btn btn-ghost btn-sm" onclick="openUcForm(${r.no})">แก้ไข</button> <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="deleteUcEntry(${r.no})">ลบ</button></span></div>${ucFormulaTableHtml(r)}</div>`).join('')
     : `<div style="text-align:center;padding:30px 0;color:var(--ink-400);">
         <div style="font-size:13px;margin-bottom:14px;">ยังไม่มีข้อมูลค่างานต่อหน่วยของรหัสนี้</div>
-        <button class="btn btn-primary" onclick="openUcForm(null,'${rec.code}')">+ เพิ่มค่างานต่อหน่วยใหม่</button>
+        <button class="btn btn-primary" onclick="openUcForm(null,'${jsArg(rec.code)}')">+ เพิ่มค่างานต่อหน่วยใหม่</button>
       </div>`;
   el.innerHTML = `
     <div class="refdata-card">
       <div style="display:flex;align-items:center;gap:9px;margin-bottom:7px;">
         <span style="${rec.level==='main'?'background:var(--navy-900);color:#fff;':'background:var(--paper-100);color:var(--ink-600);'}display:inline-block;padding:3px 9px;border-radius:6px;font-size:10.5px;font-weight:700;font-family:'Kanit';">${rec.level==='main'?'หลัก':'ย่อย'}</span>
-        <span style="font-family:'Kanit';font-size:12px;color:var(--ink-400);">รหัสงาน ${rec.code}</span>
+        <span style="font-family:'Kanit';font-size:12px;color:var(--ink-400);">รหัสงาน ${esc(rec.code)}</span>
       </div>
-      <h2 style="font-family:'Kanit';font-size:18px;font-weight:600;color:var(--navy-900);margin:0 0 12px;">${rec.name}</h2>
+      <h2 style="font-family:'Kanit';font-size:18px;font-weight:600;color:var(--navy-900);margin:0 0 12px;">${esc(rec.name)}</h2>
       <div style="display:flex;gap:28px;margin-bottom:12px;flex-wrap:wrap;">
-        <div><div style="font-size:10.5px;color:var(--ink-400);margin-bottom:3px;">หน่วยนับ</div><div style="font-family:'Kanit';font-size:13px;font-weight:600;color:var(--ink-900);">${info.unit}</div></div>
-        <div><div style="font-size:10.5px;color:var(--ink-400);margin-bottom:3px;">ผลผลิต</div><div style="font-family:'Kanit';font-size:13px;font-weight:600;color:var(--ink-900);">${info.output}</div></div>
+        <div><div style="font-size:10.5px;color:var(--ink-400);margin-bottom:3px;">หน่วยนับ</div><div style="font-family:'Kanit';font-size:13px;font-weight:600;color:var(--ink-900);">${esc(info.unit)}</div></div>
+        <div><div style="font-size:10.5px;color:var(--ink-400);margin-bottom:3px;">ผลผลิต</div><div style="font-family:'Kanit';font-size:13px;font-weight:600;color:var(--ink-900);">${esc(info.output)}</div></div>
       </div>
       <div style="font-size:10.5px;color:var(--ink-400);margin-bottom:5px;">ลักษณะงาน</div>
       <div style="font-size:12.5px;color:var(--ink-600);line-height:1.7;margin:0;">${info.descHtml}</div>
@@ -1736,7 +1744,7 @@ function renderRefDetail(){
     <div class="refdata-card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <h3 style="font-family:'Kanit';font-size:14.5px;font-weight:600;color:var(--navy-900);margin:0;">ค่างานต่อหน่วย (UNIT COST)</h3>
-        ${variants.length ? `<button class="btn btn-ghost btn-sm" onclick="openUcForm(null,'${rec.code}')">+ เพิ่มอัตราใหม่</button>` : ''}
+        ${variants.length ? `<button class="btn btn-ghost btn-sm" onclick="openUcForm(null,'${jsArg(rec.code)}')">+ เพิ่มอัตราใหม่</button>` : ''}
       </div>
       ${ucHtml}
     </div>`;
@@ -1744,7 +1752,7 @@ function renderRefDetail(){
 /* ---- เพิ่ม/แก้ไขรหัสงาน (รายละเอียดรหัสงาน) — หน้าต่างโมดัลลอย ---- */
 let __jcEditingCode = null;
 function jcMainOptions(){
-  return jobCodeReference.filter(r=>r.level==='main').map(r=>`<option value="${r.code}">${r.code} — ${r.name}</option>`).join('');
+  return jobCodeReference.filter(r=>r.level==='main').map(r=>`<option value="${esc(r.code)}">${esc(r.code)} — ${esc(r.name)}</option>`).join('');
 }
 function onJcLevelChange(){
   const level = document.getElementById('jc-f-level').value;
@@ -1974,7 +1982,7 @@ function extractAllKm(text){
 }
 function routeOptionsHtml(selected){
   let opts = '<option value="">— เลือกสายทางที่ควบคุม —</option>';
-  opts += controlledRoutes.map(r=>`<option value="${r.routeNo}" ${selected===r.routeNo?'selected':''}>ทล.${r.routeNo} — ${r.section} (${routeRangeLabel(r)})</option>`).join('');
+  opts += controlledRoutes.map(r=>`<option value="${esc(r.routeNo)}" ${selected===r.routeNo?'selected':''}>ทล.${esc(r.routeNo)} — ${esc(r.section)} (${routeRangeLabel(r)})</option>`).join('');
   opts += OFFICE_ROUTE_OPTIONS.map(o=>`<option value="${o.value}" ${selected===o.value?'selected':''}>${o.label}</option>`).join('');
   opts += `<option value="__other__" ${selected==='__other__'?'selected':''}>อื่นๆ / นอกฐานข้อมูลควบคุม</option>`;
   return opts;
@@ -2004,7 +2012,7 @@ function validateRouteKmMulti(routeSelId, kmInputIds, msgId){
   }
   const route = findRoute(routeNo);
   if(!route){
-    msg.innerHTML = `<span class="hazard" style="font-size:12px;">⚠ ลงข้อมูลผิดพลาด: ไม่พบหมายเลขสายทาง "${routeNo}" ในฐานข้อมูลสายทางที่หมวดควบคุม (ดูรายการที่แท็บ "ทางหลวงควบคุม")</span>`;
+    msg.innerHTML = `<span class="hazard" style="font-size:12px;">⚠ ลงข้อมูลผิดพลาด: ไม่พบหมายเลขสายทาง "${esc(routeNo)}" ในฐานข้อมูลสายทางที่หมวดควบคุม (ดูรายการที่แท็บ "ทางหลวงควบคุม")</span>`;
     return;
   }
   const combinedText = kmInputIds.map(id=>document.getElementById(id)?.value||'').join(' ');
@@ -2015,9 +2023,9 @@ function validateRouteKmMulti(routeSelId, kmInputIds, msgId){
   }
   const bad = kms.filter(k=>!kmInRoute(route,k));
   if(bad.length){
-    msg.innerHTML = `<span class="hazard" style="font-size:12px;">⚠ ลงข้อมูลผิดพลาด: กม.${bad.map(kmFmt).join(', ')} อยู่นอกช่วงที่หมวดควบคุมของ ทล.${route.routeNo} (${routeRangeLabel(route)}) กรุณาตรวจสอบเลข กม.</span>`;
+    msg.innerHTML = `<span class="hazard" style="font-size:12px;">⚠ ลงข้อมูลผิดพลาด: กม.${bad.map(kmFmt).join(', ')} อยู่นอกช่วงที่หมวดควบคุมของ ทล.${esc(route.routeNo)} (${routeRangeLabel(route)}) กรุณาตรวจสอบเลข กม.</span>`;
   } else {
-    msg.innerHTML = `<span style="color:var(--success);font-size:12px;">✓ กม. อยู่ในช่วงควบคุมของ ทล.${route.routeNo} (${route.section})</span>`;
+    msg.innerHTML = `<span style="color:var(--success);font-size:12px;">✓ กม. อยู่ในช่วงควบคุมของ ทล.${esc(route.routeNo)} (${esc(route.section)})</span>`;
   }
 }
 function validateRouteKm(routeSelId, kmInputId, msgId){ validateRouteKmMulti(routeSelId, [kmInputId], msgId); }
@@ -2050,7 +2058,7 @@ function routeLabelPrefix(routeSelId){
   const office = officeRouteOption(routeNo);
   if(office) return `${office.label} `;
   const route = findRoute(routeNo);
-  return route ? `ทล.${route.routeNo} (${route.section}) ` : '';
+  return route ? `ทล.${esc(route.routeNo)} (${esc(route.section)}) ` : '';
 }
 function renderRoutes(){
   populateRouteSelects();
@@ -2070,9 +2078,9 @@ function renderRoutes(){
   if(!bodyEl) return;
   bodyEl.innerHTML = controlledRoutes.map(r=>`
     <tr>
-      <td>${r.routeNo}</td>
-      <td>${r.controlNo || '—'}</td>
-      <td>${r.section}</td>
+      <td>${esc(r.routeNo)}</td>
+      <td>${esc(r.controlNo || '—')}</td>
+      <td>${esc(r.section)}</td>
       <td>${routeRangeLabel(r).split(' , ').join('<br>')}</td>
       <td class="num">${fmtNum(r.distActual,3)}</td>
       <td class="num">${fmtNum(r.dist2Lane,3)}</td>
@@ -2241,7 +2249,7 @@ function populateLogin(){
   const logoutBtn = document.getElementById('logout-btn');
   const s = __getSharedSession();
   if(s && s.name){
-    badge.innerHTML = s.name + (s.position ? '<span class="um-position">ตำแหน่ง '+s.position+'</span>' : '') + ((window.FBL && FBL.permBadgeHtml) ? FBL.permBadgeHtml() : '');
+    badge.innerHTML = esc(s.name) + (s.position ? '<span class="um-position">ตำแหน่ง '+esc(s.position)+'</span>' : '') + ((window.FBL && FBL.permBadgeHtml) ? FBL.permBadgeHtml() : '');
     badge.className = 'pill ' + (isAdmin() ? 'pill-ok' : 'pill-warn');
     if(logoutBtn) logoutBtn.style.display = 'flex';
   } else {
@@ -2360,15 +2368,15 @@ function renderEnc(filter){
     let actionBtn = '';
     if(isAdmin() && !e.cleared){
       actionBtn = e.stage<4
-        ? `<button class="btn btn-ghost btn-sm" onclick="advanceEnc('${e.code}', event)">เลื่อนขั้นถัดไป</button>`
-        : `<button class="btn btn-ghost btn-sm" onclick="markEncCleared('${e.code}', event)">✓ รื้อถอนแล้ว</button>`;
+        ? `<button class="btn btn-ghost btn-sm" onclick="advanceEnc('${jsArg(e.code)}', event)">เลื่อนขั้นถัดไป</button>`
+        : `<button class="btn btn-ghost btn-sm" onclick="markEncCleared('${jsArg(e.code)}', event)">✓ รื้อถอนแล้ว</button>`;
     }
     return `<tr>
-      <td>${e.code}</td>
-      <td><div class="person"><div class="p-avatar">${e.name.slice(0,1)}</div><div class="p-name">${e.name}</div></div></td>
-      <td>${e.km}</td>
+      <td>${esc(e.code)}</td>
+      <td><div class="person"><div class="p-avatar">${esc(e.name.slice(0,1))}</div><div class="p-name">${esc(e.name)}</div></div></td>
+      <td>${esc(e.km)}</td>
       <td>${e.dist.toFixed(1)}</td>
-      <td>${e.structure}</td>
+      <td>${esc(e.structure)}</td>
       <td>${stagePill}</td>
       <td>${dueCell}</td>
       <td>${actionBtn}</td>
@@ -2527,7 +2535,7 @@ function bmmMatchesMonth(e, monthSel){
 function bmmRowHtml(e, groupClass, showUnit){
   return `
     <tr class="${groupClass||''}">
-      <td>${e.code}</td><td>${e.name}</td>${showUnit ? `<td>${e.unit || '-'}</td>` : ''}
+      <td>${esc(e.code)}</td><td>${esc(e.name)}</td>${showUnit ? `<td>${esc(e.unit || '-')}</td>` : ''}
       <td>${e.kind==='plan' ? '<span class="pill pill-in">แผน</span>' : '<span class="pill pill-out">ผล</span>'}</td>
       <td class="num">${fmtNum(e.qty,2)}</td>
       <td class="num">${fmtNum(bmmBudget(e),2)}${bmmSupplementTotal(e)>0 ? `<br><span style="font-size:10px;color:var(--orange-600);font-weight:600;white-space:nowrap;">+เพิ่มเติม ${fmtNum(bmmSupplementTotal(e),0)}</span>` : ''}</td>
@@ -2614,10 +2622,10 @@ function renderBmmTable(){
       </div>`;
     }
     return `
-    <div class="bmm-main-row" onclick="toggleBmmMain('${code}')">
+    <div class="bmm-main-row" onclick="toggleBmmMain('${jsArg(code)}')">
       <span class="bmm-main-chevron ${expanded?'open':''}">▸</span>
       <div style="width:260px;flex-shrink:0;">
-        <div style="font-family:'Kanit';font-weight:600;color:var(--navy-900);">${code} · ${bmmMainName(code)}</div>
+        <div style="font-family:'Kanit';font-weight:600;color:var(--navy-900);">${esc(code)} · ${esc(bmmMainName(code))}</div>
         <div style="font-size:10.5px;color:var(--ink-400);margin-top:2px;">${subOfThis.length} รายการย่อย (ตามตัวกรอง)</div>
       </div>
       <div class="bmm-progress-track" style="flex:1;">
@@ -2673,7 +2681,7 @@ function renderBfSuppList(){
   box.innerHTML = __bfSuppDraft.map((s,i)=>`
     <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;font-size:12.5px;background:#fff;">
       <span style="color:var(--ink-600);white-space:nowrap;">${s.date ? fmtDateShort(s.date) : '-'}</span>
-      <span style="flex:1;color:var(--ink-600);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.ref || ''}</span>
+      <span style="flex:1;color:var(--ink-600);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(s.ref || '')}</span>
       <span style="font-weight:700;color:var(--navy-800);white-space:nowrap;">+${fmtNum(s.amount,2)} บ.</span>
       <button type="button" class="modal-close" style="padding:2px;" onclick="removeBfSupplement(${i})">✕</button>
     </div>
@@ -2838,7 +2846,7 @@ function renderRoutineKpiBand(){
     const job = findJob(matches[0]?.code);
     __todaysCrewStatus[c.id] = {
       working,
-      jobLine: working ? matches.map(d=>`${d.code}${job?' '+job.name:''} · ${d.loc}`).join(' · ') : ''
+      jobLine: working ? matches.map(d=>`${esc(d.code)}${job?' '+esc(job.name):''} · ${esc(d.loc)}`).join(' · ') : ''
     };
   });
 
@@ -2885,12 +2893,12 @@ function renderCrewList(){
     return `
     <button type="button" class="crew-card" onclick="openCrewModal(${c.id})">
       <span class="crew-status-pill ${status.working?'working':'idle'}">${status.working?'● กำลังปฏิบัติงาน':'○ ว่างวันนี้'}</span>
-      <div class="crew-card-name" style="margin-top:9px;">${c.name}</div>
+      <div class="crew-card-name" style="margin-top:9px;">${esc(c.name)}</div>
       <div class="crew-card-footer">
-        <span class="crew-leader-compact"><span class="crew-leader-tag">หน.</span>${c.leader||'—'}</span>
+        <span class="crew-leader-compact"><span class="crew-leader-tag">หน.</span>${esc(c.leader||'—')}</span>
         <span class="crew-count-badge">${total} คน</span>
       </div>
-      <div class="crew-avatar-stack">${initials.map(i=>`<div class="crew-avatar">${i}</div>`).join('')}</div>
+      <div class="crew-avatar-stack">${initials.map(i=>`<div class="crew-avatar">${esc(i)}</div>`).join('')}</div>
       <div class="crew-job-line ${status.working?'':'idle'}">${status.working ? status.jobLine : 'ไม่ได้ลงพื้นที่วันนี้'}</div>
     </button>`;
   }).join('');
@@ -2909,8 +2917,8 @@ function renderCrewLeaderSuggest(){
   } else {
     box.innerHTML = matches.map(n=>{
       const other = findPersonCrew(n, __crewDraft.id);
-      const tag = other ? ` <span style="color:var(--ink-400);font-size:11px;">(อยู่ชุด ${other.name} แล้ว)</span>` : '';
-      return `<div style="padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectCrewLeader('${n.replace(/'/g,"\\'")}')">${n}${tag}</div>`;
+      const tag = other ? ` <span style="color:var(--ink-400);font-size:11px;">(อยู่ชุด ${esc(other.name)} แล้ว)</span>` : '';
+      return `<div style="padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectCrewLeader('${jsArg(n)}')">${esc(n)}${tag}</div>`;
     }).join('');
   }
   box.classList.remove('hidden');
@@ -2939,8 +2947,8 @@ function renderCrewMemberSuggest(){
   } else {
     box.innerHTML = matches.map(n=>{
       const other = findPersonCrew(n, __crewDraft.id);
-      const tag = other ? ` <span style="color:var(--ink-400);font-size:11px;">(อยู่ชุด ${other.name} แล้ว)</span>` : '';
-      return `<div style="padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectDraftMember('${n.replace(/'/g,"\\'")}')">${n}${tag}</div>`;
+      const tag = other ? ` <span style="color:var(--ink-400);font-size:11px;">(อยู่ชุด ${esc(other.name)} แล้ว)</span>` : '';
+      return `<div style="padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectDraftMember('${jsArg(n)}')">${esc(n)}${tag}</div>`;
     }).join('');
   }
   box.classList.remove('hidden');
@@ -2963,7 +2971,7 @@ function renderCrewModalMembers(){
   const el = document.getElementById('crew-modal-members');
   if(!el || !__crewDraft) return;
   const editable = isAdmin();
-  el.innerHTML = __crewDraft.members.map((m,i)=>`<span class="crew-member-chip">${m}${editable?` <button type="button" onclick="removeDraftMember(${i})">✕</button>`:''}</span>`).join('')
+  el.innerHTML = __crewDraft.members.map((m,i)=>`<span class="crew-member-chip">${esc(m)}${editable?` <button type="button" onclick="removeDraftMember(${i})">✕</button>`:''}</span>`).join('')
     || '<span style="color:var(--ink-400);font-size:12px;">ยังไม่มีสมาชิก</span>';
   const countEl = document.getElementById('crew-modal-member-count');
   if(countEl){
@@ -3162,25 +3170,38 @@ function latestFuelPriceX(fuelType){
   txs.sort((a,b)=> b.date.localeCompare(a.date) || (b.id-a.id));
   return txs[0].unitPrice;
 }
-/* บันทึกรายการเบิกน้ำมัน/พัสดุ (จากใบสั่งการรายวัน) ขึ้นฐานข้อมูลกลางตรงๆ — เดิมเขียนผ่าน
-   localStorage คีย์ของระบบรองที่ 3 แต่ตั้งแต่ระบบรองที่ 3 ย้ายไปใช้ backend จริงแล้ว
-   (ไม่อ่าน localStorage อีกต่อไป) ต้องเขียนผ่าน apiPost ตรงๆ แทน ไม่ใช่ fire-and-forget —
-   ผู้เรียก (proceedSaveDailyEntry) ต้อง await ฟังก์ชันนี้เพื่อรู้ผลว่าสำเร็จหรือไม่ */
-async function pushToSubsys3(fuelTx, materialTx){
-  for(const t of fuelTx){
-    const saved = await apiPost('add', 'fuel_transactions', {
-      vehicleId:t.vehicle, fuelType:t.fuelType, kind:t.kind, date:t.date, qty:t.liters, note:t.note||'',
-      relatedDailyWorkOrderId: t.sourceDailyId!=null ? String(t.sourceDailyId) : undefined
-    });
-    __subsys3FuelTx.push(subsys3FuelTxFromApi(saved));
-  }
-  for(const t of materialTx){
-    const saved = await apiPost('add', 'material_transactions', {
-      materialId:t.itemCode, type:t.kind, qty:t.qty, date:t.date, note:t.note||'',
-      relatedDailyWorkOrderId: t.sourceDailyId!=null ? String(t.sourceDailyId) : undefined
-    });
-    __subsys3MaterialTx.push(subsys3MatTxFromApi(saved));
-  }
+/* สร้างคำสั่งเพิ่มรายการเบิกน้ำมัน/พัสดุ (จากใบสั่งการรายวัน) สำหรับส่งใน apiBatch ชุดเดียวกับใบสั่งการ
+   — ไม่เขียนอะไรเอง คืนเฉพาะรายการคำสั่ง; ตัวแปรหน้าเว็บอัปเดตหลัง batch สำเร็จเท่านั้น (ดู applySubsys3BatchResult) */
+function buildSubsys3AddOps(fuelTx, materialTx){
+  const ops = [];
+  fuelTx.forEach(t=> ops.push({ action:'add', table:'fuel_transactions', data:{
+    vehicleId:t.vehicle, fuelType:t.fuelType, kind:t.kind, date:t.date, qty:t.liters, note:t.note||'',
+    relatedDailyWorkOrderId: t.sourceDailyId!=null ? String(t.sourceDailyId) : undefined } }));
+  materialTx.forEach(t=> ops.push({ action:'add', table:'material_transactions', data:{
+    materialId:t.itemCode, type:t.kind, qty:t.qty, date:t.date, note:t.note||'',
+    relatedDailyWorkOrderId: t.sourceDailyId!=null ? String(t.sourceDailyId) : undefined } }));
+  return ops;
+}
+/* ทำให้ตัวแปรคลังในหน้าตรงกับผลของ batch ที่สำเร็จแล้ว (เรียกหลัง await apiBatch สำเร็จเท่านั้น) */
+function applySubsys3BatchResult(ops, results){
+  ops.forEach((op, i)=>{
+    const r = results[i];
+    if(op.table==='fuel_transactions'){
+      if(op.action==='add') __subsys3FuelTx.push(subsys3FuelTxFromApi(r));
+      else if(op.action==='delete') __subsys3FuelTx = __subsys3FuelTx.filter(t=>String(t.id)!==String(op.id));
+    } else if(op.table==='material_transactions'){
+      if(op.action==='add') __subsys3MaterialTx.push(subsys3MatTxFromApi(r));
+      else if(op.action==='delete') __subsys3MaterialTx = __subsys3MaterialTx.filter(t=>String(t.id)!==String(op.id));
+    }
+  });
+}
+/* คำสั่งลบรายการเบิกน้ำมัน/พัสดุทั้งหมดที่ผูกกับใบสั่งการนี้ — หาจากเซิร์ฟเวอร์โดยตรง (ไม่เชื่อตัวแปรในหน้า)
+   ถ้าเน็ตหลุด จะ throw ทันที ผู้เรียกต้องหยุดบันทึก toTrash=false ตอนแก้ไข (ลบเพื่อบันทึกทับ), true ตอนลบทั้งใบ */
+async function buildSubsys3DeleteOps(orderId, toTrash){
+  const found = await FBL.findDailyOrderTx(orderId);
+  const opts = toTrash===false ? {trash:false} : undefined;
+  return found.fuel.map(t=>({ action:'delete', table:'fuel_transactions', id:t.id, options:opts }))
+    .concat(found.material.map(t=>({ action:'delete', table:'material_transactions', id:t.id, options:opts })));
 }
 function checkDwLeaveConflict(){
   const msg = document.getElementById('dw-leave-msg');
@@ -3190,7 +3211,7 @@ function checkDwLeaveConflict(){
   const leaves = getLeaveHistoryX();
   const onLeave = dwSelectedStaff.filter(name=> leaves.some(l=> l.name===name && l.from<=date && date<=l.to));
   msg.innerHTML = onLeave.length
-    ? `<div class="op-warn-box op-warn-danger"><span class="op-warn-icon">🚫</span><span class="op-warn-text"><b>${onLeave.join(', ')}</b> มีบันทึกการลาในวันที่เลือก<br>ระบบจะไม่ให้บันทึกจนกว่าจะแก้ไขวันที่หรือรายชื่อ</span></div>`
+    ? `<div class="op-warn-box op-warn-danger"><span class="op-warn-icon">🚫</span><span class="op-warn-text"><b>${esc(onLeave.join(', '))}</b> มีบันทึกการลาในวันที่เลือก<br>ระบบจะไม่ให้บันทึกจนกว่าจะแก้ไขวันที่หรือรายชื่อ</span></div>`
     : '';
 }
 /* กันเจ้าหน้าที่คนเดียวกันถูกเลือกไปทำงานคนละรหัสงานในวันเดียวกัน (ใบสั่งการรายวันคนละใบ)
@@ -3225,7 +3246,7 @@ function checkDwJobConflict(){
   const conflicts = getDwJobConflicts();
   if(!conflicts.length){ msg.innerHTML=''; return; }
   const groups = groupDwJobConflicts(conflicts, dwSelectedStaff.length);
-  const lines = groups.map(g=>`<b>${g.label}</b> เลือกไว้แล้วในรหัสงาน ${g.code} วันเดียวกัน`);
+  const lines = groups.map(g=>`<b>${esc(g.label)}</b> เลือกไว้แล้วในรหัสงาน ${esc(g.code)} วันเดียวกัน`);
   msg.innerHTML = `<div class="op-warn-box"><span class="op-warn-icon">⚠️</span><span class="op-warn-text">${lines.join('<br>')}<br>ถ้าไม่ใช่การคีย์ผิด สามารถกดยืนยันบันทึกต่อได้ตอนกดบันทึก</span></div>`;
 }
 
@@ -3254,7 +3275,7 @@ function renderDwStaffSuggest(){
   } else {
     box.innerHTML = matches.map(n=>{
       const cr = crewLabelOf(n);
-      return `<div style="padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectDwStaff('${n.replace(/'/g,"\\'")}')">${n}${cr?` <span style="color:var(--ink-400);font-size:11px;">(${cr})</span>`:''}</div>`;
+      return `<div style="padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectDwStaff('${jsArg(n)}')">${esc(n)}${cr?` <span style="color:var(--ink-400);font-size:11px;">(${esc(cr)})</span>`:''}</div>`;
     }).join('');
   }
   box.classList.remove('hidden');
@@ -3296,7 +3317,7 @@ function renderDwStaffChips(){
   box.innerHTML = dwSelectedStaff.map(n=>{
     const cr = crewLabelOf(n);
     const isDup = dupSet.has(normName(n));
-    return `<span class="staff-chip${isDup?' staff-chip-dup':''}"${isDup?' title="ชื่อนี้ถูกเลือกซ้ำ"':''}>${n}${cr?` <span class="crew-tag">· ${cr}</span>`:''}${isDup?' <span class="crew-tag" style="color:#c0392b;">⚠ ซ้ำ</span>':''}<span class="x" onclick="removeDwStaff('${n.replace(/'/g,"\\'")}')">✕</span></span>`;
+    return `<span class="staff-chip${isDup?' staff-chip-dup':''}"${isDup?' title="ชื่อนี้ถูกเลือกซ้ำ"':''}>${esc(n)}${cr?` <span class="crew-tag">· ${esc(cr)}</span>`:''}${isDup?' <span class="crew-tag" style="color:#c0392b;">⚠ ซ้ำ</span>':''}<span class="x" onclick="removeDwStaff('${jsArg(n)}')">✕</span></span>`;
   }).join('') || `<span style="font-size:12px;color:var(--ink-400);">ยังไม่ได้เพิ่มเจ้าหน้าที่</span>`;
 }
 /* เพิ่มแรงงานทั้งชุด: กันชื่อซ้ำด้วย dwStaffIncludes (ตัดช่องว่างส่วนเกิน) และดึงเครื่องจักรที่มีชื่อคนนั้นเป็น "ผู้รับผิดชอบ" ขึ้นมาในรายการเครื่องจักรให้อัตโนมัติ
@@ -3340,7 +3361,7 @@ function renderDwJobSuggest(){
   if(!matches.length){
     box.innerHTML = `<div style="padding:9px 12px;color:var(--ink-400);font-size:13px;">ไม่พบรหัสงานที่ตรงกับคำค้น</div>`;
   } else {
-    box.innerHTML = matches.map(j=>`<div class="dw-job-opt" style="padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectDwJob('${j.code}')"><b>${j.code}</b> — ${j.name}</div>`).join('');
+    box.innerHTML = matches.map(j=>`<div class="dw-job-opt" style="padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectDwJob('${jsArg(j.code)}')"><b>${esc(j.code)}</b> — ${esc(j.name)}</div>`).join('');
   }
   box.classList.remove('hidden');
 }
@@ -3418,7 +3439,7 @@ function populateDwUnitOptions(code, preselect){
   const rawUnit = ref ? (ref.unit||'') : '';
   const units = rawUnit ? rawUnit.split(',').map(s=>s.trim()).filter(Boolean) : [];
   sel.innerHTML = units.length
-    ? units.map(u=>`<option value="${u}">${u}</option>`).join('')
+    ? units.map(u=>`<option value="${esc(u)}">${esc(u)}</option>`).join('')
     : `<option value="">-</option>`;
   sel.disabled = units.length===0;
   if(preselect && units.includes(preselect)) sel.value = preselect;
@@ -3435,7 +3456,7 @@ function renderBfJobSuggest(){
   if(!matches.length){
     box.innerHTML = `<div style="padding:9px 12px;color:var(--ink-400);font-size:13px;">ไม่พบรหัสงานที่ตรงกับคำค้น</div>`;
   } else {
-    box.innerHTML = matches.map(j=>`<div class="dw-job-opt" style="padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectBfJob('${j.code}','${(j.unit||'').replace(/'/g,"\\'")}')"><b>${j.code}</b> — ${j.name} (${j.unit})</div>`).join('');
+    box.innerHTML = matches.map(j=>`<div class="dw-job-opt" style="padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectBfJob('${jsArg(j.code)}','${jsArg(j.unit||'')}')"><b>${esc(j.code)}</b> — ${esc(j.name)} (${esc(j.unit)})</div>`).join('');
   }
   box.classList.remove('hidden');
 }
@@ -3471,7 +3492,7 @@ function renderDwPartSuggest(idx){
   const q = (document.getElementById('dw-part-search-'+idx).value||'').trim().toLowerCase();
   let matches = getMaterialsX();
   if(q) matches = matches.filter(m=> m.code.toLowerCase().includes(q) || m.name.toLowerCase().includes(q));
-  box.innerHTML = matches.length ? matches.map(m=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectDwPart(${idx},'${m.code}')"><b>${m.code}</b> — ${m.name} <span style="color:var(--ink-400);">(${m.accountType||'ในบัญชี'}, คงเหลือ ${fmtNum(m.stock,1)} ${m.unit}${m.unitPrice?', '+fmtNum(m.unitPrice,2)+' บาท/'+m.unit:''})</span></div>`).join('')
+  box.innerHTML = matches.length ? matches.map(m=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectDwPart(${idx},'${jsArg(m.code)}')"><b>${esc(m.code)}</b> — ${esc(m.name)} <span style="color:var(--ink-400);">(${esc(m.accountType||'ในบัญชี')}, คงเหลือ ${fmtNum(m.stock,1)} ${esc(m.unit)}${m.unitPrice?', '+fmtNum(m.unitPrice,2)+' บาท/'+esc(m.unit):''})</span></div>`).join('')
     : `<div style="padding:9px 12px;color:var(--ink-400);font-size:13px;">ไม่พบพัสดุที่ตรงกับคำค้น</div>`;
   box.classList.remove('hidden');
 }
@@ -3487,7 +3508,7 @@ function selectDwPart(idx, code){
 }
 function populateDwCrewVehicle(){
   const bulkSel = document.getElementById('dw-crew-bulk');
-  if(bulkSel) bulkSel.innerHTML = '<option value="">+ เพิ่มทั้งชุด…</option>' + fieldCrews.map(c=>`<option value="${c.id}">${c.name} (หัวหน้าชุด ${c.leader})</option>`).join('');
+  if(bulkSel) bulkSel.innerHTML = '<option value="">+ เพิ่มทั้งชุด…</option>' + fieldCrews.map(c=>`<option value="${c.id}">${esc(c.name)} (หัวหน้าชุด ${esc(c.leader)})</option>`).join('');
 }
 /* ============================================================
    เครื่องจักร/รถที่ใช้ — เลือกได้หลายรายการในใบสั่งการเดียว (เช่น เบิกเครื่องตัดหญ้าพร้อมกัน 6 เครื่อง)
@@ -3619,7 +3640,7 @@ function renderDwVehSuggest(idx){
   let matches = getVehiclesX().filter(v=> !used.includes(v.id));
   if(q) matches = matches.filter(v=> v.label.toLowerCase().includes(q) || (v.note||'').toLowerCase().includes(q));
   matches = matches.slice(0,30);
-  box.innerHTML = matches.length ? matches.map(v=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectDwVeh(${idx},${v.id})">${v.label}</div>`).join('')
+  box.innerHTML = matches.length ? matches.map(v=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectDwVeh(${idx},${v.id})">${esc(v.label)}</div>`).join('')
     : `<div style="padding:9px 12px;color:var(--ink-400);font-size:13px;">ไม่พบรายการที่ตรงกับคำค้น หรือเพิ่มไว้แล้วทุกเครื่อง</div>`;
   box.classList.remove('hidden');
 }
@@ -3646,7 +3667,7 @@ function updateDwVehOperatorHint(idx, v){
   if(opName && staffHasApprovedLeaveOnDate(opName, date)){
     hintEl.innerHTML = `<div class="op-warn-box">
       <span class="op-warn-icon">⚠️</span>
-      <span class="op-warn-text"><b>${opName}</b> (ผู้รับผิดชอบเครื่องจักรนี้ตามทะเบียน) มีบันทึกการลาในวันที่เลือก ระบบจึงไม่เติมชื่อให้อัตโนมัติ</span>
+      <span class="op-warn-text"><b>${esc(opName)}</b> (ผู้รับผิดชอบเครื่องจักรนี้ตามทะเบียน) มีบันทึกการลาในวันที่เลือก ระบบจึงไม่เติมชื่อให้อัตโนมัติ</span>
     </div>`;
     hintEl.classList.remove('hidden');
   } else {
@@ -3744,7 +3765,7 @@ function suggestRentCost(){
   const parts = rows.map(r=>{
     const daily = r.vehicle.monthlyRent/dim;
     sum += daily;
-    return `${r.vehicle.label.split(' — ')[0]} ${fmtNum(daily,2)}`;
+    return `${esc(r.vehicle.label.split(' — ')[0])} ${fmtNum(daily,2)}`;
   });
   const totalLine = `ค่าเช่าเฉลี่ยต่อวัน (อัตราแขวง ÷ ${dim} วันของเดือนนี้) รวม <b>${fmtNum(sum,2)}</b> บาท (${rows.length} รายการ, ดึงอัตโนมัติแล้ว — แก้ไขเองได้ถ้าไม่ตรง)`;
   /* หลายเครื่อง (เช่น เบิกเครื่องตัดหญ้าพร้อมกันหลายเครื่อง) ทำให้บรรทัดคำนวณยาวมาก — ย่อไว้เป็นค่าเริ่มต้น กดดูรายละเอียดเพื่อขยาย */
@@ -3772,7 +3793,7 @@ function suggestLaborCost(){
     if(s && s.rate){ sum += s.rate; } else missing.push(name);
   });
   if(sum<=0 && !missing.length && !alreadyCounted.length){ hint.innerHTML=''; refreshDwAccBadges(); return; }
-  const dupNote = alreadyCounted.length ? `<div style="color:var(--ink-400);margin-top:2px;">⚠ ${alreadyCounted.map(c=>`${c.name} (นับค่าแรงไปแล้วในรหัสงาน ${c.code} วันเดียวกัน — ไม่บวกซ้ำให้อัตโนมัติ)`).join(', ')}</div>` : '';
+  const dupNote = alreadyCounted.length ? `<div style="color:var(--ink-400);margin-top:2px;">⚠ ${alreadyCounted.map(c=>`${esc(c.name)} (นับค่าแรงไปแล้วในรหัสงาน ${esc(c.code)} วันเดียวกัน — ไม่บวกซ้ำให้อัตโนมัติ)`).join(', ')}</div>` : '';
   hint.innerHTML = (sum>0 ? `รวมอัตราค่าจ้าง/วัน (เฉพาะลูกจ้างชั่วคราวที่มีอัตรา): <b>${fmtNum(sum,2)}</b> บาท (ดึงจากฐานข้อมูลเจ้าหน้าที่อัตโนมัติแล้ว — แก้ไขเองได้ถ้าไม่ตรง)` : '') + dupNote;
   /* ดึงอัตโนมัติ — เติมค่าให้ทันที ไม่ต้องกดปุ่ม (ต่างจาก 3 ช่องอื่นที่ยังเป็นแค่คำแนะนำให้กดใช้เอง)
      ผู้ใช้ยังแก้ไขตัวเลขในช่องได้ตามปกติหลังจากนี้ ถ้าค่าที่ดึงมาไม่ตรงกับความเป็นจริง */
@@ -3852,7 +3873,7 @@ function renderUcJobSuggest(){
   let matches = leafJobCodes();
   if(q) matches = matches.filter(j=> j.code.toLowerCase().includes(q) || j.name.toLowerCase().includes(q));
   matches = matches.slice(0,30);
-  box.innerHTML = matches.length ? matches.map(j=>`<div style="padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectUcJob('${j.code}')"><b>${j.code}</b> — ${j.name} (${j.unit})</div>`).join('')
+  box.innerHTML = matches.length ? matches.map(j=>`<div style="padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectUcJob('${jsArg(j.code)}')"><b>${esc(j.code)}</b> — ${esc(j.name)} (${esc(j.unit)})</div>`).join('')
     : `<div style="padding:9px 12px;color:var(--ink-400);font-size:13px;">ไม่พบรหัสงานที่ตรงกับคำค้น</div>`;
   box.classList.remove('hidden');
 }
@@ -3941,7 +3962,7 @@ function renderUcMatSuggest(idx){
   let matches = getMaterialsX();
   if(q) matches = matches.filter(m=> m.code.toLowerCase().includes(q) || m.name.toLowerCase().includes(q));
   matches = matches.slice(0,30);
-  box.innerHTML = matches.length ? matches.map(m=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectUcMat(${idx},'${m.code}')"><b>${m.code}</b> — ${m.name} <span style="color:var(--ink-400);">(${fmtNum(m.unitPrice||0,2)} บาท/${m.unit})</span></div>`).join('')
+  box.innerHTML = matches.length ? matches.map(m=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectUcMat(${idx},'${jsArg(m.code)}')"><b>${esc(m.code)}</b> — ${esc(m.name)} <span style="color:var(--ink-400);">(${fmtNum(m.unitPrice||0,2)} บาท/${esc(m.unit)})</span></div>`).join('')
     : `<div style="padding:9px 12px;color:var(--ink-400);font-size:13px;">ไม่พบพัสดุที่ตรงกับคำค้น</div>`;
   box.classList.remove('hidden');
 }
@@ -4006,7 +4027,7 @@ function renderUcVehSuggest(idx){
   let matches = getVehiclesX();
   if(q) matches = matches.filter(v=> v.label.toLowerCase().includes(q));
   matches = matches.slice(0,30);
-  box.innerHTML = matches.length ? matches.map(v=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectUcVeh(${idx},${v.id})">${v.label}</div>`).join('')
+  box.innerHTML = matches.length ? matches.map(v=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectUcVeh(${idx},${v.id})">${esc(v.label)}</div>`).join('')
     : `<div style="padding:9px 12px;color:var(--ink-400);font-size:13px;">ไม่พบรายการที่ตรงกับคำค้น</div>`;
   box.classList.remove('hidden');
 }
@@ -4276,9 +4297,9 @@ function renderDailyLog(){
     ].join('');
     return `<tr>
       <td>${fmtDateShort(d.date)}</td>
-      <td>${d.code}${job?'<span class="dw-job-name" title="'+job.name.replace(/"/g,'&quot;')+'">'+job.name+'</span>':''}</td>
-      <td><div class="dw-loc-main">${d.loc}</div>${summaryBadges?'<div class="dw-summary-row">'+summaryBadges+'</div>':''}</td>
-      <td>${d.qtyPending ? '<span class="pill pill-warn">รอปริมาณงาน</span>' : fmtNum(d.qty,2)+(d.unit?' '+d.unit:'')}</td>
+      <td>${esc(d.code)}${job?'<span class="dw-job-name" title="'+esc(job.name)+'">'+esc(job.name)+'</span>':''}</td>
+      <td><div class="dw-loc-main">${esc(d.loc)}</div>${d.note?'<div style="font-size:11.5px;color:var(--ink-400);">📝 '+esc(d.note)+'</div>':''}${summaryBadges?'<div class="dw-summary-row">'+summaryBadges+'</div>':''}</td>
+      <td>${d.qtyPending ? '<span class="pill pill-warn">รอปริมาณงาน</span>' : fmtNum(d.qty,2)+(d.unit?' '+esc(d.unit):'')}</td>
       <td>${fmtNum(d.material,2)}</td>
       <td>${fmtNum(d.labor,2)}</td>
       <td>${fmtNum(d.rent,2)}</td>
@@ -4329,13 +4350,16 @@ function deleteDailyEntry(no){
     'รายการน้ำมัน/วัสดุที่เบิกตามใบสั่งการนี้ในระบบพัสดุ/น้ำมัน (พ.1-02/พ.1-03) จะถูกลบไปด้วย',
     'ลบรายการ',
     async function(){
+      /* ลบใบสั่งการ + รายการตัดน้ำมัน/วัสดุที่ผูกกัน ใน batch เดียว (ถังขยะชุดเดียวกัน) — ลบหมดหรือไม่ลบเลย */
       try{
-        await apiPost('delete', 'daily_work_orders', null, d.__backendId);
+        const ops = [{ action:'delete', table:'daily_work_orders', id:d.__backendId }]
+          .concat(await buildSubsys3DeleteOps(d.__backendId, true));
+        const results = await apiBatch(ops);
+        applySubsys3BatchResult(ops, results);
       }catch(err){
-        alert('ลบใบสั่งการรายวันในฐานข้อมูลกลางไม่สำเร็จ: ' + err.message);
+        alert('ลบใบสั่งการรายวันไม่สำเร็จ — ยังไม่มีอะไรถูกลบ ข้อมูลทุกอย่างอยู่ครบเหมือนเดิม\nสาเหตุ: ' + err.message + '\nตรวจสอบสัญญาณอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง');
         return;
       }
-      await removeSubsys3TxBySource(d.__backendId);
       const idx = dailyWorkOrders.findIndex(x=>x.no===no);
       if(idx>-1) dailyWorkOrders.splice(idx,1);
       renderAll();
@@ -4363,6 +4387,8 @@ function toggleDailyForm(){
   document.getElementById('dw-job-search').value = '';
   document.getElementById('dw-loc').value = '';
   document.getElementById('dw-loc-end').value = '';
+  document.getElementById('dw-note').value = '';
+  document.getElementById('dw-case-banner').classList.add('hidden');
   document.getElementById('dw-qty').value = 0;
   document.getElementById('dw-qty').disabled = false;
   document.getElementById('dw-qty-pending').checked = false;
@@ -4413,6 +4439,8 @@ function editDailyEntry(no){
   document.getElementById('dw-loc').value = rec.kmStart || '';
   document.getElementById('dw-loc-end').value = rec.kmEnd || '';
   validateDwKm();
+  document.getElementById('dw-note').value = rec.note || '';
+  document.getElementById('dw-case-banner').classList.add('hidden');
 
   document.getElementById('dw-qty-pending').checked = !!rec.qtyPending;
   document.getElementById('dw-qty').value = rec.qtyPending ? 0 : (rec.qty||0);
@@ -4455,27 +4483,45 @@ function editDailyEntry(no){
   resetDwAccState();
   refreshDwAccBadges();
 }
-/* ล้างรายการเบิกน้ำมัน/พัสดุเดิมของใบสั่งการนี้ในระบบรองที่ 3 (พ.1-03 ฯลฯ) ก่อนเขียนรายการใหม่เข้าไปแทน — ใช้ตอนแก้ไขใบสั่งการรายวันเพื่อไม่ให้ยอดซ้ำ */
-/* ลบรายการเบิกน้ำมัน/พัสดุที่เชื่อมโยงกับใบสั่งการรายวันนี้ออกจากฐานข้อมูลกลาง (เรียกก่อนบันทึกซ้ำ
-   ตอนแก้ไขใบสั่งการ หรือตอนลบใบสั่งการทั้งใบ) — เทียบด้วย relatedDailyWorkOrderId ที่ตั้งไว้ตอนสร้าง */
-/* toTrash=false ตอนแก้ไขใบสั่งการ (ลบเพื่อบันทึกทับ ไม่ต้องเก็บลงถังขยะ), ค่าเริ่มต้น true ตอนลบทั้งใบ
-   (รายการจะอยู่ในถังขยะชุดเดียวกับใบสั่งการ กู้คืนพร้อมกันได้) */
-async function removeSubsys3TxBySource(no, toTrash){
-  const key = String(no);
-  const opts = toTrash===false ? {trash:false} : undefined;
-  const fuelHits = __subsys3FuelTx.filter(t=>t.relatedDailyWorkOrderId===key);
-  const matHits = __subsys3MaterialTx.filter(t=>t.relatedDailyWorkOrderId===key);
-  for(const t of fuelHits){
-    try{ await apiPost('delete', 'fuel_transactions', null, t.id, opts); }
-    catch(e){ console.error('ลบรายการน้ำมันที่เชื่อมโยงกับใบสั่งการนี้ล้มเหลว', e); }
+/* ตรวจรายการตัดน้ำมัน/วัสดุของใบสั่งการที่อาจซ้ำหรือค้าง — แสดงรายการให้คนตรวจเอง ไม่แก้ไข/ลบอะไรอัตโนมัติ
+   ถ้าต้องลบ ให้ลบที่หน้าระบบพัสดุ/น้ำมัน (ระบบที่ 3) ด้วยตัวเองโดยดูรหัสรายการจากตารางนี้ */
+async function openDwTxAudit(){
+  let ov = document.getElementById('dw-audit-overlay');
+  if(!ov){
+    ov = document.createElement('div');
+    ov.id = 'dw-audit-overlay';
+    ov.className = 'modal-overlay no-print';
+    ov.innerHTML = '<div class="modal-box" style="max-width:980px;width:96%;max-height:88vh;overflow:auto;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><h3 style="margin:0;">🔎 ตรวจยอดคลังน้ำมัน/วัสดุที่อาจซ้ำหรือค้าง</h3>'
+      + '<button class="modal-close" onclick="document.getElementById(\'dw-audit-overlay\').classList.add(\'hidden\')">✕</button></div>'
+      + '<div id="dw-audit-body">กำลังตรวจ...</div></div>';
+    document.body.appendChild(ov);
   }
-  for(const t of matHits){
-    try{ await apiPost('delete', 'material_transactions', null, t.id, opts); }
-    catch(e){ console.error('ลบรายการพัสดุที่เชื่อมโยงกับใบสั่งการนี้ล้มเหลว', e); }
+  ov.classList.remove('hidden');
+  const body = document.getElementById('dw-audit-body');
+  body.textContent = 'กำลังตรวจ...';
+  try{
+    const r = await FBL.auditDailyOrderTx();
+    const nm = t => t==='fuel_transactions' ? 'น้ำมัน' : 'วัสดุ';
+    const tbl = (head, rows) => rows.length
+      ? '<div style="overflow:auto"><table class="data-table" style="width:100%;font-size:13px;"><thead><tr>'+head.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'
+        + rows.map(c=>'<tr>'+c.map(x=>'<td>'+esc(x)+'</td>').join('')+'</tr>').join('') + '</tbody></table></div>'
+      : '<div style="color:var(--success,#16794a);padding:6px 0;">ไม่พบรายการ ✔</div>';
+    body.innerHTML =
+      '<div style="font-size:13px;margin-bottom:10px;">ตรวจจากใบสั่งการทั้งหมด '+esc(r.orders)+' ใบ — <b>หน้านี้แสดงอย่างเดียว ไม่ลบหรือแก้ไขอะไรอัตโนมัติ</b> ถ้าพบรายการซ้ำ ให้ตรวจแล้วลบเองที่หน้าระบบพัสดุ/น้ำมัน โดยดูรหัสรายการ</div>'
+      + '<h4>1) รายการตัดคลังที่ใบสั่งการต้นทางไม่มีแล้ว ('+esc(r.orphans.length)+')</h4>'
+      + tbl(['ประเภท','รหัสรายการ','ชี้ไปใบสั่งการ','วันที่','รายการ','จำนวน'], r.orphans.map(o=>[nm(o.table),o.id,o.orderId,o.date,o.item,o.qty]))
+      + '<h4 style="margin-top:14px;">2) ใบสั่งการที่มีรายการตัดคลังมากกว่าที่ระบุไว้ — เสี่ยงยอดซ้ำ ('+esc(r.duplicates.length)+')</h4>'
+      + tbl(['ประเภท','ใบสั่งการ','วันที่','รายการ','ควรมี (แถว/จำนวน)','พบจริง (แถว/จำนวน)','รหัสรายการที่พบ'], r.duplicates.map(o=>[nm(o.table),o.orderId,o.date,o.item,o.wantRows+' / '+o.wantQty,o.gotRows+' / '+o.gotQty,o.ids.join(', ')]))
+      + '<h4 style="margin-top:14px;">3) ใบสั่งการที่ระบุเบิกแต่หาในคลังไม่พบ หรือน้อยกว่าที่ระบุ ('+esc(r.missing.length)+')</h4>'
+      + '<div style="font-size:12px;color:#666;">ใบสั่งการเก่าที่สร้างก่อนมีรหัสผูกกับคลัง อาจขึ้นในข้อนี้ได้โดยไม่ใช่ข้อผิดพลาด</div>'
+      + tbl(['ประเภท','ใบสั่งการ','วันที่','รายการ','ควรมี (แถว/จำนวน)','พบจริง (แถว/จำนวน)'], r.missing.map(o=>[nm(o.table),o.orderId,o.date,o.item,o.wantRows+' / '+o.wantQty,o.gotRows+' / '+o.gotQty]));
+  }catch(err){
+    body.textContent = 'ตรวจไม่สำเร็จ: ' + err.message;
   }
-  __subsys3FuelTx = __subsys3FuelTx.filter(t=>t.relatedDailyWorkOrderId!==key);
-  __subsys3MaterialTx = __subsys3MaterialTx.filter(t=>t.relatedDailyWorkOrderId!==key);
 }
+let __dwCaseDupOk = false;
+function dwCaseToken(text){ const m = String(text||'').match(/\[เคส:[a-z]+:[\w-]+\]/); return m ? m[0] : ''; }
 function saveDailyEntry(){
   if(!isAdmin()) return;
   if(blockIfMonthLocked(document.getElementById('dw-date').value)) return;
@@ -4487,6 +4533,18 @@ function saveDailyEntry(){
   const dwRouteVal = document.getElementById('dw-route').value;
   const isOfficeLoc = !!officeRouteOption(dwRouteVal);
   if(!isOfficeLoc && !kmStart){ alert('กรุณาระบุ กม. ปฏิบัติงาน (เริ่มต้น)'); return; }
+  /* แผน 12: เคสเดียวกันมีใบสั่งการอยู่แล้ว → เตือนก่อน (กันตัดคลังซ้ำ) ผู้ใช้กดบันทึกต่อได้ เช่น ซ่อมหลายวัน */
+  const caseTok = dwCaseToken(document.getElementById('dw-note').value);
+  if(caseTok && !__dwCaseDupOk){
+    const dup = dailyWorkOrders.find(d=> d.no!==__dwEditingNo && dwCaseToken(d.note)===caseTok);
+    if(dup){
+      showConfirmModal('เคสนี้มีใบสั่งการแล้ว',
+        `เคสนี้มีใบสั่งการรายวันอ้างอิงอยู่แล้ว (วันที่ ${dup.date} รหัสงาน ${dup.code})\n\nถ้าเป็นการซ่อมหลายวัน บันทึกต่อได้ แต่ถ้าซ้ำกับใบเดิม ให้ยกเลิกแล้วไปแก้ใบเดิมแทน (กันตัดคลังซ้ำ)`,
+        'บันทึกต่อ', function(){ __dwCaseDupOk = true; saveDailyEntry(); });
+      return;
+    }
+  }
+  __dwCaseDupOk = false;
   if(!confirmRouteSaveMulti('dw-route',['dw-loc','dw-loc-end'])) return;
   const qtyPending = document.getElementById('dw-qty-pending').checked;
   if(!qtyPending && !(+document.getElementById('dw-qty').value>0)){
@@ -4552,32 +4610,32 @@ async function proceedSaveDailyEntry(date, code, kmStart, kmEnd, locText, qtyPen
     material: +document.getElementById('dw-material').value||0,
     labor: +document.getElementById('dw-labor').value||0,
     rent: +document.getElementById('dw-rent').value||0,
-    fuel: +document.getElementById('dw-fuel').value||0
+    fuel: +document.getElementById('dw-fuel').value||0,
+    note: document.getElementById('dw-note').value.trim()
   };
   const dwSaveBtn = document.getElementById('daily-form-save-btn');
   const dwCancelBtn = document.getElementById('daily-form-cancel-btn');
   const dwSaveBtnOrigText = dwSaveBtn ? dwSaveBtn.textContent : '';
   if(dwSaveBtn){ dwSaveBtn.disabled = true; dwSaveBtn.textContent = 'กำลังบันทึก...'; }
   if(dwCancelBtn) dwCancelBtn.disabled = true;
+  /* บันทึกทั้งหมดใน batch เดียว: ใบสั่งการ + ลบรายการตัดคลังเดิม (ถ้าแก้ไข) + เพิ่มรายการตัดคลังใหม่
+     สำเร็จครบทุกอย่าง หรือไม่เปลี่ยนอะไรเลย — ตัวแปรในหน้าอัปเดตหลังสำเร็จเท่านั้น */
   try{
-    if(isEdit){
-      await apiPost('update', 'daily_work_orders', dwoToApi(record));
-      const idx = dailyWorkOrders.findIndex(d=>d.no===recNo);
-      if(idx>-1) dailyWorkOrders[idx] = record; else dailyWorkOrders.push(record);
-      await removeSubsys3TxBySource(record.__backendId, false);
-    } else {
-      const saved = await apiPost('add', 'daily_work_orders', dwoToApi(record));
-      record.__backendId = saved.id;
-      dailyWorkOrders.push(record);
-    }
-    const fuelTx = vehRows.filter(r=>r.liters>0).map(r=>({date, fuelType:r.vehicle.fuelType, kind:'issue', liters:r.liters, vehicle:r.vehicle.label, crew:staffLabel, note:'เบิกตามใบสั่งการรายวัน', sourceDailyId:record.__backendId}));
-    const materialTx = partRows.map(p=>({date, itemCode:p.code, kind:'issue', qty:p.qty, vehicle:vehicleLabels.join(', '), crew:staffLabel, note:'เบิกตามใบสั่งการรายวัน', sourceDailyId:record.__backendId}));
-    if(fuelTx.length || materialTx.length) await pushToSubsys3(fuelTx, materialTx);
+    const orderId = isEdit ? record.__backendId : FBL.newId('daily_work_orders');
+    record.__backendId = orderId;
+    const fuelTx = vehRows.filter(r=>r.liters>0).map(r=>({date, fuelType:r.vehicle.fuelType, kind:'issue', liters:r.liters, vehicle:r.vehicle.label, crew:staffLabel, note:'เบิกตามใบสั่งการรายวัน', sourceDailyId:orderId}));
+    const materialTx = partRows.map(p=>({date, itemCode:p.code, kind:'issue', qty:p.qty, vehicle:vehicleLabels.join(', '), crew:staffLabel, note:'เบิกตามใบสั่งการรายวัน', sourceDailyId:orderId}));
+    const ops = [{ action: isEdit ? 'update' : 'add', table:'daily_work_orders', data:dwoToApi(record) }];
+    if(isEdit) (await buildSubsys3DeleteOps(orderId, false)).forEach(o=>ops.push(o));
+    buildSubsys3AddOps(fuelTx, materialTx).forEach(o=>ops.push(o));
+    const results = await apiBatch(ops);
+    applySubsys3BatchResult(ops.slice(1), results.slice(1));
+    const idx = dailyWorkOrders.findIndex(d=>d.no===recNo);
+    if(idx>-1) dailyWorkOrders[idx] = record; else dailyWorkOrders.push(record);
   }catch(err){
-    alert('บันทึกใบสั่งการรายวันไปยังฐานข้อมูลกลางไม่สำเร็จ: ' + err.message + '\nกรุณาตรวจสอบในตารางใบสั่งการรายวันก่อนว่าบันทึกไปแล้วหรือยัง ก่อนลองบันทึกซ้ำ');
+    alert('บันทึกใบสั่งการรายวันไม่สำเร็จ — ไม่มีข้อมูลใดถูกบันทึก (ใบสั่งการและยอดคลังน้ำมัน/วัสดุอยู่เหมือนเดิมทั้งหมด)\nสาเหตุ: ' + err.message + '\nตรวจสอบสัญญาณอินเทอร์เน็ตแล้วกดบันทึกใหม่ได้เลย ไม่ต้องกลัวข้อมูลซ้ำ');
     if(dwSaveBtn){ dwSaveBtn.disabled = false; dwSaveBtn.textContent = dwSaveBtnOrigText; }
     if(dwCancelBtn) dwCancelBtn.disabled = false;
-    renderAll();
     return;
   }
   __dwEditingNo = null;
@@ -4640,7 +4698,7 @@ function renderRollup(){
         <span style="font-weight:600;color:${pct<50?'var(--orange-600)':'var(--navy-900)'};">${pct}%</span>
       </div>`;
     return `<tr>
-      <td>${r.code}</td><td>${job?job.name:'—'}</td>
+      <td>${esc(r.code)}</td><td>${esc(job?job.name:'—')}</td>
       <td>${fmtNum(r.qty,2)}</td><td>${fmtNum(r.material,2)}</td><td>${fmtNum(r.labor,2)}</td>
       <td>${fmtNum(r.rent,2)}</td><td>${fmtNum(r.fuel,2)}</td><td>${fmtNum(total,2)}</td>
       <td>${pctCell}</td>
@@ -4702,8 +4760,8 @@ function renderEm(filter){
     const pending = __emUpdating.has(e.no);
     return `<tr>
       <td>${e.no}</td>
-      <td>${e.type}</td>
-      <td>${e.loc}</td>
+      <td>${esc(e.type)}</td>
+      <td>${esc(e.loc)}</td>
       <td>${fmtDateTimeShort(e.start)}</td>
       <td>${fmtDateTimeShort(e.lastUpdate)}</td>
       <td>${e.status==='ongoing' ? (nd.overdue?`<span class="hazard">${nd.text}</span>`:`<span class="pill pill-neutral">${nd.text}</span>`) : '<span class="pill pill-neutral">—</span>'}</td>
@@ -4797,6 +4855,50 @@ function __toggleNote(id, btn){
 }
 
 renderAll();
+/* ============================================================
+   แผน 12 — รับข้อมูลเคสอุบัติเหตุ (ปุ่ม "ส่งไปทำใบสั่งการ") ผ่านส่วนท้ายลิงก์ #case=accident&id=…&hw=…&km=…&side=…&d=…
+   - ไม่มีข้อมูลส่วนบุคคล ไม่มีวัสดุ/ราคา — เติมได้เฉพาะ ทล./กม./ฝั่ง/เลขเคส ลงฟอร์ม ไม่บันทึกเอง
+   - อ่านแล้วล้างออกจากแถบที่อยู่ทันที; เก็บใน sessionStorage ไว้ 30 นาทีเผื่อต้องล็อกอินก่อน
+   ============================================================ */
+const CASE_HANDOFF_KEY = 'cn_case_handoff';
+(function stashCaseHandoff(){
+  try{
+    const h = location.hash || '';
+    if(h.indexOf('#case=') !== 0) return;
+    const p = new URLSearchParams(h.slice(1));
+    history.replaceState(null, '', location.pathname + location.search);
+    const clean = s => String(s||'').replace(/[^฀-๿\w\s./()-]/g,'').trim().slice(0,30);
+    const o = { from:p.get('case'), id:String(p.get('id')||''), hw:String(p.get('hw')||''), km:Number(p.get('km')), side:clean(p.get('side')), d:String(p.get('d')||''), t:Date.now() };
+    if(o.from!=='accident' || !/^[\w-]{3,40}$/.test(o.id) || !/^\d{1,4}$/.test(o.hw)) return;
+    if(!isFinite(o.km) || o.km<0 || o.km>2000000) return;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(o.d)) o.d = '';
+    sessionStorage.setItem(CASE_HANDOFF_KEY, JSON.stringify(o));
+  }catch(e){}
+})();
+function applyCaseHandoff(){
+  let o = null;
+  try{
+    o = JSON.parse(sessionStorage.getItem(CASE_HANDOFF_KEY) || 'null');
+    sessionStorage.removeItem(CASE_HANDOFF_KEY);
+  }catch(e){}
+  if(!o || Date.now() - o.t > 30*60*1000) return;
+  if(!isAdmin()){ alert('ข้อมูลเคสอุบัติเหตุที่ส่งมา ใช้ได้เฉพาะผู้มีสิทธิ์แก้ไขระบบที่ 2 (หัวหน้าหมวด/ผู้ช่วย) — ให้ผู้มีสิทธิ์กดปุ่ม "ส่งไปทำใบสั่งการ" จากเคสอีกครั้ง'); return; }
+  document.querySelector('.sec-tab[data-sec="routine"]')?.click();
+  toggleDailyForm();
+  const kmTxt = Math.floor(o.km/1000) + '+' + String(Math.round(o.km%1000)).padStart(3,'0');
+  const routeSel = document.getElementById('dw-route');
+  const hasRoute = !!findRoute(o.hw);
+  routeSel.value = hasRoute ? o.hw : '';
+  document.getElementById('dw-loc').value = kmTxt;
+  validateDwKm();
+  const label = 'อุบัติเหตุ ทล.' + o.hw + ' กม.' + kmTxt + (o.side ? ' ' + o.side : '') + (o.d ? ' (เกิดเหตุ ' + o.d + ')' : '');
+  document.getElementById('dw-note').value = '[เคส:accident:' + o.id + '] ' + label;
+  const ban = document.getElementById('dw-case-banner');
+  ban.innerHTML = '📎 <b>เติมจากเคสอุบัติเหตุ</b> — ' + esc(label)
+    + '<br><span style="color:var(--ink-400);">เติมให้เฉพาะ ทล./กม./หมายเหตุ ยังไม่ได้บันทึก — กรุณาเลือก <b>วันที่ซ่อมจริง</b> รหัสงาน ปริมาณงาน เจ้าหน้าที่ และวัสดุที่ใช้ซ่อมจริงเอง'
+    + (hasRoute ? '' : '<br><b style="color:var(--danger);">ไม่พบ ทล.' + esc(o.hw) + ' ในสายทางที่หมวดควบคุม — กรุณาเลือกสายทางเอง</b>') + '</span>';
+  ban.classList.remove('hidden');
+}
 (async function __initApiData(){
   // Firestore โหลดพร้อมกันได้ทุกตาราง (ไม่มีปัญหา quota แบบ Apps Script เดิม) — เร็วกว่าโหลดทีละตารางมาก
   // staff/leave_requests ของระบบที่ 1 โหลดเก็บไว้ให้ getStaffX()/getLeaveHistoryX() อ่าน
@@ -4822,6 +4924,7 @@ renderAll();
   const numericCrewIds = fieldCrews.map(c=>Number(c.id)).filter(n=>!isNaN(n));
   __crewNextId = numericCrewIds.length ? Math.max(...numericCrewIds)+1 : 1;
   renderAll();
+  try{ applyCaseHandoff(); }catch(e){ console.error('เติมข้อมูลจากเคสอุบัติเหตุไม่สำเร็จ', e); }
 })();
 
 /* ปิด Modal ด้วย Esc — มาตรฐานเดียวกันทุกระบบ ปิดได้เฉพาะปุ่ม ✕ กับ Esc เท่านั้น (ไม่ปิดด้วยคลิกนอกกรอบ) */
