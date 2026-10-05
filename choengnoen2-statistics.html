@@ -613,7 +613,6 @@
               <span class="head-desc" id="routes-asof"></span>
             </h2>
             <div class="toolbar">
-              <button class="btn btn-primary no-print" id="routes-add-btn" onclick="openRouteForm()">+ เพิ่ม/แก้ไขสายทางควบคุม</button>
             </div>
           </div>
 
@@ -1758,15 +1757,7 @@ function onJcLevelChange(){
   const level = document.getElementById('jc-f-level').value;
   document.getElementById('jc-f-parent-row').classList.toggle('hidden', level==='main');
 }
-function openJcForm(code){
-  if(!requireAdmin()) return;
-  /* รหัสงานอ่านจากฐานข้อมูลกลาง (CN-Hub แท็บรหัสงาน) — เพิ่ม/แก้/ลบ ที่ฐานกลางที่เดียว ทุกระบบเห็นตรงกัน */
-  if(window.FBL && FBL.masterJobsActive && FBL.masterJobsActive()){
-    if(confirm('รหัสงาน หน่วยนับ ผลผลิต และลักษณะงาน แก้ไขได้ที่ฐานข้อมูลกลาง (แท็บรหัสงาน) ทุกระบบเห็นข้อมูลใหม่ทันที\n\nเปิดฐานข้อมูลกลางหรือไม่?')){
-      window.open(FBL.MASTER_JOB_EDIT_URL, '_blank', 'noopener');
-    }
-    return;
-  }
+function openJcForm(code){ alert('รหัสงานเป็นข้อมูลจากฐานข้อมูลกลาง — ดูได้อย่างเดียว'); return;
   __jcEditingCode = code || null;
   const rec = code ? jobCodeReference.find(r=>r.code===code) : null;
   document.getElementById('jc-form-overlay').classList.remove('hidden');
@@ -2087,7 +2078,7 @@ function renderRoutes(){
       <td class="num">${fmtNum(r.asphalt,3)}</td>
       <td class="num">${fmtNum(r.concrete,3)}</td>
       <td class="num">${fmtNum(r.workQty,3)}</td>
-      <td class="no-print">${isAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="openRouteForm(${r.id})">แก้ไข</button>` : ''}</td>
+      <td class="no-print"></td>
     </tr>
   `).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--ink-400);">ไม่มีข้อมูลสายทาง</td></tr>';
   document.getElementById('routes-foot').innerHTML = `
@@ -2111,7 +2102,7 @@ function renderRoutes(){
     </tr>
   `;
 }
-function openRouteForm(id){
+function openRouteForm(id){ alert('สายทางควบคุมเป็นข้อมูลจากฐานข้อมูลกลาง — ดูได้อย่างเดียว'); return;
   if(!requireAdmin()) return;
   const r = id ? controlledRoutes.find(x=>x.id===id) : null;
   document.getElementById('rf-id').value = r ? r.id : '';

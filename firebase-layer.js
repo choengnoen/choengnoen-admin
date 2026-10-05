@@ -1650,7 +1650,6 @@
     return masterPromise;
   }
   FBL.masterRoutesReady = masterReady;
-  FBL.MASTER_EDIT_URL = 'https://choengnoen.github.io/choengnoen-Hub/master-data.html#routes';
 
   /* ---------- รหัสงาน (job_code_reference) อ่านจากฐานกลาง แท็บ "รหัสงาน" ----------
      - ใช้เฉพาะงานบำรุงปกติ (รหัส 21xxx) ที่ระบบนี้ใช้จ่ายงาน/แผน-ผล — รหัสที่อยู่ใต้ 21000 โดยตรง = รหัสงานหลัก (level main)
@@ -1661,7 +1660,6 @@
   const JOB_PREFIX = '21';
   const JOB_ROOT = '21000';
   let masterWorkCodes = null; // null = ยังไม่ได้/ใช้ไม่ได้ → ใช้ตารางเดิม
-  FBL.MASTER_JOB_EDIT_URL = 'https://choengnoen.github.io/choengnoen-Hub/master-data.html#workcodes';
   function pickWorkCodes(all) {
     const list = (all || []).filter(function (w) { return String(w.code).indexOf(JOB_PREFIX) === 0 && String(w.code) !== JOB_ROOT; });
     return list.length ? list : null;
@@ -1807,18 +1805,7 @@
     return baseLoaded(table);
   };
   FBL.apiPost = async function (action, table, data, id, options) {
-    if (table === MASTER_TABLE && await masterReady()) {
-      if (confirm('ข้อมูลสายทางแก้ไขได้ที่ฐานข้อมูลกลาง ทุกระบบเห็นข้อมูลใหม่ทันที\n\nเปิดฐานข้อมูลกลางหรือไม่?')) {
-        window.open(FBL.MASTER_EDIT_URL, '_blank', 'noopener');
-      }
-      throw new Error('แก้ไขได้ที่ฐานข้อมูลกลาง (ไม่ได้บันทึกในระบบนี้)');
-    }
-    if (table === JOB_TABLE && await masterJobsReady()) {
-      if (confirm('รหัสงานและหน่วยนับแก้ไขได้ที่ฐานข้อมูลกลาง (แท็บรหัสงาน) ทุกระบบเห็นข้อมูลใหม่ทันที\n\nเปิดฐานข้อมูลกลางหรือไม่?')) {
-        window.open(FBL.MASTER_JOB_EDIT_URL, '_blank', 'noopener');
-      }
-      throw new Error('แก้ไขได้ที่ฐานข้อมูลกลาง (ไม่ได้บันทึกในระบบนี้)');
-    }
+    if (table === MASTER_TABLE || table === JOB_TABLE) throw new Error('ข้อมูลจากฐานข้อมูลกลาง — ดูได้อย่างเดียว (ไม่บันทึกในระบบนี้)');
     return baseApiPost(action, table, data, id, options);
   };
   // ชุดคำสั่งเดียว (apiBatch) ห้ามแตะข้อมูลที่ย้ายไปแก้ที่ฐานข้อมูลกลางแล้ว
