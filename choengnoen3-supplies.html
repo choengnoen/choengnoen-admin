@@ -143,7 +143,7 @@
   .section-icon svg{width:15px;height:15px;}
   .head-desc{font-size:12.5px;font-weight:400;color:var(--ink-400);margin-left:37px;display:block;}
 
-  .btn{font-family:'Sarabun';font-size:13px;font-weight:600;border:none;border-radius:10px;padding:9px 17px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:filter .15s ease,transform .1s ease,box-shadow .15s ease;}
+  .btn{font-family:'Kanit',sans-serif;font-size:14px;font-weight:600;border:none;border-radius:10px;padding:9px 17px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:filter .15s ease,transform .1s ease,box-shadow .15s ease;}
   .btn:hover{filter:brightness(1.06);}
   .btn:active{transform:translateY(1px);}
   .btn-primary{background:linear-gradient(135deg,var(--orange-500),var(--orange-600));color:#fff;box-shadow:0 4px 12px -2px rgba(224,98,15,.4);}
@@ -365,8 +365,8 @@
   .draft-chip .dc-btn{border:none;border-radius:6px;padding:5px 11px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Sarabun';white-space:nowrap;}
   .draft-chip .dc-clear{background:transparent;color:#8a5a10;border:1px solid #e3c07a;}
   .draft-chip .dc-clear:hover{background:#fdefc9;}
-  .draft-chip .dc-save{background:var(--orange-600);color:#fff;}
-  .draft-chip .dc-save:hover{background:var(--orange-500);}
+  .draft-chip .dc-save{background:linear-gradient(135deg,var(--orange-500),var(--orange-600));color:#fff;box-shadow:0 4px 12px -2px rgba(224,98,15,.4);}
+  .draft-chip .dc-save:hover{filter:brightness(1.06);}
 
   /* segmented toggle (ประเภทรายการ / ประเภทพัสดุ ในโมดัล) */
   .seg-toggle{display:inline-flex;background:var(--paper-100);border-radius:8px;padding:3px;gap:2px;}
@@ -1326,7 +1326,7 @@ function fuelHistoryReceivesHtml(){
         <td><input type="number" step="0.01" class="no-spin" id="fh-edit-liters" value="${esc(t.liters||'')}"></td>
         <td><input type="number" step="0.01" class="no-spin" id="fh-edit-price" value="${esc(t.unitPrice||'')}" placeholder="บาท/ลิตร"></td>
         <td style="white-space:nowrap;">
-          <button type="button" class="btn btn-sm btn-ok" onclick="saveFuelReceiveEdit(${t.id})">💾 บันทึก</button>
+          <button type="button" class="btn btn-sm btn-primary" onclick="saveFuelReceiveEdit(${t.id})">💾 บันทึก</button>
           <button type="button" class="btn btn-sm btn-ghost" onclick="cancelFuelReceiveEdit()">ยกเลิก</button>
         </td>
       </tr>`;
