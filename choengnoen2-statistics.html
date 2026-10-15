@@ -571,6 +571,12 @@
   @media(max-width:640px){ .dw-subgrid{grid-template-columns:1fr;} }
   .dw-toprow{display:grid;grid-template-columns:0.8fr 1fr 1.4fr;gap:12px;}
   @media(max-width:640px){ .dw-toprow{grid-template-columns:1fr;} }
+/* แถบเลื่อนบางแบบเดียวกับระบบโจรกรรม */
+.modal-body,.modal-overlay,.mat-scroll-wrap,.table-wrap-scroll,.refdata-list,#mat-table-wrap,#veh-table-wrap,#labor-table-wrap{scrollbar-width:thin;scrollbar-color:#c3cad3 transparent}
+.modal-body::-webkit-scrollbar,.modal-overlay::-webkit-scrollbar,.mat-scroll-wrap::-webkit-scrollbar,.table-wrap-scroll::-webkit-scrollbar,.refdata-list::-webkit-scrollbar,#mat-table-wrap::-webkit-scrollbar,#veh-table-wrap::-webkit-scrollbar,#labor-table-wrap::-webkit-scrollbar{width:8px;height:8px}
+.modal-body::-webkit-scrollbar-track,.modal-overlay::-webkit-scrollbar-track,.mat-scroll-wrap::-webkit-scrollbar-track,.table-wrap-scroll::-webkit-scrollbar-track,.refdata-list::-webkit-scrollbar-track,#mat-table-wrap::-webkit-scrollbar-track,#veh-table-wrap::-webkit-scrollbar-track,#labor-table-wrap::-webkit-scrollbar-track{background:transparent}
+.modal-body::-webkit-scrollbar-thumb,.modal-overlay::-webkit-scrollbar-thumb,.mat-scroll-wrap::-webkit-scrollbar-thumb,.table-wrap-scroll::-webkit-scrollbar-thumb,.refdata-list::-webkit-scrollbar-thumb,#mat-table-wrap::-webkit-scrollbar-thumb,#veh-table-wrap::-webkit-scrollbar-thumb,#labor-table-wrap::-webkit-scrollbar-thumb{background:#c3cad3;border-radius:8px}
+.modal-body::-webkit-scrollbar-thumb:hover,.modal-overlay::-webkit-scrollbar-thumb:hover,.mat-scroll-wrap::-webkit-scrollbar-thumb:hover,.table-wrap-scroll::-webkit-scrollbar-thumb:hover,.refdata-list::-webkit-scrollbar-thumb:hover,#mat-table-wrap::-webkit-scrollbar-thumb:hover,#veh-table-wrap::-webkit-scrollbar-thumb:hover,#labor-table-wrap::-webkit-scrollbar-thumb:hover{background:#9aa6b2}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
