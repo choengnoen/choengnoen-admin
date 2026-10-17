@@ -367,6 +367,64 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .draft-chip .dc-save:hover{filter:brightness(1.06);}
 
   /* segmented toggle (ประเภทรายการ / ประเภทพัสดุ ในโมดัล) */
+  /* ทะเบียนพัสดุแบบ 3 คอลัมน์ตามความเร่งด่วน (ต้องตรวจสอบ / ต้องสั่งซื้อ / ปกติ) + แถบเครื่องมือเลือกเดือน */
+  .mc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:18px 20px 0;}
+  .mc-month{display:flex;align-items:center;gap:6px;position:relative;}
+  .mc-month select{font-family:'Kanit',sans-serif;font-size:24px;font-weight:600;color:var(--navy-900);border:0;background:none;padding:0 18px 0 0;appearance:none;-webkit-appearance:none;cursor:pointer;outline:0;}
+  .mc-month select:disabled{cursor:default;opacity:.7;}
+  .mc-car{position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:12px;color:var(--ink-400);pointer-events:none;}
+  .mc-upd{margin-top:6px;font-size:13px;color:var(--ink-600);}
+  .mc-upd.old{color:#a3350f;font-weight:600;}
+  .mc-tabrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 20px 0;border-bottom:1px solid var(--line);}
+  .mc-tabrow .tab{padding:11px 16px;font-size:14px;}
+  .mc-tabrow .mc-sp{flex:1;}
+  .mc-search{min-width:210px;flex:none;height:34px;padding:0 10px;margin-bottom:3px;}
+  .mc-more{position:relative;flex:none;margin-bottom:3px;}
+  .mc-more-btn{width:34px;height:34px;border:1px solid var(--line);background:#fff;border-radius:7px;font-size:16px;line-height:1;cursor:pointer;color:var(--ink-900);}
+  .mc-more-btn:hover{background:var(--paper-100);}
+  .mc-menu{position:absolute;right:0;top:40px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px -8px rgba(7,27,48,.25);padding:5px;min-width:180px;z-index:20;}
+  .mc-menu.hidden{display:none;}
+  .mc-menu button{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 12px;border-radius:7px;font-family:'Sarabun';font-size:13.5px;cursor:pointer;color:var(--ink-900);}
+  .mc-menu button:hover{background:var(--paper-100);}
+  .mc-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start;padding:16px 20px 20px;}
+  .mc-cols.hidden{display:none;}
+  .mc-col{border-radius:14px;padding:12px;}
+  .mc-col.neg{background:var(--danger-bg);}.mc-col.low{background:#fdeede;}.mc-col.ok{background:var(--success-bg);}
+  .mc-col h3{font-size:14.5px;margin:0;padding:4px 6px 12px;display:flex;align-items:center;gap:7px;color:var(--navy-900);}
+  .mc-col h3 .n{margin-left:auto;background:#fff;border-radius:99px;padding:1px 11px;font-size:12.5px;}
+  .mc-card{background:#fff;border-radius:11px;padding:12px 13px;margin-bottom:9px;box-shadow:0 1px 2px rgba(0,0,0,.07);}
+  .mc-l1{display:flex;gap:10px;align-items:center;}
+  .mc-nm{flex:1;font-size:13.5px;line-height:1.35;color:var(--ink-900);}
+  .mc-nm small{display:block;color:var(--ink-400);font-size:11.5px;margin-top:2px;}
+  .mc-v{text-align:right;font-family:'Kanit',sans-serif;font-weight:600;font-size:18px;line-height:1.1;white-space:nowrap;}
+  .mc-v small{display:block;font-family:'Sarabun';font-size:11px;font-weight:400;color:var(--ink-600);}
+  .mc-v.neg{color:var(--danger);}.mc-v.low{color:#a3350f;}.mc-v.ok{color:var(--success);}
+  .mc-go{border:0;background:var(--navy-900);color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;font-family:'Kanit',sans-serif;cursor:pointer;white-space:nowrap;}
+  .mc-go:hover{filter:brightness(1.15);}
+  .mc-mv{display:flex;gap:12px;flex-wrap:wrap;margin-top:9px;padding-top:8px;border-top:1px dashed var(--line);font-size:12px;color:var(--ink-600);}
+  .mc-mv b{font-family:'Kanit',sans-serif;font-weight:600;}
+  .mc-mv .in{color:var(--success);}.mc-mv .out{color:#a3350f;}
+  .mc-watch{display:inline-block;margin-top:4px;background:#fdeede;color:#a3350f;border-radius:99px;padding:1px 8px;font-size:11px;font-weight:600;}
+  .mc-empty{text-align:center;color:var(--ink-400);padding:18px;font-size:13px;}
+  @media(max-width:900px){.mc-cols{grid-template-columns:1fr;}.mc-search{min-width:0;flex:1;}}
+  /* โมดัลตรวจสอบ / แจ้งซื้อ */
+  .ma-box{background:var(--paper-50);border-radius:10px;padding:11px 14px;display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;}
+  .ma-box small{display:block;color:var(--ink-600);font-size:11.5px;}
+  .ma-box b{font-family:'Kanit',sans-serif;font-size:17px;}
+  .ma-hint{border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin-bottom:14px;}
+  .ma-hint.neg{background:var(--danger-bg);color:var(--danger);}.ma-hint.low{background:#fdeede;color:#a3350f;}
+  .ma-tx{margin:0 0 14px;padding:0;list-style:none;border-left:2px solid var(--line);padding-left:16px;}
+  .ma-tx li{position:relative;padding:5px 0;font-size:13px;}
+  .ma-tx li::before{content:"";position:absolute;left:-23px;top:11px;width:10px;height:10px;border-radius:50%;background:#fff;border:3px solid var(--navy-700);}
+  .ma-tx li.out::before{border-color:var(--orange-500);}
+  .ma-tx li span.q{float:right;font-weight:600;}
+  .ma-tx li small{display:block;color:var(--ink-400);font-size:11.5px;}
+  .ma-two{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .ma-foot{display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line);background:var(--paper-50);border-radius:0 0 20px 20px;}
+  .ma-chs{display:flex;gap:8px;}
+  .ma-chs button{flex:1;padding:9px;border:1px solid var(--line);background:#fff;border-radius:9px;font-family:'Kanit',sans-serif;font-size:13px;cursor:pointer;}
+  .ma-chs button.on{border-color:var(--orange-500);background:#fdeede;color:#a3350f;font-weight:600;}
+  @media(max-width:600px){#mat-act-overlay{align-items:flex-end;padding:0;}#mat-act-overlay .modal-box{max-width:none;border-radius:20px 20px 0 0;max-height:92vh;}.ma-two{grid-template-columns:1fr;}}
   .seg-toggle{display:inline-flex;background:var(--paper-100);border-radius:8px;padding:3px;gap:2px;}
   .seg-btn{border:none;background:transparent;padding:8px 15px;border-radius:6px;font-family:'Sarabun';font-size:13px;font-weight:600;color:var(--ink-600);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s ease,color .15s ease;}
   .seg-btn.active{background:#fff;color:var(--navy-900);box-shadow:0 1px 3px rgba(7,27,48,.15);}
@@ -592,28 +650,29 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <!-- ============ MATERIAL MASTER ============ -->
       <div class="panel active" id="panel-master">
         <div class="section">
-          <div class="section-head">
-            <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg></span>
-              ทะเบียนพัสดุ / น้ำมันเชื้อเพลิง
-            </h2>
-            <div class="toolbar">
-              <button class="btn btn-primary" id="mat-add-btn" onclick="openItemModal()">+ รับพัสดุ/น้ำมันเข้าคลัง</button>
+          <div class="mc-top">
+            <div>
+              <div class="mc-month"><select id="mc-month" onchange="onMasterMonthChange(this.value)" aria-label="เลือกเดือน"></select><span class="mc-car">▾</span></div>
+              <div class="mc-upd" id="mc-upd"></div>
             </div>
+            <button class="btn btn-primary" id="mat-add-btn" onclick="openItemModal()">+ รับเข้าคลัง</button>
           </div>
-          <div class="toolbar" style="padding:14px 20px 0;">
+          <div class="mc-tabrow">
             <div class="tabs" id="master-tabs" style="padding:0;border:none;background:transparent;flex:none;">
               <div class="tab" data-mastertab="nai" onclick="setMasterTab(this)">พัสดุในบัญชี</div>
               <div class="tab" data-mastertab="nok" onclick="setMasterTab(this)">พัสดุนอกบัญชี</div>
               <div class="tab active" data-mastertab="fuel" onclick="setMasterTab(this)">น้ำมันเชื้อเพลิง</div>
             </div>
-            <div class="mat-summary-chip" id="mat-count-chip" style="margin-left:auto;"></div>
-            <div class="toolbar" id="mat-edit-controls" style="padding:0;flex:none;gap:8px;">
-              <button class="btn btn-ghost btn-sm" id="mat-edit-btn" onclick="toggleMaterialEdit()">✎ แก้ไขรายการ</button>
-              <button class="btn btn-primary btn-sm hidden" id="mat-save-btn" onclick="saveMaterialEdits()">💾 บันทึก</button>
+            <span class="mc-sp"></span>
+            <button class="btn btn-primary btn-sm hidden" id="mat-save-btn" onclick="saveMaterialEdits()">💾 บันทึก</button>
+            <div class="search-box mc-search" id="mat-search-box">🔍 <input id="mat-search" oninput="renderMaterials()" placeholder="ค้นหาชื่อวัสดุ"></div>
+            <div class="mc-more" id="mat-edit-controls">
+              <button type="button" class="mc-more-btn" title="เมนูเพิ่มเติม" onclick="toggleMcMenu(event)">⋯</button>
+              <div class="mc-menu hidden" id="mc-menu"><button type="button" id="mat-edit-btn" onclick="toggleMcMenu();toggleMaterialEdit()">✎ แก้ไขรายการ</button></div>
             </div>
-            <div class="search-box" id="mat-search-box" style="min-width:220px;flex:none;">🔍 <input id="mat-search" oninput="renderMaterials()" placeholder="ค้นหาชื่อวัสดุ"></div>
           </div>
-          <div class="table-wrap" id="mat-table-wrap"><table>
+          <div class="mc-cols" id="mat-cols"></div>
+          <div class="table-wrap hidden" id="mat-table-wrap"><table>
             <colgroup><col style="width:28%"><col style="width:11%"><col style="width:10%"><col style="width:15%"><col style="width:12%"><col style="width:14%"><col style="width:10%"></colgroup>
             <thead><tr><th>ชื่อรายการวัสดุ</th><th>ประเภท</th><th>หน่วยนับ</th><th title="คำนวณสดจากบัญชี พ.1-02 (ยอดตั้งต้น + รับเข้า − จ่าย ทุกเดือนที่ผ่านมา) — คลิก &quot;✎ แก้ไขรายการ&quot; ด้านบนเพื่อปรับยอดคงเหลือให้ตรงกับยอดนับจริง">ยอดคงเหลือปัจจุบัน ℹ️</th><th>ยอดที่ควรจัดซื้อ</th><th class="mv-status">สถานะ</th><th></th></tr></thead>
             <tbody id="mat-body"></tbody>
@@ -678,7 +737,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div id="rep-mat-grid-wrap" class="grid-wrap"></div>
           <div class="legend-block" id="rep-mat-foot-block">
             <button type="button" class="legend-dot-btn no-print" id="rep-mat-foot-toggle" onclick="__toggleNote('rep-mat-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="rep-mat-foot" style="display:none;background:transparent;border-top:none;">คลิกช่องตัวเลข เพื่อกรอก/แก้ไขจำนวนที่เบิกของวันนั้นๆตามใบเบิก-จ่ายพัสดุตัวจริง , การรับพัสดุเข้าคลังให้ใช้ปุ่ม "+ รับพัสดุ/น้ำมันเข้าคลัง" ที่แท็บทะเบียนพัสดุ</div>
+            <div class="foot-note" id="rep-mat-foot" style="display:none;background:transparent;border-top:none;">คลิกช่องตัวเลข เพื่อกรอก/แก้ไขจำนวนที่เบิกของวันนั้นๆตามใบเบิก-จ่ายพัสดุตัวจริง , การรับพัสดุเข้าคลังให้ใช้ปุ่ม "+ รับเข้าคลัง" ที่แท็บทะเบียนพัสดุ</div>
           </div>
         </div>
       </div>
@@ -726,7 +785,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div id="rep-fuel-grid-wrap" class="grid-wrap"></div>
           <div class="legend-block" id="rep-fuel-foot-block">
             <button type="button" class="legend-dot-btn no-print" id="rep-fuel-foot-toggle" onclick="__toggleNote('rep-fuel-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="rep-fuel-foot" style="display:none;background:transparent;border-top:none;">คลิกช่องตัวเลข (สำหรับผู้มีสิทธิ์แก้ไข) เพื่อกรอก/แก้ไขจำนวนลิตรที่เบิกของวันนั้นๆตามใบสั่งจ่ายน้ำมันตัวจริง — การรับน้ำมันเข้าคลังให้ใช้ปุ่ม "+ รับพัสดุ/น้ำมันเข้าคลัง" ที่แท็บทะเบียนพัสดุ (แท็บย่อยน้ำมันเชื้อเพลิง)</div>
+            <div class="foot-note" id="rep-fuel-foot" style="display:none;background:transparent;border-top:none;">คลิกช่องตัวเลข (สำหรับผู้มีสิทธิ์แก้ไข) เพื่อกรอก/แก้ไขจำนวนลิตรที่เบิกของวันนั้นๆตามใบสั่งจ่ายน้ำมันตัวจริง — การรับน้ำมันเข้าคลังให้ใช้ปุ่ม "+ รับเข้าคลัง" ที่แท็บทะเบียนพัสดุ (แท็บย่อยน้ำมันเชื้อเพลิง)</div>
           </div>
         </div>
       </div>
@@ -870,6 +929,19 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <div class="modal-tab" data-histtab="receives" onclick="setFuelHistTab(this,'receives')">📥 รายการรับเข้า</div>
     </div>
     <div class="modal-body" id="fuel-history-body"></div>
+  </div>
+</div>
+
+<!-- ============ MATERIAL ACTION MODAL — ตรวจสอบยอดติดลบ / แจ้งจัดซื้อ (เปิดจากปุ่มบนการ์ดทะเบียนพัสดุ) ============ -->
+<div class="modal-overlay hidden no-print" id="mat-act-overlay" onclick="if(event.target===this)closeMatActModal()">
+  <div class="modal-box" style="max-width:540px;">
+    <div class="modal-head">
+      <div class="modal-head-icon" id="mat-act-icon" style="font-size:19px;">⚠️</div>
+      <h3 id="mat-act-title">ตรวจสอบ</h3>
+      <button type="button" class="modal-close" onclick="closeMatActModal()">✕</button>
+    </div>
+    <div class="modal-body" id="mat-act-body"></div>
+    <div class="ma-foot" id="mat-act-foot"></div>
   </div>
 </div>
 
@@ -1142,13 +1214,17 @@ function setMasterTab(el){
 function renderMaterials(){
   const tab = currentMasterTab();
   const isFuel = tab==='fuel';
-  document.getElementById('mat-table-wrap').classList.toggle('hidden', isFuel);
+  const editing = matEditMode && isAdmin();
+  if(editing) masterMonth = null; // โหมดแก้ไขใช้ได้เฉพาะเดือนปัจจุบัน (แก้ยอดย้อนหลังให้ไปทำที่ พ.1-02)
+  renderMasterToolbar(editing);
+  document.getElementById('mat-cols').classList.toggle('hidden', isFuel || editing);
+  document.getElementById('mat-table-wrap').classList.toggle('hidden', isFuel || !editing);
   document.getElementById('mat-foot-block').classList.toggle('hidden', isFuel);
   document.getElementById('master-fuel-view').classList.toggle('hidden', !isFuel);
-  document.getElementById('mat-search-box').classList.toggle('hidden', isFuel);
-  document.getElementById('mat-count-chip').classList.toggle('hidden', isFuel);
-  document.getElementById('mat-edit-controls').classList.toggle('hidden', isFuel);
+  document.getElementById('mat-search-box').classList.toggle('hidden', isFuel || editing);
+  document.getElementById('mat-edit-controls').classList.toggle('hidden', isFuel || editing || !isAdmin());
   if(isFuel){ renderMasterFuel(); return; }
+  renderMaterialCols();
   const acctType = tab==='nok' ? 'นอกบัญชี' : 'ในบัญชี';
   const q = (document.getElementById('mat-search')?.value||'').toLowerCase();
   const dis = isAdmin() ? '' : 'disabled';
@@ -1160,7 +1236,6 @@ function renderMaterials(){
     if(aUrgent!==bUrgent) return aUrgent-bUrgent;
     return a.name.localeCompare(b.name,'th');
   });
-  const editing = matEditMode && isAdmin();
   document.getElementById('mat-body').innerHTML = rows.map(m=>{
     const i = materials.indexOf(m);
     const stock = currentStock(m);
@@ -1198,12 +1273,190 @@ function renderMaterials(){
   }
   const banner = document.getElementById('mat-neg-banner');
   if(banner){
-    banner.classList.toggle('hidden', negItems.length===0);
+    banner.classList.toggle('hidden', !editing || negItems.length===0);
     if(negItems.length>0){
       banner.innerHTML = `⚠ พบ ${negItems.length} รายการที่ยอดคงเหลือติดลบ (${negItems.slice(0,5).map(m=>esc(m.name)).join(', ')}${negItems.length>5?' และอื่นๆ':''}) — มักเกิดจากยอดเบิกที่บันทึกไว้มากกว่ายอดที่มีจริง เช่น กรอกจำนวนผิดหรือบันทึกซ้ำ กด "✎ แก้ไขรายการ" ด้านบนแล้วแก้ยอดคงเหลือให้ตรงกับที่นับได้จริง ระบบจะบันทึกเป็นรายการปรับปรุงในบัญชี พ.1-02 ของวันนี้โดยอัตโนมัติ`;
     }
   }
   document.getElementById('mat-foot').textContent = `ยอดคงเหลือคำนวณจากบัญชี พ.1-02`;
+}
+/* ============================================================
+   ทะเบียนพัสดุแบบ 3 คอลัมน์ตามความเร่งด่วน + เลือกดูรายเดือน (2569-10-18)
+   - ยอดรายเดือนใช้ materialMonthSummary()/fuelMonthSummary() ชุดเดียวกับรายงาน พ.1-02 / พ.1-03 (ไม่คำนวณซ้ำ)
+   - ปุ่มบนการ์ด: ตรวจสอบ (ยอดติดลบ → ปรับยอดผ่านรายการ [ปรับยอด] เหมือน "แก้ไขรายการ" เดิม)
+                  แจ้งซื้อ (สร้างข้อความแจ้งจัดซื้อให้คัดลอก — ยังไม่มีตารางใบแจ้งจัดซื้อในฐานข้อมูล)
+                  ประวัติ (ใช้โมดัลประวัติเดิม openItemHistoryModal)
+   - ดูเดือนที่ผ่านมาได้อย่างเดียว (ซ่อนปุ่มแก้) แก้ยอดย้อนหลังให้ทำที่ พ.1-02
+   ============================================================ */
+let masterMonth = null; // null = เดือนปัจจุบัน
+function currentMonthKey(){ return monthKeyOf(toLocalISODate(TODAY)); }
+function masterMk(){ return masterMonth || currentMonthKey(); }
+function onMasterMonthChange(v){ masterMonth = (v===currentMonthKey()) ? null : v; renderMaterials(); }
+function toggleMcMenu(ev){
+  if(ev) ev.stopPropagation();
+  const m = document.getElementById('mc-menu');
+  if(m) m.classList.toggle('hidden');
+}
+document.addEventListener('click', ()=>{ const m=document.getElementById('mc-menu'); if(m) m.classList.add('hidden'); });
+/* วันที่ของรายการรับ/เบิกล่าสุดที่บันทึกในระบบ (ไม่เกินวันนี้) ใช้แสดง "อัปเดตล่าสุด" */
+function latestRecordDate(){
+  const today = toLocalISODate(TODAY);
+  let best = '';
+  materialTransactions.forEach(t=>{ if(t.date && t.date<=today && t.date>best) best=t.date; });
+  fuelTransactions.forEach(t=>{ if(t.date && t.date<=today && t.date>best) best=t.date; });
+  return best;
+}
+function renderMasterToolbar(editing){
+  const sel = document.getElementById('mc-month');
+  if(!sel) return;
+  const cur = currentMonthKey(), mk = masterMk();
+  const keys = []; let k = cur;
+  for(let i=0;i<12;i++){ keys.push(k); k = prevMonthKey(k); }
+  if(!keys.includes(mk)) keys.push(mk);
+  sel.innerHTML = keys.map(o=>{
+    const [y,m] = o.split('-').map(Number);
+    return `<option value="${o}" ${o===mk?'selected':''}>${o===cur?'เดือนนี้ · ':''}${monthNamesTh[m-1]} ${y+543}</option>`;
+  }).join('');
+  sel.disabled = !!editing;
+  const upd = document.getElementById('mc-upd');
+  if(!upd) return;
+  if(mk===cur){
+    const d = latestRecordDate();
+    upd.className = 'mc-upd';
+    upd.title = 'วันที่ของรายการรับเข้า/เบิกจ่ายล่าสุดที่บันทึกในระบบ';
+    upd.textContent = d ? '📌 อัปเดตล่าสุด '+fmtDate(d) : '';
+  } else {
+    const [y,m] = mk.split('-').map(Number);
+    upd.className = 'mc-upd old';
+    upd.title = '';
+    upd.textContent = '🗓 ข้อมูลสิ้นเดือน '+monthNamesTh[m-1]+' '+(y+543)+' (ดูย้อนหลังอย่างเดียว)';
+  }
+}
+function renderMaterialCols(){
+  const el = document.getElementById('mat-cols');
+  if(!el) return;
+  const acctType = currentMasterTab()==='nok' ? 'นอกบัญชี' : 'ในบัญชี';
+  const q = (document.getElementById('mat-search')?.value||'').trim().toLowerCase();
+  const mk = masterMk(), isCur = mk===currentMonthKey();
+  const rows = materials
+    .filter(m=>(m.accountType||'ในบัญชี')===acctType && m.name.toLowerCase().includes(q))
+    .map(m=>{
+      const s = materialMonthSummary(m.code, mk), c = s.closing;
+      const k = c<0 ? 'neg' : (c<=m.reorder ? 'low' : 'ok');
+      return {m, s, c, k, watch: k==='ok' && m.reorder>0 && c<=m.reorder*1.3};
+    })
+    .sort((a,b)=>a.m.name.localeCompare(b.m.name,'th'));
+  const card = r=>{
+    const act = !isCur ? 'history' : r.k==='neg' ? 'check' : r.k==='low' ? 'buy' : 'history';
+    const lab = act==='check' ? 'ตรวจสอบ' : act==='buy' ? 'แจ้งซื้อ' : 'ประวัติ';
+    const onclick = act==='history' ? `openItemHistoryModal('material','${jsArg(r.m.code)}')` : `openMatAction('${act}','${jsArg(r.m.code)}')`;
+    return `<div class="mc-card">
+      <div class="mc-l1">
+        <div class="mc-nm">${esc(r.m.name)}<small>จุดสั่งซื้อ ${fmtNum(r.m.reorder,1)} ${esc(r.m.unit)}</small>${r.watch?'<span class="mc-watch">ใกล้ถึงจุดสั่งซื้อ</span>':''}</div>
+        <div class="mc-v ${r.k}">${fmtNum(r.c,1)}<small>${esc(r.m.unit)}</small></div>
+        <button type="button" class="mc-go" onclick="${onclick}">${lab}</button>
+      </div>
+      <div class="mc-mv"><span>ยกมา <b>${fmtNum(r.s.opening,1)}</b></span><span class="in">รับเข้า <b>+${fmtNum(r.s.received,1)}</b></span><span class="out">เบิก <b>−${fmtNum(r.s.issued,1)}</b></span></div>
+    </div>`;
+  };
+  const col = (k,title,ic)=>{
+    const list = rows.filter(r=>r.k===k);
+    return `<div class="mc-col ${k}"><h3>${ic} ${title}<span class="n">${list.length}</span></h3>${list.map(card).join('') || '<div class="mc-empty">— ไม่มีรายการ —</div>'}</div>`;
+  };
+  el.innerHTML = col('neg','ต้องตรวจสอบ (ยอดติดลบ)','⚠️') + col('low','ต้องสั่งซื้อ','🛒') + col('ok','ปกติ','✅');
+}
+/* ---- โมดัลตรวจสอบ / แจ้งซื้อ ---- */
+function closeMatActModal(){ document.getElementById('mat-act-overlay').classList.add('hidden'); }
+function matByCode(code){ return materials.find(x=>x.code===code); }
+function matActBoxHtml(m, stock){
+  return `<div class="ma-box"><div><small>ยอดในระบบ</small><b style="color:${stock<0?'var(--danger)':'var(--navy-900)'}">${fmtNum(stock,1)} ${esc(m.unit)}</b></div>
+    <div><small>จุดสั่งซื้อ</small><b>${fmtNum(m.reorder,1)}</b></div></div>`;
+}
+function openMatAction(kind, code){
+  const m = matByCode(code);
+  if(!m) return;
+  const stock = currentStock(m);
+  const icon = document.getElementById('mat-act-icon'), title = document.getElementById('mat-act-title');
+  const body = document.getElementById('mat-act-body'), foot = document.getElementById('mat-act-foot');
+  const cj = jsArg(m.code);
+  if(kind==='check'){
+    icon.textContent = '⚠️'; title.textContent = 'ตรวจสอบยอดติดลบ: '+m.name;
+    const txs = materialTransactions.filter(t=>t.itemCode===m.code).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,5);
+    const txHtml = txs.length ? `<ul class="ma-tx">${txs.map(t=>`<li class="${t.kind==='issue'?'out':''}"><span class="q">${t.kind==='issue'?'−':'+'}${fmtNum(t.qty,1)} ${esc(m.unit)}</span><b>${isAdjustmentTx(t)?'🔧 ปรับยอด':t.kind==='issue'?'เบิกจ่าย':'รับเข้า'}</b><small>${fmtDate(t.date)}${t.note?' · '+esc(String(t.note).replace(ADJUSTMENT_NOTE_PREFIX,'')):''}</small></li>`).join('')}</ul>`
+      : '<div style="font-size:13px;color:var(--ink-400);margin-bottom:14px;">ยังไม่มีรายการเคลื่อนไหว — ยอดมาจากยอดตั้งต้นของรายการ</div>';
+    const admin = isAdmin();
+    body.innerHTML = matActBoxHtml(m, stock) +
+      `<div class="ma-hint neg">ยอดติดลบมักเกิดจาก <b>เบิกก่อนบันทึกรับเข้า</b> หรือบันทึกจำนวนเบิกผิด/ซ้ำ ตรวจรายการล่าสุดด้านล่าง แล้วใส่ยอดที่นับได้จริง ระบบจะบันทึกเป็นรายการ [ปรับยอด] ในบัญชี พ.1-02 ของวันนี้</div>
+       <div style="font-weight:600;font-size:12.5px;margin-bottom:8px;">รายการเคลื่อนไหวล่าสุด</div>${txHtml}` +
+      (admin ? `<div class="ma-two"><div class="f-row"><label>ยอดที่นับได้จริง (${esc(m.unit)})</label><input type="number" step="0.01" id="ma-count" placeholder="เช่น 0"></div>
+        <div class="f-row"><label>สาเหตุ</label><select id="ma-reason"><option>รับเข้าแล้วแต่ยังไม่ได้บันทึก</option><option>บันทึกจำนวนเบิกผิด</option><option>บันทึกซ้ำ</option><option>ตรวจนับสต็อกใหม่</option><option>อื่น ๆ</option></select></div></div>
+        <div class="f-row"><label>หมายเหตุ (ถ้ามี)</label><input type="text" id="ma-note" placeholder="เช่น รับของจากพัสดุแขวง 10 ต.ค. ยังไม่ได้ลงระบบ"></div>`
+        : '<div class="ma-hint low">การปรับยอดทำได้เฉพาะผู้ดูแลระบบ — แจ้งผู้ดูแลให้ตรวจสอบรายการนี้</div>');
+    foot.innerHTML = `<button type="button" class="btn btn-ghost" onclick="closeMatActModal()">ปิด</button>
+      <button type="button" class="btn btn-ghost" onclick="closeMatActModal();openItemHistoryModal('material','${cj}')">🕘 ประวัติทั้งหมด</button>` +
+      (admin ? `<button type="button" class="btn btn-primary" id="ma-save-btn" onclick="saveMatCheck('${cj}')">บันทึกการปรับยอด</button>` : '');
+  } else {
+    icon.textContent = '🛒'; title.textContent = 'แจ้งจัดซื้อ: '+m.name;
+    const qty = m.reorder>0 ? m.reorder : 1;
+    body.innerHTML = matActBoxHtml(m, stock) +
+      `<div class="ma-hint low">คงเหลือต่ำกว่าจุดสั่งซื้อ — ระบบสร้างข้อความแจ้งจัดซื้อให้คัดลอกไปส่งงานพัสดุแขวง (ยังไม่ได้ส่งอัตโนมัติ)</div>
+       <div class="f-row"><label>จำนวนที่ขอซื้อ (${esc(m.unit)})</label><input type="number" min="0" step="0.01" id="ma-qty" value="${qty}"></div>
+       <div class="f-row"><label>ความเร่งด่วน</label><div class="ma-chs"><button type="button" class="on" onclick="pickMaChip(this)">ปกติ</button><button type="button" onclick="pickMaChip(this)">ด่วน</button><button type="button" onclick="pickMaChip(this)">ด่วนมาก</button></div></div>
+       <div class="f-row"><label>หมายเหตุถึงงานพัสดุแขวง (ถ้ามี)</label><input type="text" id="ma-note" placeholder="เช่น ใช้ซ่อมบำรุงสายทาง 3 สัปดาห์หน้า"></div>`;
+    foot.innerHTML = `<button type="button" class="btn btn-ghost" onclick="closeMatActModal()">ยกเลิก</button>
+      <button type="button" class="btn btn-primary" onclick="copyMatBuy('${cj}')">📋 คัดลอกข้อความแจ้งจัดซื้อ</button>`;
+  }
+  document.getElementById('mat-act-overlay').classList.remove('hidden');
+}
+function pickMaChip(b){ b.parentNode.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); }
+async function saveMatCheck(code){
+  if(!isAdmin()) return;
+  const m = matByCode(code);
+  if(!m) return;
+  const v = parseFloat(document.getElementById('ma-count').value);
+  if(isNaN(v)){ showAlertModal('กรุณากรอกยอดที่นับได้จริงก่อนบันทึก'); return; }
+  const delta = v - currentStock(m);
+  if(Math.abs(delta) < 1e-9){ closeMatActModal(); showAlertModal('ยอดที่กรอกตรงกับยอดในระบบอยู่แล้ว จึงไม่ต้องปรับ'); return; }
+  const today = toLocalISODate(TODAY);
+  if(blockIfMonthLocked(today)) return;
+  const reason = document.getElementById('ma-reason').value;
+  const note = (document.getElementById('ma-note').value||'').trim();
+  const tx = {date:today, itemCode:m.code, kind: delta>0?'receive':'issue', qty:Math.abs(delta),
+    note: ADJUSTMENT_NOTE_PREFIX + reason + (note ? ' — '+note : '') + ' (ปรับจากหน้าทะเบียนพัสดุ)'};
+  const btn = document.getElementById('ma-save-btn');
+  if(btn){ btn.disabled = true; btn.textContent = 'กำลังบันทึก...'; }
+  try{
+    const saved = await apiPost('add', 'material_transactions', matTxToApi(tx));
+    materialTransactions.push(matTxFromApi(saved));
+  }catch(err){
+    closeMatActModal();
+    showAlertModal('บันทึกการปรับยอดไปยังฐานข้อมูลกลางไม่สำเร็จ: ' + err.message);
+    return;
+  }
+  closeMatActModal();
+  renderAll();
+  showSuccessModal('ปรับยอด "'+m.name+'" เป็น '+fmtNum(v,1)+' '+m.unit+' เรียบร้อยแล้ว');
+}
+async function copyMatBuy(code){
+  const m = matByCode(code);
+  if(!m) return;
+  const qty = document.getElementById('ma-qty').value || '';
+  const urg = document.querySelector('#mat-act-body .ma-chs button.on')?.textContent || 'ปกติ';
+  const note = (document.getElementById('ma-note').value||'').trim();
+  const text = ['แจ้งจัดซื้อพัสดุ — หมวดทางหลวงเชิงเนิน',
+    'รายการ: '+m.name,
+    'คงเหลือ: '+fmtNum(currentStock(m),1)+' '+m.unit+' (จุดสั่งซื้อ '+fmtNum(m.reorder,1)+')',
+    'ขอซื้อ: '+qty+' '+m.unit,
+    'ความเร่งด่วน: '+urg,
+    note ? 'หมายเหตุ: '+note : null,
+    'วันที่แจ้ง: '+fmtDate(toLocalISODate(TODAY))].filter(Boolean).join('\n');
+  let ok = false;
+  try{ await navigator.clipboard.writeText(text); ok = true; }catch(e){
+    try{ const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); ok=document.execCommand('copy'); ta.remove(); }catch(e2){}
+  }
+  closeMatActModal();
+  if(ok) showSuccessModal('คัดลอกข้อความแจ้งจัดซื้อแล้ว — นำไปวางส่งให้งานพัสดุแขวง (LINE/อีเมล) ได้เลย');
+  else showAlertModal('คัดลอกอัตโนมัติไม่สำเร็จ กรุณาคัดลอกข้อความนี้เอง:\n\n'+text);
 }
 /* จุดสั่งซื้อขั้นต่ำของน้ำมัน (2569-09-18) — เดิมมีแค่ของวัสดุ (matStatus) น้ำมันไม่มีการเตือน
    สต็อกต่ำเลยทั้งที่หมดแล้วกระทบงานหน้างานทันที เร่งด่วนกว่าวัสดุหลายชนิดด้วยซ้ำ */
@@ -1226,7 +1479,7 @@ async function saveFuelReorderPoint(ft, rawValue){
 function renderMasterFuel(){
   const cardsEl = document.getElementById('master-fuel-cards');
   if(!cardsEl) return;
-  const mk = toLocalISODate(TODAY).slice(0,7);
+  const mk = masterMk();
   const icons = {
     'ดีเซล':'<path d="M6 20V8l6-4 6 4v12"/><path d="M9 20v-6h6v6"/><circle cx="12" cy="12" r="1.5"/>',
     'เบนซิน':'<path d="M4 21h9V7l-3-4H7L4 7Z"/><path d="M13 10h2a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0v-7l-2-2"/>'
