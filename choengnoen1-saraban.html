@@ -2214,6 +2214,7 @@ async function submitLeaveRequest(){
     contact,
     reason: document.getElementById('lr-reason').value,
     status: 'pending',
+    approval: 'pending', /* รออนุมัติที่แท็บภาพรวมหน้าหลัก (ใบลาเดิมที่ไม่มีค่านี้ = ก่อนมีระบบอนุมัติ ไม่ต้องอนุมัติ) */
     recordedDate: TODAY.toISOString().slice(0,10),
     advanceDays
   };
@@ -2265,7 +2266,7 @@ function __leaveRowHTML(r,i){
   return `
     <tr>
       <td class="p-name">${esc(r.name)}</td><td>${esc(r.type)}</td><td>${fmtDate(r.from)} – ${fmtDate(r.to)}</td>
-      <td>${r.status==='cancelled' ? '<span class="pill pill-neutral">ยกเลิกแล้ว</span>' : '<span class="pill pill-ok">บันทึกแล้ว</span>'}</td>
+      <td>${r.status==='cancelled' ? '<span class="pill pill-neutral">ยกเลิกแล้ว</span>' : (r.approval==='pending' ? '<span class="pill pill-warn">รออนุมัติ</span>' : r.approval==='approved' ? `<span class="pill pill-ok" title="${esc(r.approvedBy||'')}">อนุมัติแล้ว</span>` : r.approval==='rejected' ? `<span class="pill pill-neutral" style="color:var(--danger);" title="${esc(r.approvalNote||'')}">ไม่อนุมัติ</span>` : '<span class="pill pill-ok">บันทึกแล้ว</span>')}</td>
       <td class="lr-actions-cell">
         <button class="btn btn-ghost btn-sm" onclick="printLeaveForm(${i})">🖶 พิมพ์ใบลา</button>
         ${__canCancelLeave(r) ? `<button class="btn btn-ghost btn-sm" onclick="printCancelForm(${i})">🖶 ใบขอยกเลิกวันลา</button>` : ''}

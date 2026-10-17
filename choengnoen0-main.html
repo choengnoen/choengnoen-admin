@@ -543,6 +543,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 
       <!-- ============ แจ้งเตือน ============ -->
       <div class="panel" id="panel-alerts">
+        <div class="section" id="leave-approve-sec" style="display:none;">
+          <div class="section-head"><h2>ใบลารออนุมัติ</h2><span class="muted small" id="leave-approve-count"></span></div>
+          <div class="today-list" id="leave-approve-list"></div>
+        </div>
         <div class="section">
           <div class="section-head">
             <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 4.3 2.6 18a1.8 1.8 0 0 0 1.6 2.7h15.6a1.8 1.8 0 0 0 1.6-2.7L13.7 4.3a1.8 1.8 0 0 0-3.4 0Z"/></svg></span>
@@ -837,7 +841,48 @@ async function loadAll(){
 function activeStaff(){ return D.staff.filter(s=>(s.status||'ok')==='ok'); }
 function leaveToday(){
   const t = todayISO();
-  return D.leave.filter(r=>r.status!=='cancelled' && r.from && r.to && t>=r.from && t<=r.to);
+  // ใบลาที่ "ไม่อนุมัติ" ไม่นับเป็นลา (ข้อมูลยังอยู่ในระบบ 1) — ใบลาเดิมที่ไม่มีค่าอนุมัติและใบที่รออนุมัติยังนับตามเดิม
+  return D.leave.filter(r=>r.status!=='cancelled' && r.approval!=='rejected' && r.from && r.to && t>=r.from && t<=r.to);
+}
+/* ---------- อนุมัติใบลา (แท็บภาพรวม) — ใบลาใหม่จากระบบ 1 มี approval='pending'; ใบเดิมไม่มีค่า = ไม่ต้องอนุมัติ ---------- */
+let __pendingLeaves = [], __leaveBusy = false;
+function renderLeaveApprovals(){
+  const sec = document.getElementById('leave-approve-sec');
+  if(!sec) return;
+  __pendingLeaves = [];
+  if(!(FBL.canApproveLeave && FBL.canApproveLeave())){ sec.style.display = 'none'; return; }
+  __pendingLeaves = D.leave.filter(r=>r.approval==='pending' && r.status!=='cancelled').sort((a,b)=>String(a.from).localeCompare(String(b.from)));
+  if(!__pendingLeaves.length){ sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  document.getElementById('leave-approve-count').textContent = __pendingLeaves.length + ' รายการ';
+  document.getElementById('leave-approve-list').innerHTML = __pendingLeaves.map((r,i)=>`
+    <div class="today-item" style="align-items:flex-start;flex-wrap:wrap;">
+      <div style="flex:1 1 260px;min-width:0;">
+        <b>${esc(r.name)}</b> <span class="pill pill-warn">${esc(r.type)}</span>
+        <div class="muted small">${fmtDate(r.from)}${r.to&&r.to!==r.from?' – '+fmtDate(r.to):''} · ${esc(r.days)} วัน${r.cover?' · ผู้ปฏิบัติงานแทน '+esc(r.cover):''}${r.reason?' · '+esc(r.reason):''}</div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button type="button" class="btn btn-primary btn-sm" onclick="decideLeave(${i},'approved')">อนุมัติ</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="decideLeave(${i},'rejected')">ไม่อนุมัติ</button>
+      </div>
+    </div>`).join('');
+}
+async function decideLeave(i, decision){
+  const r = __pendingLeaves[i];
+  if(!r || __leaveBusy) return;
+  let note = '';
+  if(decision==='rejected'){
+    note = prompt('เหตุผลที่ไม่อนุมัติใบลาของ '+r.name+' (ไม่บังคับ)', '');
+    if(note===null) return; // กดยกเลิก
+  }else if(!confirm('อนุมัติใบลา'+r.type+'ของ '+r.name+' ?')) return;
+  __leaveBusy = true;
+  try{
+    await FBL.approveLeave(r.id, decision, note);
+    showToast(decision==='approved' ? 'อนุมัติใบลาแล้ว' : 'บันทึกว่าไม่อนุมัติแล้ว');
+    await loadAll();
+  }catch(err){
+    alert('บันทึกการอนุมัติไม่สำเร็จ: ' + err.message);
+  }finally{ __leaveBusy = false; }
 }
 /* ---------- วัสดุคงเหลือ: ใช้ยอดที่ระบบที่ 3 คำนวณส่งมา (ตรงกับบัญชี พ.1-02 ทุกตัวเลข) ถ้ายังไม่มี ใช้ยอดตั้งต้น + รับ − จ่าย ---------- */
 function materialsView(){
@@ -1115,11 +1160,13 @@ function renderAlerts(){
     <div class="alert-group"><div class="alert-group-title"><span class="dot-yellow"></span> ใกล้ถึงกำหนดส่งรายงานประจำเดือน / สัปดาห์</div>${a.yellow.map(alertRowHTML).join('') || empty}</div>
     <div class="alert-group"><div class="alert-group-title"><span class="dot-blue"></span> แจ้งเตือนล่วงหน้า</div>${a.blue.map(alertRowHTML).join('') || empty}</div>`;
   const badge = document.getElementById('alerts-tab-badge');
-  if(a.red.length){ badge.textContent = a.red.length; badge.classList.remove('hidden'); } else badge.classList.add('hidden');
+  const badgeN = a.red.length + __pendingLeaves.length; // ด่วน + ใบลารออนุมัติ
+  if(badgeN){ badge.textContent = badgeN; badge.classList.remove('hidden'); } else badge.classList.add('hidden');
   // สรุปย่อในหน้าภาพรวม: ด่วนทั้งหมด + งานประจำที่ยังไม่ติ๊กและเหลือ ≤ 7 วัน
   const soon = a.yellow.filter(o=>{ const st=__alertState[o.id]||{}; return st.doneFor!==o.checkKey; }).filter(o=>/อีก [0-7] วัน|วันนี้/.test(o.pillHTML));
   const top = a.red.concat(soon).slice(0,6);
-  document.getElementById('ov-alerts').innerHTML = top.length ? top.map(o=>`<div class="today-item"><span>${esc(o.task)}</span>${o.pillHTML}</div>`).join('') : '<div class="empty">ไม่มีงานเร่งด่วน 👍</div>';
+  const leaveRow = __pendingLeaves.length ? `<div class="today-item" style="cursor:pointer;" onclick="gotoTab('alerts')"><span>ใบลารออนุมัติ</span><span class="pill pill-warn">${__pendingLeaves.length} รายการ</span></div>` : '';
+  document.getElementById('ov-alerts').innerHTML = (leaveRow || top.length) ? leaveRow + top.map(o=>`<div class="today-item"><span>${esc(o.task)}</span>${o.pillHTML}</div>`).join('') : '<div class="empty">ไม่มีงานเร่งด่วน 👍</div>';
 }
 
 /* ============================================================
@@ -1256,7 +1303,7 @@ function printExecReport(){
 
 function renderAll(){
   if(!__dataLoaded) return;
-  renderOverviewStats(); renderTodayLeave(); renderBudgetMini(); renderBudgetDonut(); renderMaterials(); renderAlerts();
+  renderOverviewStats(); renderLeaveApprovals(); renderTodayLeave(); renderBudgetMini(); renderBudgetDonut(); renderMaterials(); renderAlerts();
   if(document.getElementById('panel-reports').classList.contains('active')) renderSummaryReport();
 }
 </script>

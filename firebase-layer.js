@@ -113,7 +113,7 @@
     // หน้าเว็บยังเรียก apiGet/apiPost('staff') เหมือนเดิม — ชั้นนี้แยก/รวมให้เอง; columns = เฉพาะส่วนที่อ่านข้ามระบบได้
     staff: { section: 's1', label: 'บุคลากร', idField: 'id', idPrefix: 'STF', columns: ['id', 'name', 'role', 'duty', 'ptype', 'rate', 'status', 'startDate', 'lastUpdated', 'nickname', 'shirt'], numericFields: ['rate'], privateTable: 'staff_private', privateCols: ['birth', 'med', 'phone', 'address', 'education', 'emergencyContact', 'emergencyPhone', 'bloodType'] },
     staff_private: { section: 's1', label: 'ข้อมูลส่วนตัวบุคลากร', idField: 'id', idPrefix: null, columns: ['id', 'birth', 'med', 'phone', 'address', 'education', 'emergencyContact', 'emergencyPhone', 'bloodType', 'lastUpdated'], numericFields: [], trash: false },
-    leave_requests: { section: 's1', label: 'การลา', idField: 'id', idPrefix: 'LV', columns: ['id', 'name', 'type', 'from', 'to', 'days', 'reason', 'cover', 'contact', 'status', 'recordedDate', 'advanceDays', 'lastUpdated'], numericFields: ['days', 'advanceDays'] },
+    leave_requests: { section: 's1', label: 'การลา', idField: 'id', idPrefix: 'LV', columns: ['id', 'name', 'type', 'from', 'to', 'days', 'reason', 'cover', 'contact', 'status', 'recordedDate', 'advanceDays', 'lastUpdated', 'approval', 'approvedBy', 'approvedAt', 'approvalNote'], numericFields: ['days', 'advanceDays'] },
     public_holidays: { section: 's1', label: 'วันหยุดนักขัตฤกษ์', idField: 'date', idPrefix: null, columns: ['date', 'name', 'lastUpdated'], numericFields: [] },
     complaints: { section: 's1', label: 'คำร้องทุกข์', idField: 'id', idPrefix: 'CPL', columns: ['id', 'date', 'receiveNo', 'route', 'km', 'subject', 'remark', 'status', 'lastUpdated', 'updatesJson'], numericFields: [] },
 
@@ -1093,7 +1093,21 @@
   // อ่านจากแคชในหน่วยความจำทันที (ต้องเคย apiGet ตารางนั้นมาก่อน) — ไม่รอเน็ต
   FBL.rows = function (table) { return subs[table] ? clone(subs[table].rows) : []; };
   FBL.loaded = function (table) { return !!(subs[table] && subs[table].firstDone); };
-  // อ่านเฉพาะช่วงของตารางครั้งเดียว (ไม่ฟังสด ไม่เก็บค้างในหน่วยความจำของชั้นนี้) — ใช้กับตารางที่โตทุกปี เช่น ใบสั่งการรายวัน
+  // อนุมัติ/ไม่อนุมัติใบลา (ผู้เข้าหน้าหลักได้) — แตะเฉพาะฟิลด์การอนุมัติ ไม่แก้ข้อมูลลาอื่น + บันทึกประวัติในคำสั่งเดียวกัน
+  // approval: '' (ใบลาเดิมก่อนมีระบบอนุมัติ) | 'pending' | 'approved' | 'rejected'
+  FBL.canApproveLeave = function () { return FBL.can('main'); };
+  FBL.approveLeave = async function (id, decision, note) {
+    if (!FBL.canApproveLeave()) throw new Error('ไม่มีสิทธิ์อนุมัติใบลา');
+    if (decision !== 'approved' && decision !== 'rejected') throw new Error('ค่าการอนุมัติไม่ถูกต้อง');
+    await FBL.ready;
+    const ref = db.collection('leave_requests').doc(docKey(id));
+    const batch = db.batch();
+    const at = nowIso();
+    batch.update(ref, { approval: decision, approvedBy: FBL.user.name, approvedAt: at, approvalNote: String(note || '').slice(0, 300), lastUpdated: at });
+    batch.set(logRef(), logEntry('update', 'leave_requests', id, (decision === 'approved' ? 'อนุมัติใบลา' : 'ไม่อนุมัติใบลา') + (note ? ' — ' + String(note).slice(0, 120) : '')));
+    lastLocalWrite = Date.now();
+    try { await batch.commit(); } catch (e) { throw new Error(thErr(e)); }
+  };  // อ่านเฉพาะช่วงของตารางครั้งเดียว (ไม่ฟังสด ไม่เก็บค้างในหน่วยความจำของชั้นนี้) — ใช้กับตารางที่โตทุกปี เช่น ใบสั่งการรายวัน
   // field ต้องเป็นฟิลด์เดียว (ช่วงค่า from..to) เพื่อไม่ต้องสร้างดัชนีเพิ่มใน Firestore
   FBL.apiQueryRange = async function (table, field, from, to) {
     if (!TABLES[table]) throw new Error('ไม่รู้จักตาราง: ' + table);
