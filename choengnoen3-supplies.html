@@ -386,6 +386,35 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .mc-menu.hidden{display:none;}
   .mc-menu button{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 12px;border-radius:7px;font-family:'Sarabun';font-size:13.5px;cursor:pointer;color:var(--ink-900);}
   .mc-menu button:hover{background:var(--paper-100);}
+  .mc-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+  /* ตรวจเทียบไฟล์ระบบกรม (rmms) */
+  #doh-chk-overlay .modal-box{max-width:1020px;}
+  .dohc-note{background:var(--paper-50);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--ink-600);line-height:1.6;margin-bottom:12px;}
+  .dohc-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+  .dohc-bar select{font-family:'Sarabun';font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;}
+  .dohc-pick{display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
+  .dohc-kpi{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+  .dohc-kpi div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:12.5px;color:var(--ink-600);}
+  .dohc-kpi b{display:block;font-size:19px;color:var(--ink-900);}
+  .dohc-tabs{display:flex;gap:6px;margin-bottom:8px;}
+  .dohc-tabs button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 14px;font-family:'Sarabun';font-size:14px;cursor:pointer;}
+  .dohc-tabs button.on{background:var(--navy-800);color:#fff;border-color:var(--navy-800);}
+  .dohc-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;}
+  .dohc-wrap table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  .dohc-wrap th,.dohc-wrap td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;}
+  .dohc-wrap th{background:var(--paper-50);color:var(--ink-600);font-weight:600;font-size:12.5px;}
+  .dohc-wrap td.n,.dohc-wrap th.n{text-align:right;}
+  .dohc-wrap tr.dohc-row{cursor:pointer;}
+  .dohc-wrap tr.dohc-row:hover{background:var(--paper-50);}
+  .dohc-wrap tr.dohc-det td{background:var(--paper-50);white-space:normal;font-size:12.5px;line-height:1.6;}
+  .dohc-st{display:inline-block;padding:1px 9px;border-radius:99px;font-size:12px;font-weight:600;}
+  .dohc-st.ok{background:var(--success-bg);color:var(--success);}
+  .dohc-st.bad{background:var(--danger-bg);color:var(--danger);}
+  .dohc-st.warn{background:#fdf1d9;color:#9a6200;}
+  .dohc-two{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .dohc-two h5{margin:0 0 4px;font-size:12.5px;color:var(--ink-600);}
+  .dohc-two ul{margin:0;padding-left:16px;}
+  @media(max-width:700px){.dohc-two{grid-template-columns:1fr;}}
   .mc-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start;padding:16px 20px 20px;}
   .mc-cols.hidden{display:none;}
   .mc-col{border-radius:14px;padding:12px;}
@@ -655,7 +684,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="mc-month"><select id="mc-month" onchange="onMasterMonthChange(this.value)" aria-label="เลือกเดือน"></select><span class="mc-car">▾</span></div>
               <div class="mc-upd" id="mc-upd"></div>
             </div>
-            <button class="btn btn-primary" id="mat-add-btn" onclick="openItemModal()">+ รับเข้าคลัง</button>
+            <div class="mc-actions">
+              <button class="btn btn-ghost" id="doh-chk-btn" onclick="openDohCheck()" title="นำเข้าไฟล์ CSV จากระบบกรม (rmms) แล้วเทียบกับบัญชีเบิก-จ่ายของเรา">🔎 ตรวจเทียบไฟล์กรม</button>
+              <button class="btn btn-primary" id="mat-add-btn" onclick="openItemModal()">+ รับเข้าคลัง</button>
+            </div>
           </div>
           <div class="mc-tabrow">
             <div class="tabs" id="master-tabs" style="padding:0;border:none;background:transparent;flex:none;">
@@ -901,6 +933,18 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <div class="modal-tab" data-modaltab="new" onclick="setItemModalTab(this,'new')">＋ เพิ่มรายการวัสดุใหม่</div>
     </div>
     <div class="modal-body" id="item-modal-body"></div>
+  </div>
+</div>
+
+<!-- ============ ตรวจเทียบไฟล์ระบบกรม (rmms) กับบัญชีเบิก-จ่ายของเรา (อ่านอย่างเดียว ไม่เขียนข้อมูลใด ๆ) ============ -->
+<div class="modal-overlay hidden no-print" id="doh-chk-overlay">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-head-icon" style="font-size:19px;">🔎</div>
+      <h3>ตรวจเทียบไฟล์ระบบกรม (rmms)</h3>
+      <button type="button" class="modal-close" onclick="closeDohCheck()">✕</button>
+    </div>
+    <div class="modal-body" id="doh-chk-body"></div>
   </div>
 </div>
 
@@ -4846,6 +4890,212 @@ function runConfirmModal(){
   document.getElementById('confirm-modal-overlay').classList.add('hidden');
   __confirmModalCallback = null;
   if(cb) cb();
+}
+
+/* ============================================================
+   ตรวจเทียบไฟล์ระบบกรม (rmms) กับบัญชีเบิก-จ่ายของเรา — อ่านอย่างเดียว
+   - ผู้ใช้เลือกไฟล์ CSV ของเดือนเดียว (Export_CSV ทุกไฟล์ที่เป็นกิจกรรม) ระบบอ่านในเครื่อง ไม่ส่งข้อมูลไปที่ใด
+   - รวมยอดน้ำมันต่อเครื่อง และยอดวัสดุต่อรายการของทั้งเดือน เทียบกับ fuelTransactions / materialTransactions
+     (kind:'issue' ไม่รวมรายการ [ปรับยอด]) — ระบบเรายังไม่เก็บเลขที่ใบ/ผู้เบิก/กิจกรรมของใบเบิก จึงเทียบได้ระดับยอดรวมรายเดือน
+   ============================================================ */
+const DohChk = { parsed:[], skipped:[], mk:'', detected:'', onlyDiff:true, tab:'fuel', open:{}, rows:{fuel:[], mat:[]} };
+function dohNum(x){ const v = parseFloat(String(x==null?'':x).replace(/,/g,'')); return isNaN(v) ? 0 : v; }
+function dohDigits(s){ return String(s||'').replace(/\D/g,''); }
+function dohNorm(s){ return String(s||'').replace(/\s+/g,'').toLowerCase(); }
+function dohIso(d){ // 'DD-MM-YYYY' (พ.ศ.) -> 'YYYY-MM-DD' (ค.ศ.)
+  const p = String(d||'').trim().split('-'); if(p.length!==3) return '';
+  return (+p[2]-543)+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');
+}
+function dohParseCsv(text){
+  if(text.charCodeAt(0)===0xFEFF) text = text.slice(1);
+  const rows=[]; let row=[], cell='', q=false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){ cell+='"'; i++; } else q=false; } else cell+=c; }
+    else if(c==='"') q=true;
+    else if(c===','){ row.push(cell); cell=''; }
+    else if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n') i++; row.push(cell); rows.push(row); row=[]; cell=''; }
+    else cell+=c;
+  }
+  if(cell!==''||row.length){ row.push(cell); rows.push(row); }
+  return rows;
+}
+/* อ่านไฟล์ "ผลงานรายกิจกรรม" (Export_CSV ที่ขึ้นต้นด้วย รหัสหน่วยงาน) — ไฟล์อื่นคืน null */
+function dohParseActivity(rows, fname){
+  if(!rows.length || String(rows[0][0]||'').trim()!=='รหัสหน่วยงาน') return null;
+  const a = { file:fname, plan:'', jobCode:'', jobName:'', route:'', km:'', dates:[], machines:[], mats:[] };
+  let mode='';
+  for(const r of rows){
+    const k = String(r[0]||'').trim();
+    if(k==='แผนปฏิบัติการ') a.plan = r[1]||'';
+    else if(k==='รหัสงาน'){ a.jobCode = r[1]||''; a.jobName = r[2]||''; }
+    else if(k==='หมายเลขสายทาง') a.route = r[1]||'';
+    else if(k==='กม.เริ่มต้น') a.km = (r[1]||'')+' – '+(r[3]||'');
+    else if(k==='วันที่ปฏิบัติงาน') a.dates = String(r[1]||'').split(',').map(s=>s.trim()).filter(Boolean);
+    else if(k==='รายการวัสดุ') mode='mat';
+    else if(k==='หมายเลขเครื่องจักร') mode='mach';
+    else if(k==='แรงงาน'||k==='ค่าใช้สอย') mode='';
+    else if(mode==='mat' && k) a.mats.push({ name:k, unit:String(r[2]||'').trim(), price:dohNum(r[3]), qty:dohNum(r[4]), amt:dohNum(r[5]) });
+    else if(mode==='mach' && /^[\d-]{6,}$/.test(k)) a.machines.push({ no:k, hours:dohNum(r[2]), liters:dohNum(r[5]), amt:dohNum(r[7]) });
+    else if(!k && mode && (r[3]==='รวม' || r[1]==='รวม')) mode='';
+  }
+  return a;
+}
+async function dohReadFile(f){
+  const buf = await f.arrayBuffer();
+  let text = new TextDecoder('utf-8').decode(buf);
+  if(text.indexOf('รหัส')<0 && text.indexOf('รายงาน')<0){ try{ text = new TextDecoder('windows-874').decode(buf); }catch(e){} }
+  return text;
+}
+async function dohOnFiles(input){
+  const files = Array.from(input.files||[]);
+  if(!files.length) return;
+  DohChk.parsed = []; DohChk.skipped = []; DohChk.open = {};
+  for(const f of files){
+    try{
+      const a = dohParseActivity(dohParseCsv(await dohReadFile(f)), f.name);
+      if(a) DohChk.parsed.push(a); else DohChk.skipped.push(f.name);
+    }catch(e){ DohChk.skipped.push(f.name); }
+  }
+  // เดือนของไฟล์ = เดือนที่พบวันที่ปฏิบัติงานมากที่สุด
+  const cnt = {};
+  DohChk.parsed.forEach(a=>a.dates.forEach(d=>{ const iso = dohIso(d); if(iso){ const mk = iso.slice(0,7); cnt[mk] = (cnt[mk]||0)+1; } }));
+  const best = Object.keys(cnt).sort((x,y)=>cnt[y]-cnt[x])[0] || '';
+  DohChk.detected = best;
+  DohChk.mk = best || masterMk();
+  DohChk.mixed = Object.keys(cnt).length>1;
+  renderDohCheck();
+}
+function dohMkLabel(mk){ const p = String(mk).split('-').map(Number); return monthNamesTh[p[1]-1]+' '+(p[0]+543); }
+/* รวมยอดฝั่งกรมและฝั่งเราของเดือน mk แล้วจับคู่ */
+function dohBuildRows(){
+  const mk = DohChk.mk, eps = {fuel:0.05, mat:0.005};
+  // ---- น้ำมัน ----
+  const F = {};
+  const fGet = (k, base)=> F[k] || (F[k] = Object.assign({ key:k, label:'', sub:'', doh:0, our:0, dohParts:[], ourParts:[], inDoh:false, inOur:false }, base||{}));
+  DohChk.parsed.forEach(a=>a.machines.forEach(m=>{
+    if(!(m.liters>0)) return;
+    const o = fGet(dohDigits(m.no)); o.inDoh = true; o.doh += m.liters; o.label = o.label || m.no;
+    o.dohParts.push({ plan:a.plan, job:a.jobName, route:a.route, km:a.km, qty:m.liters, dates:a.dates });
+  }));
+  fuelTransactions.forEach(t=>{
+    if(t.kind!=='issue' || isAdjustmentTx(t) || monthKeyOf(t.date)!==mk) return;
+    const reg = vehicleRegNo(t.vehicle); const k = dohDigits(reg!=='—' ? reg : t.vehicle) || String(t.vehicle||'');
+    const o = fGet(k); o.inOur = true; o.our += (t.liters||0);
+    o.ourName = vehicleShortName(t.vehicle); if(!o.label) o.label = reg!=='—' ? reg : String(t.vehicle||'');
+    o.ourParts.push({ date:t.date, qty:t.liters||0, fuelType:t.fuelType });
+  });
+  // ---- วัสดุ ----
+  const matByCode = {}; materials.forEach(m=>{ matByCode[m.code] = m; });
+  const M = {}, OM = {};
+  DohChk.parsed.forEach(a=>a.mats.forEach(m=>{
+    const k = dohNorm(m.name); const o = M[k] || (M[k] = { key:k, label:m.name, sub:m.unit, doh:0, our:0, dohParts:[], ourParts:[], inDoh:true, inOur:false });
+    o.doh += m.qty; o.dohParts.push({ plan:a.plan, job:a.jobName, route:a.route, km:a.km, qty:m.qty, price:m.price, dates:a.dates });
+  }));
+  materialTransactions.forEach(t=>{
+    if(t.kind!=='issue' || isAdjustmentTx(t) || monthKeyOf(t.date)!==mk) return;
+    const m = matByCode[t.itemCode]; const nm = m ? m.name : String(t.itemCode||'');
+    const k = dohNorm(nm); const o = OM[k] || (OM[k] = { name:nm, unit:m?m.unit:'', our:0, parts:[] });
+    o.our += (t.qty||0); o.parts.push({ date:t.date, qty:t.qty||0 });
+  });
+  // จับคู่ชื่อ: ตรงกันเป๊ะก่อน แล้วค่อยจับแบบประมาณ (ชื่อหนึ่งอยู่ในอีกชื่อหนึ่ง)
+  const used = {};
+  Object.keys(M).forEach(k=>{ if(OM[k]){ M[k].our = OM[k].our; M[k].ourParts = OM[k].parts; M[k].inOur = true; used[k] = true; } });
+  Object.keys(M).forEach(k=>{
+    if(M[k].inOur || k.length<4) return;
+    const hit = Object.keys(OM).find(ok=>!used[ok] && ok.length>=4 && (ok.indexOf(k)>=0 || k.indexOf(ok)>=0));
+    if(hit){ M[k].our = OM[hit].our; M[k].ourParts = OM[hit].parts; M[k].inOur = true; M[k].approx = OM[hit].name; used[hit] = true; }
+  });
+  Object.keys(OM).forEach(ok=>{ if(used[ok]) return; M['our:'+ok] = { key:'our:'+ok, label:OM[ok].name, sub:OM[ok].unit, doh:0, our:OM[ok].our, dohParts:[], ourParts:OM[ok].parts, inDoh:false, inOur:true }; });
+  const fin = (list, e)=> list.map(o=>{
+    o.diff = Math.round((o.our - o.doh)*1000)/1000;
+    if(o.inDoh && !o.inOur) o.status = ['bad','มีในกรม ไม่พบในระบบเรา'];
+    else if(!o.inDoh && o.inOur) o.status = ['warn','มีในระบบเรา ไม่พบในไฟล์กรม'];
+    else if(Math.abs(o.diff)<=e) o.status = ['ok','ตรงกัน'];
+    else o.status = o.diff<0 ? ['bad','ระบบเราน้อยกว่ากรม'] : ['warn','ระบบเรามากกว่ากรม'];
+    o.isOk = o.status[0]==='ok'; return o;
+  }).sort((a,b)=> (a.isOk-b.isOk) || (Math.abs(b.diff)-Math.abs(a.diff)) || String(a.label).localeCompare(String(b.label)));
+  DohChk.rows.fuel = fin(Object.values(F), eps.fuel);
+  DohChk.rows.mat = fin(Object.values(M), eps.mat);
+}
+function dohSetMonth(v){ DohChk.mk = v; DohChk.open = {}; renderDohCheck(); }
+function dohSetTab(t){ DohChk.tab = t; renderDohCheck(); }
+function dohToggleOnly(v){ DohChk.onlyDiff = !!v; renderDohCheck(); }
+function dohToggleRow(i){ const o = DohChk.rows[DohChk.tab][i]; if(!o) return; DohChk.open[o.key] = !DohChk.open[o.key]; renderDohCheck(); }
+function dohDatesText(dates){
+  if(!dates || !dates.length) return 'ไม่ระบุวันที่ในไฟล์';
+  return dates.map(d=>{ const iso = dohIso(d); return iso ? fmtDate(iso) : d; }).join(', ');
+}
+function openDohCheck(){
+  document.getElementById('doh-chk-overlay').classList.remove('hidden');
+  renderDohCheck();
+}
+function closeDohCheck(){ document.getElementById('doh-chk-overlay').classList.add('hidden'); }
+function dohDownload(){
+  const out = [['ประเภท','รายการ','หน่วย','ยอดกรม','ยอดระบบเรา','ผลต่าง (เรา-กรม)','สถานะ']];
+  [['fuel','น้ำมัน'],['mat','วัสดุ']].forEach(([k,n])=>DohChk.rows[k].forEach(o=>{
+    const nm = k==='fuel' ? (o.label+(o.ourName?' '+o.ourName:'')) : o.label;
+    out.push([n, nm, k==='fuel'?'ลิตร':o.sub, o.doh, o.our, o.diff, o.status[1]]);
+  }));
+  const csv = '﻿'+out.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download = 'ตรวจเทียบไฟล์กรม-'+DohChk.mk+'.csv';
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function renderDohCheck(){
+  const body = document.getElementById('doh-chk-body'); if(!body) return;
+  const note = `<div class="dohc-note"><b>วิธีใช้:</b> กด "เลือกไฟล์" แล้วเลือกไฟล์ <b>Export_CSV ทุกไฟล์ของเดือนเดียวกัน</b> ที่โหลดจากระบบกรม (เลือกพร้อมกันหลายไฟล์ได้) ระบบอ่านไฟล์ในเครื่องคุณเท่านั้น ไม่ได้ส่งไปที่ใดและไม่แก้ข้อมูลใด ๆ<br>
+    <b>ข้อจำกัด:</b> ใบเบิกในระบบเรายังไม่เก็บเลขที่ใบ ผู้เบิก หรือกิจกรรม จึงเทียบได้เป็นยอดรวมของทั้งเดือน ต่อเครื่อง (น้ำมัน) และต่อรายการ (วัสดุ) เมื่อพบส่วนต่าง ให้เปิดดูวันที่ในระบบเราเทียบกับใบกระดาษ</div>`;
+  const pick = `<label class="btn btn-primary dohc-pick">📂 เลือกไฟล์ CSV<input type="file" accept=".csv,text/csv" multiple style="display:none" onchange="dohOnFiles(this)"></label>`;
+  if(!DohChk.parsed.length){
+    const sk = DohChk.skipped.length ? `<div class="dohc-note" style="background:var(--danger-bg);color:var(--danger);">ไม่พบไฟล์ผลงานรายกิจกรรมในที่เลือก (ข้าม ${DohChk.skipped.length} ไฟล์: ${esc(DohChk.skipped.join(', '))}) — ต้องเป็นไฟล์ที่บรรทัดแรกขึ้นต้นด้วย "รหัสหน่วยงาน"</div>` : '';
+    body.innerHTML = note + sk + `<div class="dohc-bar">${pick}</div>`;
+    return;
+  }
+  if(typeof __s3DataReady!=='undefined' && !__s3DataReady){
+    body.innerHTML = note + `<div class="dohc-note">กำลังโหลดข้อมูลบัญชีเบิก-จ่ายของเรา กรุณารอสักครู่แล้วเปิดหน้านี้ใหม่</div>`; return;
+  }
+  dohBuildRows();
+  // ตัวเลือกเดือน: เดือนที่พบในไฟล์ + 12 เดือนล่าสุด
+  const keys = []; let k = currentMonthKey();
+  for(let i=0;i<12;i++){ keys.push(k); k = prevMonthKey(k); }
+  if(!keys.includes(DohChk.mk)) keys.unshift(DohChk.mk);
+  const monthSel = `<select onchange="dohSetMonth(this.value)" aria-label="เดือนที่เทียบ">${keys.map(o=>`<option value="${o}" ${o===DohChk.mk?'selected':''}>${dohMkLabel(o)}${o===DohChk.detected?' (ตามวันที่ในไฟล์)':''}</option>`).join('')}</select>`;
+  const warn = [];
+  if(DohChk.mixed) warn.push('ไฟล์มีวันที่ปฏิบัติงานหลายเดือนปนกัน — ควรเลือกไฟล์ทีละเดือน');
+  if(!DohChk.detected) warn.push('ไม่พบวันที่ปฏิบัติงานในไฟล์ จึงเดาเดือนจากหน้าจอ — ตรวจสอบเดือนให้ถูกต้อง');
+  if(DohChk.skipped.length) warn.push('ข้าม '+DohChk.skipped.length+' ไฟล์ที่ไม่ใช่ผลงานรายกิจกรรม: '+DohChk.skipped.join(', '));
+  const rows = DohChk.rows[DohChk.tab];
+  const allF = DohChk.rows.fuel, allM = DohChk.rows.mat;
+  const kpi = `<div class="dohc-kpi">
+    <div><b>${DohChk.parsed.length}</b>ไฟล์กิจกรรมที่อ่าน</div>
+    <div><b>${allF.filter(o=>o.isOk).length}/${allF.length}</b>น้ำมัน ตรงกัน (เครื่อง)</div>
+    <div><b>${allM.filter(o=>o.isOk).length}/${allM.length}</b>วัสดุ ตรงกัน (รายการ)</div>
+    <div><b style="color:var(--danger)">${allF.concat(allM).filter(o=>!o.isOk).length}</b>รายการที่ต้องตรวจ</div></div>`;
+  const unit = DohChk.tab==='fuel' ? 'ลิตร' : '';
+  const shown = DohChk.onlyDiff ? rows.filter(o=>!o.isOk) : rows;
+  const tr = shown.map(o=>{
+    const nm = DohChk.tab==='fuel' ? `${esc(o.label)} <small style="color:var(--ink-400)">${esc(o.ourName||'')}</small>` : `${esc(o.label)}${o.approx?` <small style="color:var(--ink-400)" title="จับคู่โดยประมาณกับ: ${esc(o.approx)}">≈ ${esc(o.approx)}</small>`:''}`;
+    const open = !!DohChk.open[o.key];
+    let det = '';
+    if(open){
+      const left = o.dohParts.length ? '<ul>'+o.dohParts.map(p=>`<li>แผน ${esc(p.plan)} · ${esc(p.job)} · สาย ${esc(p.route)} กม. ${esc(p.km)} → <b>${fmtNum(p.qty, DohChk.tab==='fuel'?2:2)}</b>${p.price?` (@${fmtNum(p.price,2)})`:''}<br><small>วันที่ในไฟล์: ${esc(dohDatesText(p.dates))}</small></li>`).join('')+'</ul>' : '<i>ไม่มีในไฟล์กรม</i>';
+      const ps = o.ourParts.slice().sort((a,b)=>a.date.localeCompare(b.date));
+      const right = ps.length ? '<ul>'+ps.map(p=>`<li>${esc(fmtDate(p.date))} → <b>${fmtNum(p.qty,2)}</b>${p.fuelType?' · '+esc(p.fuelType):''}</li>`).join('')+'</ul>' : '<i>ไม่มีรายการเบิกในระบบเราของเดือนนี้</i>';
+      det = `<tr class="dohc-det"><td colspan="6"><div class="dohc-two"><div><h5>ไฟล์กรม (แยกตามแผน/กิจกรรม)</h5>${left}</div><div><h5>ระบบเรา (แยกตามวันที่เบิก)</h5>${right}</div></div></td></tr>`;
+    }
+    return `<tr class="dohc-row" onclick="dohToggleRow(${rows.indexOf(o)})"><td>${open?'▾':'▸'} ${nm}</td><td>${esc(DohChk.tab==='fuel'?'ลิตร':o.sub)}</td><td class="n">${fmtNum(o.doh,2)}</td><td class="n">${fmtNum(o.our,2)}</td><td class="n" style="color:${o.diff<0?'var(--danger)':(o.diff>0?'#9a6200':'inherit')}">${o.diff>0?'+':''}${fmtNum(o.diff,2)}</td><td><span class="dohc-st ${o.status[0]}">${esc(o.status[1])}</span></td></tr>${det}`;
+  }).join('');
+  body.innerHTML = note
+    + (warn.length ? `<div class="dohc-note" style="background:#fdf1d9;color:#7a5000;">${warn.map(esc).join('<br>')}</div>` : '')
+    + `<div class="dohc-bar">${pick}<span>เดือนที่เทียบ ${monthSel}</span>
+        <label style="display:inline-flex;gap:6px;align-items:center;font-size:13.5px;"><input type="checkbox" ${DohChk.onlyDiff?'checked':''} onchange="dohToggleOnly(this.checked)"> แสดงเฉพาะที่ไม่ตรง</label>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="dohDownload()">⬇ ดาวน์โหลดผล (CSV)</button></div>`
+    + kpi
+    + `<div class="dohc-tabs"><button class="${DohChk.tab==='fuel'?'on':''}" onclick="dohSetTab('fuel')">⛽ น้ำมัน (ต่อเครื่อง)</button><button class="${DohChk.tab==='mat'?'on':''}" onclick="dohSetTab('mat')">📦 วัสดุ (ต่อรายการ)</button></div>`
+    + `<div class="dohc-wrap"><table><thead><tr><th>${DohChk.tab==='fuel'?'เลขเครื่องจักร':'รายการวัสดุ'}</th><th>หน่วย</th><th class="n">ยอดกรม</th><th class="n">ยอดระบบเรา</th><th class="n">ผลต่าง (เรา−กรม)</th><th>สถานะ</th></tr></thead><tbody>${tr || `<tr><td colspan="6" style="text-align:center;color:var(--ink-400);padding:18px;">${DohChk.onlyDiff?'ไม่มีรายการที่ไม่ตรง 🎉':'ไม่มีข้อมูล'}</td></tr>`}</tbody></table></div>`
+    + `<p class="dohc-note" style="margin-top:10px;">กดแถวเพื่อดูรายละเอียดฝั่งกรมและฝั่งเรา · ตัวเลขนับเฉพาะรายการ "เบิกจ่าย" ของเดือน ${esc(dohMkLabel(DohChk.mk))} (ไม่รวมรายการปรับยอด) · น้ำมันตรงกันเมื่อต่างไม่เกิน 0.05 ลิตร</p>`;
 }
 
 /* โมดัลแจ้งเตือนแบบทั่วไป (แทน alert()) — showAlertModal(msg, title) ปุ่มเดียว "ตกลง" */
