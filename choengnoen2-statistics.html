@@ -162,14 +162,6 @@
   #routes-body td.num, #routes-foot td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
   .bmm-inner-table tr.bmm-total-row td{background:var(--paper-50);font-weight:700;color:var(--navy-900);border-top:2px solid var(--line);}
 
-  #daily-table td{vertical-align:top;}
-  #daily-table td:nth-child(1){white-space:nowrap;}
-  #daily-table td:nth-child(2){white-space:nowrap;}
-  #daily-table td:nth-child(2) .dw-job-name{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400;color:var(--ink-500);font-size:12px;margin-top:2px;max-width:150px;cursor:default;}
-  #daily-table td:nth-child(3){white-space:normal;max-width:360px;}
-  #daily-table td:nth-child(4){white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums;}
-  #daily-table td:nth-child(5),#daily-table td:nth-child(6),#daily-table td:nth-child(7),#daily-table td:nth-child(8),#daily-table td:nth-child(9){white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums;}
-  #daily-table td:nth-child(10){white-space:nowrap;text-align:center;}
   .dw-loc-main{font-weight:500;}
   .dw-loc-toggle{display:inline-block;margin-top:5px;background:none;border:none;padding:0;font-family:inherit;font-size:11px;font-weight:600;color:var(--orange-600);cursor:pointer;}
   .dw-loc-toggle:hover{text-decoration:underline;}
@@ -569,8 +561,132 @@
   .dw-subcard-head{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--navy-800);margin-bottom:10px;}
   .dw-subcard-head svg{width:14px;height:14px;flex:none;}
   @media(max-width:640px){ .dw-subgrid{grid-template-columns:1fr;} }
-  .dw-toprow{display:grid;grid-template-columns:0.8fr 1fr 1.4fr;gap:12px;}
+  .dw-toprow{display:grid;grid-template-columns:1fr 1.5fr;gap:14px;}
   @media(max-width:640px){ .dw-toprow{grid-template-columns:1fr;} }
+
+  /* ===== แท็บย่อยงานบำรุงปกติ + ตัวกรองรวม ===== */
+  .sub-tabs{display:flex;gap:4px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:-8px 0 14px;border-bottom:2px solid var(--line);}
+  .sub-tabs::-webkit-scrollbar{display:none;}
+  .sub-tabs.hidden,.set-tabs.hidden,.g-filter.hidden{display:none;}
+  .sub-tab{display:flex;align-items:center;gap:8px;padding:12px 18px;font-family:'Kanit';font-size:15px;font-weight:500;color:var(--ink-600);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;margin-bottom:-2px;}
+  .sub-tab:hover{color:var(--orange-600);}
+  .sub-tab.active{color:var(--navy-900);border-bottom-color:var(--orange-500);font-weight:600;}
+  .sub-tab-no{width:22px;height:22px;border-radius:50%;background:var(--paper-100);color:var(--ink-600);font-size:12px;display:inline-flex;align-items:center;justify-content:center;font-weight:600;}
+  .sub-tab.active .sub-tab-no{background:var(--orange-500);color:#fff;}
+  .set-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .set-tab{padding:7px 15px;border-radius:20px;font-size:13px;font-weight:600;color:var(--ink-600);background:#fff;border:1px solid var(--line);cursor:pointer;}
+  .set-tab.active{background:var(--navy-900);color:#fff;border-color:var(--navy-900);}
+  .g-filter{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 16px;}
+  .g-filter-label{font-size:13px;color:var(--ink-600);font-weight:600;}
+  .g-filter select{width:auto;min-width:150px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-family:'Sarabun';font-size:14px;color:var(--ink-900);}
+  .sec-tab{padding:10px 20px;font-size:14.5px;}
+
+  /* ===== ใบสั่งการรายวัน: การ์ดจัดกลุ่มตามวัน ===== */
+  .dw-list{padding:4px 20px 16px;}
+  .dw-sum-strip{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0 6px;}
+  .dw-sum-chip{background:var(--paper-50);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:12px;color:var(--ink-600);}
+  .dw-sum-chip b{display:block;font-family:'Kanit';font-size:17px;color:var(--navy-900);font-weight:600;}
+  .dw-day{margin-top:18px;}
+  .dw-day-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:0 4px 8px;}
+  .dw-day-title{font-family:'Kanit';font-size:15px;font-weight:600;color:var(--navy-900);}
+  .dw-day-title small{font-family:'Sarabun';font-weight:400;font-size:12px;color:var(--ink-400);margin-left:8px;}
+  .dw-day-total{font-size:12.5px;color:var(--ink-600);}
+  .dw-day-total b{color:var(--navy-900);font-family:'Kanit';font-size:14px;}
+  .dw-card-item{position:relative;background:#fff;border:1px solid var(--line);border-left:5px solid var(--orange-500);border-radius:12px;margin-bottom:10px;transition:box-shadow .15s ease;}
+  .dw-card-item.pending{border-left-color:var(--amber-400);}
+  .dw-card-item:hover{box-shadow:0 6px 18px rgba(10,37,64,.08);}
+  .dw-ci-main{display:flex;gap:14px;align-items:flex-start;padding:13px 14px 13px 16px;cursor:pointer;}
+  .dw-ci-body{flex:1;min-width:0;}
+  .dw-ci-job{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+  .dw-ci-code{font-family:'Kanit';font-size:12px;font-weight:600;background:var(--navy-900);color:#fff;border-radius:6px;padding:1px 8px;}
+  .dw-ci-name{font-family:'Kanit';font-size:15.5px;font-weight:500;color:var(--navy-900);}
+  .dw-ci-meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:6px;font-size:13px;color:var(--ink-600);}
+  .dw-ci-meta .qty{font-weight:700;color:var(--navy-900);}
+  .dw-ci-note{margin-top:5px;font-size:12px;color:var(--ink-400);}
+  .dw-ci-right{text-align:right;flex:none;display:flex;gap:8px;align-items:flex-start;}
+  .dw-ci-amount{font-family:'Kanit';font-size:19px;font-weight:600;color:var(--navy-900);line-height:1.2;}
+  .dw-ci-amount small{display:block;font-family:'Sarabun';font-size:11px;color:var(--ink-400);font-weight:400;}
+  .dw-ci-detail{display:none;border-top:1px dashed var(--line);padding:12px 16px 14px;background:var(--paper-50);border-radius:0 0 12px 8px;font-size:13px;}
+  .dw-card-item.open .dw-ci-detail{display:block;}
+  .dw-ci-costs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;}
+  .dw-ci-cost{background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:11.5px;color:var(--ink-400);}
+  .dw-ci-cost b{display:block;font-size:14px;color:var(--ink-900);font-weight:600;font-variant-numeric:tabular-nums;}
+  .dw-ci-line{margin:4px 0;color:var(--ink-600);}
+  .dw-ci-line b{color:var(--ink-900);}
+  .dw-empty{padding:44px 20px;text-align:center;color:var(--ink-400);}
+  .dw-empty .big{font-size:34px;margin-bottom:6px;}
+  @media(max-width:700px){ .dw-ci-costs{grid-template-columns:1fr 1fr;} .dw-ci-main{flex-direction:column;} .dw-ci-right{width:100%;justify-content:space-between;} }
+
+  /* ===== ฟอร์มใบสั่งการทีละขั้น ===== */
+  #daily-form-overlay .modal-box{max-width:780px;}
+  .dw-stepbar{display:flex;gap:0;background:var(--paper-50);border-bottom:1px solid var(--line);}
+  .dw-stepchip{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 6px 10px;border:none;background:none;cursor:pointer;font-family:'Sarabun';color:var(--ink-400);border-bottom:3px solid transparent;position:relative;min-width:0;}
+  .dw-stepchip .n{width:26px;height:26px;border-radius:50%;background:var(--paper-100);color:var(--ink-600);font-family:'Kanit';font-weight:600;font-size:13px;display:inline-flex;align-items:center;justify-content:center;}
+  .dw-stepchip .t{font-size:12.5px;font-weight:600;color:var(--ink-600);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+  .dw-stepchip .b{font-size:11px;color:var(--ink-400);white-space:nowrap;}
+  .dw-stepchip.active{border-bottom-color:var(--orange-500);background:#fff;}
+  .dw-stepchip.active .n{background:var(--orange-500);color:#fff;}
+  .dw-stepchip.active .t{color:var(--navy-900);}
+  .dw-stepchip.done .n{background:var(--success);color:#fff;}
+  @media(max-width:560px){ .dw-stepchip .t{font-size:11px;} .dw-stepchip .b{display:none;} }
+  .dw-step-pane{display:none;}
+  .dw-step-pane.active{display:block;}
+  .dw-step-title{font-family:'Kanit';font-size:16px;font-weight:600;color:var(--navy-900);margin:0 0 14px;}
+  .dw-req{color:var(--danger);}
+  .dw-hintopt{font-weight:400;color:var(--ink-400);font-size:12px;}
+  .dw-card{border:1px solid var(--line);border-radius:14px;padding:14px 16px 6px;margin-bottom:14px;background:var(--paper-50);}
+  .dw-card-title{font-size:13px;font-weight:700;color:var(--navy-800);margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .dw-two{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .dw-pending{display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:13px;color:var(--ink-900);margin:-2px 0 10px;}
+  .dw-pending input{margin-top:3px;width:18px;height:18px;flex:none;}
+  .dw-pending small{color:var(--ink-400);font-size:11.5px;}
+  .dw-fy-line{border:none !important;background:none !important;padding:4px 2px 0 !important;font-size:11.5px !important;color:var(--ink-400) !important;box-shadow:none !important;width:100%;}
+  .dw-uc-suggest{margin:0 0 14px;padding:10px 14px;border:1px dashed var(--orange-500);border-radius:12px;background:#fff7ee;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .dw-uc-suggest.hidden{display:none;}
+  .dw-uc-suggest span{font-size:12px;color:var(--ink-600);}
+  .dw-step-err{margin:6px 0 4px;padding:9px 13px;border-radius:10px;background:var(--danger-bg);color:var(--danger);font-size:13px;font-weight:600;white-space:pre-line;}
+  .dw-step-err.hidden{display:none;}
+  .dw-field-err{border-color:var(--danger) !important;box-shadow:0 0 0 3px rgba(193,64,47,.14) !important;}
+  .dw-review-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;font-size:13px;margin-bottom:14px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fff;}
+  .dw-review-grid .k{color:var(--ink-400);font-size:11.5px;}
+  .dw-review-grid .v{color:var(--ink-900);font-weight:600;word-break:break-word;}
+  .dw-review-grid .full{grid-column:1 / -1;}
+  .dw-review-edit{float:right;font-size:11.5px;color:var(--orange-600);cursor:pointer;font-weight:600;background:none;border:none;font-family:inherit;}
+  .dw-review-warn{margin-bottom:14px;padding:10px 14px;border-radius:12px;background:#fdf2df;border:1px solid #e3c07a;font-size:12.5px;color:#7a4e0b;}
+  .dw-review-warn.hidden{display:none;}
+  .dw-editcost{margin-left:auto;font-weight:500;color:var(--ink-600);font-size:12px;display:inline-flex;align-items:center;gap:5px;cursor:pointer;}
+  .dw-cost-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .dw-cost-grid input[readonly]{background:var(--paper-100);border-style:dashed;}
+  @media(max-width:640px){ .dw-cost-grid,.dw-two,.dw-review-grid{grid-template-columns:1fr 1fr;} }
+  .dw-cost-total{text-align:right;padding:4px 2px 12px;font-size:14px;color:var(--ink-600);}
+  .dw-cost-total b{font-family:'Kanit';font-size:24px;color:var(--navy-900);}
+  .dw-wizard-footer{justify-content:space-between;}
+  .dw-wiz-right{display:flex;gap:8px;align-items:center;}
+  .dw-wizard-footer .btn{padding:11px 22px;font-size:14.5px;}
+  .btn.hidden{display:none;}
+  /* ===== ตารางสรุป: แถวหลักอ่านง่าย กดแถวเพื่อดูแยกประเภทค่าใช้จ่าย ===== */
+  .cost-row{cursor:pointer;}
+  .cost-row td{vertical-align:middle;}
+  .cost-row td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .cost-detail{display:none;}
+  .cost-detail.open{display:table-row;}
+  .cost-detail td{background:var(--paper-50) !important;padding:10px 14px 12px !important;border-bottom:1px solid var(--line) !important;}
+  .cost-detail:hover td{background:var(--paper-50) !important;}
+  .cost-row.row-open td{background:#fdf6ec;}
+  .cost-row.row-open .row-chev{transform:rotate(90deg);}
+  .row-chev{display:inline-block;color:var(--ink-400);transition:transform .15s;}
+  .cost-chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .cost-chip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:11.5px;color:var(--ink-400);min-width:92px;}
+  .cost-chip b{display:block;font-size:14px;color:var(--ink-900);font-weight:600;font-variant-numeric:tabular-nums;}
+  .bmm-code{font-family:'Kanit';font-size:11.5px;font-weight:600;background:var(--navy-900);color:#fff;border-radius:6px;padding:1px 7px;}
+  .bmm-sub{font-size:11px;color:var(--ink-400);margin-top:2px;}
+  .bmm-inner-table thead th{text-align:center;}
+  #panel-rollup thead th:nth-child(2),#panel-rollup thead th:nth-child(3){text-align:right;}
+  .rollup-status{margin:14px 20px 4px;padding:11px 16px;border-radius:12px;font-size:13px;border:1px solid var(--line);background:var(--paper-50);color:var(--ink-600);line-height:1.6;}
+  .rollup-status.ok{background:var(--success-bg);border-color:#bfe3cb;color:#17653d;}
+  .rollup-status.warn{background:#fdf2df;border-color:#e3c07a;color:#7a4e0b;}
+  .rollup-status b{font-weight:700;}
+  .rollup-status ul{margin:4px 0 0;padding-left:20px;}
 /* แถบเลื่อนบางแบบเดียวกับระบบโจรกรรม */
 .modal-body,.modal-overlay,.mat-scroll-wrap,.table-wrap-scroll,.refdata-list,#mat-table-wrap,#veh-table-wrap,#labor-table-wrap{scrollbar-width:thin;scrollbar-color:#c3cad3 transparent}
 .modal-body::-webkit-scrollbar,.modal-overlay::-webkit-scrollbar,.mat-scroll-wrap::-webkit-scrollbar,.table-wrap-scroll::-webkit-scrollbar,.refdata-list::-webkit-scrollbar,#mat-table-wrap::-webkit-scrollbar,#veh-table-wrap::-webkit-scrollbar,#labor-table-wrap::-webkit-scrollbar{width:8px;height:8px}
@@ -625,16 +741,33 @@
         <h1>งานสถิติและบริการประชาชน</h1>
       </div>
 
+      <!-- แท็บใหญ่ 4 กลุ่ม (data-sec = view เริ่มต้นของกลุ่ม) -->
       <div class="sec-tabs no-print" id="sec-tabs">
-        <div class="sec-tab active" data-sec="routes">ทางหลวงควบคุม</div>
-        <div class="sec-tab" data-sec="routine">งานบำรุงปกติ</div>
-        <div class="sec-tab" data-sec="routine2">แผนงาน - ผลงาน</div>
-        <div class="sec-tab" data-sec="refdata">ข้อมูลอ้างอิงงาน</div>
+        <div class="sec-tab active" data-sec="routine">งานบำรุงปกติ</div>
         <div class="sec-tab" data-sec="encroach">งานรุกล้ำ</div>
-        <div class="sec-tab" data-sec="emergency">รายงานเหตุฉุกเฉิน</div>
+        <div class="sec-tab" data-sec="emergency">เหตุฉุกเฉิน</div>
+        <div class="sec-tab" data-sec="contracts">สัญญา</div>
+      </div>
+      <!-- แท็บย่อยของกลุ่มงานบำรุงปกติ เรียงตามลำดับการทำงาน -->
+      <div class="sub-tabs no-print" id="sub-tabs">
+        <div class="sub-tab active" data-view="routine"><span class="sub-tab-no">1</span>ใบสั่งการรายวัน</div>
+        <div class="sub-tab" data-view="rollup"><span class="sub-tab-no">2</span>สรุปรายเดือน</div>
+        <div class="sub-tab" data-view="routine2"><span class="sub-tab-no">3</span>แผน - ผลงาน</div>
+        <div class="sub-tab" data-view="settings"><span class="sub-tab-no">4</span>ตั้งค่า</div>
+      </div>
+      <div class="set-tabs no-print hidden" id="set-tabs">
+        <div class="set-tab active" data-view="crews">ชุดปฏิบัติงาน</div>
+        <div class="set-tab" data-view="refdata">ข้อมูลอ้างอิงงาน</div>
+        <div class="set-tab" data-view="routes">ทางหลวงควบคุม</div>
+      </div>
+      <!-- ตัวกรองปี/เดือนชุดเดียว ใช้ร่วมใบสั่งการ/สรุปรายเดือน/แผน-ผลงาน -->
+      <div class="g-filter no-print" id="g-filter">
+        <span class="g-filter-label">แสดงข้อมูลของ</span>
+        <select id="g-fy" class="edit-input" onchange="applyGlobalFilter()"></select>
+        <select id="g-month" class="edit-input" onchange="applyGlobalFilter()"></select>
       </div>
       <!-- ============ ทางหลวงควบคุม (CONTROLLED ROUTES) ============ -->
-      <div class="panel active" id="panel-routes">
+      <div class="panel" id="panel-routes">
         <div class="stats" id="routes-stats" style="grid-template-columns:repeat(4,1fr);"></div>
         <div class="section">
           <div class="section-head">
@@ -776,9 +909,95 @@
           </div>
         </div>
       </div>
+      <!-- ============ CONTRACTS (งานสัญญา) — เพิ่ม 17 ต.ค. 2569 ============ -->
+      <div class="panel" id="panel-contracts">
+        <div class="routine-kpi" id="ct-kpi"></div>
+        <div class="section">
+          <div class="section-head">
+            <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></span>
+              งานสัญญา (ก่อสร้าง / บำรุงทางในพื้นที่)
+            </h2>
+            <div class="toolbar">
+              <div class="search-box">🔍 <input id="ct-search" placeholder="ค้นหาเลขที่สัญญา / โครงการ / ผู้รับจ้าง"></div>
+              <button class="btn btn-ghost" onclick="exportContractsCsv()">ส่งออก CSV (ให้เครื่องมือแผนที่)</button>
+              <button class="btn btn-primary" onclick="openContractForm(null)">+ เพิ่มสัญญา</button>
+            </div>
+          </div>
+          <div id="ct-form-overlay" class="modal-overlay hidden no-print">
+            <div class="modal-box gmodal-box">
+              <div class="modal-head gmodal-head">
+                <div class="gmodal-head-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></div>
+                <div>
+                  <h3 id="ct-form-title">เพิ่มสัญญา</h3>
+                  <div class="gmodal-subtitle">ข้อมูลสัญญา ช่วงทางหลวง ระยะเวลา และค้ำประกัน</div>
+                </div>
+                <button class="modal-close" onclick="closeContractForm()">✕</button>
+              </div>
+              <div class="modal-body">
+                <input type="hidden" id="ct-id">
+                <div class="dw-group">
+                  <div class="dw-group-title"><span class="dot"></span>ข้อมูลสัญญา</div>
+                  <div class="f-row"><label>ชื่อโครงการ</label><input id="ct-name" placeholder="เช่น ซ่อมผิวทางแอสฟัลต์ ทล.3 ตอน ระยอง - กะเฉด"></div>
+                  <div class="two-col">
+                    <div class="f-row"><label>เลขที่สัญญา</label><input id="ct-no" placeholder="เช่น 12/2569"></div>
+                    <div class="f-row"><label>ปีงบประมาณ (พ.ศ.)</label><input type="number" id="ct-fy" placeholder="เช่น 2569"></div>
+                  </div>
+                  <div class="two-col">
+                    <div class="f-row"><label>ผู้รับจ้าง</label><input id="ct-by" placeholder="ชื่อบริษัท / ห้างหุ้นส่วน"></div>
+                    <div class="f-row"><label>วงเงินสัญญา (บาท)</label><input type="number" step="0.01" id="ct-amount" placeholder="เช่น 4500000"></div>
+                  </div>
+                  <div class="f-row"><label>ผู้ควบคุมงาน</label><input id="ct-sup" placeholder="ชื่อ-สกุล (ถ้ามี)"></div>
+                </div>
+                <div class="dw-group">
+                  <div class="dw-group-title"><span class="dot"></span>ระยะเวลา</div>
+                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                    <div class="f-row"><label>วันเริ่มสัญญา</label>
+                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-start" class="thdate-native" onchange="thdateSync(this)"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
+                    <div class="f-row"><label>วันสิ้นสุดสัญญา</label>
+                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-end" class="thdate-native" onchange="thdateSync(this)"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
+                    <div class="f-row"><label>ค้ำประกันถึง</label>
+                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-warr" class="thdate-native" onchange="thdateSync(this)"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
+                  </div>
+                </div>
+                <div class="dw-group">
+                  <div class="dw-group-title"><span class="dot"></span>ช่วงทางหลวงที่สัญญาครอบคลุม</div>
+                  <div id="ct-ranges"></div>
+                  <button type="button" class="btn btn-ghost btn-sm" onclick="addContractRangeRow()" style="margin-bottom:12px;">+ เพิ่มช่วง</button>
+                  <div id="ct-range-msg" style="margin-bottom:10px;"></div>
+                </div>
+                <div class="dw-group">
+                  <div class="dw-group-title"><span class="dot"></span>สถานะพิเศษและหมายเหตุ</div>
+                  <div class="f-row"><label>สถานะพิเศษ (ปกติปล่อยว่าง — ระบบคำนวณจากวันที่ให้เอง)</label>
+                    <select id="ct-status"><option value="">— ไม่มี (คำนวณจากวันที่) —</option><option value="ระงับงาน">ระงับงาน</option><option value="ยกเลิกสัญญา">ยกเลิกสัญญา</option></select></div>
+                  <div class="f-row"><label>หมายเหตุ</label><textarea id="ct-note" placeholder="เช่น ขยายเวลา / เลขที่หนังสืออ้างอิง"></textarea></div>
+                </div>
+              </div>
+              <div class="gmodal-footer">
+                <div style="display:flex;gap:8px;margin-left:auto;">
+                  <button class="btn btn-ghost" id="ct-cancel-btn" onclick="closeContractForm()">ยกเลิก</button>
+                  <button class="btn btn-primary" id="ct-save-btn" onclick="saveContract()">บันทึกสัญญา</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tabs">
+            <div class="tab active" data-cttab="all">ทั้งหมด</div>
+            <div class="tab" data-cttab="running">กำลังดำเนินการ</div>
+            <div class="tab" data-cttab="warranty">ในระยะค้ำประกัน</div>
+            <div class="tab" data-cttab="done">สิ้นสุดแล้ว</div>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>เลขที่สัญญา</th><th>โครงการ / ผู้รับจ้าง</th><th>ปีงบ</th><th>ช่วงทางหลวง</th><th>วงเงิน (บาท)</th><th>ระยะสัญญา</th><th>ค้ำประกันถึง</th><th>สถานะ</th><th></th></tr></thead>
+            <tbody id="ct-body"></tbody>
+          </table></div>
+          <div class="legend-block">
+            <div class="foot-note" id="ct-foot" style="background:transparent;border-top:none;"></div>
+          </div>
+        </div>
+      </div>
       <!-- ============ ROUTINE MAINTENANCE (งานบำรุงปกติ) ============ -->
-      <div class="panel" id="panel-routine">
-        <div class="routine-kpi" id="routine-kpi-band"></div>
+      <!-- แท็บย่อย "ตั้งค่า > ชุดปฏิบัติงาน" (ย้ายมาจากส่วนบนสุดของหน้างานบำรุงปกติ) -->
+      <div class="panel" id="panel-crews">
         <div class="section">
           <div class="section-head">
             <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
@@ -842,74 +1061,85 @@
             </div>
           </div>
         </div>
+      </div>
 
+      <!-- แท็บย่อย 1: ใบสั่งการรายวัน -->
+      <div class="panel active" id="panel-routine">
+        <div class="routine-kpi" id="routine-kpi-band"></div>
         <div class="section">
           <div class="section-head">
             <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M8 3v4M16 3v4M4 9h16"/><rect x="4" y="5" width="16" height="16" rx="2"/></svg></span>
               ใบสั่งการรายวัน
+              <span class="head-desc" id="dw-list-asof"></span>
             </h2>
             <div class="toolbar">
-              <div class="search-box">🔍 <input id="dw-search" placeholder="ค้นหารหัสงาน / สถานที่"></div>
-              <button class="btn btn-ghost" onclick="openDwTxAudit()" title="แสดงรายการตัดน้ำมัน/วัสดุที่อาจซ้ำหรือค้าง (ดูอย่างเดียว ไม่ลบอัตโนมัติ)">🔎 ตรวจยอดคลังซ้ำ</button>
-              <button class="btn btn-primary" onclick="toggleDailyForm()">+ บันทึกใบสั่งการรายวัน</button>
+              <div class="search-box">🔍 <input id="dw-search" placeholder="ค้นหารหัสงาน / สถานที่ / ชื่อ"></div>
+              <button class="btn btn-ghost btn-sm" onclick="openDwTxAudit()" title="แสดงรายการตัดน้ำมัน/วัสดุที่อาจซ้ำหรือค้าง (ดูอย่างเดียว ไม่ลบอัตโนมัติ)">🔎 ตรวจยอดคลังซ้ำ</button>
+              <button class="btn btn-primary" onclick="toggleDailyForm()">+ บันทึกใบสั่งการ</button>
             </div>
           </div>
-          <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:0 20px 14px;">
-            <select id="dw-log-month" class="edit-input" style="width:150px;flex:none;" onchange="renderDailyLog()"></select>
-            <select id="dw-log-fy" class="edit-input" style="width:150px;flex:none;" onchange="renderDailyLog()"></select>
+          <!-- ตัวกรองเดิม (ซ่อนไว้ — ถูกควบคุมโดยตัวกรองรวมด้านบน) -->
+          <div style="display:none;">
+            <select id="dw-log-month" class="edit-input" onchange="renderDailyLog()"></select>
+            <select id="dw-log-fy" class="edit-input" onchange="renderDailyLog()"></select>
           </div>
           <div class="modal-overlay hidden no-print" id="daily-form-overlay">
           <div class="modal-box">
             <div class="modal-head">
               <div class="modal-head-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9 12h6M9 16h6M8 3h8l4 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/></svg></div>
-              <div><h3 id="daily-form-title">บันทึกใบสั่งการรายวัน</h3><div class="modal-head-subtitle">ชุดปฏิบัติงานภาคสนาม · เครื่องจักร · พัสดุ · ค่าใช้จ่าย</div></div>
+              <div><h3 id="daily-form-title">บันทึกใบสั่งการรายวัน</h3><div class="modal-head-subtitle">กรอกทีละขั้น 4 ขั้นตอน — กดหัวข้อด้านล่างเพื่อข้ามไปขั้นใดก็ได้</div></div>
               <button class="modal-close" onclick="toggleDailyForm()">✕</button>
             </div>
+            <div class="dw-stepbar" id="dw-stepbar">
+              <button type="button" class="dw-stepchip active" data-step="1" onclick="goDwStep(1)"><span class="n">1</span><span class="t">งาน · ที่ไหน · เท่าไหร่</span></button>
+              <button type="button" class="dw-stepchip" data-step="2" onclick="goDwStep(2)"><span class="n">2</span><span class="t">ใครทำ</span><span class="b" id="dw-acc-labor-badge">0 คน</span></button>
+              <button type="button" class="dw-stepchip" data-step="3" onclick="goDwStep(3)"><span class="n">3</span><span class="t">ใช้อะไร</span><span class="b"><span id="dw-acc-material-badge">0 รายการ</span> · <span id="dw-acc-machine-badge">0 รายการ</span></span></button>
+              <button type="button" class="dw-stepchip" data-step="4" onclick="goDwStep(4)"><span class="n">4</span><span class="t">ตรวจสอบ</span><span class="b" id="dw-acc-summary-badge">0.00 บาท</span></button>
+            </div>
             <div class="modal-body" id="daily-form">
-            <div class="dw-group">
-              <div class="dw-group-title"><span class="dot"></span>ข้อมูลปฏิบัติงานรายวัน</div>
+            <div class="dw-step-pane active" data-step="1">
+              <div class="dw-step-title">ขั้นที่ 1 · ทำงานอะไร ที่ไหน เท่าไหร่</div>
               <div class="dw-toprow">
-                <div class="f-row"><label>ปีงบประมาณ</label><input id="dw-fy" readonly style="background:var(--paper-100);"></div>
-                <div class="f-row"><label>วันที่ปฏิบัติงาน</label>
+                <div class="f-row"><label>วันที่ปฏิบัติงาน <span class="dw-req">*</span></label>
                   <div class="thdate-wrap" onclick="openThaiDatePicker(this)">
                     <input type="date" id="dw-date" class="thdate-native" onchange="thdateSync(this);checkDwLeaveConflict();checkDwJobConflict();suggestRentCost();updateDwFy();refreshDwAccBadges();refreshAllDwVehOperatorHints();">
                     <div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
                   </div>
+                  <input id="dw-fy" readonly class="dw-fy-line" tabindex="-1">
                 </div>
                 <div class="f-row" style="position:relative;">
-                  <label>รหัสงาน</label>
+                  <label>รหัสงาน <span class="dw-req">*</span></label>
                   <input id="dw-job-search" placeholder="พิมพ์คำค้น เช่น หญ้า, ปะซ่อม, 215" autocomplete="off"
                          oninput="renderDwJobSuggest()" onfocus="renderDwJobSuggest()" onblur="setTimeout(hideDwJobSuggest,150)">
                   <input type="hidden" id="dw-job">
                   <div id="dw-job-suggest" class="hidden" style="position:absolute;z-index:20;top:100%;left:0;right:0;background:#fff;border:1px solid var(--line);border-top:none;border-radius:0 0 7px 7px;max-height:230px;overflow-y:auto;box-shadow:0 8px 18px rgba(0,0,0,.10);"></div>
                 </div>
               </div>
-              <div class="f-row"><label>ทล. ปฏิบัติงาน</label><select id="dw-route" onchange="validateDwKm()"></select></div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr 0.8fr;gap:12px;">
-                <div class="f-row"><label>กม. ปฏิบัติงาน (เริ่มต้น)</label><input id="dw-loc" placeholder="เช่น 8+100" oninput="validateDwKm()"></div>
-                <div class="f-row"><label>กม. ปฏิบัติงาน (สิ้นสุด)</label><input id="dw-loc-end" placeholder="เช่น 8+300" oninput="validateDwKm()"></div>
-                <div class="f-row"><label>ปริมาณงานที่ทำ</label><input type="number" id="dw-qty" value="0" oninput="onDwQtyInput()"></div>
-                <div class="f-row"><label>หน่วย</label><select id="dw-unit"></select></div>
+              <div class="dw-card">
+                <div class="dw-card-title">📍 สถานที่</div>
+                <div class="f-row"><label>ทางหลวง (ทล.) <span class="dw-req">*</span></label><select id="dw-route" onchange="validateDwKm()"></select></div>
+                <div class="dw-two">
+                  <div class="f-row"><label>กม. เริ่มต้น <span class="dw-req">*</span></label><input id="dw-loc" placeholder="เช่น 8+100" oninput="validateDwKm()"></div>
+                  <div class="f-row"><label>กม. สิ้นสุด <span class="dw-hintopt">(ถ้ามี)</span></label><input id="dw-loc-end" placeholder="เช่น 8+300" oninput="validateDwKm()"></div>
+                </div>
+                <div id="dw-loc-msg" style="margin:-6px 0 4px;"></div>
+                <div id="dw-case-banner" class="hidden" style="margin:0 0 8px;padding:8px 12px;border:1px solid var(--line);border-left:4px solid #e0620f;border-radius:7px;background:#fff7ee;font-size:12.5px;"></div>
               </div>
-              <div id="dw-loc-msg" style="margin:-8px 0 4px;"></div>
-              <div id="dw-case-banner" class="hidden" style="margin:0 0 8px;padding:8px 12px;border:1px solid var(--line);border-left:4px solid #e0620f;border-radius:7px;background:#fff7ee;font-size:12.5px;"></div>
-              <div class="f-row"><label>หมายเหตุ / อ้างอิงเคส (ไม่บังคับ)</label><input id="dw-note" maxlength="300" placeholder="เช่น ซ่อมราวกันอันตรายหลังอุบัติเหตุ" autocomplete="off"></div>
-              <div class="qty-pending-row" style="margin:-4px 0 4px;">
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="dw-qty-pending" onchange="onDwQtyPendingToggle()"> ยังไม่ทราบปริมาณงาน (รอหัวหน้าหมวด/ช่างระบุภายหลัง — เสมียนไม่ต้องประมาณเอง)</label>
+              <div class="dw-card">
+                <div class="dw-card-title">📏 ปริมาณงาน</div>
+                <div class="dw-two dw-qtyrow">
+                  <div class="f-row"><label>ปริมาณงานที่ทำ</label><input type="number" id="dw-qty" value="0" oninput="onDwQtyInput()"></div>
+                  <div class="f-row"><label>หน่วย</label><select id="dw-unit"></select></div>
+                </div>
+                <label class="dw-pending"><input type="checkbox" id="dw-qty-pending" onchange="onDwQtyPendingToggle()"> <span>ยังไม่ทราบปริมาณงาน <small>(รอหัวหน้าหมวด/ช่างระบุทีหลัง — ไม่ต้องประมาณเอง)</small></span></label>
               </div>
-              <div id="dw-uc-suggest-row" class="hidden" style="margin:-2px 0 4px;">
-                <button type="button" class="btn btn-ghost btn-sm" onclick="suggestDwFromUnitCost()">💡 เติมวัสดุ/เครื่องจักรจากสูตรมาตรฐาน</button>
-                <span id="dw-uc-suggest-note" style="font-size:11.5px;color:var(--ink-400);margin-left:6px;"></span>
-              </div>
+              <div class="f-row" style="margin-bottom:6px;"><label>หมายเหตุ / อ้างอิงเคส <span class="dw-hintopt">(ไม่บังคับ)</span></label><input id="dw-note" maxlength="300" placeholder="เช่น ซ่อมราวกันอันตรายหลังอุบัติเหตุ" autocomplete="off"></div>
+              <div id="dw-step1-err" class="dw-step-err hidden"></div>
             </div>
 
-            <div class="dw-acc open" id="dw-acc-labor">
-              <div class="dw-acc-head" onclick="toggleDwAcc('labor')">
-                <span class="dw-acc-title"><span class="dot"></span>แรงงาน</span>
-                <span class="dw-acc-badge" id="dw-acc-labor-badge">0 คน</span>
-                <span class="dw-acc-chevron">▾</span>
-              </div>
-              <div class="dw-acc-body" id="dw-acc-labor-body">
+            <div class="dw-step-pane" data-step="2" id="dw-acc-labor">
+              <div class="dw-step-title">ขั้นที่ 2 · ใครเป็นผู้ปฏิบัติงาน</div>
+              <div id="dw-acc-labor-body">
                 <div id="dw-roster-status" style="margin:0 0 10px;"></div>
                 <div class="f-row" style="position:relative;">
                   <div style="display:flex;gap:8px;align-items:flex-start;">
@@ -929,89 +1159,92 @@
               </div>
             </div>
 
-            <div class="dw-acc" id="dw-acc-material">
-              <div class="dw-acc-head" onclick="toggleDwAcc('material')">
-                <span class="dw-acc-title"><span class="dot"></span>วัสดุ</span>
-                <span class="dw-acc-badge" id="dw-acc-material-badge">0 รายการ</span>
-                <span class="dw-acc-chevron">▾</span>
+            <div class="dw-step-pane" data-step="3">
+              <div class="dw-step-title">ขั้นที่ 3 · ใช้วัสดุและเครื่องจักรอะไร <span class="dw-hintopt">(ไม่ใช้ก็ข้ามได้)</span></div>
+              <div id="dw-uc-suggest-row" class="dw-uc-suggest hidden">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="suggestDwFromUnitCost()">💡 เติมวัสดุ/เครื่องจักรจากสูตรมาตรฐาน</button>
+                <span id="dw-uc-suggest-note"></span>
               </div>
-              <div class="dw-acc-body hidden" id="dw-acc-material-body">
-                <label class="dw-subhead">พัสดุที่เบิกวันนี้ (ถ้ามี)</label>
-                <div id="dw-part-items"></div>
-                <button class="btn btn-ghost btn-sm" onclick="addDwPartRow()">+ เพิ่มรายการพัสดุ</button>
-              </div>
-            </div>
-
-            <div class="dw-acc" id="dw-acc-machine">
-              <div class="dw-acc-head" onclick="toggleDwAcc('machine')">
-                <span class="dw-acc-title"><span class="dot"></span>เครื่องจักร</span>
-                <span class="dw-acc-badge" id="dw-acc-machine-badge">0 รายการ</span>
-                <span class="dw-acc-chevron">▾</span>
-              </div>
-              <div class="dw-acc-body hidden" id="dw-acc-machine-body">
-                <label class="dw-subhead">เครื่องจักร/รถที่ใช้ + น้ำมันที่เบิกวันนี้</label>
-                <div id="dw-veh-count" class="dw-veh-count"></div>
-                <div id="dw-vehicle-items"></div>
-                <button class="btn btn-ghost btn-sm" onclick="addDwVehicleRow()">+ เพิ่มเครื่องจักร/รถ</button>
-              </div>
-            </div>
-
-            <div class="dw-acc" id="dw-acc-summary">
-              <div class="dw-acc-head" onclick="toggleDwAcc('summary')">
-                <span class="dw-acc-title"><span class="dot"></span>สรุป</span>
-                <span class="dw-acc-badge" id="dw-acc-summary-badge">0.00 บาท</span>
-                <span class="dw-acc-chevron">▾</span>
-              </div>
-              <div class="dw-acc-body hidden" id="dw-acc-summary-body">
-                <div class="detail-grid" style="grid-template-columns:repeat(4,1fr);">
-                  <div class="f-row"><label>ค่าวัสดุ</label><input type="number" id="dw-material" value="0" oninput="refreshDwAccBadges()"><div class="suggest-hint" id="dw-material-hint"></div></div>
-                  <div class="f-row"><label>ค่าแรงงาน</label><input type="number" id="dw-labor" value="0" oninput="refreshDwAccBadges()"><div class="suggest-hint" id="dw-labor-hint"></div></div>
-                  <div class="f-row"><label>ค่าเช่าเครื่องจักร</label><input type="number" id="dw-rent" value="0" oninput="refreshDwAccBadges()"><div class="suggest-hint" id="dw-rent-hint"></div></div>
-                  <div class="f-row"><label>ค่าน้ำมันเชื้อเพลิง</label><input type="number" id="dw-fuel" value="0" oninput="refreshDwAccBadges()"><div class="suggest-hint" id="dw-fuel-hint"></div></div>
+              <div class="dw-card" id="dw-acc-material">
+                <div class="dw-card-title">🧱 วัสดุ/พัสดุที่เบิกวันนี้</div>
+                <div id="dw-acc-material-body">
+                  <div id="dw-part-items"></div>
+                  <button type="button" class="btn btn-ghost btn-sm" onclick="addDwPartRow()">+ เพิ่มรายการพัสดุ</button>
                 </div>
-                <div class="foot-note" style="padding:4px 0 0;">ตัวเลขทั้ง 4 ช่องดึงจากข้อมูลแรงงาน/วัสดุ/เครื่องจักรที่กรอกไว้ด้านบนโดยอัตโนมัติ — แก้ไขเองได้ถ้าไม่ตรงกับความเป็นจริง</div>
+              </div>
+              <div class="dw-card" id="dw-acc-machine">
+                <div class="dw-card-title">🚜 เครื่องจักร/รถที่ใช้ + น้ำมันที่เบิก</div>
+                <div id="dw-acc-machine-body">
+                  <div id="dw-veh-count" class="dw-veh-count"></div>
+                  <div id="dw-vehicle-items"></div>
+                  <button type="button" class="btn btn-ghost btn-sm" onclick="addDwVehicleRow()">+ เพิ่มเครื่องจักร/รถ</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="dw-step-pane" data-step="4" id="dw-acc-summary">
+              <div class="dw-step-title">ขั้นที่ 4 · ตรวจสอบก่อนบันทึก</div>
+              <div id="dw-review"></div>
+              <div id="dw-review-warn" class="dw-review-warn hidden"></div>
+              <div class="dw-card" id="dw-acc-summary-body">
+                <div class="dw-card-title">💰 ค่าใช้จ่าย <span class="dw-hintopt">(ระบบคำนวณให้จากขั้นก่อนหน้า)</span>
+                  <label class="dw-editcost"><input type="checkbox" id="dw-cost-edit" onchange="toggleDwCostEdit()"> แก้ตัวเลขเอง</label>
+                </div>
+                <div class="dw-cost-grid">
+                  <div class="f-row"><label>ค่าวัสดุ</label><input type="number" id="dw-material" value="0" oninput="refreshDwAccBadges()" readonly><div class="suggest-hint" id="dw-material-hint"></div></div>
+                  <div class="f-row"><label>ค่าแรงงาน</label><input type="number" id="dw-labor" value="0" oninput="refreshDwAccBadges()" readonly><div class="suggest-hint" id="dw-labor-hint"></div></div>
+                  <div class="f-row"><label>ค่าเช่าเครื่องจักร</label><input type="number" id="dw-rent" value="0" oninput="refreshDwAccBadges()" readonly><div class="suggest-hint" id="dw-rent-hint"></div></div>
+                  <div class="f-row"><label>ค่าน้ำมันเชื้อเพลิง</label><input type="number" id="dw-fuel" value="0" oninput="refreshDwAccBadges()" readonly><div class="suggest-hint" id="dw-fuel-hint"></div></div>
+                </div>
+                <div class="dw-cost-total">รวมทั้งสิ้น <b id="dw-cost-total-val">0</b> บาท</div>
               </div>
             </div>
             </div>
-            <div class="modal-plain-footer">
-              <button class="btn btn-primary" id="daily-form-save-btn" onclick="saveDailyEntry()">บันทึกใบสั่งการ</button>
+            <div class="modal-plain-footer dw-wizard-footer">
               <button class="btn btn-ghost" id="daily-form-cancel-btn" onclick="toggleDailyForm()">ยกเลิก</button>
+              <div class="dw-wiz-right">
+                <button type="button" class="btn btn-ghost" id="dw-prev-btn" onclick="dwStepPrev()">‹ ย้อนกลับ</button>
+                <button type="button" class="btn btn-primary" id="dw-next-btn" onclick="dwStepNext()">ถัดไป ›</button>
+                <button type="button" class="btn btn-primary hidden" id="daily-form-save-btn" onclick="saveDailyEntry()">บันทึกใบสั่งการ</button>
+              </div>
             </div>
           </div>
           </div>
-          <div class="table-wrap table-wrap-sticky" style="max-height:560px;"><table id="daily-table">
-            <thead><tr><th>วันที่</th><th>รหัสงาน</th><th>สถานที่</th><th>ปริมาณ</th><th>วัสดุ</th><th>แรงงาน</th><th>เครื่องจักร/เช่า</th><th>น้ำมัน</th><th>รวม</th><th>จัดการ</th></tr></thead>
-            <tbody id="daily-body"></tbody>
-          </table></div>
+          <div class="dw-list" id="daily-body"></div>
           <div class="legend-block" id="daily-foot-block">
             <button type="button" class="legend-dot-btn no-print" id="daily-foot-toggle" onclick="__toggleNote('daily-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="daily-foot" style="display:none;background:transparent;border-top:none;">บันทึกผลงานจากใบสั่งการประจำวันที่นี่ แล้วใช้ตารางสรุปด้านล่างเพื่อรวมยอดเป็นผลงานประจำเดือนโดยไม่ต้องคีย์ซ้ำ</div>
+            <div class="foot-note" id="daily-foot" style="display:none;background:transparent;border-top:none;">บันทึกผลงานจากใบสั่งการประจำวันที่นี่ แล้วไปแท็บ "2 สรุปรายเดือน" เพื่อรวมยอดเป็นผลงานประจำเดือนโดยไม่ต้องคีย์ซ้ำ กดที่การ์ดเพื่อดูรายละเอียดแรงงาน/วัสดุ/เครื่องจักร</div>
           </div>
         </div>
+      </div>
 
+      <!-- แท็บย่อย 2: สรุปรายเดือน -->
+      <div class="panel" id="panel-rollup">
         <div class="section">
           <div class="section-head">
             <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span>
               สรุปผลงานประจำเดือน
+              <span class="head-desc" id="rollup-ctx"></span>
             </h2>
             <div class="toolbar" id="rollup-toolbar" style="flex-wrap:nowrap;overflow-x:auto;">
-              <select id="rollup-fy" class="edit-input" style="width:160px;flex:none;" onchange="renderRollup()"></select>
-              <select id="rollup-month" class="edit-input" style="width:80px;flex:none;" onchange="renderRollup()">
+              <select id="rollup-fy" class="edit-input" style="display:none;" onchange="renderRollup()"></select>
+              <select id="rollup-month" class="edit-input" style="display:none;" onchange="renderRollup()">
                 <option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option>
                 <option value="1">ม.ค.</option><option value="2">ก.พ.</option><option value="3">มี.ค.</option>
                 <option value="4">เม.ย.</option><option value="5">พ.ค.</option><option value="6">มิ.ย.</option>
                 <option value="7" selected>ก.ค.</option><option value="8">ส.ค.</option><option value="9">ก.ย.</option>
               </select>
-              <button class="btn btn-primary" id="rollup-commit-btn" style="flex:none;white-space:nowrap;" onclick="commitRollupToActual()">บันทึกผลงาน</button>
+              <button class="btn btn-primary" id="rollup-commit-btn" style="flex:none;white-space:nowrap;" onclick="commitRollupToActual()">ปิดยอดเดือนนี้</button>
             </div>
           </div>
+          <div id="rollup-status" class="rollup-status"></div>
           <div class="table-wrap"><table>
-            <thead><tr><th>รหัสงาน</th><th>ลักษณะงาน</th><th>ปริมาณรวม</th><th>วัสดุ</th><th>แรงงาน</th><th>เครื่องจักร/เช่า</th><th>น้ำมัน</th><th>รวมงบประมาณ</th><th>% ของแผนทั้งปี (สะสม)</th></tr></thead>
-            <tbody id="rollup-body"></tbody>
+            <thead><tr><th style="text-align:left;">งาน</th><th>ปริมาณรวม</th><th>รวมงบประมาณ (บาท)</th><th>% ของแผนทั้งปี (สะสม)</th><th style="width:60px;"></th></tr></thead>
+            <tbody id="rollup-body" class="rollup-tbody"></tbody>
           </table></div>
           <div class="legend-block" id="rollup-foot-block">
             <button type="button" class="legend-dot-btn no-print" id="rollup-foot-toggle" onclick="__toggleNote('rollup-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="rollup-foot" style="display:none;background:transparent;border-top:none;">รวบรวมงานจาก "ใบสั่งการรายวัน"ของเดือน กดปุ่ม "บันทึกผลงาน" เพื่อส่งผลรวมเข้าตาราง "แผนงาน - ผลงาน งานบำรุงปกติ" เพื่อเป็นข้อมูลของเดือนนั้น</div>
+            <div class="foot-note" id="rollup-foot" style="display:none;background:transparent;border-top:none;">ตัวเลขในตารางนี้และในแท็บ "3 แผน - ผลงาน" คำนวณสดจากใบสั่งการรายวันอยู่แล้ว ไม่ต้องกดอะไรเพื่อให้เห็นผล เมื่อสิ้นเดือนและตรวจครบแล้วให้กด "ปิดยอดเดือนนี้" เพื่อบันทึกยอดเป็นข้อมูลทางการของเดือนนั้น (ถ้าภายหลังมีการแก้ใบสั่งการ ระบบจะเตือนให้ปิดยอดใหม่)</div>
           </div>
         </div>
 
@@ -1025,7 +1258,7 @@
               แผนงาน - ผลงาน งานบำรุงปกติ
             </h2>
             <div class="toolbar" id="bmm-toolbar" style="flex-wrap:nowrap;overflow-x:auto;">
-              <select id="bmm-fy" class="edit-input" style="width:150px;flex:none;" onchange="renderBmmTable()"></select>
+              <select id="bmm-fy" class="edit-input" style="display:none;" onchange="renderBmmTable()"></select>
               <select id="bmm-kind" class="edit-input" style="width:120px;flex:none;" onchange="renderBmmTable()">
                 <option value="all">แผน + ผล</option>
                 <option value="plan">เฉพาะแผน</option>
@@ -2358,14 +2591,49 @@ function requireAdmin(){
 /* ============================================================
    SECTION SWITCHING
    ============================================================ */
+/* แท็บใหญ่ 4 กลุ่ม (งานบำรุงปกติ/งานรุกล้ำ/เหตุฉุกเฉิน/สัญญา) + แท็บย่อยของงานบำรุงปกติ
+   view = id ของ panel (panel-<view>) : routine, rollup, routine2, crews, refdata, routes, encroach, emergency, contracts */
+const MAINT_VIEWS = ['routine','rollup','routine2','crews','refdata','routes'];
+const SETTINGS_VIEWS = ['crews','refdata','routes'];
+const FILTER_VIEWS = ['routine','rollup','routine2'];
+let __lastMaintView = 'routine';
+let __lastSettingsView = 'crews';
+function showView(view){
+  if(view==='settings') view = __lastSettingsView;
+  const isMaint = MAINT_VIEWS.includes(view);
+  if(isMaint){ __lastMaintView = view; if(SETTINGS_VIEWS.includes(view)) __lastSettingsView = view; }
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  document.getElementById('panel-'+view)?.classList.add('active');
+  document.querySelectorAll('.sec-tab').forEach(x=>x.classList.toggle('active', x.dataset.sec===(isMaint?'routine':view)));
+  document.getElementById('sub-tabs')?.classList.toggle('hidden', !isMaint);
+  const inSettings = SETTINGS_VIEWS.includes(view);
+  document.querySelectorAll('#sub-tabs .sub-tab').forEach(x=>x.classList.toggle('active', x.dataset.view===(inSettings?'settings':view)));
+  document.getElementById('set-tabs')?.classList.toggle('hidden', !inSettings);
+  document.querySelectorAll('#set-tabs .set-tab').forEach(x=>x.classList.toggle('active', x.dataset.view===view));
+  const showFilter = FILTER_VIEWS.includes(view);
+  document.getElementById('g-filter')?.classList.toggle('hidden', !showFilter);
+  const gm = document.getElementById('g-month'); if(gm) gm.style.display = (view==='routine2') ? 'none' : '';
+}
 document.querySelectorAll('.sec-tab').forEach(t=>{
-  t.addEventListener('click', ()=>{
-    document.querySelectorAll('.sec-tab').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
-    document.getElementById('panel-'+t.dataset.sec).classList.add('active');
-  });
+  t.addEventListener('click', ()=> showView(t.dataset.sec));
 });
+document.querySelectorAll('#sub-tabs .sub-tab, #set-tabs .set-tab').forEach(t=>{
+  t.addEventListener('click', ()=> showView(t.dataset.view));
+});
+/* ตัวกรองปี/เดือนชุดเดียว — คุมตัวกรองเดิมที่ซ่อนอยู่ (dw-log-fy/month, rollup-fy/month, bmm-fy) เพื่อไม่ต้องแก้ตรรกะเดิม */
+function syncGlobalFilterToHidden(){
+  const fyEl = document.getElementById('g-fy'), mEl = document.getElementById('g-month');
+  if(!fyEl || !mEl || !fyEl.value) return;
+  populateDwLogMonthSelect();
+  ['dw-log-fy','rollup-fy','bmm-fy'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value = fyEl.value; });
+  const curM = String(TODAY.getMonth()+1);
+  const dm = document.getElementById('dw-log-month'); if(dm) dm.value = mEl.value;
+  const rm = document.getElementById('rollup-month'); if(rm) rm.value = (mEl.value==='all') ? curM : mEl.value;
+}
+function applyGlobalFilter(){
+  syncGlobalFilterToHidden();
+  renderDailyLog(); renderRollup(); renderBmmTable();
+}
 
 /* ============================================================
    ENCROACHMENT
@@ -2488,6 +2756,233 @@ document.querySelectorAll('[data-enctab]').forEach(t=>t.addEventListener('click'
 document.getElementById('enc-search').addEventListener('input', ()=>renderEnc());
 
 /* ============================================================
+   งานสัญญา (เพิ่ม 17 ต.ค. 2569) — ตาราง contracts (ส่วนงาน s2)
+   1 สัญญา = 1 รายการ · ช่วงทางหลวงหลายช่วงเก็บใน ranges = [{route, k1, k2}] (กม. เป็นกิโลเมตรทศนิยม เหมือน controlled_routes)
+   แก้ไข/เพิ่ม/ลบได้เฉพาะผู้มีสิทธิ์แก้ไขระบบที่ 2 (isAdmin) · คนอื่นดูอย่างเดียว · ลบแล้วเข้าถังขยะ
+   ============================================================ */
+let contractsList = [];
+function ctFromApi(row){
+  const ranges = Array.isArray(row.rangesJson) ? row.rangesJson : [];
+  return { id:row.id, fiscalYear:Number(row.fiscalYear)||'', contractNo:row.contractNo||'', name:row.name||'', contractor:row.contractor||'',
+    amount:Number(row.amount)||0, startDate:String(row.startDate||'').slice(0,10), endDate:String(row.endDate||'').slice(0,10),
+    warrantyEnd:String(row.warrantyEnd||'').slice(0,10), supervisor:row.supervisor||'', status:row.status||'', note:row.note||'',
+    ranges: ranges.map(r=>({route:String(r.route==null?'':r.route), k1:Number(r.k1)||0, k2:Number(r.k2)||0})) };
+}
+function ctToApi(c){
+  return { id:c.id, fiscalYear:c.fiscalYear===''?'':c.fiscalYear, contractNo:c.contractNo, name:c.name, contractor:c.contractor, amount:c.amount||0,
+    startDate:c.startDate||'', endDate:c.endDate||'', warrantyEnd:c.warrantyEnd||'', supervisor:c.supervisor||'', status:c.status||'', note:c.note||'',
+    rangesJson:c.ranges };
+}
+async function loadContractsFromApi(){
+  try{
+    contractsList = (await apiGet('contracts')).map(ctFromApi);
+  }catch(err){
+    console.error('โหลดข้อมูลสัญญาไม่สำเร็จ', err);
+    alert('โหลดข้อมูลสัญญาจากฐานข้อมูลกลางไม่สำเร็จ: ' + err.message + '\nถ้าเพิ่งเพิ่มแท็บนี้ ให้ตรวจว่า Publish Rules ล่าสุดแล้ว (คู่มือติดตั้ง หัวข้อ "งานสัญญา") แล้วรีเฟรชหน้าใหม่');
+  }
+}
+function ctTodayIso(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function ctDaysTo(iso){ if(!iso) return null; return Math.round((new Date(iso+'T00:00:00') - new Date(ctTodayIso()+'T00:00:00'))/MSDAY); }
+/* สถานะวันนี้ (คำนวณจากวันที่ ยกเว้นสถานะพิเศษ) */
+function ctStatus(c){
+  if(c.status==='ระงับงาน') return {key:'hold', label:'ระงับงาน', cls:'pill-warn'};
+  if(c.status==='ยกเลิกสัญญา') return {key:'cancel', label:'ยกเลิกสัญญา', cls:'pill-neutral'};
+  const t = ctTodayIso();
+  if(c.startDate && t < c.startDate) return {key:'pending', label:'ยังไม่เริ่ม', cls:'pill-neutral'};
+  if(!c.endDate) return c.startDate ? {key:'running', label:'กำลังดำเนินการ', cls:'pill-ok'} : {key:'unknown', label:'ยังไม่ระบุวันที่', cls:'pill-neutral'};
+  if(t <= c.endDate) return {key:'running', label:'กำลังดำเนินการ', cls:'pill-ok'};
+  if(c.warrantyEnd && t <= c.warrantyEnd) return {key:'warranty', label:'ในระยะค้ำประกัน', cls:'pill-warn'};
+  return {key:'done', label:'สิ้นสุดแล้ว', cls:'pill-neutral'};
+}
+function ctRangeText(c){
+  return (c.ranges||[]).map(r=>`ทล.${esc(r.route)} กม.${kmFmt(r.k1)} – ${kmFmt(r.k2)}`).join('<br>') || '<span style="color:var(--ink-400);">— ไม่ระบุช่วง —</span>';
+}
+function renderContracts(){
+  const body = document.getElementById('ct-body'); if(!body) return;
+  const filter = document.querySelector('[data-cttab].active')?.dataset.cttab || 'all';
+  const q = (document.getElementById('ct-search')?.value || '').trim().toLowerCase();
+  const withSt = contractsList.map(c=>({c, st:ctStatus(c)}));
+  // สรุปด้านบน
+  const running = withSt.filter(x=>x.st.key==='running'), warranty = withSt.filter(x=>x.st.key==='warranty');
+  const endSoon = running.filter(x=>{ const d=ctDaysTo(x.c.endDate); return d!==null && d<=60; });
+  const warrSoon = warranty.filter(x=>{ const d=ctDaysTo(x.c.warrantyEnd); return d!==null && d<=60; });
+  const sumAmt = running.reduce((s,x)=>s+(x.c.amount||0),0);
+  const kpi = (label,val,sub)=>`<div class="routine-kpi-item"><div class="kpi-label">${label}</div><div class="kpi-val">${val}</div><div class="kpi-sub">${sub}</div></div>`;
+  document.getElementById('ct-kpi').innerHTML =
+    kpi('กำลังดำเนินการ', running.length+' สัญญา', 'วงเงินรวม '+fmtNum(sumAmt,0)+' บาท') + '<div class="routine-kpi-div"></div>' +
+    kpi('ในระยะค้ำประกัน', warranty.length+' สัญญา', 'พ้นสัญญาแล้ว ยังอยู่ในค้ำประกัน') + '<div class="routine-kpi-div"></div>' +
+    kpi('สิ้นสุดสัญญาภายใน 60 วัน', endSoon.length+' สัญญา', endSoon.length?esc(endSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี') + '<div class="routine-kpi-div"></div>' +
+    kpi('ค้ำประกันหมดภายใน 60 วัน', warrSoon.length+' สัญญา', warrSoon.length?esc(warrSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี');
+  let rows = withSt.filter(x=>{
+    if(filter==='running') return x.st.key==='running';
+    if(filter==='warranty') return x.st.key==='warranty';
+    if(filter==='done') return x.st.key==='done' || x.st.key==='cancel';
+    return true;
+  });
+  if(q) rows = rows.filter(x=> (x.c.contractNo+' '+x.c.name+' '+x.c.contractor+' '+x.c.supervisor).toLowerCase().includes(q));
+  rows.sort((a,b)=> String(b.c.startDate||'').localeCompare(String(a.c.startDate||'')) || String(b.c.contractNo).localeCompare(String(a.c.contractNo)));
+  const can = isAdmin();
+  body.innerHTML = rows.length ? rows.map(({c,st})=>{
+    const dEnd = ctDaysTo(c.endDate), dW = ctDaysTo(c.warrantyEnd);
+    const endHint = (st.key==='running' && dEnd!==null && dEnd<=60) ? `<div style="font-size:11px;color:var(--danger);">เหลือ ${dEnd} วัน</div>` : '';
+    const wHint = (st.key==='warranty' && dW!==null && dW<=60) ? `<div style="font-size:11px;color:var(--danger);">เหลือ ${dW} วัน</div>` : '';
+    return `<tr>
+      <td>${esc(c.contractNo)||'—'}</td>
+      <td><div style="font-weight:600;">${esc(c.name)||'—'}</div><div style="font-size:12px;color:var(--ink-400);">${esc(c.contractor)}${c.supervisor?' · ผู้ควบคุมงาน '+esc(c.supervisor):''}</div></td>
+      <td>${esc(c.fiscalYear)}</td>
+      <td style="font-size:12.5px;">${ctRangeText(c)}</td>
+      <td class="num">${c.amount?fmtNum(c.amount,2):'—'}</td>
+      <td>${fmtDateShort(c.startDate)} – ${fmtDateShort(c.endDate)}${endHint}</td>
+      <td>${fmtDateShort(c.warrantyEnd)}${wHint}</td>
+      <td><span class="pill ${st.cls}">${st.label}</span></td>
+      <td style="white-space:nowrap;">${can?`<button class="btn btn-ghost btn-sm" onclick="openContractForm('${jsArg(c.id)}')">แก้ไข</button> <button class="btn btn-ghost btn-sm" onclick="deleteContract('${jsArg(c.id)}')">ลบ</button>`:''}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="9" style="text-align:center;color:var(--ink-400);padding:22px;">${contractsList.length?'ไม่พบรายการตามเงื่อนไข':'ยังไม่มีข้อมูลสัญญา'+(can?' — กด "+ เพิ่มสัญญา" เพื่อเริ่มบันทึก':'')}</td></tr>`;
+  document.getElementById('ct-foot').textContent = `ทั้งหมด ${contractsList.length} สัญญา · สถานะคำนวณจากวันที่ (กำลังดำเนินการ = ยังไม่พ้นวันสิ้นสุดสัญญา, ในระยะค้ำประกัน = พ้นสัญญาแล้วแต่ยังไม่ถึงวันค้ำประกันถึง) · ใช้สิทธิ์ส่วนงานที่ 2 (ผู้มีสิทธิ์แก้ไขเท่านั้นที่เพิ่ม/แก้/ลบได้)`;
+}
+/* ---- ช่วงทางหลวงในฟอร์ม ---- */
+function ctRouteOptions(sel){
+  return '<option value="">— เลือกสายทาง —</option>' + controlledRoutes.map(r=>`<option value="${esc(r.routeNo)}" ${String(sel)===String(r.routeNo)?'selected':''}>ทล.${esc(r.routeNo)} — ${esc(r.section)} (${routeRangeLabel(r)})</option>`).join('');
+}
+function addContractRangeRow(r){
+  r = r || {route:'', k1:null, k2:null};
+  const div = document.createElement('div');
+  div.className = 'ct-range-row';
+  div.style.cssText = 'display:grid;grid-template-columns:2.2fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px;';
+  div.innerHTML = `<div class="f-row" style="margin:0;"><label>สายทาง</label><select class="ct-r-route" onchange="validateContractRanges()">${ctRouteOptions(r.route)}</select></div>
+    <div class="f-row" style="margin:0;"><label>กม.เริ่ม</label><input class="ct-r-k1" placeholder="229+000" value="${r.k1==null?'':kmFmt(r.k1)}" oninput="validateContractRanges()"></div>
+    <div class="f-row" style="margin:0;"><label>กม.สิ้นสุด</label><input class="ct-r-k2" placeholder="231+500" value="${r.k2==null?'':kmFmt(r.k2)}" oninput="validateContractRanges()"></div>
+    <button type="button" class="btn btn-ghost btn-sm" title="ลบช่วงนี้" onclick="this.closest('.ct-range-row').remove();validateContractRanges()">✕</button>`;
+  document.getElementById('ct-ranges').appendChild(div);
+  validateContractRanges();
+}
+/* อ่านช่วงทั้งหมดในฟอร์ม → {ranges, errors(ต้องแก้), warns(เตือน)} */
+function collectContractRanges(){
+  const ranges=[], errors=[], warns=[];
+  document.querySelectorAll('#ct-ranges .ct-range-row').forEach((row,i)=>{
+    const route = row.querySelector('.ct-r-route').value;
+    const t1 = row.querySelector('.ct-r-k1').value.trim(), t2 = row.querySelector('.ct-r-k2').value.trim();
+    if(!route && !t1 && !t2) return; // แถวว่าง ข้าม
+    const n = 'ช่วงที่ '+(i+1);
+    if(!route){ errors.push(n+': ยังไม่ได้เลือกสายทาง'); return; }
+    const k1 = extractAllKm(t1)[0], k2 = extractAllKm(t2)[0];
+    if(k1===undefined || k2===undefined){ errors.push(n+': กรอก กม. ไม่ครบหรือรูปแบบไม่ถูกต้อง (ใช้ เช่น 229+000)'); return; }
+    if(k2 <= k1){ errors.push(n+': กม.สิ้นสุดต้องมากกว่า กม.เริ่ม'); return; }
+    const rt = findRoute(route);
+    if(rt && (!kmInRoute(rt,k1) || !kmInRoute(rt,k2))) warns.push(n+': กม. อยู่นอกช่วงที่หมวดควบคุมของ ทล.'+route+' ('+routeRangeLabel(rt)+')');
+    ranges.push({route:String(route), k1:Math.round(k1*1000)/1000, k2:Math.round(k2*1000)/1000});
+  });
+  return {ranges, errors, warns};
+}
+function validateContractRanges(){
+  const msg = document.getElementById('ct-range-msg'); if(!msg) return;
+  const {ranges, errors, warns} = collectContractRanges();
+  let h = '';
+  if(errors.length) h += `<div class="hazard" style="font-size:12px;white-space:normal;">⚠ ${errors.map(esc).join('<br>⚠ ')}</div>`;
+  if(warns.length) h += `<div style="color:var(--danger);font-size:12px;margin-top:4px;">⚠ ${warns.map(esc).join('<br>⚠ ')}</div>`;
+  if(!errors.length && !warns.length) h = ranges.length ? '<span style="color:var(--success);font-size:12px;">✓ ช่วงทางหลวงอยู่ในขอบเขตที่หมวดควบคุม</span>' : '<span style="color:var(--ink-400);font-size:12px;">ยังไม่มีช่วงทางหลวง — เพิ่มอย่างน้อย 1 ช่วง</span>';
+  msg.innerHTML = h;
+}
+function closeContractForm(){ document.getElementById('ct-form-overlay').classList.add('hidden'); }
+function openContractForm(id){
+  if(!requireAdmin()) return;
+  const c = id ? contractsList.find(x=>String(x.id)===String(id)) : null;
+  if(id && !c) return;
+  document.getElementById('ct-form-title').textContent = c ? 'แก้ไขสัญญา' : 'เพิ่มสัญญา';
+  document.getElementById('ct-id').value = c ? c.id : '';
+  document.getElementById('ct-name').value = c ? c.name : '';
+  document.getElementById('ct-no').value = c ? c.contractNo : '';
+  document.getElementById('ct-fy').value = c ? c.fiscalYear : (TODAY.getMonth()>=9 ? TODAY.getFullYear()+544 : TODAY.getFullYear()+543);
+  document.getElementById('ct-by').value = c ? c.contractor : '';
+  document.getElementById('ct-amount').value = c && c.amount ? c.amount : '';
+  document.getElementById('ct-sup').value = c ? c.supervisor : '';
+  document.getElementById('ct-start').value = c ? c.startDate : '';
+  document.getElementById('ct-end').value = c ? c.endDate : '';
+  document.getElementById('ct-warr').value = c ? c.warrantyEnd : '';
+  ['ct-start','ct-end','ct-warr'].forEach(i=>thdateSync(document.getElementById(i)));
+  document.getElementById('ct-status').value = c ? c.status : '';
+  document.getElementById('ct-note').value = c ? c.note : '';
+  document.getElementById('ct-ranges').innerHTML = '';
+  if(c && c.ranges.length) c.ranges.forEach(r=>addContractRangeRow(r)); else addContractRangeRow();
+  document.getElementById('ct-form-overlay').classList.remove('hidden');
+}
+async function saveContract(){
+  if(!isAdmin()) return;
+  const g = id => document.getElementById(id).value.trim();
+  const name = g('ct-name'), no = g('ct-no');
+  if(!name && !no){ alert('กรุณาระบุชื่อโครงการหรือเลขที่สัญญาอย่างน้อย 1 อย่าง'); return; }
+  const {ranges, errors, warns} = collectContractRanges();
+  if(errors.length){ alert('ช่วงทางหลวงยังไม่ถูกต้อง\n• ' + errors.join('\n• ')); return; }
+  if(!ranges.length){ alert('กรุณาเพิ่มช่วงทางหลวงที่สัญญาครอบคลุมอย่างน้อย 1 ช่วง'); return; }
+  const start = g('ct-start'), end = g('ct-end'), warr = g('ct-warr');
+  if(start && end && end < start){ alert('วันสิ้นสุดสัญญาต้องไม่ก่อนวันเริ่มสัญญา'); return; }
+  if(end && warr && warr < end){ alert('วันที่ค้ำประกันถึง ต้องไม่ก่อนวันสิ้นสุดสัญญา'); return; }
+  if(warns.length && !confirm('ระบบตรวจพบว่าบางช่วง กม. อยู่นอกขอบเขตที่หมวดควบคุม:\n• ' + warns.join('\n• ') + '\n\nต้องการบันทึกต่อหรือไม่?')) return;
+  const id = g('ct-id');
+  const dupNo = no && contractsList.find(x=>String(x.contractNo).trim()===no && String(x.id)!==String(id));
+  if(dupNo && !confirm('เลขที่สัญญา "'+no+'" มีอยู่แล้ว ('+(dupNo.name||'ไม่มีชื่อ')+')\nต้องการบันทึกซ้ำหรือไม่?')) return;
+  const c = {
+    id: id || undefined, fiscalYear: g('ct-fy') ? Number(g('ct-fy')) : '', contractNo:no, name, contractor:g('ct-by'),
+    amount: parseFloat(g('ct-amount'))||0, startDate:start, endDate:end, warrantyEnd:warr, supervisor:g('ct-sup'),
+    status:document.getElementById('ct-status').value, note:g('ct-note'), ranges
+  };
+  const saveBtn = document.getElementById('ct-save-btn'), cancelBtn = document.getElementById('ct-cancel-btn');
+  const orig = saveBtn.textContent;
+  saveBtn.disabled = true; saveBtn.textContent = 'กำลังบันทึก...'; cancelBtn.disabled = true;
+  try{
+    const saved = await apiPost(id ? 'update' : 'add', 'contracts', ctToApi(c));
+    const row = ctFromApi(saved);
+    const ix = contractsList.findIndex(x=>String(x.id)===String(row.id));
+    if(ix>=0) contractsList[ix] = row; else contractsList.push(row);
+  }catch(err){
+    alert('บันทึกสัญญาไปยังฐานข้อมูลกลางไม่สำเร็จ: ' + err.message);
+    saveBtn.disabled = false; saveBtn.textContent = orig; cancelBtn.disabled = false;
+    return;
+  }
+  saveBtn.disabled = false; saveBtn.textContent = orig; cancelBtn.disabled = false;
+  closeContractForm();
+  renderContracts();
+  showSuccessModal('บันทึกสัญญาเรียบร้อย');
+}
+function deleteContract(id){
+  if(!requireAdmin()) return;
+  const c = contractsList.find(x=>String(x.id)===String(id)); if(!c) return;
+  showConfirmModal('ลบสัญญา', 'ลบสัญญา "'+(c.contractNo||'')+' '+(c.name||'')+'" ? (ย้ายไปถังขยะที่ระบบหลัก กู้คืนได้)', 'ลบสัญญา', async function(){
+    try{
+      await apiPost('delete', 'contracts', null, c.id);
+      contractsList = contractsList.filter(x=>String(x.id)!==String(c.id));
+      renderContracts();
+    }catch(err){
+      alert('ลบสัญญาไม่สำเร็จ: ' + err.message);
+    }
+  });
+}
+/* ส่งออก CSV: 1 แถวต่อ 1 ช่วง ตรงกับ "แม่แบบข้อมูลสัญญา.csv" ของเครื่องมือคำนวณ กม./แผนที่ (ไม่ส่งออกวงเงิน) */
+function exportContractsCsv(){
+  if(!contractsList.length){ alert('ยังไม่มีข้อมูลสัญญา'); return; }
+  const cell = v => { v = v==null?'':String(v); return /[",\r\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
+  const rows = [['ชื่อโครงการ','เลขที่สัญญา','ผู้รับจ้าง','ปีงบ','ทล.','ตอน','กม.เริ่ม','กม.สิ้นสุด','วันเริ่มสัญญา','วันสิ้นสุดสัญญา','ค้ำประกันถึง','สถานะ','หมายเหตุ']];
+  contractsList.forEach(c=>{
+    const st = ctStatus(c).label;
+    const rs = c.ranges.length ? c.ranges : [{route:'',k1:0,k2:0}];
+    rs.forEach(r=>{
+      const rt = findRoute(r.route);
+      rows.push([c.name, c.contractNo, c.contractor, c.fiscalYear, r.route, rt?rt.controlNo||'':'', c.ranges.length?kmFmt(r.k1):'', c.ranges.length?kmFmt(r.k2):'', c.startDate, c.endDate, c.warrantyEnd, st, c.note]);
+    });
+  });
+  const csv = '﻿' + rows.map(r=>r.map(cell).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
+  a.download = 'contracts_' + ctTodayIso().replace(/-/g,'') + '.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+document.querySelectorAll('[data-cttab]').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('[data-cttab]').forEach(x=>x.classList.remove('active')); t.classList.add('active'); renderContracts();
+}));
+document.getElementById('ct-search').addEventListener('input', ()=>renderContracts());
+
+/* ============================================================
    งานบำรุงปกติ (BMM) — แผน/ผล + ใบสั่งการรายวัน + สรุปเข้า BMM
    ============================================================ */
 function bmmFyList(){
@@ -2506,6 +3001,20 @@ function populateFySelects(){
       el.dataset.filled = '1';
     }
   });
+  /* ตัวกรองรวม: ค่าเริ่มต้น = ปีงบประมาณ/เดือนปัจจุบัน แล้วส่งค่าไปยังตัวกรองเดิมที่ซ่อนอยู่ */
+  const gFy = document.getElementById('g-fy'), gM = document.getElementById('g-month');
+  if(gFy && !gFy.dataset.filled){
+    gFy.innerHTML = opts;
+    gFy.value = currentFy;
+    gFy.dataset.filled = '1';
+  }
+  if(gM && !gM.dataset.filled){
+    gM.innerHTML = [{m:'all', label:'ทั้งปี'}].concat(DW_LOG_FY_MONTHS.map(m=>({m, label:THAI_MONTHS_FULL[m-1]})))
+      .map(it=>`<option value="${it.m}">${it.label}</option>`).join('');
+    gM.value = String(TODAY.getMonth()+1);
+    gM.dataset.filled = '1';
+    syncGlobalFilterToHidden();
+  }
 }
 /* รหัสงานย่อย (leaf code ที่คีย์เข้า BMM จริง) -> รหัสงานหลัก โดยไต่ผัง parent ใน jobCodeReference ขึ้นไปจนถึงระดับหลัก */
 function bmmMainCodeOf(code){
@@ -2553,21 +3062,54 @@ function bmmMatchesMonth(e, monthSel){
   if(e.baseline) return e.asOfMonth===m;
   return e.month===m;
 }
+/* ผลงานแบบ "คำนวณสด": เดือนที่ยังไม่ปิดยอด (ไม่มีแถวผลที่บันทึกไว้) ใช้ยอดรวมจากใบสั่งการรายวันมาแสดงในแผน-ผลงานทันที
+   เดือนที่ปิดยอดแล้วใช้แถวที่บันทึกไว้ตามเดิม; เดือนที่อยู่ในยอดยกมา (baseline) ไม่นับซ้ำ */
+function bmmLiveActualRows(){
+  const groups = {};
+  dailyWorkOrders.forEach(d=>{
+    if(d.qtyPending || !d.date || !d.code) return;
+    const job = findJob(d.code); if(!job) return;
+    const fy = fyOfDate(d.date), month = +d.date.slice(5,7);
+    const key = fy+'|'+month+'|'+d.code;
+    if(!groups[key]) groups[key] = { no:null, live:true, code:job.code, unit:job.unit, name:job.name, level:'sub', kind:'actual', fy, month, baseline:false, asOfMonth:null, qty:0, material:0, labor:0, rent:0, fuel:0, service:0, contract:0 };
+    const g = groups[key];
+    g.qty += d.qty||0; g.material += d.material||0; g.labor += d.labor||0; g.rent += d.rent||0; g.fuel += d.fuel||0;
+  });
+  return Object.values(groups).filter(g=>{
+    if(bmmEntries.some(e=>e.kind==='actual' && !e.baseline && e.fy===g.fy && e.month===g.month && e.code===g.code)) return false;
+    const seq = DW_LOG_FY_MONTHS.indexOf(g.month);
+    return !bmmEntries.some(e=>e.kind==='actual' && e.baseline && e.fy===g.fy && e.code===g.code && e.asOfMonth!=null && DW_LOG_FY_MONTHS.indexOf(e.asOfMonth)>=seq);
+  });
+}
+function bmmEntriesWithLive(){
+  const live = bmmLiveActualRows();
+  return live.length ? bmmEntries.concat(live) : bmmEntries;
+}
+/* ตารางแผน-ผลงาน 6 คอลัมน์: งาน(รหัส+ชื่อ+หน่วย) | แผน/ผล | ปริมาณ | งบประมาณ | ราคาต่อหน่วย | จัดการ
+   แยกประเภทค่าใช้จ่าย (วัสดุ/แรงงาน/เช่า/น้ำมัน/ใช้สอย) ซ่อนไว้ กดที่แถวเพื่อดู */
+function bmmCostChipsHtml(m, l, r, f, s){
+  const chip = (k,v)=> `<span class="cost-chip">${k}<b>${fmtMoney(v)}</b></span>`;
+  return `<div class="cost-chips">${chip('วัสดุ',m)}${chip('แรงงาน',l)}${chip('เช่า',r)}${chip('น้ำมัน',f)}${chip('ใช้สอย/จ้างเหมา',s)}</div>`;
+}
+function toggleCostRow(tr){
+  const next = tr.nextElementSibling;
+  if(!next || !next.classList.contains('cost-detail')) return;
+  const open = next.classList.toggle('open');
+  tr.classList.toggle('row-open', open);
+}
 function bmmRowHtml(e, groupClass, showUnit){
+  const kindPill = e.kind==='plan' ? '<span class="pill pill-in">แผน</span>' : '<span class="pill pill-out">ผล</span>';
+  const livePill = e.live ? '<br><span class="pill pill-warn" style="margin-top:3px;font-size:10px;" title="ยอดคำนวณสดจากใบสั่งการรายวัน — ยังไม่ได้ปิดยอดเดือน">ยังไม่ปิดยอด</span>' : '';
   return `
-    <tr class="${groupClass||''}">
-      <td>${esc(e.code)}</td><td>${esc(e.name)}</td>${showUnit ? `<td>${esc(e.unit || '-')}</td>` : ''}
-      <td>${e.kind==='plan' ? '<span class="pill pill-in">แผน</span>' : '<span class="pill pill-out">ผล</span>'}</td>
-      <td class="num">${fmtNum(e.qty,2)}</td>
-      <td class="num">${fmtNum(bmmBudget(e),2)}${bmmSupplementTotal(e)>0 ? `<br><span style="font-size:10px;color:var(--orange-600);font-weight:600;white-space:nowrap;">+เพิ่มเติม ${fmtNum(bmmSupplementTotal(e),0)}</span>` : ''}</td>
-      <td class="num">${fmtNum(bmmUnitCost(e),2)}</td>
-      <td class="num">${fmtNum(e.material,2)}</td>
-      <td class="num">${fmtNum(e.labor,2)}</td>
-      <td class="num">${fmtNum(e.rent,2)}</td>
-      <td class="num">${fmtNum(e.fuel,2)}</td>
-      <td class="num">${fmtNum((e.service||0)+(e.contract||0),2)}</td>
-      <td>${e.no!=null ? `<button class="btn btn-ghost btn-sm" onclick="openBmmForm(${e.no})">แก้ไข</button>` : ''}</td>
+    <tr class="${groupClass||''} cost-row" onclick="toggleCostRow(this)" title="กดเพื่อดูแยกประเภทค่าใช้จ่าย">
+      <td><span class="bmm-code">${esc(e.code)}</span> ${esc(e.name)}${e.unit ? `<div class="bmm-sub">หน่วย: ${esc(e.unit)}</div>` : ''}</td>
+      <td>${kindPill}${livePill}</td>
+      <td class="num">${fmtQtyShort(e.qty)}</td>
+      <td class="num"><b>${fmtMoney(bmmBudget(e))}</b>${bmmSupplementTotal(e)>0 ? `<br><span style="font-size:10px;color:var(--orange-600);font-weight:600;white-space:nowrap;">+เพิ่มเติม ${fmtNum(bmmSupplementTotal(e),0)}</span>` : ''}</td>
+      <td class="num">${fmtMoney(bmmUnitCost(e))}</td>
+      <td>${e.no!=null ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openBmmForm(${e.no})">แก้ไข</button>` : ''}</td>
     </tr>
+    <tr class="cost-detail"><td colspan="6">${bmmCostChipsHtml(e.material||0, e.labor||0, e.rent||0, e.fuel||0, (e.service||0)+(e.contract||0))}</td></tr>
   `;
 }
 function bmmTotalsRowHtml(rows, kind, label, showUnit){
@@ -2580,23 +3122,19 @@ function bmmTotalsRowHtml(rows, kind, label, showUnit){
   const service = set.reduce((s,e)=>s+((e.service||0)+(e.contract||0)),0);
   const budget = material+labor+rent+fuel+service;
   return `
-    <tr class="bmm-total-row">
-      <td colspan="${showUnit ? 3 : 2}">${label}</td>
+    <tr class="bmm-total-row cost-row" onclick="toggleCostRow(this)" title="กดเพื่อดูแยกประเภทค่าใช้จ่าย">
+      <td>${label}</td>
       <td>${kind==='plan' ? '<span class="pill pill-in">แผน</span>' : '<span class="pill pill-out">ผล</span>'}</td>
-      <td class="num">${fmtNum(qty,2)}</td>
-      <td class="num">${fmtNum(budget,2)}</td>
+      <td class="num">${fmtQtyShort(qty)}</td>
+      <td class="num">${fmtMoney(budget)}</td>
       <td class="num">—</td>
-      <td class="num">${fmtNum(material,2)}</td>
-      <td class="num">${fmtNum(labor,2)}</td>
-      <td class="num">${fmtNum(rent,2)}</td>
-      <td class="num">${fmtNum(fuel,2)}</td>
-      <td class="num">${fmtNum(service,2)}</td>
       <td></td>
     </tr>
+    <tr class="cost-detail"><td colspan="6">${bmmCostChipsHtml(material, labor, rent, fuel, service)}</td></tr>
   `;
 }
 function bmmTheadHtml(showUnit){
-  return `<tr><th>รหัสงาน</th><th>ลักษณะงาน</th>${showUnit ? '<th>หน่วย</th>' : ''}<th>แผน/ผล</th><th>ปริมาณ</th><th>งบประมาณ (บาท)</th><th>ราคาต่อหน่วย</th><th>วัสดุ</th><th>แรงงาน</th><th>เช่า</th><th>น้ำมัน</th><th><span style="white-space:nowrap">ใช้สอย/</span><br><span style="white-space:nowrap">จ้างเหมา</span></th><th>จัดการ</th></tr>`;
+  return `<tr><th style="width:38%;text-align:left;">งาน</th><th style="width:11%;">แผน/ผล</th><th style="width:13%;">ปริมาณ</th><th style="width:17%;">งบประมาณ (บาท)</th><th style="width:13%;">ราคา/หน่วย</th><th style="width:8%;">จัดการ</th></tr>`;
 }
 /* แผนงาน-ผลงาน (แบบ D — ไล่ระดับหลัก→ย่อย): การ์ดหมวดหลักคำนวณแผน/ผลจากทุกรายการของปีงบเสมอ
    (ไม่ขึ้นกับตัวกรอง bmm-kind) เพราะแถบเทียบต้องเห็นทั้งสองค่าพร้อมกันตลอด — ตัวกรอง kind มีผลแค่กับ
@@ -2610,7 +3148,7 @@ function renderBmmTable(){
   const fy = +document.getElementById('bmm-fy').value || 2569;
   const kind = document.getElementById('bmm-kind').value || 'all';
 
-  const fySub = bmmEntries.filter(e=> e.fy===fy && e.level==='sub');
+  const fySub = bmmEntriesWithLive().filter(e=> e.fy===fy && e.level==='sub');
   const subRows = fySub.filter(e=> kind==='all' || e.kind===kind);
 
   const planMain = bmmAggregateToMain(fySub.filter(e=>e.kind==='plan'));
@@ -2638,7 +3176,7 @@ function renderBmmTable(){
       subTable = `<div style="padding:0 20px 16px 46px;background:var(--paper-50);">
         <table class="bmm-inner-table" style="background:#fff;border-radius:8px;overflow:hidden;">
           <thead>${bmmTheadHtml(true)}</thead>
-          <tbody>${rowsHtml || `<tr><td colspan="13" style="text-align:center;color:var(--ink-400);">ไม่มีรหัสงานย่อยในหมวดนี้ตามตัวกรองที่เลือก</td></tr>`}</tbody>
+          <tbody>${rowsHtml || `<tr><td colspan="6" style="text-align:center;color:var(--ink-400);">ไม่มีรหัสงานย่อยในหมวดนี้ตามตัวกรองที่เลือก</td></tr>`}</tbody>
         </table>
       </div>`;
     }
@@ -4247,32 +4785,14 @@ function dwDayRoster(date){
   const leaves = getLeaveHistoryX();
   return active.filter(s=> !leaves.some(l=> l.name===s.name && l.from<=date && date<=l.to));
 }
-function toggleDwAcc(key){
-  const acc = document.getElementById('dw-acc-'+key);
-  const body = document.getElementById('dw-acc-'+key+'-body');
-  if(!acc || !body) return;
-  const isOpen = acc.classList.contains('open');
-  acc.classList.toggle('open', !isOpen);
-  body.classList.toggle('hidden', isOpen);
-}
-/* เปิดเฉพาะหัวข้อ "แรงงาน" เป็นค่าเริ่มต้นทุกครั้งที่เปิดฟอร์มใหม่ (ประหยัดพื้นที่ตามที่ขอ) */
-function resetDwAccState(){
-  ['labor','material','machine','summary'].forEach(key=>{
-    const acc = document.getElementById('dw-acc-'+key);
-    const body = document.getElementById('dw-acc-'+key+'-body');
-    if(!acc || !body) return;
-    const shouldOpen = key==='labor';
-    acc.classList.toggle('open', shouldOpen);
-    body.classList.toggle('hidden', !shouldOpen);
-  });
-}
-/* อัปเดตตัวเลขสรุปบนหัวข้อรองทั้ง 4 (แสดงแม้ยังไม่ได้เปิดดูรายละเอียดข้างใน) */
+/* ฟอร์มใบสั่งการเปลี่ยนจากหัวข้อพับ (accordion) เป็นทีละขั้น (wizard) แล้ว — เก็บชื่อฟังก์ชันไว้ให้โค้ดเดิมที่เรียกอยู่ไม่พัง */
+function toggleDwAcc(){}
+function resetDwAccState(){ resetDwWizard(); }
+/* อัปเดตตัวเลขสรุปบนหัวขั้นตอนทั้ง 4 */
 function refreshDwAccBadges(){
   const laborBadge = document.getElementById('dw-acc-labor-badge');
   if(laborBadge){
-    const date = document.getElementById('dw-date')?.value;
-    const rosterN = date ? dwDayRoster(date).length : 0;
-    laborBadge.textContent = `เลือกแล้ว ${dwSelectedStaff.length} จาก ${rosterN} คน (มาทำงานวันนี้)`;
+    laborBadge.textContent = `${dwSelectedStaff.length} คน`;
   }
   const matBadge = document.getElementById('dw-acc-material-badge');
   if(matBadge){
@@ -4287,7 +4807,117 @@ function refreshDwAccBadges(){
   const sumBadge = document.getElementById('dw-acc-summary-badge');
   if(sumBadge){
     const total = (+document.getElementById('dw-material')?.value||0)+(+document.getElementById('dw-labor')?.value||0)+(+document.getElementById('dw-rent')?.value||0)+(+document.getElementById('dw-fuel')?.value||0);
-    sumBadge.textContent = fmtNum(total,2)+' บาท';
+    sumBadge.textContent = fmtMoney(total)+' บาท';
+    const totEl = document.getElementById('dw-cost-total-val');
+    if(totEl) totEl.textContent = fmtNum(total,2);
+  }
+}
+
+/* ===== ฟอร์มใบสั่งการทีละขั้น (4 ขั้น) ===== */
+let __dwStep = 1;
+const DW_STEP_COUNT = 4;
+function toggleDwCostEdit(){
+  const on = document.getElementById('dw-cost-edit').checked;
+  ['dw-material','dw-labor','dw-rent','dw-fuel'].forEach(id=>{ document.getElementById(id).readOnly = !on; });
+}
+function goDwStep(n){
+  n = Math.max(1, Math.min(DW_STEP_COUNT, n));
+  __dwStep = n;
+  document.querySelectorAll('#daily-form .dw-step-pane').forEach(p=>p.classList.toggle('active', +p.dataset.step===n));
+  document.querySelectorAll('#dw-stepbar .dw-stepchip').forEach(c=>{
+    const s = +c.dataset.step;
+    c.classList.toggle('active', s===n);
+    c.classList.toggle('done', s<n);
+  });
+  const last = n===DW_STEP_COUNT;
+  document.getElementById('dw-prev-btn').classList.toggle('hidden', n===1);
+  document.getElementById('dw-next-btn').classList.toggle('hidden', last);
+  document.getElementById('daily-form-save-btn').classList.toggle('hidden', !last);
+  if(last) renderDwReview();
+  refreshDwAccBadges();
+  const body = document.getElementById('daily-form');
+  if(body) body.scrollTop = 0;
+  const ov = document.getElementById('daily-form-overlay');
+  if(ov) ov.scrollTop = 0;
+}
+/* เปิดฟอร์มใหม่/เปิดแก้ไข: เริ่มที่ขั้น 1 เสมอ และให้ช่องตัวเลขล็อกไว้ (ระบบคำนวณให้) */
+function resetDwWizard(){
+  const ce = document.getElementById('dw-cost-edit');
+  if(ce){ ce.checked = false; toggleDwCostEdit(); }
+  const err = document.getElementById('dw-step1-err');
+  if(err){ err.classList.add('hidden'); err.textContent = ''; }
+  document.querySelectorAll('.dw-field-err').forEach(el=>el.classList.remove('dw-field-err'));
+  goDwStep(1);
+}
+function dwStep1Errors(){
+  const errs = [];
+  const bad = [];
+  if(!document.getElementById('dw-job').value){ errs.push('เลือกรหัสงานจากรายการค้นหา'); bad.push('dw-job-search'); }
+  const isOffice = !!officeRouteOption(document.getElementById('dw-route').value);
+  if(!isOffice && !document.getElementById('dw-loc').value.trim()){ errs.push('ระบุ กม. เริ่มต้น (หรือเลือกสถานที่เป็นสำนักงาน)'); bad.push('dw-loc'); }
+  return {errs, bad};
+}
+function dwStepNext(){
+  if(__dwStep===1){
+    document.querySelectorAll('.dw-field-err').forEach(el=>el.classList.remove('dw-field-err'));
+    const {errs, bad} = dwStep1Errors();
+    const box = document.getElementById('dw-step1-err');
+    if(errs.length){
+      box.textContent = 'ยังกรอกไม่ครบ:\n• ' + errs.join('\n• ');
+      box.classList.remove('hidden');
+      bad.forEach(id=>document.getElementById(id)?.classList.add('dw-field-err'));
+      document.getElementById(bad[0])?.focus();
+      return;
+    }
+    box.classList.add('hidden');
+  }
+  goDwStep(__dwStep+1);
+}
+function dwStepPrev(){ goDwStep(__dwStep-1); }
+/* ขั้น 4: สรุปข้อมูลที่กรอกให้ตรวจก่อนบันทึก + รวบรวมคำเตือนจากขั้นก่อนหน้า (ลา/ซ้ำงาน/กม.ผิด) มาแสดงในหน้าเดียว */
+function renderDwReview(){
+  const host = document.getElementById('dw-review');
+  if(!host) return;
+  const code = document.getElementById('dw-job').value;
+  const job = code ? findJob(code) : null;
+  const date = document.getElementById('dw-date').value;
+  const kmS = document.getElementById('dw-loc').value.trim(), kmE = document.getElementById('dw-loc-end').value.trim();
+  const routeSel = document.getElementById('dw-route');
+  const routeTxt = routeSel.value && routeSel.selectedOptions && routeSel.selectedOptions[0] ? routeSel.selectedOptions[0].textContent : '';
+  const pending = document.getElementById('dw-qty-pending').checked;
+  const qty = +document.getElementById('dw-qty').value || 0;
+  const unit = document.getElementById('dw-unit').value || '';
+  const note = document.getElementById('dw-note').value.trim();
+  const vehs = dwVehicleRowsData();
+  const parts = Array.from(document.getElementById('dw-part-items').children).filter(div=>{
+    const idx = div.id.replace('dw-part-','');
+    return document.getElementById('dw-part-code-'+idx)?.value && (+document.getElementById('dw-part-qty-'+idx)?.value||0)>0;
+  }).length;
+  const loc = kmS ? (kmE ? `กม.${kmS} - ${kmE}` : `กม.${kmS}`) : '—';
+  const cell = (k, v, full) => `<div class="${full?'full':''}"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  host.innerHTML = `<div class="dw-review-grid">
+    ${cell('งาน', code ? esc(code) + (job ? ' · ' + esc(job.name) : '') : '<span style="color:var(--danger);">ยังไม่ได้เลือกรหัสงาน</span>', true)}
+    ${cell('วันที่', date ? esc(fmtDateShort(date)) : '—')}
+    ${cell('ปริมาณ', pending ? '<span style="color:#a3660a;">รอปริมาณงาน</span>' : (fmtQtyShort(qty) + ' ' + esc(unit)))}
+    ${cell('สถานที่', esc((routeTxt ? routeTxt + ' ' : '') + loc), true)}
+    ${cell('ผู้ปฏิบัติงาน', dwSelectedStaff.length + ' คน')}
+    ${cell('เครื่องจักร/รถ', vehs.length + ' รายการ')}
+    ${cell('วัสดุที่เบิก', parts + ' รายการ')}
+    ${note ? cell('หมายเหตุ', esc(note)) : ''}
+  </div>`;
+  const warnParts = [];
+  ['dw-loc-msg','dw-leave-msg','dw-jobconflict-msg'].forEach(id=>{
+    const t = (document.getElementById(id)?.textContent||'').trim();
+    /* ข้อความ กม. แสดงเฉพาะกรณีเตือน (⚠) ไม่แสดงข้อความ "✓ กม. อยู่ในช่วง" หรือช่วงควบคุมเฉยๆ */
+    if(t && (id!=='dw-loc-msg' || t.indexOf('⚠')>-1)) warnParts.push(document.getElementById(id).innerHTML);
+  });
+  const w = document.getElementById('dw-review-warn');
+  w.innerHTML = warnParts.length ? '<b>⚠ ข้อควรตรวจสอบ</b><div style="margin-top:4px;">' + warnParts.join('<div style="height:4px;"></div>') + '</div>' : '';
+  w.classList.toggle('hidden', !warnParts.length);
+  const errs = dwStep1Errors().errs;
+  if(errs.length){
+    w.innerHTML = '<b>⚠ ยังกรอกไม่ครบ:</b> ' + esc(errs.join(', ')) + ' — <button type="button" class="dw-review-edit" style="float:none;" onclick="goDwStep(1)">กลับไปแก้ที่ขั้นที่ 1</button>' + (warnParts.length ? '<div style="margin-top:6px;">'+warnParts.join('')+'</div>' : '');
+    w.classList.remove('hidden');
   }
 }
 function dwTotal(d){ return (d.material||0)+(d.labor||0)+(d.rent||0)+(d.fuel||0); }
@@ -4301,36 +4931,104 @@ function renderDailyLog(){
   if(fy) rows = rows.filter(d=> fyOfDate(d.date)===fy);
   if(monthSel && monthSel!=='all') rows = rows.filter(d=> (new Date(d.date+'T00:00:00')).getMonth()+1 === +monthSel);
   rows = rows.slice().sort((a,b)=> new Date(b.date)-new Date(a.date));
-  document.getElementById('daily-body').innerHTML = rows.map(d=>{
-    const job = findJob(d.code);
-    const staffNames = (d.staff && d.staff.length ? d.staff : (d.staffLabel? d.staffLabel.split(',').map(s=>s.trim()) : [])).filter(Boolean);
-    const vehRaw = (d.vehicles && d.vehicles.length ? d.vehicles : (d.vehicle? d.vehicle.split(',').map(s=>({label:s.trim()})).filter(v=>v.label) : []));
-    /* สรุปจำนวนคน/เครื่องตัดหญ้า/รถหรือเครื่องจักรอื่น ให้เห็นภาพรวมทันทีในตาราง — ต้องการดูรายชื่อ/ทะเบียนแบบเต็มให้กด "แก้ไข" แทน */
-    const mowerCount = vehRaw.filter(isMowerVehicle).length;
-    const chainsawCount = vehRaw.filter(isChainsawVehicle).length;
-    const otherVehCount = vehRaw.length - mowerCount - chainsawCount;
-    /* ข้อความสั้นลง (ตัด "เครื่อง"/"คัน" ท้ายคำ) เพื่อให้ป้ายอยู่แถวเดียวกันได้พอดีในคอลัมน์ ไม่ตกไปอีกบรรทัด */
-    const summaryBadges = [
-      staffNames.length ? `<span class="dw-summary-badge people"><span class="ic">👤</span>${staffNames.length} คน</span>` : '',
-      mowerCount ? `<span class="dw-summary-badge mower"><span class="ic">✂️</span>ตัดหญ้า ${mowerCount}</span>` : '',
-      chainsawCount ? `<span class="dw-summary-badge chainsaw"><span class="ic ic-svg">${CHAINSAW_ICON_SVG}</span>เลื่อยยนต์ ${chainsawCount}</span>` : '',
-      otherVehCount ? `<span class="dw-summary-badge truck"><span class="ic">🚛</span>อื่นๆ ${otherVehCount}</span>` : ''
-    ].join('');
-    return `<tr>
-      <td>${fmtDateShort(d.date)}</td>
-      <td>${esc(d.code)}${job?'<span class="dw-job-name" title="'+esc(job.name)+'">'+esc(job.name)+'</span>':''}</td>
-      <td><div class="dw-loc-main">${esc(d.loc)}</div>${d.note?'<div style="font-size:11.5px;color:var(--ink-400);">📝 '+esc(d.note)+'</div>':''}${summaryBadges?'<div class="dw-summary-row">'+summaryBadges+'</div>':''}</td>
-      <td>${d.qtyPending ? '<span class="pill pill-warn">รอปริมาณงาน</span>' : fmtNum(d.qty,2)+(d.unit?' '+esc(d.unit):'')}</td>
-      <td>${fmtNum(d.material,2)}</td>
-      <td>${fmtNum(d.labor,2)}</td>
-      <td>${fmtNum(d.rent,2)}</td>
-      <td>${fmtNum(d.fuel,2)}</td>
-      <td>${fmtNum(dwTotal(d),2)}</td>
-      <td><div class="row-menu"><button type="button" class="row-menu-btn" onclick="toggleDwRowMenu(event,${d.no})" title="จัดการ">⋮</button><div id="dw-row-menu-${d.no}" class="row-menu-dropdown hidden"><button type="button" class="row-menu-item" onclick="closeDwRowMenus();editDailyEntry(${d.no})">แก้ไข</button><button type="button" class="row-menu-item danger" onclick="closeDwRowMenus();deleteDailyEntry(${d.no})">ลบ</button></div></div></td>
-    </tr>`;
+  renderDailyCards(rows);
+}
+/* ===== ใบสั่งการรายวันแบบการ์ด จัดกลุ่มตามวัน (แทนตาราง 10 คอลัมน์) ===== */
+const TH_WEEKDAYS = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+function fmtMoney(v){ v = v||0; return fmtNum(v, Math.abs(v%1)<0.005 ? 0 : 2); }
+function fmtQtyShort(v){ v = v||0; return fmtNum(v, Math.abs(v%1)<0.005 ? 0 : 2); }
+function fmtDayHeading(iso){
+  const d = new Date(iso+'T00:00:00');
+  return 'วัน'+TH_WEEKDAYS[d.getDay()]+'ที่ '+fmtDateShort(iso);
+}
+function toggleDwCard(no){
+  document.getElementById('dw-card-'+no)?.classList.toggle('open');
+}
+function dwCardHtml(d){
+  const job = findJob(d.code);
+  const staffNames = (d.staff && d.staff.length ? d.staff : (d.staffLabel ? d.staffLabel.split(',').map(s=>s.trim()) : [])).filter(Boolean);
+  const vehRaw = (d.vehicles && d.vehicles.length ? d.vehicles : (d.vehicle ? d.vehicle.split(',').map(s=>({label:s.trim()})).filter(v=>v.label) : []));
+  const mowerCount = vehRaw.filter(isMowerVehicle).length;
+  const chainsawCount = vehRaw.filter(isChainsawVehicle).length;
+  const otherVehCount = vehRaw.length - mowerCount - chainsawCount;
+  const badges = [
+    staffNames.length ? `<span class="dw-summary-badge people"><span class="ic">👤</span>${staffNames.length} คน</span>` : '',
+    mowerCount ? `<span class="dw-summary-badge mower"><span class="ic">✂️</span>ตัดหญ้า ${mowerCount}</span>` : '',
+    chainsawCount ? `<span class="dw-summary-badge chainsaw"><span class="ic ic-svg">${CHAINSAW_ICON_SVG}</span>เลื่อยยนต์ ${chainsawCount}</span>` : '',
+    otherVehCount ? `<span class="dw-summary-badge truck"><span class="ic">🚛</span>อื่นๆ ${otherVehCount}</span>` : ''
+  ].join('');
+  const qtyHtml = d.qtyPending
+    ? '<span class="pill pill-warn">รอปริมาณงาน</span>'
+    : `<span><span class="qty">${fmtQtyShort(d.qty)}</span> ${esc(d.unit||'')}</span>`;
+  const partsLine = (d.parts||[]).map(p=>{
+    const m = getMaterialsX().find(x=>x.code===p.code);
+    return esc((m && m.name) || p.code) + ' × ' + fmtQtyShort(p.qty) + (m && m.unit ? ' ' + esc(m.unit) : '');
+  }).join(' · ');
+  const vehLine = vehRaw.map(v=> esc(v.label) + (v.liters ? ' (น้ำมัน ' + fmtQtyShort(v.liters) + ' ล.)' : '')).join(' · ');
+  const noteLine = d.note ? `<div class="dw-ci-note">📝 ${esc(d.note)}</div>` : '';
+  return `
+  <div class="dw-card-item ${d.qtyPending?'pending':''}" id="dw-card-${d.no}">
+    <div class="dw-ci-main" onclick="toggleDwCard(${d.no})">
+      <div class="dw-ci-body">
+        <div class="dw-ci-job"><span class="dw-ci-code">${esc(d.code)}</span><span class="dw-ci-name">${esc(job ? job.name : '')}</span></div>
+        <div class="dw-ci-meta"><span>📍 ${esc(d.loc)}</span>${qtyHtml}</div>
+        ${badges ? `<div class="dw-summary-row">${badges}</div>` : ''}
+        ${noteLine}
+      </div>
+      <div class="dw-ci-right">
+        <div class="dw-ci-amount">${fmtMoney(dwTotal(d))}<small>บาท</small></div>
+        <div class="row-menu"><button type="button" class="row-menu-btn" onclick="toggleDwRowMenu(event,${d.no})" title="จัดการ">⋮</button><div id="dw-row-menu-${d.no}" class="row-menu-dropdown hidden"><button type="button" class="row-menu-item" onclick="closeDwRowMenus();editDailyEntry(${d.no})">แก้ไข</button><button type="button" class="row-menu-item danger" onclick="closeDwRowMenus();deleteDailyEntry(${d.no})">ลบ</button></div></div>
+      </div>
+    </div>
+    <div class="dw-ci-detail">
+      <div class="dw-ci-costs">
+        <div class="dw-ci-cost">วัสดุ<b>${fmtMoney(d.material)}</b></div>
+        <div class="dw-ci-cost">แรงงาน<b>${fmtMoney(d.labor)}</b></div>
+        <div class="dw-ci-cost">เครื่องจักร/เช่า<b>${fmtMoney(d.rent)}</b></div>
+        <div class="dw-ci-cost">น้ำมัน<b>${fmtMoney(d.fuel)}</b></div>
+      </div>
+      ${staffNames.length ? `<div class="dw-ci-line">👤 <b>ผู้ปฏิบัติงาน (${staffNames.length}):</b> ${esc(staffNames.join(', '))}</div>` : ''}
+      ${vehLine ? `<div class="dw-ci-line">🚜 <b>เครื่องจักร/รถ:</b> ${vehLine}</div>` : ''}
+      ${partsLine ? `<div class="dw-ci-line">🧱 <b>วัสดุที่เบิก:</b> ${partsLine}</div>` : ''}
+      ${(!staffNames.length && !vehLine && !partsLine) ? '<div class="dw-ci-line">ไม่มีรายละเอียดแรงงาน/วัสดุ/เครื่องจักร</div>' : ''}
+      <div style="margin-top:10px;display:flex;gap:8px;">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="editDailyEntry(${d.no})">แก้ไข</button>
+        <button type="button" class="btn btn-danger btn-sm" onclick="deleteDailyEntry(${d.no})">ลบ</button>
+      </div>
+    </div>
+  </div>`;
+}
+function renderDailyCards(rows){
+  const host = document.getElementById('daily-body');
+  if(!host) return;
+  const asof = document.getElementById('dw-list-asof');
+  if(asof) asof.textContent = rows.length ? '· ' + rows.length + ' ใบ' : '';
+  if(!rows.length){
+    host.innerHTML = `<div class="dw-empty"><div class="big">📋</div>ยังไม่มีใบสั่งการรายวันในช่วงที่เลือก<br><span style="font-size:12.5px;">กดปุ่ม "+ บันทึกใบสั่งการ" ด้านบนเพื่อเริ่มบันทึก หรือเปลี่ยนเดือน/ปีงบประมาณที่ตัวกรองด้านบน</span></div>`;
+    return;
+  }
+  const total = rows.reduce((s,d)=>s+dwTotal(d),0);
+  const pendingN = rows.filter(d=>d.qtyPending).length;
+  const dayCount = new Set(rows.map(d=>d.date)).size;
+  const strip = `<div class="dw-sum-strip">
+    <div class="dw-sum-chip">ใบสั่งการ<b>${rows.length} ใบ</b></div>
+    <div class="dw-sum-chip">ปฏิบัติงาน<b>${dayCount} วัน</b></div>
+    <div class="dw-sum-chip">รวมค่าใช้จ่าย<b>${fmtMoney(total)} บาท</b></div>
+    ${pendingN ? `<div class="dw-sum-chip" style="border-color:#e3c07a;background:#fdf2df;">รอปริมาณงาน<b style="color:#a3660a;">${pendingN} ใบ</b></div>` : ''}
+  </div>`;
+  const byDate = {};
+  const order = [];
+  rows.forEach(d=>{ if(!byDate[d.date]){ byDate[d.date] = []; order.push(d.date); } byDate[d.date].push(d); });
+  host.innerHTML = strip + order.map(date=>{
+    const list = byDate[date];
+    const dayTotal = list.reduce((s,d)=>s+dwTotal(d),0);
+    return `<div class="dw-day">
+      <div class="dw-day-head"><div class="dw-day-title">${fmtDayHeading(date)}<small>${list.length} ใบ</small></div><div class="dw-day-total">รวมวันนี้ <b>${fmtMoney(dayTotal)}</b> บาท</div></div>
+      ${list.map(dwCardHtml).join('')}
+    </div>`;
   }).join('');
 }
-/* เปิด/ปิดเมนูจัดการ (⋮) รายแถวของตารางใบสั่งการรายวัน — เปิดได้ทีละเมนู กดที่อื่นแล้วปิดอัตโนมัติ */
+/* เปิด/ปิดเมนูจัดการ (⋮) รายการของใบสั่งการรายวัน — เปิดได้ทีละเมนู กดที่อื่นแล้วปิดอัตโนมัติ */
 function closeDwRowMenus(){
   document.querySelectorAll('#daily-body .row-menu-dropdown').forEach(el=>el.classList.add('hidden'));
 }
@@ -4698,14 +5396,17 @@ function rollupRows(){
 function bmmPriorMonthsQty(code, fy, month){
   const seq = DW_LOG_FY_MONTHS.indexOf(month);
   const priorMonths = seq>0 ? DW_LOG_FY_MONTHS.slice(0, seq) : [];
-  return bmmEntries.filter(e=> e.kind==='actual' && e.fy===fy && e.code===code && priorMonths.includes(e.month))
+  return bmmEntriesWithLive().filter(e=> e.kind==='actual' && e.fy===fy && e.code===code && priorMonths.includes(e.month))
     .reduce((s,e)=>s+(e.qty||0), 0);
 }
 function renderRollup(){
   const rows = rollupRows();
   const fy = +document.getElementById('rollup-fy').value || 2569;
   const month = +document.getElementById('rollup-month').value;
-  const pendingNote = rows.__pendingCount ? `<tr><td colspan="9" style="text-align:center;color:#b4801f;background:#fdf2df;">⚠ มีใบสั่งการรายวัน ${rows.__pendingCount} ใบของเดือนนี้ที่ยังติ๊ก "รอปริมาณงาน" — ไม่ถูกรวมในสรุปนี้ กรุณากลับไปกรอกปริมาณงานให้ครบก่อนปิดยอดเดือน</td></tr>` : '';
+  const ctx = document.getElementById('rollup-ctx');
+  if(ctx) ctx.textContent = '· เดือน' + monthLabel(month) + ' ปีงบประมาณ ' + fy + (document.getElementById('g-month')?.value==='all' ? ' (ตัวกรองเป็น "ทั้งปี" จึงสรุปเดือนปัจจุบัน — เลือกเดือนที่ต้องการด้านบน)' : '');
+  renderRollupStatus(fy, month, rows);
+  const pendingNote = ''; /* คำเตือน "รอปริมาณงาน" แสดงที่แถบสถานะด้านบนแล้ว (rollup-status) */
   document.getElementById('rollup-body').innerHTML = pendingNote + (rows.length ? rows.map(r=>{
     const job = findJob(r.code);
     const total = r.material+r.labor+r.rent+r.fuel;
@@ -4718,31 +5419,97 @@ function renderRollup(){
         <div class="bmm-progress-track" style="width:70px;"><div class="bmm-progress-fill" style="width:${Math.min(pct,100)}%;background:${pct<50?'var(--amber-400)':'var(--orange-500)'};"></div></div>
         <span style="font-weight:600;color:${pct<50?'var(--orange-600)':'var(--navy-900)'};">${pct}%</span>
       </div>`;
-    return `<tr>
-      <td>${esc(r.code)}</td><td>${esc(job?job.name:'—')}</td>
-      <td>${fmtNum(r.qty,2)}</td><td>${fmtNum(r.material,2)}</td><td>${fmtNum(r.labor,2)}</td>
-      <td>${fmtNum(r.rent,2)}</td><td>${fmtNum(r.fuel,2)}</td><td>${fmtNum(total,2)}</td>
+    return `<tr class="cost-row" onclick="toggleCostRow(this)" title="กดเพื่อดูแยกประเภทค่าใช้จ่าย">
+      <td><span class="bmm-code">${esc(r.code)}</span> ${esc(job?job.name:'—')}${job && job.unit ? `<div class="bmm-sub">หน่วย: ${esc(job.unit)}</div>` : ''}</td>
+      <td class="num">${fmtQtyShort(r.qty)}</td>
+      <td class="num"><b>${fmtMoney(total)}</b></td>
       <td>${pctCell}</td>
-    </tr>`;
-  }).join('') : (rows.__pendingCount ? '' : `<tr><td colspan="9" style="text-align:center;color:var(--ink-400);">ยังไม่มีใบสั่งการรายวันของเดือนนี้</td></tr>`));
+      <td class="num"><span class="row-chev">▸</span></td>
+    </tr>
+    <tr class="cost-detail"><td colspan="5">${bmmCostChipsHtml(r.material, r.labor, r.rent, r.fuel, 0)}</td></tr>`;
+  }).join('') : (rows.__pendingCount ? '' : `<tr><td colspan="5" style="text-align:center;color:var(--ink-400);">ยังไม่มีใบสั่งการรายวันของเดือนนี้</td></tr>`));
 }
-async function commitRollupToActual(){
+/* สถานะการปิดยอดของเดือนที่เลือก: เทียบแถวผลที่บันทึกไว้ (bmm_plan_actual) กับยอดสดจากใบสั่งการรายวัน */
+function rollupCloseStatus(fy, month, rows){
+  const saved = bmmEntries.filter(e=> e.kind==='actual' && !e.baseline && e.fy===fy && e.month===month);
+  const same = (a,b)=> Math.abs((a||0)-(b||0)) < 0.005;
+  const changed = [], added = [], orphan = [];
+  rows.forEach(r=>{
+    const s = saved.find(e=>e.code===r.code);
+    if(!s) added.push(r.code);
+    else if(!(same(s.qty,r.qty) && same(s.material,r.material) && same(s.labor,r.labor) && same(s.rent,r.rent) && same(s.fuel,r.fuel))) changed.push(r.code);
+  });
+  saved.forEach(s=>{
+    if(!rows.some(r=>r.code===s.code) && (s.qty||s.material||s.labor||s.rent||s.fuel)) orphan.push(s.code);
+  });
+  const state = !saved.length ? 'open' : ((changed.length||added.length||orphan.length) ? 'stale' : 'closed');
+  return { state, changed, added, orphan, savedCount: saved.length };
+}
+function renderRollupStatus(fy, month, rows){
+  const el = document.getElementById('rollup-status');
+  if(!el) return;
+  const st = rollupCloseStatus(fy, month, rows);
+  const label = 'เดือน' + monthLabel(month) + ' ปีงบประมาณ ' + fy;
+  const orders = dailyWorkOrders.filter(d=> fyOfDate(d.date)===fy && +String(d.date).slice(5,7)===month);
+  const ceYear = month>=10 ? fy-543-1 : fy-543;
+  const lockedNote = ledgerLocks[ceYear+'-'+String(month).padStart(2,'0')] ? '<br>🔒 เดือนนี้ถูกล็อกบัญชีพัสดุ/น้ำมัน (พ.1-02/03) แล้ว — แก้ใบสั่งการของเดือนนี้ไม่ได้' : '';
+  const pend = rows.__pendingCount ? `<br>⚠ มีใบสั่งการ ${rows.__pendingCount} ใบที่ยัง "รอปริมาณงาน" — ยังไม่นับในยอด กรอกปริมาณให้ครบก่อนปิดยอด` : '';
+  let cls = '', html = '';
+  if(!orders.length){
+    html = `ยังไม่มีใบสั่งการของ${label}`;
+  } else if(st.state==='closed'){
+    cls = 'ok'; html = `<b>✓ ปิดยอด${label}แล้ว</b> — ยอดที่บันทึกตรงกับใบสั่งการรายวัน${pend}${lockedNote}`;
+  } else if(st.state==='stale'){
+    cls = 'warn';
+    const parts = [];
+    if(st.changed.length) parts.push('ตัวเลขเปลี่ยน: ' + st.changed.join(', '));
+    if(st.added.length) parts.push('มีรหัสงานใหม่: ' + st.added.join(', '));
+    if(st.orphan.length) parts.push('ไม่มีใบสั่งการแล้ว: ' + st.orphan.join(', '));
+    html = `<b>⚠ ปิดยอด${label}ไว้แล้ว แต่ใบสั่งการมีการเปลี่ยนแปลงหลังปิดยอด</b><ul>${parts.map(p=>'<li>'+esc(p)+'</li>').join('')}</ul>กด "ปิดยอดเดือนนี้" อีกครั้งเพื่ออัปเดตยอดทางการ${pend}${lockedNote}`;
+  } else {
+    cls = 'warn'; html = `<b>ยังไม่ได้ปิดยอด${label}</b> — ตัวเลขด้านล่างและในแท็บ "แผน - ผลงาน" คำนวณสดจากใบสั่งการ เมื่อตรวจครบแล้วกด "ปิดยอดเดือนนี้"${pend}${lockedNote}`;
+  }
+  el.className = 'rollup-status ' + cls;
+  el.innerHTML = html;
+  const btn = document.getElementById('rollup-commit-btn');
+  if(btn) btn.textContent = st.state==='stale' ? 'ปิดยอดใหม่' : (st.state==='closed' ? 'ปิดยอดซ้ำ' : 'ปิดยอดเดือนนี้');
+}
+/* ปิดยอดเดือน: แสดงรายการตรวจก่อน แล้วค่อยบันทึกจริง (doCommitRollupToActual) */
+function commitRollupToActual(){
   if(!isAdmin()) return;
   const rows = rollupRows();
-  if(rows.__pendingCount && !confirm(`มีใบสั่งการรายวัน ${rows.__pendingCount} ใบที่ยังไม่ทราบปริมาณงาน จะไม่ถูกรวมในการบันทึกครั้งนี้ ต้องการบันทึกเฉพาะรายการที่ครบถ้วนต่อหรือไม่?`)) return;
-  if(!rows.length){ alert('ไม่มีข้อมูลใบสั่งการรายวันของเดือนที่เลือกให้สรุป'); return; }
+  if(!rows.length){ alert('ไม่มีข้อมูลใบสั่งการรายวันของเดือนที่เลือกให้ปิดยอด'); return; }
   const fy = +document.getElementById('rollup-fy').value || 2569;
   const month = +document.getElementById('rollup-month').value;
+  const st = rollupCloseStatus(fy, month, rows);
+  const total = rows.reduce((s,r)=>s+r.material+r.labor+r.rent+r.fuel, 0);
+  const lines = [
+    `รหัสงาน ${rows.length} รายการ รวม ${fmtNum(total,2)} บาท`,
+    rows.__pendingCount ? `⚠ ใบสั่งการที่ยังรอปริมาณงาน ${rows.__pendingCount} ใบ จะไม่ถูกรวมในการปิดยอดนี้` : '✓ ไม่มีใบสั่งการที่ค้างรอปริมาณงาน',
+    st.state==='open' ? 'เดือนนี้ยังไม่เคยปิดยอด' : 'เดือนนี้เคยปิดยอดแล้ว — ยอดเดิมจะถูกแทนที่ด้วยยอดใหม่',
+    st.orphan.length ? `รหัสงาน ${st.orphan.join(', ')} ไม่มีใบสั่งการแล้ว — ยอดจะถูกปรับเป็น 0` : ''
+  ].filter(Boolean);
+  showConfirmModal('ปิดยอด' + 'เดือน' + monthLabel(month) + ' ' + fy + '?', lines.join('\n'), 'ปิดยอด', function(){ doCommitRollupToActual(rows, fy, month, st); });
+}
+async function doCommitRollupToActual(rows, fy, month, st){
   const rollupBtn = document.getElementById('rollup-commit-btn');
   const rollupBtnOrigText = rollupBtn ? rollupBtn.textContent : '';
   if(rollupBtn){ rollupBtn.disabled = true; rollupBtn.textContent = 'กำลังบันทึก...'; }
   try{
+    /* รหัสงานที่เคยมีผลบันทึกไว้แต่ใบสั่งการหายไปแล้ว: ปรับปริมาณ/ต้นทุนใบสั่งการเป็น 0 (คงค่าใช้สอย/จ้างเหมาเดิมไว้) */
+    for(const code of (st ? st.orphan : [])){
+      const ex = bmmEntries.find(e=> e.kind==='actual' && !e.baseline && e.fy===fy && e.month===month && e.code===code);
+      if(!ex) continue;
+      ex.qty=0; ex.material=0; ex.labor=0; ex.rent=0; ex.fuel=0;
+      await apiPost('update', 'bmm_plan_actual', bmmToApi(ex));
+    }
     for(const r of rows){
       const job = findJob(r.code);
       if(!job) continue;
       const existing = bmmEntries.find(e=> e.kind==='actual' && !e.baseline && e.fy===fy && e.month===month && e.code===r.code);
       if(existing){
-        existing.qty=r.qty; existing.material=r.material; existing.labor=r.labor; existing.rent=r.rent; existing.fuel=r.fuel; existing.service=0; existing.contract=0;
+        /* แก้บั๊ก: เดิมตั้ง service/contract = 0 ทับค่าที่กรอกไว้ — ตอนนี้แก้เฉพาะ 5 ช่องที่มาจากใบสั่งการ */
+        existing.qty=r.qty; existing.material=r.material; existing.labor=r.labor; existing.rent=r.rent; existing.fuel=r.fuel;
         await apiPost('update', 'bmm_plan_actual', bmmToApi(existing));
       } else {
         const rec = {
@@ -4763,7 +5530,7 @@ async function commitRollupToActual(){
     return;
   }
   if(rollupBtn){ rollupBtn.disabled = false; rollupBtn.textContent = rollupBtnOrigText; }
-  showSuccessModal('บันทึกผลบำรุงปกติของเดือน '+monthLabel(month)+' '+fy+' เรียบร้อย');
+  showSuccessModal('ปิดยอดเดือน '+monthLabel(month)+' '+fy+' เรียบร้อย');
   renderAll();
 }
 
@@ -4855,6 +5622,7 @@ function renderAll(){
   populateLogin();
   renderRoutes();
   renderEnc(); renderRoutine(); renderEm();
+  renderContracts();
   renderJobCodeRef();
 }
 
@@ -4904,7 +5672,7 @@ function applyCaseHandoff(){
   }catch(e){}
   if(!o || Date.now() - o.t > 30*60*1000) return;
   if(!isAdmin()){ alert('ข้อมูลเคสอุบัติเหตุที่ส่งมา ใช้ได้เฉพาะผู้มีสิทธิ์แก้ไขระบบที่ 2 (หัวหน้าหมวด/ผู้ช่วย) — ให้ผู้มีสิทธิ์กดปุ่ม "ส่งไปทำใบสั่งการ" จากเคสอีกครั้ง'); return; }
-  document.querySelector('.sec-tab[data-sec="routine"]')?.click();
+  showView('routine');
   toggleDailyForm();
   const kmTxt = Math.floor(o.km/1000) + '+' + String(Math.round(o.km%1000)).padStart(3,'0');
   const routeSel = document.getElementById('dw-route');
@@ -4933,6 +5701,7 @@ function applyCaseHandoff(){
     loadUnitCostRecordsFromApi(),
     loadEncroachmentsFromApi(),
     loadEmergenciesFromApi(),
+    loadContractsFromApi(),
     loadSubsys3RefDataFromApi(),
     loadLedgerLocksFromApi()
   ]);
