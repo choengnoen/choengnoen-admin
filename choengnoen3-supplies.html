@@ -20,36 +20,33 @@
   html,body{margin:0;padding:0;}
   body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink-900);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;}
   h1,h2,h3,.display{font-family:'Kanit',sans-serif;}
-  .app{display:flex;min-height:100vh;}
+  .app{min-height:100vh;}
 
-  /* Sidebar */
-  /* หุบเหลือแถบไอคอนแคบๆ (76px) โดยปกติ ขยายเป็นแถบเต็มลอยทับเนื้อหาเมื่อเอาเมาส์ไปวาง — .main
-     เว้น margin-left คงที่ไว้ล่วงหน้าเท่ากับความกว้างตอนหุบเสมอ เนื้อหาจึงไม่ขยับตอนขยาย/หุบ */
-  .sidebar{width:76px;flex-shrink:0;background:linear-gradient(185deg,var(--navy-950),var(--navy-900) 60%);color:#dfe7f0;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;overflow:hidden;transition:width .22s cubic-bezier(.2,.8,.3,1);z-index:30;}
-  .sidebar:hover{width:264px;overflow-y:auto;box-shadow:6px 0 28px -10px rgba(7,27,48,.5);}
-  .brand{padding:22px 14px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.08);}
-  .brand-mark{width:48px;height:48px;flex-shrink:0;}
-  .brand-text{opacity:0;white-space:nowrap;transition:opacity .1s ease;}
-  .sidebar:hover .brand-text{opacity:1;transition-delay:.08s;}
-  .brand-text .t1{font-family:'Kanit';font-size:15px;font-weight:600;color:#fff;line-height:1.25;}
-  .brand-text .t2{font-size:11.5px;color:#a9bdd0;letter-spacing:.02em;}
-  .nav-group-label{font-size:10.5px;letter-spacing:.12em;color:#7a90a6;padding:18px 20px 6px;text-transform:uppercase;font-family:'Kanit';white-space:nowrap;opacity:0;transition:opacity .1s ease;}
-  .sidebar:hover .nav-group-label{opacity:1;transition-delay:.08s;}
-  .nav-item{display:flex;align-items:center;gap:11px;padding:10px 20px;margin:2px 10px;border-radius:8px;color:#c4d2df;text-decoration:none;font-size:14px;cursor:pointer;position:relative;transition:background .15s ease;white-space:nowrap;}
-  .nav-item .num{font-family:'Kanit';font-size:11px;font-weight:600;width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.08);color:#9db2c5;flex-shrink:0;}
-  .nav-item span:not(.num){opacity:0;transition:opacity .1s ease;}
-  .sidebar:hover .nav-item span:not(.num){opacity:1;transition-delay:.1s;}
-  .nav-item.active{background:rgba(224,98,15,0.16);color:#fff;}
+  /* หัวเว็บแท็บบน (แบบ 1 เหมือนระบบงานอุบัติเหตุ) — แท็บระบบคือลิงก์ a.nav-item เดิม firebase-layer.js ซ่อน/แสดงตามสิทธิ์ได้เหมือนเดิม */
+  .route-header{background:radial-gradient(1100px 420px at 12% -20%,var(--navy-800) 0%,var(--navy-950) 55%);color:#fff;padding:20px 30px 0;position:relative;z-index:40;border-bottom:1px solid rgba(0,0,0,.35);}
+  .route-header .top-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  .route-header .clock{color:#9db0c4;}
+  .brand{display:flex;align-items:center;gap:14px;}
+  .brand-mark{width:50px;height:50px;flex-shrink:0;}
+  .brand-text .t1{font-family:'Kanit';font-size:21px;font-weight:700;color:#fff;line-height:1.25;letter-spacing:-.01em;}
+  .brand-text .t2{font-size:13px;color:#9db0c4;}
+  .tabs-nav{display:flex;overflow-x:auto;margin-top:16px;border-top:1px solid rgba(255,255,255,.1);scrollbar-width:none;}
+  .tabs-nav::-webkit-scrollbar{display:none;}
+  .nav-group-label{display:none !important;}
+  .nav-item{display:flex;align-items:center;gap:8px;padding:11px 16px;color:#8aa0b8;text-decoration:none;font-family:'Kanit';font-weight:600;font-size:13.5px;cursor:pointer;position:relative;white-space:nowrap;transition:color .15s ease;}
+  .nav-item .num{font-size:11px;font-weight:600;width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.1);color:#b4c4d4;flex-shrink:0;}
+  .nav-item .own{margin-left:2px;font-size:10.5px;font-weight:500;padding:1px 7px;border-radius:999px;background:rgba(242,169,48,.18);color:#f2c46b;}
+  .nav-item.active{color:#fff;}
   .nav-item.active .num{background:var(--orange-600);color:#fff;}
-  .nav-item.active::before{content:"";position:absolute;left:-10px;top:8px;bottom:8px;width:3px;background:var(--orange-600);border-radius:2px;}
+  .nav-item.active::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,#e0620f,#f07a1f,#ffa24d,#f07a1f,#e0620f);background-size:200% 100%;animation:tabGlow 2.4s linear infinite;box-shadow:0 0 8px rgba(240,122,31,.6);}
+  @keyframes tabGlow{to{background-position:200% 0;}}
+  @media(prefers-reduced-motion:reduce){.nav-item.active::after{animation:none;}}
   .nav-item.disabled{opacity:.4;cursor:not-allowed;}
-  .nav-item.disabled:hover{background:none;}
-  .nav-item:not(.disabled):not(.active):hover{background:rgba(255,255,255,0.06);}
-  .sidebar-foot{margin-top:auto;padding:16px 20px 20px;border-top:1px solid rgba(255,255,255,0.08);font-size:12px;color:#7a90a6;white-space:nowrap;opacity:0;transition:opacity .1s ease;}
-  .sidebar:hover .sidebar-foot{opacity:1;transition-delay:.1s;}
+  .nav-item:not(.disabled):not(.active):hover{color:#e4ecf5;}
+  #nav-main-link{margin-right:6px;padding-right:20px;border-right:1px solid rgba(255,255,255,.14);}
 
   /* Main */
-  .main{flex:1;min-width:0;display:flex;flex-direction:column;margin-left:76px;}
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;}
   .topbar{background:var(--white);border-bottom:1px solid var(--line);padding:14px 30px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5;}
   .crumb{font-size:13px;color:var(--ink-400);}
   .crumb b{color:var(--ink-900);font-weight:600;}
@@ -74,8 +71,8 @@
 
 
   /* section switch tabs */
-  .sec-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 22px;padding-bottom:14px;border-bottom:1px solid var(--line);}
-  .sec-tab{padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink-600);cursor:pointer;background:var(--white);border:1px solid var(--line);}
+  .sec-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 20px;}
+  .sec-tab{padding:10px 18px;border-radius:12px;font-size:14.5px;font-weight:600;color:var(--ink-600);cursor:pointer;background:var(--white);border:1px solid var(--line);}
   .sec-tab.active{background:var(--navy-900);color:#fff;border-color:var(--navy-900);}
   .sec-tab:hover:not(.active){border-color:var(--orange-500);color:var(--orange-600);}
   .panel{display:none;}
@@ -510,7 +507,7 @@
   @media print{
     .print-only{display:none;}
     .print-only.show-print{display:block;}
-    .sidebar,.topbar,.sec-tabs,.no-print,.page-head .toolbar{display:none !important;}
+    .route-header,.sidebar,.topbar,.sec-tabs,.no-print,.page-head .toolbar{display:none !important;}
     .content{padding:0;max-width:none;}
     .section{border:none;box-shadow:none;}
     .panel{display:none !important;}
@@ -521,10 +518,8 @@
     .stats{grid-template-columns:repeat(2,1fr);}
     .lr-grid{grid-template-columns:1fr;}
     .detail-grid{grid-template-columns:repeat(2,1fr);}
-    .sidebar{width:76px;}
-    .brand-text,.nav-item span:not(.num),.nav-group-label,.sidebar-foot{display:none;}
-    .brand{justify-content:center;}
-    .nav-item{justify-content:center;padding:12px;}
+    .route-header{padding:16px 16px 0;}
+    .brand-text .t1{font-size:17px;}
   }
 /* แถบเลื่อนบางแบบเดียวกับระบบโจรกรรม */
 .modal-body,.modal-overlay,.mat-scroll-wrap,.table-wrap-scroll,.refdata-list,#mat-table-wrap,#veh-table-wrap,#labor-table-wrap{scrollbar-width:thin;scrollbar-color:#c3cad3 transparent}
@@ -543,27 +538,15 @@
 <body>
 
 <div class="app">
-  <aside class="sidebar">
-    <div class="brand">
-      <img class="brand-mark" src="logo.jpg" alt="ตรากรมทางหลวง" style="border-radius:50%;object-fit:contain;">
-      <div class="brand-text">
-        <div class="t1">หมวดทางหลวงเชิงเนิน</div>
-        <div class="t2">Choeng Noen Highway Maintenance Section</div>
+  <header class="route-header no-print">
+    <div class="top-row">
+      <div class="brand">
+        <img class="brand-mark" src="logo.jpg" alt="ตรากรมทางหลวง" style="border-radius:50%;object-fit:contain;">
+        <div class="brand-text">
+          <div class="t1">หมวดทางหลวงเชิงเนิน</div>
+          <div class="t2">Choeng Noen Highway Maintenance</div>
+        </div>
       </div>
-    </div>
-    <div class="nav-group-label" id="nav-group-main">ระบบหลัก</div>
-    <a class="nav-item" id="nav-main-link" href="choengnoen0-main.html"><span class="num">•</span><span>งานบริหารหมวด</span></a>
-    <div class="nav-group-label" id="nav-group-sub">ระบบรอง</div>
-    <a class="nav-item" href="choengnoen1-saraban.html"><span class="num">1</span><span>งานสารบรรณและบุคลากร</span></a>
-    <a class="nav-item" href="choengnoen2-statistics.html"><span class="num">2</span><span>งานสถิติและบริการประชาชน</span></a>
-    <a class="nav-item active" id="nav-store"><span class="num">3</span><span>งานพัสดุและเครื่องจักร</span></a>
-    <a class="nav-item" href="choengnoen4-finance.html"><span class="num">4</span><span>งานบัญชีและการเงิน</span></a>
-    <div class="sidebar-foot">หมวดทางหลวงเชิงเนิน<br>เวอร์ชันต้นแบบ 0.3</div>
-  </aside>
-
-  <div class="main">
-    <header class="topbar">
-      <div class="crumb" id="crumb">ระบบรองที่ 3 · <b>งานพัสดุและเครื่องจักร</b></div>
       <div class="topbar-right no-print">
         <div class="user-menu-wrap">
           <div class="avatar" id="user-avatar" onclick="__toggleUserMenu(event)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg></div>
@@ -573,11 +556,23 @@
           </div>
         </div>
       </div>
-    </header>
+    </div>
+    <nav class="tabs-nav">
+    <div class="nav-group-label" id="nav-group-main">ระบบหลัก</div>
+    <a class="nav-item" id="nav-main-link" href="choengnoen0-main.html"><span class="num">•</span><span>ภาพรวม</span><span class="own">เจ้าของระบบ/หมวด</span></a>
+    <div class="nav-group-label" id="nav-group-sub">ระบบรอง</div>
+    <a class="nav-item" href="choengnoen1-saraban.html"><span class="num">1</span><span>งานสารบรรณ</span></a>
+    <a class="nav-item" href="choengnoen2-statistics.html"><span class="num">2</span><span>งานสถิติ</span></a>
+    <a class="nav-item active" id="nav-store"><span class="num">3</span><span>งานพัสดุ</span></a>
+    <a class="nav-item" href="choengnoen4-finance.html"><span class="num">4</span><span>งานบัญชี</span></a>
+    </nav>
+  </header>
+
+  <div class="main">
 
     <div class="content">
       <div class="page-head">
-        <h1>งานพัสดุและเครื่องจักร</h1>
+        <h1>งานพัสดุ</h1>
       </div>
 
       <div class="sec-tabs no-print" id="sec-tabs">

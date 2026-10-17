@@ -23,36 +23,33 @@
   html,body{margin:0;padding:0;}
   body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink-900);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;}
   h1,h2,h3,.display{font-family:'Kanit',sans-serif;}
-  .app{display:flex;min-height:100vh;}
+  .app{min-height:100vh;}
 
-  /* Sidebar */
-  /* หุบเหลือแถบไอคอนแคบๆ (76px) โดยปกติ ขยายเป็นแถบเต็มลอยทับเนื้อหาเมื่อเอาเมาส์ไปวาง — .main
-     เว้น margin-left คงที่ไว้ล่วงหน้าเท่ากับความกว้างตอนหุบเสมอ เนื้อหาจึงไม่ขยับตอนขยาย/หุบ */
-  .sidebar{width:76px;flex-shrink:0;background:linear-gradient(185deg,var(--navy-950),var(--navy-900) 60%);color:#dfe7f0;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;overflow:hidden;transition:width .22s cubic-bezier(.2,.8,.3,1);z-index:30;}
-  .sidebar:hover{width:264px;overflow-y:auto;box-shadow:6px 0 28px -10px rgba(7,27,48,.5);}
-  .brand{padding:22px 14px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.08);}
-  .brand-mark{width:48px;height:48px;flex-shrink:0;}
-  .brand-text{opacity:0;white-space:nowrap;transition:opacity .1s ease;}
-  .sidebar:hover .brand-text{opacity:1;transition-delay:.08s;}
-  .brand-text .t1{font-family:'Kanit';font-size:15px;font-weight:600;color:#fff;line-height:1.25;}
-  .brand-text .t2{font-size:11.5px;color:#a9bdd0;letter-spacing:.02em;}
-  .nav-group-label{font-size:10.5px;letter-spacing:.12em;color:#7a90a6;padding:18px 20px 6px;text-transform:uppercase;font-family:'Kanit';white-space:nowrap;opacity:0;transition:opacity .1s ease;}
-  .sidebar:hover .nav-group-label{opacity:1;transition-delay:.08s;}
-  .nav-item{display:flex;align-items:center;gap:11px;padding:10px 20px;margin:2px 10px;border-radius:8px;color:#c4d2df;text-decoration:none;font-size:14px;cursor:pointer;position:relative;transition:background .15s ease;white-space:nowrap;}
-  .nav-item .num{font-family:'Kanit';font-size:11px;font-weight:600;width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.08);color:#9db2c5;flex-shrink:0;}
-  .nav-item span:not(.num){opacity:0;transition:opacity .1s ease;}
-  .sidebar:hover .nav-item span:not(.num){opacity:1;transition-delay:.1s;}
-  .nav-item.active{background:rgba(224,98,15,0.16);color:#fff;}
+  /* หัวเว็บแท็บบน (แบบ 1 เหมือนระบบงานอุบัติเหตุ) — แท็บระบบคือลิงก์ a.nav-item เดิม firebase-layer.js ซ่อน/แสดงตามสิทธิ์ได้เหมือนเดิม */
+  .route-header{background:radial-gradient(1100px 420px at 12% -20%,var(--navy-800) 0%,var(--navy-950) 55%);color:#fff;padding:20px 30px 0;position:relative;z-index:40;border-bottom:1px solid rgba(0,0,0,.35);}
+  .route-header .top-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  .route-header .clock{color:#9db0c4;}
+  .brand{display:flex;align-items:center;gap:14px;}
+  .brand-mark{width:50px;height:50px;flex-shrink:0;}
+  .brand-text .t1{font-family:'Kanit';font-size:21px;font-weight:700;color:#fff;line-height:1.25;letter-spacing:-.01em;}
+  .brand-text .t2{font-size:13px;color:#9db0c4;}
+  .tabs-nav{display:flex;overflow-x:auto;margin-top:16px;border-top:1px solid rgba(255,255,255,.1);scrollbar-width:none;}
+  .tabs-nav::-webkit-scrollbar{display:none;}
+  .nav-group-label{display:none !important;}
+  .nav-item{display:flex;align-items:center;gap:8px;padding:11px 16px;color:#8aa0b8;text-decoration:none;font-family:'Kanit';font-weight:600;font-size:13.5px;cursor:pointer;position:relative;white-space:nowrap;transition:color .15s ease;}
+  .nav-item .num{font-size:11px;font-weight:600;width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.1);color:#b4c4d4;flex-shrink:0;}
+  .nav-item .own{margin-left:2px;font-size:10.5px;font-weight:500;padding:1px 7px;border-radius:999px;background:rgba(242,169,48,.18);color:#f2c46b;}
+  .nav-item.active{color:#fff;}
   .nav-item.active .num{background:var(--orange-600);color:#fff;}
-  .nav-item.active::before{content:"";position:absolute;left:-10px;top:8px;bottom:8px;width:3px;background:var(--orange-600);border-radius:2px;}
+  .nav-item.active::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,#e0620f,#f07a1f,#ffa24d,#f07a1f,#e0620f);background-size:200% 100%;animation:tabGlow 2.4s linear infinite;box-shadow:0 0 8px rgba(240,122,31,.6);}
+  @keyframes tabGlow{to{background-position:200% 0;}}
+  @media(prefers-reduced-motion:reduce){.nav-item.active::after{animation:none;}}
   .nav-item.disabled{opacity:.4;cursor:not-allowed;}
-  .nav-item.disabled:hover{background:none;}
-  .nav-item:not(.disabled):not(.active):hover{background:rgba(255,255,255,0.06);}
-  .sidebar-foot{margin-top:auto;padding:16px 20px 20px;border-top:1px solid rgba(255,255,255,0.08);font-size:12px;color:#7a90a6;white-space:nowrap;opacity:0;transition:opacity .1s ease;}
-  .sidebar:hover .sidebar-foot{opacity:1;transition-delay:.1s;}
+  .nav-item:not(.disabled):not(.active):hover{color:#e4ecf5;}
+  #nav-main-link{margin-right:6px;padding-right:20px;border-right:1px solid rgba(255,255,255,.14);}
 
   /* Main */
-  .main{flex:1;min-width:0;display:flex;flex-direction:column;margin-left:76px;}
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;}
   .topbar{background:var(--white);border-bottom:1px solid var(--line);padding:14px 30px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5;}
   .crumb{font-size:13px;color:var(--ink-400);}
   .crumb b{color:var(--ink-900);font-weight:600;}
@@ -77,8 +74,8 @@
 
 
   /* section switch tabs */
-  .sec-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 22px;padding-bottom:14px;border-bottom:1px solid var(--line);}
-  .sec-tab{padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink-600);cursor:pointer;background:var(--white);border:1px solid var(--line);}
+  .sec-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 20px;}
+  .sec-tab{padding:10px 18px;border-radius:12px;font-size:14.5px;font-weight:600;color:var(--ink-600);cursor:pointer;background:var(--white);border:1px solid var(--line);}
   .sec-tab.active{background:var(--navy-900);color:#fff;border-color:var(--navy-900);}
   .sec-tab:hover:not(.active){border-color:var(--orange-500);color:var(--orange-600);}
   .panel{display:none;}
@@ -473,7 +470,7 @@
   @media print{
     .print-only{display:none;}
     .print-only.show-print{display:block;}
-    .sidebar,.topbar,.sec-tabs,.no-print,.page-head .toolbar{display:none !important;}
+    .route-header,.sidebar,.topbar,.sec-tabs,.no-print,.page-head .toolbar{display:none !important;}
     .content{padding:0;max-width:none;}
     .section{border:none;box-shadow:none;}
     .panel{display:none !important;}
@@ -484,10 +481,8 @@
     .stats{grid-template-columns:repeat(2,1fr);}
     .lr-grid{grid-template-columns:1fr;}
     .detail-grid{grid-template-columns:repeat(2,1fr);}
-    .sidebar{width:76px;}
-    .brand-text,.nav-item span:not(.num),.nav-group-label,.sidebar-foot{display:none;}
-    .brand{justify-content:center;}
-    .nav-item{justify-content:center;padding:12px;}
+    .route-header{padding:16px 16px 0;}
+    .brand-text .t1{font-size:17px;}
   }
   /* daily-form modal — เพิ่ม/แก้ไขใบสั่งการรายวัน */
   .modal-overlay{position:fixed;inset:0;background:rgba(7,27,48,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;z-index:50;padding:28px 20px;overflow-y:auto;animation:modalFadeIn .15s ease;}
@@ -565,14 +560,7 @@
   @media(max-width:640px){ .dw-toprow{grid-template-columns:1fr;} }
 
   /* ===== แท็บย่อยงานบำรุงปกติ + ตัวกรองรวม ===== */
-  .sub-tabs{display:flex;gap:4px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:-8px 0 14px;border-bottom:2px solid var(--line);}
-  .sub-tabs::-webkit-scrollbar{display:none;}
-  .sub-tabs.hidden,.set-tabs.hidden,.g-filter.hidden{display:none;}
-  .sub-tab{display:flex;align-items:center;gap:8px;padding:12px 18px;font-family:'Kanit';font-size:15px;font-weight:500;color:var(--ink-600);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;margin-bottom:-2px;}
-  .sub-tab:hover{color:var(--orange-600);}
-  .sub-tab.active{color:var(--navy-900);border-bottom-color:var(--orange-500);font-weight:600;}
-  .sub-tab-no{width:22px;height:22px;border-radius:50%;background:var(--paper-100);color:var(--ink-600);font-size:12px;display:inline-flex;align-items:center;justify-content:center;font-weight:600;}
-  .sub-tab.active .sub-tab-no{background:var(--orange-500);color:#fff;}
+  .set-tabs.hidden,.g-filter.hidden{display:none;}
   .set-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
   .set-tab{padding:7px 15px;border-radius:20px;font-size:13px;font-weight:600;color:var(--ink-600);background:#fff;border:1px solid var(--line);cursor:pointer;}
   .set-tab.active{background:var(--navy-900);color:#fff;border-color:var(--navy-900);}
@@ -580,42 +568,6 @@
   .g-filter-label{font-size:13px;color:var(--ink-600);font-weight:600;}
   .g-filter select{width:auto;min-width:150px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-family:'Sarabun';font-size:14px;color:var(--ink-900);}
   .sec-tab{padding:10px 20px;font-size:14.5px;}
-
-  /* ===== ใบสั่งการรายวัน: การ์ดจัดกลุ่มตามวัน ===== */
-  .dw-list{padding:4px 20px 16px;}
-  .dw-sum-strip{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0 6px;}
-  .dw-sum-chip{background:var(--paper-50);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:12px;color:var(--ink-600);}
-  .dw-sum-chip b{display:block;font-family:'Kanit';font-size:17px;color:var(--navy-900);font-weight:600;}
-  .dw-day{margin-top:18px;}
-  .dw-day-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:0 4px 8px;}
-  .dw-day-title{font-family:'Kanit';font-size:15px;font-weight:600;color:var(--navy-900);}
-  .dw-day-title small{font-family:'Sarabun';font-weight:400;font-size:12px;color:var(--ink-400);margin-left:8px;}
-  .dw-day-total{font-size:12.5px;color:var(--ink-600);}
-  .dw-day-total b{color:var(--navy-900);font-family:'Kanit';font-size:14px;}
-  .dw-card-item{position:relative;background:#fff;border:1px solid var(--line);border-left:5px solid var(--orange-500);border-radius:12px;margin-bottom:10px;transition:box-shadow .15s ease;}
-  .dw-card-item.pending{border-left-color:var(--amber-400);}
-  .dw-card-item:hover{box-shadow:0 6px 18px rgba(10,37,64,.08);}
-  .dw-ci-main{display:flex;gap:14px;align-items:flex-start;padding:13px 14px 13px 16px;cursor:pointer;}
-  .dw-ci-body{flex:1;min-width:0;}
-  .dw-ci-job{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
-  .dw-ci-code{font-family:'Kanit';font-size:12px;font-weight:600;background:var(--navy-900);color:#fff;border-radius:6px;padding:1px 8px;}
-  .dw-ci-name{font-family:'Kanit';font-size:15.5px;font-weight:500;color:var(--navy-900);}
-  .dw-ci-meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:6px;font-size:13px;color:var(--ink-600);}
-  .dw-ci-meta .qty{font-weight:700;color:var(--navy-900);}
-  .dw-ci-note{margin-top:5px;font-size:12px;color:var(--ink-400);}
-  .dw-ci-right{text-align:right;flex:none;display:flex;gap:8px;align-items:flex-start;}
-  .dw-ci-amount{font-family:'Kanit';font-size:19px;font-weight:600;color:var(--navy-900);line-height:1.2;}
-  .dw-ci-amount small{display:block;font-family:'Sarabun';font-size:11px;color:var(--ink-400);font-weight:400;}
-  .dw-ci-detail{display:none;border-top:1px dashed var(--line);padding:12px 16px 14px;background:var(--paper-50);border-radius:0 0 12px 8px;font-size:13px;}
-  .dw-card-item.open .dw-ci-detail{display:block;}
-  .dw-ci-costs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;}
-  .dw-ci-cost{background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:11.5px;color:var(--ink-400);}
-  .dw-ci-cost b{display:block;font-size:14px;color:var(--ink-900);font-weight:600;font-variant-numeric:tabular-nums;}
-  .dw-ci-line{margin:4px 0;color:var(--ink-600);}
-  .dw-ci-line b{color:var(--ink-900);}
-  .dw-empty{padding:44px 20px;text-align:center;color:var(--ink-400);}
-  .dw-empty .big{font-size:34px;margin-bottom:6px;}
-  @media(max-width:700px){ .dw-ci-costs{grid-template-columns:1fr 1fr;} .dw-ci-main{flex-direction:column;} .dw-ci-right{width:100%;justify-content:space-between;} }
 
   /* ===== ฟอร์มใบสั่งการทีละขั้น ===== */
   #daily-form-overlay .modal-box{max-width:780px;}
@@ -682,7 +634,110 @@
   .bmm-sub{font-size:11px;color:var(--ink-400);margin-top:2px;}
   .bmm-inner-table thead th{text-align:center;}
   #panel-rollup thead th:nth-child(2),#panel-rollup thead th:nth-child(3){text-align:right;}
-  .rollup-status{margin:14px 20px 4px;padding:11px 16px;border-radius:12px;font-size:13px;border:1px solid var(--line);background:var(--paper-50);color:var(--ink-600);line-height:1.6;}
+  /* ===== แถบเมนูงานบำรุงปกติ (ปุ่มเลือกหัวข้อปุ่มเดียว) ===== */
+  .maint-nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-4px 0 14px;}
+  .maint-nav.hidden{display:none;}
+  .maint-nav .g-filter{margin:0;}
+  .maint-nav .sp1{flex:1;}
+  .nav-menu{position:relative;}
+  .menu-btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 16px;font-family:'Kanit';font-size:15px;font-weight:600;color:var(--navy-900);cursor:pointer;}
+  .menu-btn:hover{border-color:var(--orange-500);}
+  .menu-pop{position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 40px -14px rgba(7,27,48,.35);padding:6px;min-width:210px;z-index:30;display:none;}
+  .menu-pop.show{display:block;}
+  .menu-pop div{padding:10px 14px;border-radius:8px;font-size:14px;color:var(--ink-600);font-weight:500;cursor:pointer;}
+  .menu-pop div:hover{background:var(--paper-50);}
+  .menu-pop div.on{background:#fdf1de;color:var(--navy-900);font-weight:600;}
+  .nav-routine{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  /* ===== ใบสั่งการรายวัน: แถบสัปดาห์แท่งเดียว + ไทม์ไลน์ ===== */
+  .dwk-bar{display:flex;align-items:stretch;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 2px rgba(10,37,64,.05),0 10px 22px -16px rgba(10,37,64,.16);}
+  .dwk-arr{width:42px;border:0;background:var(--paper-50);cursor:pointer;font-size:16px;color:var(--ink-600);flex:none;}
+  .dwk-arr:hover{background:var(--paper-100);}
+  .dwk-days{display:flex;flex:1;min-width:0;}
+  .dwk-d{flex:1;text-align:center;padding:9px 2px 8px;cursor:pointer;border-left:1px solid var(--paper-100);position:relative;min-width:0;}
+  .dwk-d:first-child{border-left:0;}
+  .dwk-d small{display:block;font-size:11.5px;color:var(--ink-400);}
+  .dwk-d b{font-family:'Kanit';font-size:19px;color:var(--navy-900);line-height:1.25;display:block;}
+  .dwk-d .n{font-size:11px;color:var(--ink-400);height:15px;}
+  .dwk-d:hover{background:#fdf1de;}
+  .dwk-d.off{background:var(--paper-50);}
+  .dwk-d.on,.dwk-d.on.off{background:radial-gradient(260px 100px at 20% -30%,var(--navy-800),var(--navy-950) 80%);}
+  .dwk-d.on small,.dwk-d.on .n{color:#a9bbcc;}
+  .dwk-d.on b{color:#fff;}
+  .dwk-d.today::after{content:'';position:absolute;top:6px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--orange-500);}
+  .dwt-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:6px 2px 12px;}
+  .dwt-head b{font-family:'Kanit';font-size:18px;color:var(--navy-900);}
+  .dwt-count{background:var(--paper-100);color:var(--ink-600);border-radius:99px;padding:1px 11px;font-size:12.5px;font-weight:600;}
+  .dwt-clear{font-size:13px;color:var(--navy-700);text-decoration:underline;cursor:pointer;margin-left:6px;}
+  .dwt-list{position:relative;padding-left:28px;margin-bottom:6px;}
+  .dwt-list::before{content:'';position:absolute;left:10px;top:8px;bottom:8px;width:3px;background:var(--line);border-radius:9px;}
+  .dwt-item{position:relative;margin-bottom:10px;}
+  .dwt-item::before{content:'';position:absolute;left:-25px;top:19px;width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--orange-500);}
+  .dwt-item.pend::before{background:#fdf3df;}
+  .dwt-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 16px;box-shadow:0 1px 2px rgba(10,37,64,.05),0 10px 22px -16px rgba(10,37,64,.16);cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+  .dwt-card:hover{border-color:var(--orange-500);box-shadow:0 8px 20px -12px rgba(10,37,64,.3);}
+  .dwt-h{display:flex;gap:10px;align-items:center;}
+  .dwt-code{font-family:'Kanit';font-size:12px;font-weight:600;background:var(--navy-900);color:#fff;border-radius:6px;padding:1px 8px;white-space:nowrap;}
+  .dwt-name{font-family:'Kanit';font-size:16px;font-weight:500;color:var(--navy-900);flex:1;min-width:0;}
+  .dwt-amt{font-family:'Kanit';font-size:18px;font-weight:600;color:var(--navy-900);white-space:nowrap;}
+  .dwt-meta{margin-top:4px;font-size:13.5px;color:var(--ink-600);display:flex;gap:4px 18px;flex-wrap:wrap;align-items:center;}
+  .dwt-empty{background:#fff;border:2px dashed var(--line);border-radius:16px;padding:36px 20px;text-align:center;color:var(--ink-400);}
+  .dwt-empty .big{font-size:32px;}
+  /* ===== หน้าต่างรายละเอียดใบสั่งการ ===== */
+  #dw-view-overlay .dwv-box{max-width:1000px;border-radius:20px;overflow:hidden;padding:0;background:var(--paper-50);display:flex;flex-direction:column;max-height:calc(100vh - 56px);}
+  .dwv-hd{color:#fff;background:radial-gradient(1000px 400px at 15% -30%,var(--navy-800),var(--navy-950) 70%);padding:16px 22px 12px;flex:none;}
+  .dwv-r{display:flex;align-items:center;gap:12px;}
+  .dwv-ty{flex:1;font:700 26px 'Kanit';line-height:1.25;}
+  .dwv-x{width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,.16);color:#fff;font-size:17px;cursor:pointer;flex:none;}
+  .dwv-x:hover{background:rgba(255,255,255,.3);}
+  .dwv-cells{display:flex;gap:8px;flex-wrap:wrap;padding:12px 0 4px;}
+  .dwv-cell{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:5px 12px;min-width:0;}
+  .dwv-cell.grow{flex:1;min-width:150px;}
+  .dwv-cell small{display:block;font-size:11.5px;color:rgba(255,255,255,.75);}
+  .dwv-cell b{display:block;font-family:'Kanit';font-weight:600;font-size:16px;line-height:1.35;}
+  .dwv-cell b span{font-size:.7em;font-weight:500;opacity:.85;}
+  .dwv-body{padding:16px 22px 8px;overflow-y:auto;flex:1;min-height:0;}
+  .dwv-two{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;margin-bottom:14px;}
+  .dwv-bx{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0;}
+  .dwv-bx h4{font:600 15px 'Kanit';margin:0 0 10px;display:flex;align-items:center;gap:8px;color:var(--navy-900);}
+  .dwv-bx h4 span{margin-left:auto;font:600 12px 'Sarabun';background:var(--paper-100);color:var(--ink-600);border-radius:99px;padding:1px 10px;}
+  .dwv-crew{display:flex;align-items:baseline;gap:10px;background:var(--paper-50);border-radius:10px;padding:7px 12px;margin:-2px 0 10px;}
+  .dwv-crew small{font-size:12px;color:var(--ink-400);}
+  .dwv-crew b{font-size:14.5px;color:var(--navy-900);}
+  .dwv-names{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:0 18px;}
+  .dwv-names li{display:flex;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:14px;}
+  .dwv-names li:nth-last-child(-n+2){border-bottom:0;}
+  .dwv-names .no{width:22px;color:var(--ink-400);text-align:left;flex:none;font-variant-numeric:tabular-nums;}
+  .dwv-tab{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
+  .dwv-tab th{text-align:left;font-size:12px;color:var(--ink-400);font-weight:600;padding:0 4px 7px;border-bottom:1px solid var(--line);width:25%;white-space:normal;overflow-wrap:anywhere;line-height:1.3;}
+  .dwv-tab td{padding:8px 4px;border-bottom:1px dashed var(--line);vertical-align:top;width:25%;}
+  .dwv-tab tr:last-child td{border-bottom:0;}
+  .dwv-tab .grp td{background:var(--paper-50);font-size:12px;font-weight:700;color:var(--ink-600);padding:5px 6px;border-bottom:1px solid var(--line);}
+  .dwv-tab .n{text-align:right;font-variant-numeric:tabular-nums;}
+  .dwv-tab .id{color:var(--ink-600);white-space:nowrap;}
+  .dwv-tabs{display:flex;gap:2px;margin:-4px 0 10px;border-bottom:1px solid var(--line);}
+  .dwv-tabs button{border:0;background:none;padding:7px 12px;font:600 13.5px 'Sarabun';color:var(--ink-400);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .dwv-tabs button.on{color:var(--navy-900);border-bottom-color:var(--orange-500);}
+  .dwv-tabs button i{font-style:normal;background:var(--orange-500);color:#fff;border-radius:99px;font-size:11px;padding:0 6px;margin-left:5px;}
+  .dwv-note{background:var(--paper-50);border-radius:10px;padding:9px 12px;font-size:14px;margin-bottom:10px;}
+  .dwv-note small{display:block;font-size:11.5px;color:var(--ink-400);margin-bottom:2px;}
+  .dwv-case{display:inline-flex;align-items:center;gap:8px;background:#eef3f8;border:1px solid #d3e0ec;border-radius:10px;padding:5px 12px;margin-bottom:10px;font-size:13px;color:var(--navy-700);}
+  .dwv-r2{display:flex;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13.5px;align-items:flex-start;}
+  .dwv-r2:last-child{border-bottom:0;}
+  .dwv-r2 .ic{width:20px;text-align:center;flex:none;}
+  .dwv-r2 .k{width:96px;color:var(--ink-400);flex:none;}
+  .dwv-r2 .v{flex:1;min-width:0;}
+  .dwv-r2 .v small{display:block;color:var(--ink-400);font-size:12px;}
+  .dwv-ok{color:var(--success);}.dwv-bad{color:var(--danger);}
+  .dwv-warn{background:#fdf3df;border:1px solid #e3c07a;border-radius:10px;padding:8px 12px;font-size:13px;color:#7a4a08;margin-bottom:10px;}
+  .dwv-warn div+div{margin-top:3px;}
+  .dwv-rec{background:linear-gradient(180deg,#fffaf3,#fff);border:1px solid #f1d9bd;border-radius:12px;padding:12px 16px;}
+  .dwv-ln{display:flex;align-items:baseline;gap:8px;font-size:14px;padding:3px 0;}
+  .dwv-ln i{flex:1;border-bottom:2px dotted #e4cfae;transform:translateY(-3px);}
+  .dwv-ln b{font-variant-numeric:tabular-nums;}
+  .dwv-grand{font-family:'Kanit';font-size:26px;color:var(--orange-600);font-weight:600;font-variant-numeric:tabular-nums;}
+  .dwv-foot{display:flex;gap:10px;align-items:center;justify-content:flex-end;padding:13px 22px;border-top:1px solid var(--line);background:#fff;flex:none;}
+  .dwv-foot .btn[disabled]{opacity:.4;cursor:not-allowed;}
+  @media(max-width:820px){.dwv-two{grid-template-columns:1fr;}.dwv-names{grid-template-columns:1fr;}.dwv-names li:nth-last-child(2){border-bottom:1px dashed var(--line);}.dwv-ty{font-size:21px;}}  .rollup-status{margin:14px 20px 4px;padding:11px 16px;border-radius:12px;font-size:13px;border:1px solid var(--line);background:var(--paper-50);color:var(--ink-600);line-height:1.6;}
   .rollup-status.ok{background:var(--success-bg);border-color:#bfe3cb;color:#17653d;}
   .rollup-status.warn{background:#fdf2df;border-color:#e3c07a;color:#7a4e0b;}
   .rollup-status b{font-weight:700;}
@@ -704,27 +759,15 @@
 <body>
 
 <div class="app">
-  <aside class="sidebar">
-    <div class="brand">
-      <img class="brand-mark" src="logo.jpg" alt="ตรากรมทางหลวง" style="border-radius:50%;object-fit:contain;">
-      <div class="brand-text">
-        <div class="t1">หมวดทางหลวงเชิงเนิน</div>
-        <div class="t2">Choeng Noen Highway Maintenance Section</div>
+  <header class="route-header no-print">
+    <div class="top-row">
+      <div class="brand">
+        <img class="brand-mark" src="logo.jpg" alt="ตรากรมทางหลวง" style="border-radius:50%;object-fit:contain;">
+        <div class="brand-text">
+          <div class="t1">หมวดทางหลวงเชิงเนิน</div>
+          <div class="t2">Choeng Noen Highway Maintenance</div>
+        </div>
       </div>
-    </div>
-    <div class="nav-group-label" id="nav-group-main">ระบบหลัก</div>
-    <a class="nav-item" id="nav-main-link" href="choengnoen0-main.html"><span class="num">•</span><span>งานบริหารหมวด</span></a>
-    <div class="nav-group-label" id="nav-group-sub">ระบบรอง</div>
-    <a class="nav-item" href="choengnoen1-saraban.html"><span class="num">1</span><span>งานสารบรรณและบุคลากร</span></a>
-    <a class="nav-item active" id="nav-stat"><span class="num">2</span><span>งานสถิติและบริการประชาชน</span></a>
-    <a class="nav-item" href="choengnoen3-supplies.html"><span class="num">3</span><span>งานพัสดุและเครื่องจักร</span></a>
-    <a class="nav-item" href="choengnoen4-finance.html"><span class="num">4</span><span>งานบัญชีและการเงิน</span></a>
-    <div class="sidebar-foot">หมวดทางหลวงเชิงเนิน<br>เวอร์ชันต้นแบบ 0.3</div>
-  </aside>
-
-  <div class="main">
-    <header class="topbar">
-      <div class="crumb" id="crumb">ระบบรองที่ 2 · <b>งานสถิติและบริการประชาชน</b></div>
       <div class="topbar-right no-print">
         <div class="user-menu-wrap">
           <div class="avatar" id="user-avatar" onclick="__toggleUserMenu(event)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg></div>
@@ -734,11 +777,23 @@
           </div>
         </div>
       </div>
-    </header>
+    </div>
+    <nav class="tabs-nav">
+    <div class="nav-group-label" id="nav-group-main">ระบบหลัก</div>
+    <a class="nav-item" id="nav-main-link" href="choengnoen0-main.html"><span class="num">•</span><span>ภาพรวม</span><span class="own">เจ้าของระบบ/หมวด</span></a>
+    <div class="nav-group-label" id="nav-group-sub">ระบบรอง</div>
+    <a class="nav-item" href="choengnoen1-saraban.html"><span class="num">1</span><span>งานสารบรรณ</span></a>
+    <a class="nav-item active" id="nav-stat"><span class="num">2</span><span>งานสถิติ</span></a>
+    <a class="nav-item" href="choengnoen3-supplies.html"><span class="num">3</span><span>งานพัสดุ</span></a>
+    <a class="nav-item" href="choengnoen4-finance.html"><span class="num">4</span><span>งานบัญชี</span></a>
+    </nav>
+  </header>
+
+  <div class="main">
 
     <div class="content">
       <div class="page-head">
-        <h1>งานสถิติและบริการประชาชน</h1>
+        <h1>งานสถิติ</h1>
       </div>
 
       <!-- แท็บใหญ่ 4 กลุ่ม (data-sec = view เริ่มต้นของกลุ่ม) -->
@@ -748,23 +803,34 @@
         <div class="sec-tab" data-sec="emergency">เหตุฉุกเฉิน</div>
         <div class="sec-tab" data-sec="contracts">สัญญา</div>
       </div>
-      <!-- แท็บย่อยของกลุ่มงานบำรุงปกติ เรียงตามลำดับการทำงาน -->
-      <div class="sub-tabs no-print" id="sub-tabs">
-        <div class="sub-tab active" data-view="routine"><span class="sub-tab-no">1</span>ใบสั่งการรายวัน</div>
-        <div class="sub-tab" data-view="rollup"><span class="sub-tab-no">2</span>สรุปรายเดือน</div>
-        <div class="sub-tab" data-view="routine2"><span class="sub-tab-no">3</span>แผน - ผลงาน</div>
-        <div class="sub-tab" data-view="settings"><span class="sub-tab-no">4</span>ตั้งค่า</div>
+      <!-- แถบเมนูของกลุ่มงานบำรุงปกติ: ปุ่มเลือกหัวข้อปุ่มเดียว (แทนแท็บย่อยที่ซ้อนอีกชั้น) -->
+      <div class="maint-nav no-print" id="maint-nav">
+        <div class="nav-menu">
+          <button type="button" class="menu-btn" onclick="toggleNavMenu(event)">☰ <span id="nav-menu-label">ใบสั่งการรายวัน</span> ▾</button>
+          <div class="menu-pop" id="nav-menu-pop">
+            <div data-view="routine" class="on">1 · ใบสั่งการรายวัน</div>
+            <div data-view="rollup">2 · สรุปรายเดือน</div>
+            <div data-view="routine2">3 · แผน - ผลงาน</div>
+            <div data-view="settings">4 · ตั้งค่า</div>
+          </div>
+        </div>
+        <div class="nav-routine" id="nav-routine">
+          <div class="search-box">🔍 <input id="dw-search" placeholder="ค้นหารหัสงาน / สถานที่ / ชื่อ"></div>
+          <button class="btn btn-ghost btn-sm" onclick="openDwTxAudit()" title="แสดงรายการตัดน้ำมัน/วัสดุที่อาจซ้ำหรือค้าง (ดูอย่างเดียว ไม่ลบอัตโนมัติ)">🔎 ตรวจยอดคลังซ้ำ</button>
+        </div>
+        <!-- ตัวกรองปี/เดือนชุดเดียว ใช้ร่วมสรุปรายเดือน/แผน-ผลงาน (ใบสั่งการใช้แถบสัปดาห์แทน) -->
+        <div class="g-filter no-print hidden" id="g-filter">
+          <span class="g-filter-label">แสดงข้อมูลของ</span>
+          <select id="g-fy" class="edit-input" onchange="applyGlobalFilter()"></select>
+          <select id="g-month" class="edit-input" onchange="applyGlobalFilter()"></select>
+        </div>
+        <span class="sp1"></span>
+        <button type="button" class="btn btn-primary" id="nav-add-btn" onclick="toggleDailyForm()">+ บันทึกใบสั่งการ</button>
       </div>
       <div class="set-tabs no-print hidden" id="set-tabs">
         <div class="set-tab active" data-view="crews">ชุดปฏิบัติงาน</div>
         <div class="set-tab" data-view="refdata">ข้อมูลอ้างอิงงาน</div>
         <div class="set-tab" data-view="routes">ทางหลวงควบคุม</div>
-      </div>
-      <!-- ตัวกรองปี/เดือนชุดเดียว ใช้ร่วมใบสั่งการ/สรุปรายเดือน/แผน-ผลงาน -->
-      <div class="g-filter no-print" id="g-filter">
-        <span class="g-filter-label">แสดงข้อมูลของ</span>
-        <select id="g-fy" class="edit-input" onchange="applyGlobalFilter()"></select>
-        <select id="g-month" class="edit-input" onchange="applyGlobalFilter()"></select>
       </div>
       <!-- ============ ทางหลวงควบคุม (CONTROLLED ROUTES) ============ -->
       <div class="panel" id="panel-routes">
@@ -1065,24 +1131,14 @@
 
       <!-- แท็บย่อย 1: ใบสั่งการรายวัน -->
       <div class="panel active" id="panel-routine">
-        <div class="routine-kpi" id="routine-kpi-band"></div>
-        <div class="section">
-          <div class="section-head">
-            <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M8 3v4M16 3v4M4 9h16"/><rect x="4" y="5" width="16" height="16" rx="2"/></svg></span>
-              ใบสั่งการรายวัน
-              <span class="head-desc" id="dw-list-asof"></span>
-            </h2>
-            <div class="toolbar">
-              <div class="search-box">🔍 <input id="dw-search" placeholder="ค้นหารหัสงาน / สถานที่ / ชื่อ"></div>
-              <button class="btn btn-ghost btn-sm" onclick="openDwTxAudit()" title="แสดงรายการตัดน้ำมัน/วัสดุที่อาจซ้ำหรือค้าง (ดูอย่างเดียว ไม่ลบอัตโนมัติ)">🔎 ตรวจยอดคลังซ้ำ</button>
-              <button class="btn btn-primary" onclick="toggleDailyForm()">+ บันทึกใบสั่งการ</button>
-            </div>
-          </div>
-          <!-- ตัวกรองเดิม (ซ่อนไว้ — ถูกควบคุมโดยตัวกรองรวมด้านบน) -->
-          <div style="display:none;">
-            <select id="dw-log-month" class="edit-input" onchange="renderDailyLog()"></select>
-            <select id="dw-log-fy" class="edit-input" onchange="renderDailyLog()"></select>
-          </div>
+        <!-- แถบสัปดาห์ (แท่งเดียว) + ไทม์ไลน์ใบสั่งการของวันที่เลือก — สร้างโดย renderDailyLog() -->
+        <div id="dw-week" class="no-print"></div>
+        <div id="dw-day"></div>
+        <!-- ตัวกรองเดิม (ซ่อนไว้ ใช้ร่วมกับตัวกรองรวมของสรุปรายเดือน/แผน-ผลงาน) -->
+        <div style="display:none;">
+          <select id="dw-log-month" class="edit-input" onchange="renderDailyLog()"></select>
+          <select id="dw-log-fy" class="edit-input" onchange="renderDailyLog()"></select>
+        </div>
           <div class="modal-overlay hidden no-print" id="daily-form-overlay">
           <div class="modal-box">
             <div class="modal-head">
@@ -1210,12 +1266,10 @@
             </div>
           </div>
           </div>
-          <div class="dw-list" id="daily-body"></div>
-          <div class="legend-block" id="daily-foot-block">
-            <button type="button" class="legend-dot-btn no-print" id="daily-foot-toggle" onclick="__toggleNote('daily-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="daily-foot" style="display:none;background:transparent;border-top:none;">บันทึกผลงานจากใบสั่งการประจำวันที่นี่ แล้วไปแท็บ "2 สรุปรายเดือน" เพื่อรวมยอดเป็นผลงานประจำเดือนโดยไม่ต้องคีย์ซ้ำ กดที่การ์ดเพื่อดูรายละเอียดแรงงาน/วัสดุ/เครื่องจักร</div>
+          <!-- หน้าต่างรายละเอียดใบสั่งการ (กดที่การ์ดในไทม์ไลน์) -->
+          <div class="modal-overlay hidden no-print" id="dw-view-overlay">
+            <div class="modal-box dwv-box" id="dw-view-box"></div>
           </div>
-        </div>
       </div>
 
       <!-- แท็บย่อย 2: สรุปรายเดือน -->
@@ -1759,7 +1813,9 @@ function dwoFromApi(row){
     parts: Array.isArray(row.materialsJson) ? row.materialsJson : [],
     qty:Number(row.workQuantity)||0, qtyPending:!!row.qtyPending, unit:row.unit||'',
     material:Number(row.materialCost)||0, labor:Number(row.laborCost)||0,
-    rent:Number(row.rentCost)||0, fuel:Number(row.fuelCost)||0, note:row.note||'' };
+    rent:Number(row.rentCost)||0, fuel:Number(row.fuelCost)||0, note:row.note||'',
+    /* ช่องประวัติ (อ่านอย่างเดียว): lastUpdated มีอยู่แล้วทุกใบ; createdBy/createdAt/updatedBy จะมีก็ต่อเมื่อเพิ่มช่องในตาราง */
+    lastUpdated:row.lastUpdated||'', createdBy:row.createdBy||'', createdAt:row.createdAt||'', updatedBy:row.updatedBy||'' };
 }
 function dwoToApi(d){
   return { id:d.__backendId, fiscalYear:fyOfDate(d.date), date:d.date, jobCode:d.code,
@@ -2595,7 +2651,6 @@ function requireAdmin(){
    view = id ของ panel (panel-<view>) : routine, rollup, routine2, crews, refdata, routes, encroach, emergency, contracts */
 const MAINT_VIEWS = ['routine','rollup','routine2','crews','refdata','routes'];
 const SETTINGS_VIEWS = ['crews','refdata','routes'];
-const FILTER_VIEWS = ['routine','rollup','routine2'];
 let __lastMaintView = 'routine';
 let __lastSettingsView = 'crews';
 function showView(view){
@@ -2605,21 +2660,29 @@ function showView(view){
   document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
   document.getElementById('panel-'+view)?.classList.add('active');
   document.querySelectorAll('.sec-tab').forEach(x=>x.classList.toggle('active', x.dataset.sec===(isMaint?'routine':view)));
-  document.getElementById('sub-tabs')?.classList.toggle('hidden', !isMaint);
+  document.getElementById('maint-nav')?.classList.toggle('hidden', !isMaint);
   const inSettings = SETTINGS_VIEWS.includes(view);
-  document.querySelectorAll('#sub-tabs .sub-tab').forEach(x=>x.classList.toggle('active', x.dataset.view===(inSettings?'settings':view)));
+  const menuView = inSettings ? 'settings' : view;
+  const NAV_LABEL = {routine:'ใบสั่งการรายวัน', rollup:'สรุปรายเดือน', routine2:'แผน - ผลงาน', settings:'ตั้งค่า'};
+  const lbl = document.getElementById('nav-menu-label'); if(lbl) lbl.textContent = NAV_LABEL[menuView] || '';
+  document.querySelectorAll('#nav-menu-pop [data-view]').forEach(x=>x.classList.toggle('on', x.dataset.view===menuView));
   document.getElementById('set-tabs')?.classList.toggle('hidden', !inSettings);
   document.querySelectorAll('#set-tabs .set-tab').forEach(x=>x.classList.toggle('active', x.dataset.view===view));
-  const showFilter = FILTER_VIEWS.includes(view);
+  document.getElementById('nav-routine')?.classList.toggle('hidden', view!=='routine');
+  document.getElementById('nav-add-btn')?.classList.toggle('hidden', view!=='routine');
+  const showFilter = (view==='rollup' || view==='routine2');
   document.getElementById('g-filter')?.classList.toggle('hidden', !showFilter);
   const gm = document.getElementById('g-month'); if(gm) gm.style.display = (view==='routine2') ? 'none' : '';
+  document.getElementById('nav-menu-pop')?.classList.remove('show');
 }
 document.querySelectorAll('.sec-tab').forEach(t=>{
   t.addEventListener('click', ()=> showView(t.dataset.sec));
 });
-document.querySelectorAll('#sub-tabs .sub-tab, #set-tabs .set-tab').forEach(t=>{
+document.querySelectorAll('#set-tabs .set-tab, #nav-menu-pop [data-view]').forEach(t=>{
   t.addEventListener('click', ()=> showView(t.dataset.view));
 });
+function toggleNavMenu(e){ if(e) e.stopPropagation(); document.getElementById('nav-menu-pop')?.classList.toggle('show'); }
+document.addEventListener('click', ()=>document.getElementById('nav-menu-pop')?.classList.remove('show'));
 /* ตัวกรองปี/เดือนชุดเดียว — คุมตัวกรองเดิมที่ซ่อนอยู่ (dw-log-fy/month, rollup-fy/month, bmm-fy) เพื่อไม่ต้องแก้ตรรกะเดิม */
 function syncGlobalFilterToHidden(){
   const fyEl = document.getElementById('g-fy'), mEl = document.getElementById('g-month');
@@ -3672,7 +3735,7 @@ let __subsys3Materials = [];
 let __subsys3FuelTx = [];
 let __subsys3MaterialTx = [];
 function subsys3VehicleFromApi(row){
-  return { id:row.id, label:row.label, fuelType:row.fuelType||'', note:row.operatorName||'',
+  return { id:row.id, label:row.label, fuelType:row.fuelType||'', note:row.operatorName||'', regNumber:row.regNumber||'', vehicleType:row.vehicleType||'',
     monthlyRent: row.monthlyRent!==''&&row.monthlyRent!=null?Number(row.monthlyRent):undefined,
     maxKmPerDay: row.mileageThresholdOverride!==''&&row.mileageThresholdOverride!=null?Number(row.mileageThresholdOverride):undefined,
     fuelRate: row.fuelRate!==''&&row.fuelRate!=null?Number(row.fuelRate):undefined, fuelRateUnit:row.fuelRateUnit||undefined };
@@ -4921,129 +4984,229 @@ function renderDwReview(){
   }
 }
 function dwTotal(d){ return (d.material||0)+(d.labor||0)+(d.rent||0)+(d.fuel||0); }
-function renderDailyLog(){
-  populateDwLogMonthSelect();
-  const q = (document.getElementById('dw-search')?.value || '').toLowerCase();
-  const fySel = document.getElementById('dw-log-fy')?.value;
-  const fy = fySel ? +fySel : null;
-  const monthSel = document.getElementById('dw-log-month')?.value;
-  let rows = dailyWorkOrders.filter(d=> !q || d.code.toLowerCase().includes(q) || d.loc.toLowerCase().includes(q) || (d.staffLabel||'').toLowerCase().includes(q));
-  if(fy) rows = rows.filter(d=> fyOfDate(d.date)===fy);
-  if(monthSel && monthSel!=='all') rows = rows.filter(d=> (new Date(d.date+'T00:00:00')).getMonth()+1 === +monthSel);
-  rows = rows.slice().sort((a,b)=> new Date(b.date)-new Date(a.date));
-  renderDailyCards(rows);
-}
-/* ===== ใบสั่งการรายวันแบบการ์ด จัดกลุ่มตามวัน (แทนตาราง 10 คอลัมน์) ===== */
+/* ============================================================
+   ใบสั่งการรายวัน: แถบสัปดาห์แท่งเดียว + ไทม์ไลน์ + หน้าต่างรายละเอียด
+   ============================================================ */
 const TH_WEEKDAYS = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+const TH_WEEKDAYS_SHORT = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
 function fmtMoney(v){ v = v||0; return fmtNum(v, Math.abs(v%1)<0.005 ? 0 : 2); }
 function fmtQtyShort(v){ v = v||0; return fmtNum(v, Math.abs(v%1)<0.005 ? 0 : 2); }
 function fmtDayHeading(iso){
   const d = new Date(iso+'T00:00:00');
   return 'วัน'+TH_WEEKDAYS[d.getDay()]+'ที่ '+fmtDateShort(iso);
 }
-function toggleDwCard(no){
-  document.getElementById('dw-card-'+no)?.classList.toggle('open');
+let dwSel = TODAY.toISOString().slice(0,10);   /* วันที่ที่เลือกอยู่ในแถบสัปดาห์ */
+function isoLocal(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+/* สัปดาห์เริ่มวันจันทร์ — คืนวันที่ 7 วันของสัปดาห์ที่มีวันที่ iso อยู่ */
+function dwWeekDays(iso){
+  const d = new Date(iso+'T00:00:00');
+  const off = (d.getDay()+6)%7;
+  const out = [];
+  for(let i=0;i<7;i++) out.push(isoLocal(new Date(d.getFullYear(), d.getMonth(), d.getDate()-off+i)));
+  return out;
 }
-function dwCardHtml(d){
-  const job = findJob(d.code);
-  const staffNames = (d.staff && d.staff.length ? d.staff : (d.staffLabel ? d.staffLabel.split(',').map(s=>s.trim()) : [])).filter(Boolean);
-  const vehRaw = (d.vehicles && d.vehicles.length ? d.vehicles : (d.vehicle ? d.vehicle.split(',').map(s=>({label:s.trim()})).filter(v=>v.label) : []));
-  const mowerCount = vehRaw.filter(isMowerVehicle).length;
-  const chainsawCount = vehRaw.filter(isChainsawVehicle).length;
-  const otherVehCount = vehRaw.length - mowerCount - chainsawCount;
-  const badges = [
-    staffNames.length ? `<span class="dw-summary-badge people"><span class="ic">👤</span>${staffNames.length} คน</span>` : '',
-    mowerCount ? `<span class="dw-summary-badge mower"><span class="ic">✂️</span>ตัดหญ้า ${mowerCount}</span>` : '',
-    chainsawCount ? `<span class="dw-summary-badge chainsaw"><span class="ic ic-svg">${CHAINSAW_ICON_SVG}</span>เลื่อยยนต์ ${chainsawCount}</span>` : '',
-    otherVehCount ? `<span class="dw-summary-badge truck"><span class="ic">🚛</span>อื่นๆ ${otherVehCount}</span>` : ''
-  ].join('');
-  const qtyHtml = d.qtyPending
-    ? '<span class="pill pill-warn">รอปริมาณงาน</span>'
-    : `<span><span class="qty">${fmtQtyShort(d.qty)}</span> ${esc(d.unit||'')}</span>`;
-  const partsLine = (d.parts||[]).map(p=>{
-    const m = getMaterialsX().find(x=>x.code===p.code);
-    return esc((m && m.name) || p.code) + ' × ' + fmtQtyShort(p.qty) + (m && m.unit ? ' ' + esc(m.unit) : '');
-  }).join(' · ');
-  const vehLine = vehRaw.map(v=> esc(v.label) + (v.liters ? ' (น้ำมัน ' + fmtQtyShort(v.liters) + ' ล.)' : '')).join(' · ');
-  const noteLine = d.note ? `<div class="dw-ci-note">📝 ${esc(d.note)}</div>` : '';
-  return `
-  <div class="dw-card-item ${d.qtyPending?'pending':''}" id="dw-card-${d.no}">
-    <div class="dw-ci-main" onclick="toggleDwCard(${d.no})">
-      <div class="dw-ci-body">
-        <div class="dw-ci-job"><span class="dw-ci-code">${esc(d.code)}</span><span class="dw-ci-name">${esc(job ? job.name : '')}</span></div>
-        <div class="dw-ci-meta"><span>📍 ${esc(d.loc)}</span>${qtyHtml}</div>
-        ${badges ? `<div class="dw-summary-row">${badges}</div>` : ''}
-        ${noteLine}
-      </div>
-      <div class="dw-ci-right">
-        <div class="dw-ci-amount">${fmtMoney(dwTotal(d))}<small>บาท</small></div>
-        <div class="row-menu"><button type="button" class="row-menu-btn" onclick="toggleDwRowMenu(event,${d.no})" title="จัดการ">⋮</button><div id="dw-row-menu-${d.no}" class="row-menu-dropdown hidden"><button type="button" class="row-menu-item" onclick="closeDwRowMenus();editDailyEntry(${d.no})">แก้ไข</button><button type="button" class="row-menu-item danger" onclick="closeDwRowMenus();deleteDailyEntry(${d.no})">ลบ</button></div></div>
-      </div>
-    </div>
-    <div class="dw-ci-detail">
-      <div class="dw-ci-costs">
-        <div class="dw-ci-cost">วัสดุ<b>${fmtMoney(d.material)}</b></div>
-        <div class="dw-ci-cost">แรงงาน<b>${fmtMoney(d.labor)}</b></div>
-        <div class="dw-ci-cost">เครื่องจักร/เช่า<b>${fmtMoney(d.rent)}</b></div>
-        <div class="dw-ci-cost">น้ำมัน<b>${fmtMoney(d.fuel)}</b></div>
-      </div>
-      ${staffNames.length ? `<div class="dw-ci-line">👤 <b>ผู้ปฏิบัติงาน (${staffNames.length}):</b> ${esc(staffNames.join(', '))}</div>` : ''}
-      ${vehLine ? `<div class="dw-ci-line">🚜 <b>เครื่องจักร/รถ:</b> ${vehLine}</div>` : ''}
-      ${partsLine ? `<div class="dw-ci-line">🧱 <b>วัสดุที่เบิก:</b> ${partsLine}</div>` : ''}
-      ${(!staffNames.length && !vehLine && !partsLine) ? '<div class="dw-ci-line">ไม่มีรายละเอียดแรงงาน/วัสดุ/เครื่องจักร</div>' : ''}
-      <div style="margin-top:10px;display:flex;gap:8px;">
-        <button type="button" class="btn btn-ghost btn-sm" onclick="editDailyEntry(${d.no})">แก้ไข</button>
-        <button type="button" class="btn btn-danger btn-sm" onclick="deleteDailyEntry(${d.no})">ลบ</button>
-      </div>
-    </div>
-  </div>`;
+function dwShiftWeek(n){
+  const d = new Date(dwSel+'T00:00:00');
+  dwSel = isoLocal(new Date(d.getFullYear(), d.getMonth(), d.getDate()+7*n));
+  renderDailyLog();
 }
-function renderDailyCards(rows){
-  const host = document.getElementById('daily-body');
-  if(!host) return;
-  const asof = document.getElementById('dw-list-asof');
-  if(asof) asof.textContent = rows.length ? '· ' + rows.length + ' ใบ' : '';
-  if(!rows.length){
-    host.innerHTML = `<div class="dw-empty"><div class="big">📋</div>ยังไม่มีใบสั่งการรายวันในช่วงที่เลือก<br><span style="font-size:12.5px;">กดปุ่ม "+ บันทึกใบสั่งการ" ด้านบนเพื่อเริ่มบันทึก หรือเปลี่ยนเดือน/ปีงบประมาณที่ตัวกรองด้านบน</span></div>`;
+function dwPickDay(iso){ dwSel = iso; renderDailyLog(); }
+function dwClearSearch(){ const el=document.getElementById('dw-search'); if(el) el.value=''; renderDailyLog(); }
+function dwStaffNames(d){
+  return (d.staff && d.staff.length ? d.staff : (d.staffLabel ? d.staffLabel.split(',').map(s=>s.replace(/\s*\(.*\)\s*$/,'').trim()) : [])).filter(Boolean);
+}
+/* ชื่อชุดที่ผู้ปฏิบัติงานของใบนี้สังกัด (เลือกได้หลายชุด จึงอาจมีมากกว่า 1 ชุด) */
+function dwCrewNames(d){
+  const out = [];
+  dwStaffNames(d).forEach(n=>{ const c = crewLabelOf(n); if(c && !out.includes(c)) out.push(c); });
+  return out;
+}
+/* ช่วง กม. ต้องมี "กม." นำหน้าทุกเลขเสมอ เช่น กม.53+000 – กม.53+800 */
+function dwKmText(d){ return d.kmStart ? 'กม.'+d.kmStart+(d.kmEnd ? ' – กม.'+d.kmEnd : '') : ''; }
+function dwPlaceText(d){
+  const prefix = String(d.loc||'').replace(/กม\..*$/,'').trim();
+  const km = dwKmText(d);
+  return (prefix + (km ? ' '+km : '')).trim() || String(d.loc||'—');
+}
+function dwQtyHtml(d){
+  return d.qtyPending
+    ? '<span class="pill pill-warn">รอปริมาณงาน</span>'+(d.unit ? ' <span style="color:var(--ink-400)">หน่วย '+esc(d.unit)+'</span>' : '')
+    : '<b>'+fmtQtyShort(d.qty)+'</b> '+esc(d.unit||'');
+}
+function dwTimelineHtml(list){
+  return '<div class="dwt-list">'+list.map(d=>{
+    const job = findJob(d.code), crews = dwCrewNames(d), n = dwStaffNames(d).length;
+    return `<div class="dwt-item ${d.qtyPending?'pend':''}"><div class="dwt-card" onclick="openDwView(${d.no})">
+      <div class="dwt-h"><span class="dwt-code">${esc(d.code)}</span><div class="dwt-name">${esc(job?job.name:'')}</div><div class="dwt-amt">${fmtMoney(dwTotal(d))}</div></div>
+      <div class="dwt-meta"><span>📍 ${esc(dwPlaceText(d))}</span><span>${dwQtyHtml(d)}</span><span>👥 ${crews.length ? esc(crews.join(', '))+' · ' : ''}${n} คน</span></div>
+    </div></div>`;
+  }).join('')+'</div>';
+}
+function renderDailyLog(){
+  const wk = document.getElementById('dw-week'), day = document.getElementById('dw-day');
+  if(!wk || !day) return;
+  const q = (document.getElementById('dw-search')?.value || '').trim().toLowerCase();
+  if(q){
+    /* โหมดค้นหา: ค้นทุกวัน แสดงผลจัดกลุ่มตามวัน */
+    wk.innerHTML = '';
+    const rows = dailyWorkOrders.filter(d=>{
+      const job = findJob(d.code);
+      return (d.code+' '+d.loc+' '+(job?job.name:'')+' '+(d.staffLabel||'')+' '+(d.note||'')).toLowerCase().includes(q);
+    }).sort((a,b)=> b.date.localeCompare(a.date) || b.no-a.no);
+    const byDate = {}, order = [];
+    rows.forEach(d=>{ if(!byDate[d.date]){ byDate[d.date]=[]; order.push(d.date); } byDate[d.date].push(d); });
+    day.innerHTML = `<div class="dwt-head"><b>ผลการค้นหา</b><span class="dwt-count">${rows.length} ใบ</span><span class="dwt-clear" onclick="dwClearSearch()">ล้างการค้นหา</span></div>`
+      + (rows.length ? order.map(dt=>`<div class="dwt-head" style="margin-top:14px"><b style="font-size:15px">${fmtDayHeading(dt)}</b><span class="dwt-count">${byDate[dt].length} ใบ</span></div>`+dwTimelineHtml(byDate[dt])).join('')
+        : '<div class="dwt-empty"><div class="big">🔍</div>ไม่พบใบสั่งการที่ตรงกับคำค้น</div>');
     return;
   }
-  const total = rows.reduce((s,d)=>s+dwTotal(d),0);
-  const pendingN = rows.filter(d=>d.qtyPending).length;
-  const dayCount = new Set(rows.map(d=>d.date)).size;
-  const strip = `<div class="dw-sum-strip">
-    <div class="dw-sum-chip">ใบสั่งการ<b>${rows.length} ใบ</b></div>
-    <div class="dw-sum-chip">ปฏิบัติงาน<b>${dayCount} วัน</b></div>
-    <div class="dw-sum-chip">รวมค่าใช้จ่าย<b>${fmtMoney(total)} บาท</b></div>
-    ${pendingN ? `<div class="dw-sum-chip" style="border-color:#e3c07a;background:#fdf2df;">รอปริมาณงาน<b style="color:#a3660a;">${pendingN} ใบ</b></div>` : ''}
-  </div>`;
-  const byDate = {};
-  const order = [];
-  rows.forEach(d=>{ if(!byDate[d.date]){ byDate[d.date] = []; order.push(d.date); } byDate[d.date].push(d); });
-  host.innerHTML = strip + order.map(date=>{
-    const list = byDate[date];
-    const dayTotal = list.reduce((s,d)=>s+dwTotal(d),0);
-    return `<div class="dw-day">
-      <div class="dw-day-head"><div class="dw-day-title">${fmtDayHeading(date)}<small>${list.length} ใบ</small></div><div class="dw-day-total">รวมวันนี้ <b>${fmtMoney(dayTotal)}</b> บาท</div></div>
-      ${list.map(dwCardHtml).join('')}
-    </div>`;
-  }).join('');
+  const days = dwWeekDays(dwSel), todayIso = TODAY.toISOString().slice(0,10);
+  const cnt = {};
+  dailyWorkOrders.forEach(d=>{ cnt[d.date] = (cnt[d.date]||0)+1; });
+  wk.innerHTML = `<div class="dwk-bar"><button type="button" class="dwk-arr" onclick="dwShiftWeek(-1)" title="สัปดาห์ก่อนหน้า">‹</button><div class="dwk-days">`
+    + days.map(iso=>{
+      const dt = new Date(iso+'T00:00:00'), n = cnt[iso]||0, wd = dt.getDay();
+      const mon = (dt.getDate()===1 || iso===days[0]) ? ' '+THDATE_MONTHS[dt.getMonth()] : '';
+      return `<div class="dwk-d ${iso===dwSel?'on':''} ${iso===todayIso?'today':''} ${(wd===0||wd===6)?'off':''}" onclick="dwPickDay('${iso}')"><small>${TH_WEEKDAYS_SHORT[wd]}${mon}</small><b>${dt.getDate()}</b><div class="n">${n?n+' ใบ':''}</div></div>`;
+    }).join('')
+    + `</div><button type="button" class="dwk-arr" onclick="dwShiftWeek(1)" title="สัปดาห์ถัดไป">›</button></div>`;
+  const list = dailyWorkOrders.filter(d=>d.date===dwSel).sort((a,b)=> a.no-b.no);
+  day.innerHTML = `<div class="dwt-head"><b>${fmtDayHeading(dwSel)}</b><span class="dwt-count">${list.length} ใบ</span></div>`
+    + (list.length ? dwTimelineHtml(list)
+      : `<div class="dwt-empty"><div class="big">🗓️</div><p style="margin:6px 0 14px;">ยังไม่มีใบสั่งการในวันนี้</p><button class="btn btn-primary" onclick="toggleDailyForm()">+ บันทึกใบสั่งการ</button></div>`);
 }
-/* เปิด/ปิดเมนูจัดการ (⋮) รายการของใบสั่งการรายวัน — เปิดได้ทีละเมนู กดที่อื่นแล้วปิดอัตโนมัติ */
-function closeDwRowMenus(){
-  document.querySelectorAll('#daily-body .row-menu-dropdown').forEach(el=>el.classList.add('hidden'));
+
+/* ---------- หน้าต่างรายละเอียดใบสั่งการ ---------- */
+let __dwViewNo = null, __dwViewTab = 1;
+const __dwTx = {};   /* ผลตรวจรายการตัดคลังของแต่ละใบ (อ่านจากเซิร์ฟเวอร์ตอนเปิดหน้าต่าง) */
+function closeDwView(){ document.getElementById('dw-view-overlay')?.classList.add('hidden'); __dwViewNo = null; }
+function openDwView(no){
+  const d = dailyWorkOrders.find(x=>x.no===no); if(!d) return;
+  __dwViewNo = no; __dwViewTab = 1;
+  renderDwView();
+  document.getElementById('dw-view-overlay').classList.remove('hidden');
+  loadDwTx(d);
 }
-function toggleDwRowMenu(evt, no){
-  evt.stopPropagation();
-  const dd = document.getElementById('dw-row-menu-'+no);
-  if(!dd) return;
-  const wasHidden = dd.classList.contains('hidden');
-  closeDwRowMenus();
-  if(wasHidden) dd.classList.remove('hidden');
+async function loadDwTx(d){
+  if(!d.__backendId || !(window.FBL && FBL.findDailyOrderTx)) return;
+  const key = String(d.__backendId);
+  __dwTx[key] = {state:'loading'};
+  try{
+    const r = await FBL.findDailyOrderTx(key);
+    __dwTx[key] = {state:'ok', fuel:r.fuel.length, material:r.material.length};
+  }catch(err){ __dwTx[key] = {state:'error'}; }
+  if(__dwViewNo===d.no) renderDwView();
 }
-document.addEventListener('click', function(e){
-  if(!e.target.closest || !e.target.closest('.row-menu')) closeDwRowMenus();
-});
-/* ลบใบสั่งการรายวัน — ต้องลบธุรกรรมน้ำมัน/วัสดุที่เชื่อมโยงไว้ในระบบรองที่ 3 (พ.1-02/พ.1-03) ด้วยเสมอ ไม่เช่นนั้นตัวเลขจะยังค้างอยู่ในรายงานแม้ลบใบสั่งการนี้ไปแล้ว */
+function dwSetViewTab(n){ __dwViewTab = n; renderDwView(); }
+function dwStdUnitCost(code){
+  const recs = unitCostRecords.filter(r=>r.code===code && r.qtyPerDay>0).sort((a,b)=>(b.fy||0)-(a.fy||0));
+  return recs.length ? ucRecordTotals(recs[0]).unitCost : null;
+}
+function dwFmtDT(iso){
+  if(!iso) return '';
+  const t = new Date(iso);
+  if(isNaN(t)) return String(iso);
+  return fmtDateShort(isoLocal(t))+' · '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+}
+function dwVehRows(d){
+  return (d.vehicles && d.vehicles.length ? d.vehicles : (d.vehicle ? d.vehicle.split(',').map(s=>({label:s.trim()})).filter(v=>v.label) : []));
+}
+/* ตารางเครื่องจักร/วัสดุ: ประเภท / เลขประจำเครื่อง (หรือรหัสวัสดุ) / จำนวนเบิก / หน่วย */
+function dwEquipHtml(d){
+  const veh = dwVehRows(d), parts = d.parts||[], rows = [];
+  if(veh.length){
+    rows.push('<tr class="grp"><td colspan="4">เครื่องจักร/รถ (น้ำมันที่เบิก)</td></tr>');
+    veh.forEach(v=>{
+      const m = getVehiclesX().find(x=>x.label===v.label);
+      rows.push(`<tr><td>${esc((m && m.vehicleType) || v.label)}</td><td class="id">${esc((m && m.regNumber) || '—')}</td><td class="n">${v.liters ? fmtQtyShort(v.liters) : '—'}</td><td>${v.liters ? 'ลิตร' : ''}</td></tr>`);
+    });
+  }
+  if(parts.length){
+    rows.push('<tr class="grp"><td colspan="4">วัสดุที่เบิก</td></tr>');
+    parts.forEach(p=>{
+      const m = getMaterialsX().find(x=>x.code===p.code);
+      rows.push(`<tr><td>${esc((m && m.name) || p.code)}</td><td class="id">${esc(p.code||'—')}</td><td class="n">${fmtQtyShort(p.qty)}</td><td>${esc((m && m.unit) || '')}</td></tr>`);
+    });
+  }
+  if(!rows.length) return '<div style="color:var(--ink-400);font-size:13.5px;padding:6px 0;">ไม่มีการใช้เครื่องจักรหรือวัสดุ</div>';
+  return `<table class="dwv-tab"><thead><tr><th>ประเภท</th><th>เลขประจำเครื่อง/รหัส</th><th class="n">จำนวนเบิก</th><th>หน่วย</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+}
+/* ข้อมูลสถานะ/คำเตือนของใบ — ใช้ข้อมูลที่โหลดอยู่แล้ว ยกเว้นการตัดคลังที่ตรวจจากเซิร์ฟเวอร์ */
+function dwViewInfo(d){
+  const staff = dwStaffNames(d);
+  const warns = [];
+  if(d.qtyPending) warns.push('รอปริมาณงาน — ยังไม่นับในสรุปรายเดือน');
+  const dup = staff.filter(n=> dailyWorkOrders.some(x=>x.date===d.date && x.no!==d.no && dwStaffNames(x).includes(n)));
+  if(dup.length) warns.push('มีผู้ปฏิบัติงานซ้ำในใบอื่นวันเดียวกัน '+dup.length+' คน ('+dup.join(', ')+')');
+  const leaves = getLeaveHistoryX();
+  const onLeave = staff.filter(n=> leaves.some(l=>l.name===n && l.from<=d.date && d.date<=l.to));
+  if(onLeave.length) warns.push('มีบันทึกการลาในวันนี้: '+onLeave.join(', '));
+  const veh = dwVehRows(d);
+  const expF = veh.filter(v=>v.liters>0).length, expM = (d.parts||[]).length;
+  const tx = __dwTx[String(d.__backendId)];
+  let stock;
+  if(!expF && !expM) stock = {ic:'–', cl:'', v:'ไม่มีรายการที่ต้องตัดคลัง', s:''};
+  else if(!tx || tx.state==='loading') stock = {ic:'…', cl:'', v:'กำลังตรวจรายการตัดคลัง…', s:''};
+  else if(tx.state==='error') stock = {ic:'⚠', cl:'dwv-bad', v:'ตรวจรายการตัดคลังไม่ได้', s:'สัญญาณอินเทอร์เน็ตอาจหลุด'};
+  else if(tx.fuel>=expF && tx.material>=expM) stock = {ic:'✓', cl:'dwv-ok', v:'ตัดออกจากบัญชีแล้ว', s:'น้ำมัน '+tx.fuel+' รายการ · วัสดุ '+tx.material+' รายการ (พ.1-02 / พ.1-03)'};
+  else { stock = {ic:'⚠', cl:'dwv-bad', v:'พบรายการตัดคลังไม่ครบ', s:'น้ำมัน '+tx.fuel+'/'+expF+' · วัสดุ '+tx.material+'/'+expM+' (ใบเก่าที่สร้างก่อนผูกกับคลังอาจเป็นเรื่องปกติ)'}; }
+  const locked = !!ledgerLocks[String(d.date).slice(0,7)];
+  return {staff, warns, stock, locked};
+}
+function dwViewTabBody(d, info){
+  const noteRaw = String(d.note||'');
+  const caseM = noteRaw.match(/\[เคส:([a-z]+):([\w-]+)\]/);
+  const noteClean = noteRaw.replace(/\[เคส:[a-z]+:[\w-]+\]\s*/,'').trim();
+  const row = (ic, cl, k, v, s)=>`<div class="dwv-r2"><span class="ic ${cl}">${ic}</span><span class="k">${k}</span><span class="v ${cl}">${v}${s?`<small>${s}</small>`:''}</span></div>`;
+  if(__dwViewTab===1){
+    const per = (!d.qtyPending && d.qty>0) ? dwTotal(d)/d.qty : null;
+    const std = per!=null ? dwStdUnitCost(d.code) : null;
+    const unitRow = per!=null
+      ? row('฿','','ต้นทุน/หน่วย', fmtNum(per,2)+' บาท/'+esc(d.unit||'หน่วย'), std ? 'ค่ามาตรฐาน '+fmtNum(std,2)+' · '+((per-std)/std*100>=0?'+':'')+((per-std)/std*100).toFixed(1)+'%' : '')
+      : '';
+    return `<div class="dwv-note"><small>หมายเหตุ</small>${noteClean ? esc(noteClean) : '<span style="color:var(--ink-400)">ไม่มีหมายเหตุ</span>'}</div>`
+      + (caseM ? `<div class="dwv-case">🔗 อ้างอิงเคสอุบัติเหตุ <b>${esc(caseM[2])}</b></div>` : '') + unitRow;
+  }
+  if(__dwViewTab===2){
+    return (info.warns.length ? `<div class="dwv-warn">${info.warns.map(w=>`<div>⚠ ${esc(w)}</div>`).join('')}</div>` : '')
+      + row(info.stock.ic, info.stock.cl, 'ตัดคลัง', info.stock.v, info.stock.s)
+      + (info.locked ? row('🔒','dwv-bad','สถานะเดือน','เดือนนี้ล็อกบัญชีแล้ว','แก้ไข/ลบใบสั่งการของเดือนนี้ไม่ได้ (ปลดล็อกที่ระบบพัสดุ)')
+                     : row('✓','dwv-ok','สถานะเดือน','ยังแก้ไขได้','บัญชี พ.1-02 / พ.1-03 ยังไม่ล็อก'));
+  }
+  /* ประวัติ — ใช้ช่องที่มี: lastUpdated (ระบบบันทึกให้ทุกครั้งอยู่แล้ว) และ createdBy/createdAt/updatedBy ถ้ามีในตาราง */
+  let h = '';
+  if(d.createdBy || d.createdAt) h += row('👤','','บันทึกโดย', esc(d.createdBy||'—'), esc(dwFmtDT(d.createdAt)));
+  if(d.lastUpdated) h += row('✎','', (d.createdBy||d.createdAt) ? 'แก้ไขล่าสุด' : 'บันทึกล่าสุด', esc(dwFmtDT(d.lastUpdated)), d.updatedBy ? 'โดย '+esc(d.updatedBy) : '');
+  return h || '<div style="color:var(--ink-400);font-size:13.5px;padding:6px 0;">ยังไม่มีข้อมูลประวัติของใบนี้</div>';
+}
+function renderDwView(){
+  const d = dailyWorkOrders.find(x=>x.no===__dwViewNo), box = document.getElementById('dw-view-box');
+  if(!d || !box) return;
+  const job = findJob(d.code), crews = dwCrewNames(d), info = dwViewInfo(d);
+  const veh = dwVehRows(d);
+  const badge = info.warns.length + (info.locked?1:0);
+  const tabs = [['หมายเหตุ',''],['สถานะ',badge||''],['ประวัติ','']];
+  const recLine = (k,v)=>`<div class="dwv-ln"><span>${k}</span><i></i><b>${fmtNum(v,2)}</b></div>`;
+  const canEdit = isAdmin();
+  box.innerHTML = `
+    <div class="dwv-hd"><div class="dwv-r"><div class="dwv-ty">${esc(d.code)} ${esc(job?job.name:'')}</div><button type="button" class="dwv-x" onclick="closeDwView()" title="ปิด">✕</button></div>
+      <div class="dwv-cells"><div class="dwv-cell"><small>วันที่</small><b>${fmtDateShort(d.date)}</b></div>
+        <div class="dwv-cell grow"><small>สถานที่</small><b>${esc(dwPlaceText(d)).replace(/ กม\./,' · กม.')}</b></div>
+        <div class="dwv-cell"><small>ปริมาณงาน</small><b>${d.qtyPending ? 'รอปริมาณ'+(d.unit?' <span>(หน่วย '+esc(d.unit)+')</span>':'') : fmtQtyShort(d.qty)+' '+esc(d.unit||'')}</b></div></div></div>
+    <div class="dwv-body">
+      <div class="dwv-two">
+        <div class="dwv-bx"><h4>👤 ผู้ปฏิบัติงาน<span>${info.staff.length} คน</span></h4>
+          <div class="dwv-crew"><small>ชุดปฏิบัติงาน</small><b>${crews.length ? esc(crews.join(', ')) : 'ไม่ระบุชุด'}</b></div>
+          <ul class="dwv-names">${info.staff.map((n,i)=>`<li><span class="no">${i+1}.</span><span>${esc(n)}</span></li>`).join('') || '<li style="grid-column:1/-1;color:var(--ink-400)">ไม่มีรายชื่อ</li>'}</ul></div>
+        <div class="dwv-bx"><h4>🚜 เครื่องจักร / วัสดุ<span>${veh.length+(d.parts||[]).length} รายการ</span></h4>${dwEquipHtml(d)}</div>
+      </div>
+      <div class="dwv-two">
+        <div class="dwv-bx"><div class="dwv-tabs">${tabs.map((t,i)=>`<button type="button" class="${__dwViewTab===i+1?'on':''}" onclick="dwSetViewTab(${i+1})">${t[0]}${t[1]!==''?`<i>${t[1]}</i>`:''}</button>`).join('')}</div>${dwViewTabBody(d, info)}</div>
+        <div class="dwv-bx"><h4>💰 ค่าใช้จ่าย</h4><div class="dwv-rec">${recLine('ค่าวัสดุ',d.material||0)}${recLine('ค่าแรงงาน',d.labor||0)}${recLine('ค่าเช่าเครื่องจักร',d.rent||0)}${recLine('ค่าน้ำมันเชื้อเพลิง',d.fuel||0)}<div class="dwv-ln" style="padding-top:8px"><span><b>รวมทั้งสิ้น</b></span><i></i><span class="dwv-grand">${fmtNum(dwTotal(d),2)}</span></div></div></div>
+      </div>
+    </div>
+    ${canEdit ? `<div class="dwv-foot"><button type="button" class="btn btn-danger" ${info.locked?'disabled':''} onclick="closeDwView();deleteDailyEntry(${d.no})">ลบ</button><button type="button" class="btn btn-primary" ${info.locked?'disabled':''} onclick="closeDwView();editDailyEntry(${d.no})">แก้ไข</button></div>` : '<div style="height:8px"></div>'}`;
+}/* ลบใบสั่งการรายวัน — ต้องลบธุรกรรมน้ำมัน/วัสดุที่เชื่อมโยงไว้ในระบบรองที่ 3 (พ.1-02/พ.1-03) ด้วยเสมอ ไม่เช่นนั้นตัวเลขจะยังค้างอยู่ในรายงานแม้ลบใบสั่งการนี้ไปแล้ว */
 /* สถานะล็อกเดือนของบัญชี พ.1-02/พ.1-03 (2569-09-19) — ใบสั่งการตัดสต็อกวัสดุ/น้ำมันเข้าบัญชีเหล่านั้นอัตโนมัติ
    จึงต้องกันไม่ให้บันทึก/แก้/ลบใบสั่งการของเดือนที่ถูกล็อกแล้ว (ล็อก/ปลดล็อกทำที่หน้ารายงาน พ.1-02/03 ของระบบ 3) */
 let ledgerLocks = {};
@@ -5099,7 +5262,7 @@ function toggleDailyForm(){
   __dwEditingNo = null;
   document.getElementById('daily-form-title').textContent = 'บันทึกใบสั่งการรายวัน';
   document.getElementById('daily-form-save-btn').textContent = 'บันทึกใบสั่งการ';
-  document.getElementById('dw-date').value = TODAY.toISOString().slice(0,10);
+  document.getElementById('dw-date').value = dwSel || TODAY.toISOString().slice(0,10);
   thdateSync(document.getElementById('dw-date'));
   document.getElementById('dw-route').value = '';
   document.getElementById('dw-job').value = '';
@@ -5362,6 +5525,7 @@ async function proceedSaveDailyEntry(date, code, kmStart, kmEnd, locText, qtyPen
   if(dwSaveBtn){ dwSaveBtn.disabled = false; dwSaveBtn.textContent = 'บันทึกใบสั่งการ'; }
   if(dwCancelBtn) dwCancelBtn.disabled = false;
   document.getElementById('daily-form-overlay').classList.add('hidden');
+  dwSel = date;   /* ให้แถบสัปดาห์ไปอยู่ที่วันของใบที่เพิ่งบันทึก */
   renderAll();
 }
 document.getElementById('dw-search')?.addEventListener('input', ()=>renderDailyLog());
