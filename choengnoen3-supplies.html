@@ -3813,7 +3813,9 @@ function ec1wSelectedWeekDates(){
   let base = inp && inp.value ? inp.value : '';
   base = base ? ec1wMonday(base) : ec1wMonday(toLocalISODate(TODAY));
   if(inp) inp.value = base; // เลือกวันไหนของสัปดาห์ก็ตาม ให้ตารางเริ่มวันจันทร์เสมอ (normalize ค่าที่แสดงในช่องด้วย)
-  return ec1wWeekDatesFrom(base);
+  const week = ec1wWeekDatesFrom(base);
+  ensureDwoMonths(week);
+  return week;
 }
 function shiftEc1wWeek(delta){
   const inp = document.getElementById('ec1w-week-date');
@@ -3841,9 +3843,23 @@ function ec1wFindLog(vehicle, date){ return machineryLogs.find(x=>x.vehicle===ve
 /* อ่านใบสั่งการรายวันจาก Firestore โดยตรง (โหลดไว้ตอนเปิดหน้าใน __initApiData) — เดิมอ่าน localStorage ของระบบที่ 2
    ซึ่งระบบที่ 2 เลิกเขียนไปแล้วตั้งแต่ย้ายขึ้นฐานข้อมูลกลาง ทำให้ส่วนนี้ไม่เคยเจอข้อมูล
    แปลงคอลัมน์ฐานข้อมูลเป็นรูปแบบที่ฟังก์ชันด้านล่างใช้ (date/route/kmStart/kmEnd/vehicles[].label) แบบเดียวกับ dwoFromApi ของระบบที่ 2 */
+/* ใบสั่งการโตทุกปี → ไม่ฟังทั้งตารางแล้ว โหลดเป็นรายเดือนตามสัปดาห์ที่เปิดดูใน EC 1-W (ครั้งเดียวต่อเดือนต่อการเปิดหน้า) */
+let __dwoRows = [];
+const __dwoMonths = {}, __dwoLoading = {};
+function ensureDwoMonths(dates){
+  if(!(window.FBL && FBL.apiQueryRange)) return;
+  dates.forEach(d=>{
+    const ym = String(d).slice(0,7);
+    if(__dwoMonths[ym] || __dwoLoading[ym]) return;
+    __dwoLoading[ym] = true;
+    FBL.apiQueryRange('daily_work_orders', 'date', ym, ym+'').then(rows=>{
+      __dwoRows = __dwoRows.filter(r=>String(r.date||'').slice(0,7)!==ym).concat(rows);
+    }).catch(e=>{ console.error('โหลดใบสั่งการรายวันเดือน '+ym+' ไม่สำเร็จ', e); })
+      .then(()=>{ __dwoMonths[ym] = true; delete __dwoLoading[ym]; if(typeof renderMachinery==='function') renderMachinery(); });
+  });
+}
 function getDailyWorkOrdersX(){
-  if(!(window.FBL && FBL.rows)) return [];
-  return FBL.rows('daily_work_orders').map(r=>{
+  return __dwoRows.map(r=>{
     let vehicles = r.machineryJson;
     if(typeof vehicles === 'string'){ try{ vehicles = JSON.parse(vehicles||'[]'); }catch(e){ vehicles = []; } }
     return { date:r.date, route:r.routeValue||'', kmStart:r.kmStart||'', kmEnd:r.kmEnd||'', vehicles: Array.isArray(vehicles) ? vehicles : [] };
@@ -4461,8 +4477,8 @@ function __toggleNote(id, btn){
 renderAll();
 (async function __initApiData(){
   // Firestore โหลดพร้อมกันได้ทุกตาราง (ไม่มีปัญหา quota แบบ Apps Script เดิม) — เร็วกว่าโหลดทีละตารางมาก
-  // leave_requests (ระบบ 1) และ daily_work_orders (ระบบ 2) โหลดเก็บไว้ให้ getSharedLeaveRequests()/getDailyWorkOrdersX() อ่าน
-  try{ await apiGetMultiple(['leave_requests','daily_work_orders']); }catch(e){ console.error('โหลดข้อมูลการลา/ใบสั่งการรายวันจากระบบอื่นไม่สำเร็จ', e); }
+  // leave_requests (ระบบ 1) โหลดเก็บไว้ให้ getSharedLeaveRequests() อ่าน — ใบสั่งการรายวันโหลดเป็นรายเดือนใน ensureDwoMonths()
+  try{ await apiGetMultiple(['leave_requests']); }catch(e){ console.error('โหลดข้อมูลการลาจากระบบอื่นไม่สำเร็จ', e); }
   await Promise.all([
     loadMaterialsFromApi(),
     loadMaterialTransactionsFromApi(),
