@@ -64,7 +64,7 @@
   .user-menu-panel #login-badge{display:block;white-space:normal;text-align:center;line-height:1.5;padding:8px 10px;margin-bottom:2px;}
   .user-menu-panel #login-badge .um-position{display:block;font-weight:500;opacity:.85;}
 
-  .content{padding:22px 18px 60px;max-width:1180px;margin:0 auto;}
+  .content{padding:22px 18px 60px;max-width:1180px;width:100%;box-sizing:border-box;margin:0 auto;}
   .page-head{margin-bottom:16px;}
   .page-head h1{font-size:22px;font-weight:600;margin:0 0 4px;color:var(--navy-900);display:flex;align-items:center;gap:10px;}
   .page-head p{margin:0;color:var(--ink-600);font-size:13.5px;max-width:760px;}
@@ -534,6 +534,13 @@
 <script src="dsel.js"></script>
 <script src="firebase-layer.js" data-page="s3"></script>
 <script src="emoji-img.js" defer></script>
+<style>
+/* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
+.route-header .topbar-right{flex-direction:column;align-items:flex-end;gap:6px}
+.route-header .who-line{margin:0;font-size:12px;color:#787B84}
+.route-header .btn-logout{background:transparent;border:none;color:#9DA0A8;font-family:'Sarabun',sans-serif;font-weight:600;font-size:13px;padding:5px 10px;border-radius:8px;cursor:pointer}
+.route-header .btn-logout:hover{color:#fff;background:rgba(255,255,255,.08)}
+</style>
 </head>
 <body>
 
@@ -548,7 +555,9 @@
         </div>
       </div>
       <div class="topbar-right no-print">
-        <div class="user-menu-wrap">
+        <p class="who-line" id="whoDisplay" style="display:none"></p>
+        <button class="btn-logout" id="btnLogoutTop" style="display:none" onclick="FBL.logout()">ออกจากระบบ</button>
+        <div class="user-menu-wrap" style="display:none">
           <div class="avatar" id="user-avatar" onclick="__toggleUserMenu(event)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg></div>
           <div class="user-menu-panel hidden" id="user-menu-panel">
             <span id="login-badge" class="pill pill-neutral" style="text-align:center;" title="บทบาทและสิทธิ์ของบัญชีนี้ในระบบนี้">กำลังตรวจสอบสิทธิ์…</span>
@@ -559,7 +568,7 @@
     </div>
     <nav class="tabs-nav">
     <div class="nav-group-label" id="nav-group-main">ระบบหลัก</div>
-    <a class="nav-item" id="nav-main-link" href="choengnoen0-main.html"><span class="num">•</span><span>ภาพรวม</span><span class="own">เจ้าของระบบ/หมวด</span></a>
+    <a class="nav-item" id="nav-main-link" href="choengnoen0-main.html"><span class="num">•</span><span>ภาพรวม</span></a>
     <div class="nav-group-label" id="nav-group-sub">ระบบรอง</div>
     <a class="nav-item" href="choengnoen1-saraban.html"><span class="num">1</span><span>งานสารบรรณ</span></a>
     <a class="nav-item" href="choengnoen2-statistics.html"><span class="num">2</span><span>งานสถิติ</span></a>
@@ -571,10 +580,6 @@
   <div class="main">
 
     <div class="content">
-      <div class="page-head">
-        <h1>งานพัสดุ</h1>
-      </div>
-
       <div class="sec-tabs no-print" id="sec-tabs">
         <div class="sec-tab active" data-sec="master">ทะเบียนพัสดุ / น้ำมันเชื้อเพลิง</div>
         <div class="sec-tab" data-sec="report">พ.1-02 วัสดุ</div>
@@ -4618,5 +4623,28 @@ function closeAlertModal(){
     <div class="notice-modal-footer single"><button class="btn btn-primary" onclick="closeAlertModal()">ตกลง</button></div>
   </div>
 </div>
+<script>
+/* อัปเดตข้อความ "ผู้บันทึก: ชื่อ 👑" ที่หัวเว็บ — ดูจากบัญชีที่ล็อกอินจริง (FBL.user) */
+(function(){
+  function upd(){
+    var w=document.getElementById('whoDisplay'), b=document.getElementById('btnLogoutTop');
+    if(!w||!b) return;
+    var u=window.FBL&&FBL.user;
+    if(u&&u.name){
+      var r=u.role==='owner'?' 👑':(u.role==='assistant'?' 🛡️':'');
+      w.textContent='ผู้บันทึก: '+u.name+r; w.style.display=''; b.style.display='';
+    } else { w.textContent=''; w.style.display='none'; b.style.display='none'; }
+    if(window.emojiToImg) try{ window.emojiToImg(w); }catch(e){}
+  }
+  window.__updateWho=upd;
+  function boot(){
+    upd();
+    var lb=document.getElementById('login-badge');
+    if(lb) new MutationObserver(upd).observe(lb,{childList:true,characterData:true,subtree:true,attributes:true});
+    var n=0, t=setInterval(function(){ upd(); if(++n>20) clearInterval(t); },500);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+})();
+</script>
 </body>
 </html>
