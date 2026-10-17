@@ -1102,7 +1102,12 @@
     let snap;
     try { snap = await q.get({ source: 'server' }); }
     catch (e) { if (e && e.code === 'permission-denied') throw new Error(thErr(e)); snap = await q.get(); } // ออฟไลน์ → ใช้แคช
-    return snap.docs.map(function (d) { return toRow(table, d.data()); });
+    // เรียงตามลำดับที่บันทึก (_c) เหมือน watch() — หน้าที่ใช้ลำดับนี้ตั้งเลขรายการยังได้ผลเหมือนเดิม
+    const docs = snap.docs.slice().sort(function (a, b) {
+      const ca = a.get('_c') || 0, cb = b.get('_c') || 0;
+      return ca !== cb ? ca - cb : (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    });
+    return docs.map(function (d) { return toRow(table, d.data()); });
   };
 
   /* ======================================================================

@@ -21,7 +21,8 @@
   input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
   input[type=number]{-moz-appearance:textfield;}
   html,body{margin:0;padding:0;}
-  body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink-900);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+  html{overflow-y:scroll;}
+body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink-900);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;}
   h1,h2,h3,.display{font-family:'Kanit',sans-serif;}
   .app{min-height:100vh;}
 
@@ -75,7 +76,7 @@
 
   /* section switch tabs */
   .sec-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 20px;}
-  .sec-tab{padding:10px 18px;border-radius:12px;font-size:14.5px;font-weight:600;color:var(--ink-600);cursor:pointer;background:var(--white);border:1px solid var(--line);}
+  .sec-tab{padding:6px 14px;border-radius:9px;font-size:13px;font-weight:600;color:var(--ink-600);cursor:pointer;background:var(--white);border:1px solid var(--line);}
   .sec-tab.active{background:var(--navy-900);color:#fff;border-color:var(--navy-900);}
   .sec-tab:hover:not(.active){border-color:var(--orange-500);color:var(--orange-600);}
   .panel{display:none;}
@@ -567,7 +568,7 @@
   .g-filter{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 16px;}
   .g-filter-label{font-size:13px;color:var(--ink-600);font-weight:600;}
   .g-filter select{width:auto;min-width:150px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-family:'Sarabun';font-size:14px;color:var(--ink-900);}
-  .sec-tab{padding:10px 20px;font-size:14.5px;}
+  
 
   /* ===== ฟอร์มใบสั่งการทีละขั้น ===== */
   #daily-form-overlay .modal-box{max-width:780px;}
@@ -1834,11 +1835,27 @@ function dwoToApi(d){
 /* ข้อมูลใบสั่งการรายวันจริงย้ายไปอยู่ที่ Google Sheets แท็บ "daily_work_orders" แล้ว
    หน้านี้โหลดจาก API ตอนเปิดหน้าเสมอ ดูฟังก์ชัน loadDailyWorkOrdersFromApi() ด้านล่าง */
 let dailyWorkOrders = [];
+/* ใบสั่งการโตทุกปี → ไม่ฟังทั้งตารางแล้ว โหลดครั้งเดียวเป็นรายปีงบประมาณ (ปีงบนี้ + ปีก่อน ตอนเปิดหน้า, ปีอื่นโหลดเมื่อเลือกในตัวกรองปี)
+   ข้อควรรู้: ไม่อัปเดตสดเมื่อคนอื่นเพิ่ม/แก้ใบสั่งการ — ต้องรีเฟรชหน้า (การบันทึกของเครื่องนี้เองอัปเดตในหน้าทันทีเหมือนเดิม) */
+const __dwFyLoaded = {};
+async function loadDailyWorkOrdersForFy(fys){
+  const need = fys.filter(f=>f && !__dwFyLoaded[f]);
+  if(!need.length) return;
+  try{
+    const res = await Promise.all(need.map(f=>FBL.apiQueryRange('daily_work_orders', 'date', (f-543-1)+'-10', (f-543)+'-09\uf8ff')));
+    const seen = new Set(dailyWorkOrders.map(d=>d.__backendId));
+    res.forEach(rows=>{ rows.map(dwoFromApi).forEach(r=>{ if(!seen.has(r.__backendId)){ seen.add(r.__backendId); dailyWorkOrders.push(r); } }); });
+    dailyWorkOrders.forEach((r,i)=>{ r.no = i+1; });
+    need.forEach(f=>{ __dwFyLoaded[f] = true; });
+  }catch(err){
+    console.error('โหลดข้อมูลใบสั่งการรายวันรายปีงบล้มเหลว', err);
+    alert('โหลดข้อมูลใบสั่งการรายวันไม่สำเร็จ: ' + err.message + '\nกรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วรีเฟรชหน้าใหม่');
+  }
+}
 async function loadDailyWorkOrdersFromApi(){
   try{
-    const rows = (await apiGet('daily_work_orders')).map(dwoFromApi);
-    rows.forEach((r,i)=>{ r.no = i+1; });
-    dailyWorkOrders = rows;
+    const cur = fyOfDate(new Date().toISOString().slice(0,10));
+    await loadDailyWorkOrdersForFy([cur, cur-1]);
   }catch(err){
     console.error('โหลดข้อมูลใบสั่งการรายวันจากฐานข้อมูลกลางล้มเหลว', err);
     alert('โหลดข้อมูลใบสั่งการรายวันจากฐานข้อมูลกลางไม่สำเร็จ: ' + err.message + '\nกรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วรีเฟรชหน้าใหม่');
@@ -2698,8 +2715,10 @@ function syncGlobalFilterToHidden(){
   const dm = document.getElementById('dw-log-month'); if(dm) dm.value = mEl.value;
   const rm = document.getElementById('rollup-month'); if(rm) rm.value = (mEl.value==='all') ? curM : mEl.value;
 }
-function applyGlobalFilter(){
+async function applyGlobalFilter(){
   syncGlobalFilterToHidden();
+  const gfy = +(document.getElementById('g-fy')||{}).value;
+  if(gfy && typeof loadDailyWorkOrdersForFy==='function' && !__dwFyLoaded[gfy]) await loadDailyWorkOrdersForFy([gfy]);
   renderDailyLog(); renderRollup(); renderBmmTable();
 }
 
@@ -3765,12 +3784,14 @@ async function loadSubsys3RefDataFromApi(){
     // เคยทำให้โดน Google จำกัดการเรียกชั่วคราว (ได้ HTML error page แทน JSON)
     const veh = await apiGet('machinery');
     const mat = await apiGet('materials');
-    const fuel = await apiGet('fuel_transactions');
-    const matTx = await apiGet('material_transactions');
+    /* รับ-จ่ายน้ำมัน: ใช้หน้านี้เพียงหา "ราคาน้ำมันล่าสุดที่รับเข้า" (latestFuelPriceX) → โหลดย้อนหลัง 18 เดือนพอ ไม่ฟังทั้งตาราง
+       รับ-จ่ายวัสดุ: หน้านี้ไม่เคยอ่านค่าจากตารางนี้ (มีแต่เพิ่ม/ลบหลังบันทึก) → ไม่โหลดแล้ว ส่วนการหาใบเบิกที่ผูกกับใบสั่งการใช้ FBL.findDailyOrderTx ถามเซิร์ฟเวอร์ตรง */
+    const since = new Date(); since.setMonth(since.getMonth()-18);
+    const fuel = await FBL.apiQueryRange('fuel_transactions', 'date', since.toISOString().slice(0,10), '9999-12-31');
     __subsys3Vehicles = veh.map(subsys3VehicleFromApi);
     __subsys3Materials = mat.map(subsys3MaterialFromApi);
     __subsys3FuelTx = fuel.map(subsys3FuelTxFromApi);
-    __subsys3MaterialTx = matTx.map(subsys3MatTxFromApi);
+    __subsys3MaterialTx = [];
   }catch(err){
     console.error('โหลดข้อมูลอ้างอิงเครื่องจักร/พัสดุ/น้ำมันจากระบบรองที่ 3 ล้มเหลว', err);
   }
@@ -5010,12 +5031,18 @@ function dwWeekDays(iso){
   for(let i=0;i<7;i++) out.push(isoLocal(new Date(d.getFullYear(), d.getMonth(), d.getDate()-off+i)));
   return out;
 }
-function dwShiftWeek(n){
+/* เลื่อนสัปดาห์ไปถึงวันที่ที่อยู่ในปีงบที่ยังไม่ได้โหลด → โหลดปีงบนั้นก่อนวาด (สัปดาห์คาบเกี่ยวปีงบโหลดทั้งสองปี) */
+async function dwEnsureWeekLoaded(){
+  const days = dwWeekDays(dwSel);
+  await loadDailyWorkOrdersForFy([fyOfDate(days[0]), fyOfDate(days[6])]);
+}
+async function dwShiftWeek(n){
   const d = new Date(dwSel+'T00:00:00');
   dwSel = isoLocal(new Date(d.getFullYear(), d.getMonth(), d.getDate()+7*n));
+  await dwEnsureWeekLoaded();
   renderDailyLog();
 }
-function dwPickDay(iso){ dwSel = iso; renderDailyLog(); }
+async function dwPickDay(iso){ dwSel = iso; await dwEnsureWeekLoaded(); renderDailyLog(); }
 function dwClearSearch(){ const el=document.getElementById('dw-search'); if(el) el.value=''; renderDailyLog(); }
 function dwStaffNames(d){
   return (d.staff && d.staff.length ? d.staff : (d.staffLabel ? d.staffLabel.split(',').map(s=>s.replace(/\s*\(.*\)\s*$/,'').trim()) : [])).filter(Boolean);
