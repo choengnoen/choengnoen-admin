@@ -126,6 +126,8 @@
     permits: { section: 's2', label: 'ขออนุญาตในเขตทาง', idField: 'no', idPrefix: null, columns: ['no', 'type', 'name', 'phone', 'km', 'doc', 'status', 'lastUpdated'], numericFields: ['no'] },
     encroachments: { section: 's2', label: 'งานรุกล้ำ', idField: 'code', idPrefix: null, columns: ['code', 'name', 'km', 'dist', 'structure', 'stage', 'stageDate', 'cleared', 'clearedDate', 'lastUpdated'], numericFields: ['dist', 'stage'] },
     emergencies: { section: 's2', label: 'เหตุฉุกเฉิน', idField: 'no', idPrefix: null, columns: ['no', 'type', 'loc', 'start', 'lastUpdate', 'status', 'lastUpdated'], numericFields: ['no'] },
+    // งานสัญญา (17 ต.ค. 2569): 1 สัญญา = 1 รายการ, ช่วงทางหลวงหลายช่วงเก็บใน rangesJson = [{route, k1, k2}] (กม. เป็นกิโลเมตร ทศนิยม) / status = สถานะพิเศษ (ระงับงาน, ยกเลิกสัญญา) ว่าง = คำนวณจากวันที่
+    contracts: { section: 's2', label: 'สัญญา', idField: 'id', idPrefix: 'CON', columns: ['id', 'fiscalYear', 'contractNo', 'name', 'contractor', 'amount', 'startDate', 'endDate', 'warrantyEnd', 'supervisor', 'status', 'note', 'rangesJson', 'lastUpdated'], numericFields: ['fiscalYear', 'amount'], jsonFields: ['rangesJson'] },
 
     materials: { section: 's3', label: 'ทะเบียนพัสดุ', idField: 'code', idPrefix: null, columns: ['code', 'itemName', 'category', 'unit', 'openingStock', 'reorderPoint', 'status', 'lastUpdated', 'unitPrice'], numericFields: ['openingStock', 'reorderPoint', 'unitPrice'] },
     material_transactions: { section: 's3', label: 'รับ-จ่ายวัสดุ', idField: 'id', idPrefix: 'MTX', columns: ['id', 'materialId', 'type', 'qty', 'unitPrice', 'totalPrice', 'refNo', 'date', 'note', 'relatedDailyWorkOrderId', 'lastUpdated'], numericFields: ['qty', 'unitPrice', 'totalPrice'] },
@@ -1091,6 +1093,17 @@
   // อ่านจากแคชในหน่วยความจำทันที (ต้องเคย apiGet ตารางนั้นมาก่อน) — ไม่รอเน็ต
   FBL.rows = function (table) { return subs[table] ? clone(subs[table].rows) : []; };
   FBL.loaded = function (table) { return !!(subs[table] && subs[table].firstDone); };
+  // อ่านเฉพาะช่วงของตารางครั้งเดียว (ไม่ฟังสด ไม่เก็บค้างในหน่วยความจำของชั้นนี้) — ใช้กับตารางที่โตทุกปี เช่น ใบสั่งการรายวัน
+  // field ต้องเป็นฟิลด์เดียว (ช่วงค่า from..to) เพื่อไม่ต้องสร้างดัชนีเพิ่มใน Firestore
+  FBL.apiQueryRange = async function (table, field, from, to) {
+    if (!TABLES[table]) throw new Error('ไม่รู้จักตาราง: ' + table);
+    await FBL.ready;
+    const q = db.collection(table).where(field, '>=', from).where(field, '<=', to);
+    let snap;
+    try { snap = await q.get({ source: 'server' }); }
+    catch (e) { if (e && e.code === 'permission-denied') throw new Error(thErr(e)); snap = await q.get(); } // ออฟไลน์ → ใช้แคช
+    return snap.docs.map(function (d) { return toRow(table, d.data()); });
+  };
 
   /* ======================================================================
      เขียนข้อมูล (แทน doPost ของ Code.gs) — ทุกคำสั่งบันทึก activity_log ในชุดเดียวกัน (atomic batch)

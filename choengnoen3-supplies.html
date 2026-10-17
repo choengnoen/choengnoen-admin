@@ -23,18 +23,18 @@
   .app{min-height:100vh;}
 
   /* หัวเว็บแท็บบน (แบบ 1 เหมือนระบบงานอุบัติเหตุ) — แท็บระบบคือลิงก์ a.nav-item เดิม firebase-layer.js ซ่อน/แสดงตามสิทธิ์ได้เหมือนเดิม */
-  .route-header{background:radial-gradient(1100px 420px at 12% -20%,var(--navy-800) 0%,var(--navy-950) 55%);color:#fff;padding:20px 30px 0;position:relative;z-index:40;border-bottom:1px solid rgba(0,0,0,.35);}
-  .route-header .top-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
-  .route-header .clock{color:#9db0c4;}
-  .brand{display:flex;align-items:center;gap:14px;}
-  .brand-mark{width:50px;height:50px;flex-shrink:0;}
-  .brand-text .t1{font-family:'Kanit';font-size:21px;font-weight:700;color:#fff;line-height:1.25;letter-spacing:-.01em;}
-  .brand-text .t2{font-size:13px;color:#9db0c4;}
-  .tabs-nav{display:flex;overflow-x:auto;margin-top:16px;border-top:1px solid rgba(255,255,255,.1);scrollbar-width:none;}
+  .route-header{background:radial-gradient(1100px 420px at 12% -20%,#4b5563 0%,#111827 55%);color:#fff;padding:20px 22px 0;position:relative;z-index:40;border-bottom:1px solid rgba(0,0,0,.35);}
+  .route-header .top-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;max-width:1180px;margin:0 auto;}
+  .route-header .clock{color:#9DA0A8;}
+  .brand{display:flex;align-items:flex-start;align-self:flex-start;gap:14px;}
+  .brand-mark{width:50px;height:50px;flex-shrink:0;margin-top:3px;}
+  .brand-text .t1{font-family:'Kanit';font-size:21px;font-weight:700;color:#fff;line-height:1.55;margin:0 0 3px;letter-spacing:-.01em;}
+  .brand-text .t2{font-size:13px;color:#9DA0A8;line-height:1.55;margin:0 0 14px;}
+  .tabs-nav{display:flex;max-width:1180px;margin:14px auto 0;overflow-x:auto;border-top:1px solid rgba(255,255,255,.08);scrollbar-width:none;}
   .tabs-nav::-webkit-scrollbar{display:none;}
   .nav-group-label{display:none !important;}
-  .nav-item{display:flex;align-items:center;gap:8px;padding:11px 16px;color:#8aa0b8;text-decoration:none;font-family:'Kanit';font-weight:600;font-size:13.5px;cursor:pointer;position:relative;white-space:nowrap;transition:color .15s ease;}
-  .nav-item .num{font-size:11px;font-weight:600;width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.1);color:#b4c4d4;flex-shrink:0;}
+  .nav-item{display:flex;align-items:center;gap:6px;padding:9px 13px;color:#84878F;text-decoration:none;font-family:'Kanit',sans-serif;font-weight:600;font-size:12.5px;line-height:normal;letter-spacing:.01em;border-bottom:3px solid transparent;cursor:pointer;position:relative;white-space:nowrap;transition:color .15s;}
+  .nav-item .num{display:none;}
   .nav-item .own{margin-left:2px;font-size:10.5px;font-weight:500;padding:1px 7px;border-radius:999px;background:rgba(242,169,48,.18);color:#f2c46b;}
   .nav-item.active{color:#fff;}
   .nav-item.active .num{background:var(--orange-600);color:#fff;}
@@ -42,8 +42,8 @@
   @keyframes tabGlow{to{background-position:200% 0;}}
   @media(prefers-reduced-motion:reduce){.nav-item.active::after{animation:none;}}
   .nav-item.disabled{opacity:.4;cursor:not-allowed;}
-  .nav-item:not(.disabled):not(.active):hover{color:#e4ecf5;}
-  #nav-main-link{margin-right:6px;padding-right:20px;border-right:1px solid rgba(255,255,255,.14);}
+  .nav-item:not(.disabled):not(.active):hover{color:#DEDFE2;}
+  #nav-main-link{margin-right:0;}
 
   /* Main */
   .main{flex:1;min-width:0;display:flex;flex-direction:column;}
@@ -64,7 +64,7 @@
   .user-menu-panel #login-badge{display:block;white-space:normal;text-align:center;line-height:1.5;padding:8px 10px;margin-bottom:2px;}
   .user-menu-panel #login-badge .um-position{display:block;font-weight:500;opacity:.85;}
 
-  .content{padding:26px 30px 60px;max-width:none;}
+  .content{padding:22px 18px 60px;max-width:1180px;margin:0 auto;}
   .page-head{margin-bottom:16px;}
   .page-head h1{font-size:22px;font-weight:600;margin:0 0 4px;color:var(--navy-900);display:flex;align-items:center;gap:10px;}
   .page-head p{margin:0;color:var(--ink-600);font-size:13.5px;max-width:760px;}
