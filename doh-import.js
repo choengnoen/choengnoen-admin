@@ -13,7 +13,7 @@
   'use strict';
   const TH_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
   const TOKEN_RE = /\[กรม:/;
-  const S = { parsed:[], skipped:[], plan:null, importMk:'', mixed:false, busy:false, result:null, ec1w:true };
+  const S = { parsed:[], skipped:[], plan:null, importMk:'', mixed:false, busy:false, result:null, ec1w:true, mode:'import', cmp:[], sel:{}, cmpMsg:'' };
 
   const H = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const num = x => { const v = parseFloat(String(x==null?'':x).replace(/,/g,'')); return isNaN(v)?0:v; };
@@ -230,7 +230,7 @@
   function openImport(){
     if(typeof requireAdmin==='function' && !requireAdmin()) return;
     ensureCss();
-    if(!S.busy){ S.parsed = []; S.skipped = []; S.plan = null; S.result = null; }
+    if(!S.busy){ S.parsed = []; S.skipped = []; S.plan = null; S.result = null; S.cmp = []; S.sel = {}; S.cmpMsg = ''; S.mode = 'import'; }
     overlay().classList.remove('hidden');
     render();
   }
@@ -259,6 +259,17 @@
       setFoot('<button class="btn btn-ghost" onclick="DohImp.close()">ปิด</button>'); return;
     }
     const p = S.plan;
+    const modeBar = '<div class="dohi-bar"><button class="btn btn-sm '+(S.mode==='compare'?'btn-primary':'btn-ghost')+'" onclick="DohImp.setMode(\'compare\')">🔍 เทียบกับข้อมูลในระบบ (ไม่แก้ใบเดิม)</button>'
+      + '<button class="btn btn-sm '+(S.mode==='import'?'btn-primary':'btn-ghost')+'" onclick="DohImp.setMode(\'import\')">📥 นำเข้าสร้างใบสั่งการ</button></div>';
+    if(S.mode==='compare'){
+      const nAct = Object.keys(S.sel).filter(k=>S.sel[k]).length;
+      body.innerHTML = (S.cmpMsg?'<div class="dohi-note ok">'+H(S.cmpMsg)+'</div>':'')
+        + (S.skipped.length?'<div class="dohi-note warn">ข้าม '+S.skipped.length+' ไฟล์ที่ไม่ใช่ผลงานรายกิจกรรม: '+H(S.skipped.join(', '))+'</div>':'')
+        + modeBar + '<div class="dohi-bar">'+pickHtml()+'<span>เดือนของไฟล์ <select onchange="DohImp.setMonth(this.value)">'+monthOptions(S.importMk)+'</select></span></div>'
+        + renderCompare();
+      setFoot('<button class="btn btn-ghost" onclick="DohImp.close()">ปิด</button><button class="btn btn-ghost" onclick="DohImp.copyCompare()">📋 คัดลอกผลเทียบ</button><button class="btn btn-primary" '+(nAct?'':'disabled')+' onclick="DohImp.runCompare()">ดำเนินการที่เลือก ('+nAct+')</button>');
+      return;
+    }
     const kpi = p ? '<div class="dohi-kpi"><div><b>'+S.parsed.length+'</b>ไฟล์กิจกรรมที่อ่าน</div><div><b>'+p.items.length+'</b>ใบสั่งการที่จะสร้าง</div>'
       + '<div><b>'+p.replaceCount+'</b>ใบเดิมที่จะถูกแทนที่</div>'
       + '<div><b style="color:#c1402f">'+p.items.filter(x=>x.issues.some(i=>i.t==='attn')).length+'</b>ใบที่ควรตรวจหลังนำเข้า</div>'
@@ -268,7 +279,7 @@
     body.innerHTML = (msg?'<div class="dohi-note bad">'+H(msg)+'</div>':'')
       + (S.skipped.length?'<div class="dohi-note warn">ข้าม '+S.skipped.length+' ไฟล์ที่ไม่ใช่ผลงานรายกิจกรรม: '+H(S.skipped.join(', '))+'</div>':'')
       + (S.mixed?'<div class="dohi-note warn">ไฟล์มีวันที่ปฏิบัติงานหลายเดือนปนกัน — ควรเลือกไฟล์ทีละเดือน</div>':'')
-      + '<div class="dohi-bar">'+pickHtml()+'<span>เดือนของไฟล์ <select onchange="DohImp.setMonth(this.value)">'+monthOptions(S.importMk)+'</select></span></div>'
+      + modeBar + '<div class="dohi-bar">'+pickHtml()+'<span>เดือนของไฟล์ <select onchange="DohImp.setMonth(this.value)">'+monthOptions(S.importMk)+'</select></span></div>'
       + kpi + skipBlocks
       + (p ? '<div class="dohi-bar"><label style="display:inline-flex;gap:6px;align-items:center;font-size:13.5px;"><input type="checkbox" '+(S.ec1w?'checked':'')+' onchange="DohImp.setEc1w(this.checked)"> บันทึกชั่วโมงเครื่องจักรลง EC 1-W ด้วย ('+buildEc1w().length+' แถว เครื่อง×วัน — ลงช่อง W ชั่วโมงปฏิบัติงาน; ทับเฉพาะช่อง W เดิมของแถวนั้น)</label></div>' : '')
       ;
@@ -298,11 +309,148 @@
     const ks = Object.keys(cnt).sort((x,y)=>cnt[y]-cnt[x]);
     S.mixed = ks.length>1;
     S.importMk = ks[0] || new Date().toISOString().slice(0,7);
+    S.cmpMsg = '';
     await rebuild();
+    /* ถ้าในระบบมีใบของเดือน/รหัสงานเหล่านี้อยู่แล้ว → เข้าโหมดเทียบ (ไม่ลบ/แทนที่ใบเดิม) */
+    S.mode = S.cmp.some(c=>c.exN>0) ? 'compare' : 'import';
+    render();
   }
   async function rebuild(){
     render(null, 'กำลังอ่านข้อมูลอ้างอิงและจับคู่...');
-    try{ S.plan = await buildPlan(); }catch(e){ S.plan = null; render('จับคู่ข้อมูลไม่สำเร็จ: '+(e&&e.message?e.message:e)); return; }
+    try{ S.plan = await buildPlan(); S.cmp = buildCompare(); }catch(e){ S.plan = null; S.cmp = []; render('จับคู่ข้อมูลไม่สำเร็จ: '+(e&&e.message?e.message:e)); return; }
+    S.sel = {};
+    S.cmp.forEach((c,i)=>c.actions.forEach(a=>{ S.sel[i+':'+a.type] = true; }));
+    render();
+  }
+  function setMode(m){ S.mode = m; S.cmpMsg = ''; render(); }
+  function togAct(k, v){ S.sel[k] = !!v; render(); }
+
+  /* ---------- โหมดเทียบกับข้อมูลในระบบ (ไม่ลบ/ไม่แทนที่ใบเดิม) ---------- */
+  function buildCompare(){
+    const leaves = getLeaveHistoryX();
+    const planItems = (S.plan && S.plan.items) || [];
+    return S.parsed.map(a=>{
+      const dates = Array.from(new Set(a.dates.map(iso).filter(Boolean))).sort();
+      const label = 'แผน '+a.plan+' '+a.jobName+' (สาย '+a.route+')';
+      const c = { label, plan:a.plan, diffs:[], oks:[], actions:[], exN:0, skip:'' };
+      if(!dates.length){ c.skip = 'กรมไม่ระบุวันที่ปฏิบัติงาน'; return c; }
+      const job = findJob(a.jobCode);
+      if(!job){ c.skip = 'ไม่พบรหัสงาน '+a.jobCode+' ในข้อมูลอ้างอิง'; return c; }
+      const route = findRouteDoh(a.route, a.control), rv = route ? route.routeNo : '__other__';
+      const mks = new Set(dates.map(d=>d.slice(0,7)));
+      const ex = dailyWorkOrders.filter(d=>d.code===a.jobCode && mks.has(String(d.date).slice(0,7)) && (String(d.route||'')===String(rv) || String(d.loc||'').indexOf(a.route)>=0)).sort((x,y)=>x.date<y.date?-1:1);
+      c.exN = ex.length; c.ex = ex;
+      const cmpNum = (name, sys, dept, tol)=>{ if(Math.abs(sys-dept) > (tol||0.01)) c.diffs.push(name+': ระบบ '+r2(sys)+' / กรม '+r2(dept)); else c.oks.push(name); };
+      const exDates = Array.from(new Set(ex.map(d=>d.date)));
+      const missing = dates.filter(d=>exDates.indexOf(d)<0), extra = exDates.filter(d=>dates.indexOf(d)<0);
+      if(missing.length) c.diffs.push('กรมลงวันที่ '+missing.map(dateTh).join(', ')+' แต่ระบบไม่มีใบ');
+      if(extra.length) c.diffs.push('ระบบมีใบวันที่ '+extra.map(dateTh).join(', ')+' แต่กรมไม่ได้ลง');
+      if(!missing.length && !extra.length) c.oks.push('วันที่ปฏิบัติงาน');
+      const missItems = planItems.filter(it=>it.planNo===a.plan && it.label===label && missing.indexOf(it.rec.date)>=0);
+      if(missItems.length) c.actions.push({ type:'days', text:'สร้างใบสั่งการวันที่ขาด '+missItems.length+' ใบ (จากยอดของกรม)', items:missItems });
+      if(ex.length){
+        const sum = k => ex.reduce((s,d)=>s+(d[k]||0),0);
+        cmpNum('ปริมาณงาน', sum('qty'), a.qty);
+        cmpNum('ค่าแรงงาน', sum('labor'), a.sum['ค่าแรงงาน']||0);
+        cmpNum('ค่าเช่าเครื่องจักร', sum('rent'), a.sum['ค่าเช่าเครื่องจักร']||0);
+        cmpNum('ค่าน้ำมัน', sum('fuel'), a.sum['ค่าน้ำมันเชื้อเพลิง']||0);
+        cmpNum('ค่าวัสดุ', sum('material'), a.sum['ค่าวัสดุ']||0);
+        // วัสดุ
+        const newParts = [];
+        a.mats.forEach(m=>{
+          const hit = matchMaterial(m.name);
+          if(!hit){ c.diffs.push('วัสดุ "'+m.name+'" ไม่อยู่ในทะเบียนพัสดุ — ให้เพิ่มเข้าทะเบียนก่อน'); return; }
+          const sq = ex.reduce((s,d)=>s+(d.parts||[]).filter(p=>p.code===hit.m.code).reduce((t,p)=>t+(p.qty||0),0),0);
+          if(sq===0 && m.qty>0){ c.diffs.push('วัสดุ '+m.name+' กรมลง '+m.qty+' '+m.unit+' แต่ใบของระบบไม่มี'); newParts.push({ code:hit.m.code, qty:m.qty }); }
+          else cmpNum('วัสดุ '+m.name, sq, m.qty, 0.001);
+        });
+        if(newParts.length) c.actions.push({ type:'parts', text:'เติมวัสดุที่ไม่มีในใบ '+newParts.length+' รายการ ลงใบวันแรก ('+dateTh(ex[0].date)+') และตัดคลังตาม', parts:newParts, target:ex[0] });
+        // เครื่องจักร (ลิตรน้ำมัน)
+        a.machines.forEach(m=>{
+          const v = matchVehicle(m.no);
+          if(!v){ c.diffs.push('เครื่องจักร '+m.no+' ไม่พบในทะเบียน'); return; }
+          const rows = ex.reduce((arr,d)=>arr.concat((d.vehicles||[]).filter(x=>x.label===v.label)),[]);
+          if(!rows.length){ c.diffs.push('กรมลงเครื่อง '+v.label+' แต่ใบของระบบไม่มีเครื่องนี้'); return; }
+          cmpNum('น้ำมัน '+v.label+' (ลิตร)', rows.reduce((s,x)=>s+(x.liters||0),0), m.liters, 0.05);
+        });
+        // คนทำงาน
+        const sysStaff = Array.from(new Set(ex.reduce((arr,d)=>arr.concat(d.staff||[]),[])));
+        const lackStaff = a.labor.filter(n=>!sysStaff.some(s=>normPerson(s)===normPerson(n)));
+        if(lackStaff.length) c.diffs.push('คนที่กรมลงแต่ใบของระบบไม่มี: '+lackStaff.join(', ')); else c.oks.push('รายชื่อคนทำงาน');
+        const moreStaff = sysStaff.filter(s=>!a.labor.some(n=>normPerson(s)===normPerson(n)));
+        if(moreStaff.length) c.diffs.push('คนที่อยู่ในใบของระบบแต่กรมไม่ได้ลง: '+moreStaff.join(', '));
+        // ลางาน
+        ex.forEach(d=>{ const lv = (d.staff||[]).filter(n=>leaves.some(l=>l.name===n && l.from<=d.date && d.date<=l.to)); if(lv.length) c.diffs.push('วันที่ '+dateTh(d.date)+' มีบันทึกลาแต่ลงว่าทำงาน: '+lv.join(', ')); });
+      }
+      return c;
+    });
+  }
+  function renderCompare(){
+    if(!S.cmp.length) return '';
+    const bad = S.cmp.filter(c=>c.diffs.length||c.skip).length;
+    const head = '<div class="dohi-kpi"><div><b>'+S.cmp.length+'</b>แผนในไฟล์กรม</div><div><b style="color:#1c8a53">'+(S.cmp.length-bad)+'</b>ตรงกับระบบ</div><div><b style="color:#c1402f">'+bad+'</b>มีจุดต่าง</div></div>'
+      + '<div class="dohi-note">โหมดนี้ <b>ไม่ลบ ไม่แทนที่ ไม่แก้ใบเดิม</b> — แสดงความต่างให้ตรวจ จะมีการเปลี่ยนแปลงก็ต่อเมื่อติ๊กรายการด้านล่างแล้วกด "ดำเนินการที่เลือก" เท่านั้น (ตัวเลขที่ต่างให้ไปแก้ในใบเอง)</div>';
+    return head + S.cmp.map((c,i)=>{
+      const state = c.skip ? '<span style="color:#7a5000">ข้าม</span>' : (!c.exN && c.actions.length ? '<span style="color:#c1402f">ระบบยังไม่มีใบ</span>' : (c.diffs.length ? '<span style="color:#c1402f">มีจุดต่าง '+c.diffs.length+'</span>' : '<span style="color:#1c8a53">✓ ตรงกัน</span>'));
+      return '<div class="dohi-note" style="background:#fff"><b>'+H(c.label)+'</b> — '+state+' <small>(ใบในระบบ '+c.exN+' ใบ)</small>'
+        + (c.skip?'<div>'+H(c.skip)+'</div>':'')
+        + (c.diffs.length?'<ul class="dohi-list">'+c.diffs.map(x=>'<li>'+H(x)+'</li>').join('')+'</ul>':'')
+        + c.actions.map(a=>'<label style="display:flex;gap:6px;align-items:center;margin-top:6px;font-size:13px;"><input type="checkbox" '+(S.sel[i+':'+a.type]?'checked':'')+' onchange="DohImp.togAct(\''+i+':'+a.type+'\',this.checked)"> '+H(a.text)+'</label>').join('')
+        + '</div>';
+    }).join('');
+  }
+  function compareText(){
+    const lines = ['ผลเทียบข้อมูลใบสั่งการ ระบบเรา กับไฟล์กรม (rmms) ประจำ'+mkLabel(S.importMk),''];
+    let n = 0;
+    S.cmp.forEach(c=>{
+      if(!c.diffs.length && !c.skip) return;
+      n++; lines.push(n+'. '+c.label+(c.skip?' — ข้าม: '+c.skip:''));
+      c.diffs.forEach(x=>lines.push('   - '+x));
+    });
+    if(!n) lines.push('ตรงกันทุกแผน ไม่มีจุดที่ต้องตรวจ'); else lines.push('','กรุณาตรวจเทียบกับเอกสารจริง แล้วแจ้งผลกลับ');
+    return lines.join('\n');
+  }
+  async function copyCompare(){
+    const t = compareText(); let ok = false;
+    try{ await navigator.clipboard.writeText(t); ok = true; }
+    catch(e){ const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText='position:fixed;opacity:0;'; document.body.appendChild(ta); ta.select(); try{ ok = document.execCommand('copy'); }catch(e2){} ta.remove(); }
+    S.cmpMsg = ok ? '✓ คัดลอกผลเทียบแล้ว นำไปวางในไลน์/ข้อความได้เลย' : ''; render(); if(!ok) alert('คัดลอกไม่สำเร็จ');
+  }
+  async function runCompare(){
+    if(S.busy) return;
+    const todo = [];
+    S.cmp.forEach((c,i)=>c.actions.forEach(a=>{ if(S.sel[i+':'+a.type]) todo.push({ c, a }); }));
+    if(!todo.length) return;
+    if(!confirm('จะดำเนินการ '+todo.length+' รายการที่เลือก (สร้างใบที่ขาด / เติมวัสดุที่ไม่มีในใบ พร้อมตัดคลัง)\nใบเดิมไม่ถูกลบหรือแก้ส่วนอื่น\n\nต้องการดำเนินการต่อหรือไม่?')) return;
+    S.busy = true;
+    let made = 0, filled = 0; const failed = [];
+    for(const t of todo){
+      try{
+        if(t.a.type==='days'){
+          for(const it of t.a.items){
+            const rec = it.rec; const orderId = FBL.newId('daily_work_orders'); rec.__backendId = orderId;
+            const ops = [{ action:'add', table:'daily_work_orders', data:dwoToApi(rec) }].concat(stockOps(rec, orderId));
+            const results = await apiBatch(ops); applySubsys3BatchResult(ops, results);
+            dailyWorkOrders.push(rec); made++;
+          }
+        } else {
+          const old = t.a.target;
+          if(!dailyWorkOrders.some(d=>d.__backendId===old.__backendId)) throw new Error('ไม่พบใบเดิม');
+          const merged = Object.assign({}, old, { parts:(old.parts||[]).concat(t.a.parts), note:String(old.note||'').replace(/\s*⚠ต้องตรวจ:.*$/,'').slice(0,700) });
+          const newId = FBL.newId('daily_work_orders'); merged.__backendId = newId;
+          const delOps = [{ action:'delete', table:'daily_work_orders', id:old.__backendId }]; (await buildSubsys3DeleteOps(old.__backendId, true)).forEach(o=>delOps.push(o));
+          const prevRef = await previousRefs([old]);
+          const ops = [{ action:'add', table:'daily_work_orders', data:dwoToApi(merged) }].concat(stockOps(merged, newId, prevRef), delOps);
+          const results = await apiBatch(ops); applySubsys3BatchResult(ops, results);
+          const k = dailyWorkOrders.findIndex(x=>x.__backendId===old.__backendId); if(k>-1) dailyWorkOrders.splice(k,1);
+          dailyWorkOrders.push(merged); filled += t.a.parts.length;
+        }
+      }catch(e){ failed.push(t.c.label+' — '+(e&&e.message?e.message:e)); }
+    }
+    dailyWorkOrders.forEach((r,i)=>{ r.no = i+1; });
+    S.busy = false; renderAll();
+    await rebuild();
+    S.cmpMsg = 'ดำเนินการแล้ว: สร้างใบที่ขาด '+made+' ใบ · เติมวัสดุ '+filled+' รายการ'+(failed.length?' · ไม่สำเร็จ '+failed.length+' ('+failed.join(' ; ')+')':'');
     render();
   }
   function setMonth(v){ S.importMk = v; rebuild(); }
@@ -410,14 +558,27 @@
   /* ---------- หน้าต่าง "ตรวจสอบ": รายการใบที่นำเข้าจากกรมแล้วมีจุดต้องตรวจ (อ่านจากหมายเหตุของใบ) ---------- */
   const FLAG = '⚠ต้องตรวจ: ';
   const CK = { mk:'' };
+  /* ผู้ที่มีบันทึกลาในวันนั้น แต่ถูกลงว่าทำงานในใบ — ตรวจสดจากข้อมูลการลาปัจจุบัน (ครอบคลุมใบที่นำเข้าไว้ก่อนด้วย) */
+  function leaveConflicts(d){
+    let leaves = []; try{ leaves = getLeaveHistoryX(); }catch(e){}
+    const names = Array.isArray(d.staff) ? d.staff : [];
+    return names.filter(n=>leaves.some(l=>l.name===n && l.from<=d.date && d.date<=l.to));
+  }
+  function ckProbs(d){
+    const n = String(d.note||''), at = n.indexOf(FLAG);
+    const probs = at<0 ? [] : n.slice(at+FLAG.length).split(' ; ').map(s=>s.trim()).filter(Boolean);
+    if(at>=0 && !probs.length) probs.push('นำเข้าด้วยเวอร์ชันเก่า ไม่ได้ระบุสาเหตุ — ตรวจค่าตอบแทน/ค่าใช้สอย/ล่วงเวลาที่ไม่ได้นำเข้า กับระบบกรม');
+    const lv = leaveConflicts(d);
+    if(lv.length && !probs.some(p=>p.indexOf('ลา')>=0)) probs.push('มีบันทึกลาวันนี้แต่ลงว่าทำงาน: '+lv.join(', '));
+    return probs;
+  }
   function flagged(){
-    return (typeof dailyWorkOrders!=='undefined' ? dailyWorkOrders : []).filter(d=>{ const n = String(d.note||''); return TOKEN_RE.test(n) && n.indexOf(FLAG)>=0; });
+    return (typeof dailyWorkOrders!=='undefined' ? dailyWorkOrders : []).filter(d=>TOKEN_RE.test(String(d.note||'')) && ckProbs(d).length);
   }
   function ckItems(mk){
     return flagged().filter(d=>String(d.date).slice(0,7)===mk).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.code<b.code?-1:1)).map(d=>{
-      const n = String(d.note), j = findJob(d.code);
-      const probs = n.slice(n.indexOf(FLAG)+FLAG.length).split(' ; ').map(s=>s.trim()).filter(Boolean);
-      return { id:d.__backendId, no:d.no, date:d.date, code:d.code, name:(j&&j.name)||'', loc:d.loc||'', probs };
+      const j = findJob(d.code);
+      return { id:d.__backendId, no:d.no, date:d.date, code:d.code, name:(j&&j.name)||'', loc:d.loc||'', probs:ckProbs(d) };
     });
   }
   function ckDefaultMonth(){
@@ -460,7 +621,7 @@
       : '<div class="dohi-note ok">เดือนนี้ไม่มีใบที่ต้องตรวจ</div>';
     body.innerHTML = '<div class="dohi-bar"><span>เดือน <select onchange="DohImp.setCheckMonth(this.value)">'+opts+'</select></span><span><b>'+items.length+'</b> ใบที่ต้องตรวจ</span></div>'
       + list
-      + '<div class="dohi-note" style="margin-top:12px">ตรวจ/แก้ใบแล้ว ให้ลบข้อความ "⚠ต้องตรวจ: ..." ออกจากช่องหมายเหตุของใบนั้น รายการจะหายไปจากหน้านี้</div>';
+      + '<div class="dohi-note" style="margin-top:12px">ตรวจ/แก้ใบแล้ว ให้ลบข้อความ "⚠ต้องตรวจ: ..." ออกจากช่องหมายเหตุของใบนั้น รายการจะหายไปจากหน้านี้ · เรื่องลางาน ระบบเทียบกับบันทึกการลาสด ๆ จะหายเมื่อเอาชื่อผู้ลาออกจากใบ หรือแก้วันลา</div>';
     if(foot) foot.innerHTML = '<span id="doh-ck-msg" style="margin-right:auto;font-size:13px;color:#1c8a53"></span><button class="btn btn-ghost" onclick="DohImp.closeCheck()">ปิด</button><button class="btn btn-primary" '+(items.length?'':'disabled')+' onclick="DohImp.copyCheck()">📋 คัดลอกรายการ</button>';
   }
   function openCheck(){
@@ -493,5 +654,5 @@
   setInterval(updateBadge, 2000);
 
   function setEc1w(v){ S.ec1w = !!v; }
-  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, openCheck, closeCheck, setCheckMonth, copyCheck };
+  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, runCompare };
 })();
