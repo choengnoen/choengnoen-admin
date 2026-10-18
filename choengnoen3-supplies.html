@@ -545,6 +545,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fhist-latest-tag{display:inline-block;margin-left:8px;font-family:'Kanit';font-size:10px;font-weight:600;color:#fff;background:var(--success,#2e8b57);padding:1px 8px;border-radius:20px;vertical-align:middle;}
   .fh-row-edit input{width:100%;}
   .fh-row-edit td{padding:6px 8px;}
+  .fh-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;}
+  .fh-bar span{font-size:12.5px;color:var(--ink-400);}
+  .fh-err{font-size:12px;color:var(--danger);margin-top:3px;line-height:1.35;}
+  .fh-row-edit input.bad{border-color:var(--danger);background:#fff8f7;}
 
   /* item modal — เพิ่มรายการวัสดุ / รับพัสดุ-น้ำมันเข้าคลัง */
   .modal-overlay{position:fixed;inset:0;background:rgba(7,27,48,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;animation:modalFadeIn .15s ease;}
@@ -1652,8 +1656,13 @@ function renderFuelHistoryModal(){
   const body = document.getElementById('fuel-history-body');
   const title = document.getElementById('fuel-history-title');
   if(!body || !title) return;
-  title.textContent = 'ประวัติน้ำมัน' + __fuelHistType;
-  body.innerHTML = fuelHistTypeToggleHtml() + (__fuelHistTab==='months' ? fuelHistoryMonthsHtml() : fuelHistoryReceivesHtml());
+  if(__fuelHistTab==='months'){
+    title.textContent = 'ประวัติน้ำมัน' + __fuelHistType;
+    body.innerHTML = fuelHistTypeToggleHtml() + fuelHistoryMonthsHtml();
+  }else{
+    title.textContent = 'ประวัติน้ำมันเชื้อเพลิง';
+    body.innerHTML = fuelHistoryReceivesHtml();
+  }
 }
 function fuelHistoryMonthsHtml(){
   const ft = __fuelHistType;
@@ -1685,37 +1694,76 @@ function fuelHistoryMonthsHtml(){
     <tbody>${rows}</tbody>
   </table></div>`;
 }
+/* รายการรับเข้าน้ำมัน — แสดงเป็นรายใบเบิก (1 แถว = 1 ใบเบิก มีดีเซล/เบนซินในใบเดียวกันได้)
+   แก้ 2569-10-18: จัดกลุ่มตามเลขที่ใบเบิก (field ref) และกันลงเลขที่ใบเบิกซ้ำ; รายการเก่าที่ไม่มีเลขที่แสดงแยกเป็นแถวละรายการ */
+const FUEL_REF_PREFIX = '426/35/'; // คำนำหน้าเลขที่ใบเบิก เติมให้อัตโนมัติ (ต่อด้วย ปี/ลำดับ เช่น 69/1062)
+let __fuelHistEditKey = null;
+let __fuelHistAdding = false;
+function fuelReceiveSlips(){
+  const map = new Map();
+  fuelTransactions.filter(t=>t.kind==='receive').forEach(t=>{
+    if(t.fuelType!=='ดีเซล' && t.fuelType!=='เบนซิน') return;
+    const ref = String(t.ref||'').trim();
+    const key = ref ? 'r:'+ref : 'i:'+t.id;
+    let s = map.get(key);
+    if(!s){ s = {key, ref, date:t.date||'', maxId:Number(t.id)||0, tx:{'ดีเซล':[], 'เบนซิน':[]}}; map.set(key, s); }
+    if(t.date && t.date>s.date) s.date = t.date;
+    if((Number(t.id)||0)>s.maxId) s.maxId = Number(t.id)||0;
+    s.tx[t.fuelType].push(t);
+  });
+  return Array.from(map.values()).sort((a,b)=>b.date.localeCompare(a.date) || (b.maxId-a.maxId));
+}
+function fuelSlipLiters(s, ft){ return s.tx[ft].reduce((a,t)=>a+(t.liters||0),0); }
+function fuelSlipRefConflict(ref, ownKey){
+  ref = String(ref||'').trim();
+  if(!ref) return null;
+  const key = 'r:'+ref;
+  if(key===ownKey) return null;
+  return fuelReceiveSlips().find(s=>s.key===key) || null;
+}
+function fhCheckRef(){
+  const inp = document.getElementById('fh-edit-ref'), err = document.getElementById('fh-ref-err'), btn = document.getElementById('fh-save-btn');
+  if(!inp) return true;
+  const hit = fuelSlipRefConflict(inp.value, __fuelHistEditKey);
+  inp.classList.toggle('bad', !!hit);
+  if(err) err.textContent = hit ? 'ซ้ำ! มีแล้วเมื่อ '+fmtDate(hit.date) : '';
+  if(btn) btn.disabled = !!hit;
+  return !hit;
+}
 function fuelHistoryReceivesHtml(){
-  const ft = __fuelHistType;
-  const rows = fuelTransactions.filter(t=>t.fuelType===ft && t.kind==='receive').slice().sort((a,b)=>b.date.localeCompare(a.date) || (b.id-a.id));
-  if(!rows.length) return `<div class="foot-note">ยังไม่มีรายการรับเข้า${ft}</div>`;
   const admin = isAdmin();
-  const body = rows.map(t=>{
-    if(__fuelHistEditId===t.id){
-      return `<tr class="fh-row-edit">
-        <td><input type="date" id="fh-edit-date" value="${esc(t.date||'')}"></td>
-        <td><input type="text" id="fh-edit-ref" value="${esc(t.ref||'')}" placeholder="เลขที่ใบรับ"></td>
-        <td><input type="number" step="0.01" class="no-spin" id="fh-edit-liters" value="${esc(t.liters||'')}"></td>
-        <td><input type="number" step="0.01" class="no-spin" id="fh-edit-price" value="${esc(t.unitPrice||'')}" placeholder="บาท/ลิตร"></td>
-        <td style="white-space:nowrap;">
-          <button type="button" class="btn btn-sm btn-primary" onclick="saveFuelReceiveEdit(${t.id})">💾 บันทึก</button>
-          <button type="button" class="btn btn-sm btn-ghost" onclick="cancelFuelReceiveEdit()">ยกเลิก</button>
-        </td>
-      </tr>`;
-    }
-    return `<tr>
-      <td>${fmtDate(t.date)}</td>
-      <td>${esc(t.ref || '—')}</td>
-      <td class="num">${fmtNum(t.liters,1)}</td>
-      <td class="num">${t.unitPrice ? fmtNum(t.unitPrice,2) : '—'}</td>
+  const slips = fuelReceiveSlips();
+  const dash = '<span style="color:#b4bac2;">—</span>';
+  const cell = n => n>0 ? fmtNum(n,1) : dash;
+  const numIn = (id,v) => `<input type="number" step="0.01" min="0" class="no-spin" id="${id}" value="${v>0?esc(v):''}" placeholder="0.0" style="text-align:right;">`;
+  const formRow = s => `<tr class="fh-row-edit">
+      <td><input type="date" id="fh-edit-date" value="${esc(s?s.date:toLocalISODate(TODAY))}"></td>
+      <td><input type="text" id="fh-edit-ref" value="${esc(s && s.ref ? s.ref : FUEL_REF_PREFIX)}" placeholder="เลขที่ใบเบิก" oninput="fhCheckRef()"><div class="fh-err" id="fh-ref-err"></div></td>
+      <td>${numIn('fh-edit-d', s?fuelSlipLiters(s,'ดีเซล'):0)}</td>
+      <td>${numIn('fh-edit-g', s?fuelSlipLiters(s,'เบนซิน'):0)}</td>
       <td style="white-space:nowrap;">
-        ${admin ? `<button type="button" class="btn btn-sm btn-ghost" onclick="editFuelReceiveRow(${t.id})">✎ แก้ไข</button>
-        <button type="button" class="btn btn-sm btn-danger" onclick="deleteFuelReceiveRow(${t.id})">🗑</button>` : ''}
+        <button type="button" class="btn btn-sm btn-primary" id="fh-save-btn" onclick="saveFuelSlip()">💾 บันทึก</button>
+        <button type="button" class="btn btn-sm btn-ghost" onclick="cancelFuelSlipEdit()">✕</button>
+      </td>
+    </tr>`;
+  let body = __fuelHistAdding ? formRow(null) : '';
+  body += slips.map(s=>{
+    if(__fuelHistEditKey===s.key) return formRow(s);
+    return `<tr>
+      <td>${fmtDate(s.date)}</td>
+      <td>${s.ref ? esc(s.ref) : '<span style="color:var(--danger);font-size:13px;">ยังไม่ระบุเลขที่</span>'}</td>
+      <td class="num">${cell(fuelSlipLiters(s,'ดีเซล'))}</td>
+      <td class="num">${cell(fuelSlipLiters(s,'เบนซิน'))}</td>
+      <td style="white-space:nowrap;">
+        ${admin ? `<button type="button" class="btn btn-sm btn-ghost" onclick="editFuelSlip('${jsArg(s.key)}')" title="แก้ไข" aria-label="แก้ไข">✎</button>
+        <button type="button" class="btn btn-sm btn-danger" onclick="deleteFuelSlip('${jsArg(s.key)}')">🗑</button>` : ''}
       </td>
     </tr>`;
   }).join('');
-  return `<div class="table-wrap"><table>
-    <thead><tr><th>วันที่รับเข้า</th><th>เลขที่ใบรับ</th><th class="num">ปริมาณ (ล.)</th><th class="num">ราคา/ลิตร</th><th></th></tr></thead>
+  if(!body) return `<div class="foot-note">ยังไม่มีรายการรับเข้า</div>`;
+  return `<div class="fh-bar"><span>1 แถว = 1 ใบเบิก · เลขที่ห้ามซ้ำ</span>${admin ? `<button type="button" class="btn btn-sm btn-primary" onclick="startFuelSlipAdd()">＋ เพิ่มใบเบิก</button>` : ''}</div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>วันที่รับเข้า</th><th>เลขที่ใบเบิก</th><th class="num">ดีเซล (ล.)</th><th class="num">เบนซิน (ล.)</th><th></th></tr></thead>
     <tbody>${body}</tbody>
   </table></div>
   ${admin ? '' : `<div class="legend-block" id="fuel-recv-foot-block">
@@ -1723,66 +1771,103 @@ function fuelHistoryReceivesHtml(){
     <div class="foot-note" id="fuel-recv-foot" style="display:none;background:transparent;border-top:none;">เข้าสู่ระบบผู้ดูแลเพื่อแก้ไขหรือลบรายการ</div>
   </div>`}`;
 }
-function editFuelReceiveRow(id){
+function startFuelSlipAdd(){
   if(!isAdmin()) return;
-  __fuelHistEditId = id;
+  __fuelHistAdding = true; __fuelHistEditKey = null;
   renderFuelHistoryModal();
 }
-function cancelFuelReceiveEdit(){
-  __fuelHistEditId = null;
+function editFuelSlip(key){
+  if(!isAdmin()) return;
+  __fuelHistEditKey = key; __fuelHistAdding = false;
   renderFuelHistoryModal();
 }
-/* แก้/ลบรายการรับน้ำมันในประวัติ — เดิมแก้แค่ในหน่วยความจำ (ไม่เรียก backend) รีเฟรชหน้าแล้วกลับเป็นค่าเดิม
-   แก้ 2569-09-19 ให้บันทึกลง fuel_transactions จริง ถ้าไม่สำเร็จคืนค่าเดิมกลับ */
-async function saveFuelReceiveEdit(id){
+function cancelFuelSlipEdit(){
+  __fuelHistEditKey = null; __fuelHistAdding = false;
+  renderFuelHistoryModal();
+}
+function fuelSlipNote(ref, price, liters){
+  const parts = [];
+  if(ref) parts.push('เลขที่ใบรับ '+ref);
+  if(price) parts.push('ราคา '+fmtNum(price,2)+' บาท/หน่วย รวม '+fmtNum(liters*price,2)+' บาท');
+  return parts.length ? parts.join(' · ') : 'รับเข้าคลัง';
+}
+/* บันทึกใบเบิก (เพิ่มใหม่/แก้ไข) — ชนิดน้ำมันที่เว้นว่างในใบที่มีอยู่เดิม = ลบรายการชนิดนั้นออกจากใบ
+   ถ้าบันทึกกลางทางไม่สำเร็จ โหลดข้อมูลจากฐานข้อมูลกลางใหม่เพื่อให้หน้าจอตรงกับของจริง */
+async function saveFuelSlip(){
   if(!isAdmin()) return;
-  const t = fuelTransactions.find(x=>x.id===id);
-  if(!t) return;
-  if(blockIfMonthLocked(t.date)) return;
+  const editing = __fuelHistEditKey ? fuelReceiveSlips().find(s=>s.key===__fuelHistEditKey) : null;
   const date = document.getElementById('fh-edit-date')?.value;
-  if(date && blockIfMonthLocked(date)) return;
-  const ref = (document.getElementById('fh-edit-ref')?.value||'').trim();
-  const liters = parseFloat(document.getElementById('fh-edit-liters')?.value);
-  const price = parseFloat(document.getElementById('fh-edit-price')?.value) || 0;
-  if(!date || isNaN(liters) || liters<=0){ showAlertModal('กรุณากรอกวันที่และปริมาณให้ถูกต้อง'); return; }
-  const before = Object.assign({}, t);
-  t.date = date;
-  t.liters = liters;
-  t.ref = ref || undefined;
-  t.unitPrice = price || undefined;
-  t.totalPrice = price ? liters*price : undefined;
-  const noteParts = [];
-  if(ref) noteParts.push('เลขที่ใบรับ '+ref);
-  if(price) noteParts.push('ราคา '+fmtNum(price,2)+' บาท/หน่วย รวม '+fmtNum(liters*price,2)+' บาท');
-  t.note = noteParts.length ? noteParts.join(' · ') : 'รับเข้าคลัง';
+  let ref = (document.getElementById('fh-edit-ref')?.value||'').trim();
+  if(ref===FUEL_REF_PREFIX.trim()) ref = ''; // มีแค่คำนำหน้า = ยังไม่ได้กรอกเลขที่
+  const lit = {'ดีเซล': parseFloat(document.getElementById('fh-edit-d')?.value)||0, 'เบนซิน': parseFloat(document.getElementById('fh-edit-g')?.value)||0};
+  if(!date){ showAlertModal('กรุณากรอกวันที่'); return; }
+  if(!editing && !ref){ showAlertModal('กรุณากรอกเลขที่ใบเบิก'); return; }
+  if(lit['ดีเซล']<=0 && lit['เบนซิน']<=0){ showAlertModal('กรุณากรอกปริมาณอย่างน้อย 1 ชนิด (ดีเซลหรือเบนซิน)'); return; }
+  if(!fhCheckRef()){ showAlertModal('เลขที่ใบเบิกนี้ลงข้อมูลไว้แล้ว ไม่สามารถบันทึกซ้ำได้'); return; }
+  if(blockIfMonthLocked(date)) return;
+  if(editing && blockIfMonthLocked(editing.date)) return;
+  const saveBtn = document.getElementById('fh-save-btn');
+  if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'กำลังบันทึก...'; }
   try{
-    await apiPost('update', 'fuel_transactions', fuelTxToApi(t));
+    for(const ft of ['ดีเซล','เบนซิน']){
+      const list = editing ? editing.tx[ft] : [];
+      const q = lit[ft];
+      if(q>0){
+        if(list.length){
+          const t = list[0];
+          const u = Object.assign({}, t, {date, liters:q, ref:ref||undefined});
+          u.totalPrice = t.unitPrice ? q*t.unitPrice : undefined;
+          u.note = fuelSlipNote(ref, t.unitPrice, q);
+          await apiPost('update', 'fuel_transactions', fuelTxToApi(u));
+          Object.assign(t, u);
+          for(const x of list.slice(1)){
+            await apiPost('delete', 'fuel_transactions', null, x.id);
+            fuelTransactions = fuelTransactions.filter(y=>y.id!==x.id);
+          }
+        }else{
+          const rec = {date, fuelType:ft, kind:'receive', liters:q, note:fuelSlipNote(ref,0,q), ref:ref||undefined};
+          const saved = await apiPost('add', 'fuel_transactions', fuelTxToApi(rec));
+          fuelTransactions.push(fuelTxFromApi(saved));
+        }
+      }else{
+        for(const x of list){
+          await apiPost('delete', 'fuel_transactions', null, x.id);
+          fuelTransactions = fuelTransactions.filter(y=>y.id!==x.id);
+        }
+      }
+    }
   }catch(err){
-    Object.assign(t, before);
-    showAlertModal('บันทึกการแก้ไขรายการรับน้ำมันไปยังฐานข้อมูลกลางไม่สำเร็จ: ' + err.message);
+    showAlertModal('บันทึกใบเบิกไปยังฐานข้อมูลกลางไม่สำเร็จ: ' + err.message);
+    try{ await loadFuelTransactionsFromApi(); }catch(e){}
     renderAll();
     renderFuelHistoryModal();
     return;
   }
-  __fuelHistEditId = null;
+  __fuelHistEditKey = null; __fuelHistAdding = false;
   renderAll();
   renderFuelHistoryModal();
 }
-function deleteFuelReceiveRow(id){
+function deleteFuelSlip(key){
   if(!isAdmin()) return;
-  const tx = fuelTransactions.find(t=>t.id===id);
-  if(tx && blockIfMonthLocked(tx.date)) return;
-  showConfirmModal('ยืนยันลบรายการ', 'ยืนยันลบรายการรับเข้านี้? การลบไม่สามารถย้อนกลับได้', 'ลบรายการ', async function(){
+  const txs = fuelTransactions.filter(t=>t.kind==='receive' && (String(t.ref||'').trim() ? 'r:'+String(t.ref).trim() : 'i:'+t.id)===key);
+  if(!txs.length) return;
+  for(const t of txs){ if(blockIfMonthLocked(t.date)) return; }
+  showConfirmModal('ยืนยันลบใบเบิก', 'ยืนยันลบใบเบิกนี้ทั้งใบ (ทุกชนิดน้ำมันในใบ)? การลบไม่สามารถย้อนกลับได้', 'ลบใบเบิก', async function(){
     try{
-      await apiPost('delete', 'fuel_transactions', null, id);
+      for(const t of txs){
+        await apiPost('delete', 'fuel_transactions', null, t.id);
+        fuelTransactions = fuelTransactions.filter(y=>y.id!==t.id);
+      }
     }catch(err){
       showAlertModal('ลบรายการรับน้ำมันในฐานข้อมูลกลางไม่สำเร็จ: ' + err.message);
+      try{ await loadFuelTransactionsFromApi(); }catch(e){}
+      renderAll();
+      renderFuelHistoryModal();
       return;
     }
-    fuelTransactions = fuelTransactions.filter(t=>t.id!==id);
     renderAll();
     renderFuelHistoryModal();
-    showSuccessModal('ลบรายการรับเข้าเรียบร้อยแล้ว');
+    showSuccessModal('ลบใบเบิกเรียบร้อยแล้ว');
   });
 }
 function updateMaterial(i, field, val){
@@ -2051,7 +2136,7 @@ function receiveFormHtml(){
       ${recvKindToggleHtml()}
     </div>
     <div class="two-col">
-      <div class="f-row"><label>เลขที่ใบรับ/ใบส่งของ</label><input type="text" id="recv-ref"></div>
+      <div class="f-row"><label>เลขที่ใบรับ/ใบส่งของ</label><input type="text" id="recv-ref" value="${FUEL_REF_PREFIX}"></div>
       <div class="f-row"><label>วันที่รับ</label><input type="date" id="recv-date" value="${todayStr}"></div>
     </div>
     <div class="f-row"><label>ผู้ขาย/หน่วยงานที่ส่งของ (ถ้ามี)</label><input type="text" id="recv-supplier" placeholder="ไม่บังคับ"></div>
@@ -2177,9 +2262,14 @@ function onRecvCalc(rid){
 }
 async function submitReceiveForm(){
   if(!isAdmin()) return;
-  const ref = (document.getElementById('recv-ref')?.value||'').trim();
+  let ref = (document.getElementById('recv-ref')?.value||'').trim();
+  if(ref===FUEL_REF_PREFIX.trim()) ref = ''; // มีแค่คำนำหน้า = ยังไม่ได้กรอกเลขที่
   const date = document.getElementById('recv-date')?.value || toLocalISODate(TODAY);
   if(blockIfMonthLocked(date)) return;
+  if(itemModalRecvType==='fuel' && ref){
+    const dupSlip = fuelSlipRefConflict(ref, null);
+    if(dupSlip){ showAlertModal('เลขที่ใบเบิก '+ref+' ลงข้อมูลไว้แล้วเมื่อ '+fmtDate(dupSlip.date)+' ไม่สามารถบันทึกซ้ำได้ ถ้าต้องการแก้ไขให้ไปที่ประวัติน้ำมัน > รายการรับเข้า'); return; }
+  }
   const supplier = (document.getElementById('recv-supplier')?.value||'').trim();
   const noteExtra = (document.getElementById('recv-note')?.value||'').trim();
 
