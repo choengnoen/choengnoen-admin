@@ -494,10 +494,19 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ib-tag.lock{background:var(--paper-100);color:var(--ink-600);}
   .ib-tag.ok{background:var(--success-bg);color:var(--success);}
   .ib-lines td{background:var(--paper-50);padding:0 10px 6px 10px;}
-  .ib-lines ul{margin:0;padding:3px 10px;list-style:none;display:grid;gap:0;background:#fff;border:1px solid var(--line);border-radius:8px;}
-  .ib-lines li{display:flex;justify-content:space-between;gap:12px;font-size:12.5px;line-height:1.35;padding:3px 0;}
-  .ib-lines li + li{border-top:1px dashed var(--line);}
-  .ib-lines li span:last-child{color:var(--ink-600);white-space:nowrap;flex-shrink:0;}
+  .ib-lines td.ib-lines-gap{padding:0;}
+  .ib-lt{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:12.5px;line-height:1.35;table-layout:fixed;}
+  .ib-lt th{background:var(--paper-100);color:var(--ink-600);font-weight:600;font-size:11.5px;text-align:right;padding:5px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  .ib-lt td{padding:5px 10px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;border-top:1px dashed var(--line);background:#fff;}
+  .ib-lt tbody tr:first-child td{border-top:0;}
+  .ib-lt th:first-child,.ib-lt td:first-child{text-align:left;white-space:normal;}
+  .ib-lt .c-qty{width:130px;}
+  .ib-lt .c-price{width:130px;}
+  .ib-lt .c-total{width:130px;}
+  .ib-lt td.c-total{font-weight:600;color:var(--ink-900,#222);}
+  .ib-lt tfoot td{border-top:1px solid var(--line);background:var(--paper-50);font-weight:700;}
+  .ib-lt tfoot td:first-child{text-align:right;color:var(--ink-600);}
+  .ib-lt .na{color:var(--ink-400);}
   .ib-empty{text-align:center;color:var(--ink-400);padding:38px 0;font-size:14px;line-height:1.8;}
   .ib-hd{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .ib-sec-t{font-weight:600;font-size:13px;color:var(--ink-600);margin:6px 0 8px;}
@@ -1970,7 +1979,14 @@ function renderInbound(){
         <button type="button" class="fh-ico fh-ico-del" onclick="event.stopPropagation();deleteIbSlip('${kj}')" title="ลบทั้งใบ" aria-label="ลบทั้งใบ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
       </td>` : '';
     const ncol = admin ? 5 : 4;
-    const detail = open ? `<tr class="ib-lines"><td colspan="${ncol}"><ul>${s.lines.map(l=>`<li><span>${l.kind==='fuel'?'⛽':'📦'} ${esc(l.name)}</span><span>${fmtNum(l.qty, Number.isInteger(l.qty)?0:2)} ${esc(l.unit)}${l.unitPrice ? ' · '+fmtNum(l.unitPrice,2)+' บาท/หน่วย' : ''}</span></li>`).join('')}</ul></td></tr>` : '';
+    let detail = '';
+    if(open){
+      const lineTot = l => (l.unitPrice ? (Number(l.qty)||0)*Number(l.unitPrice) : 0);
+      const grand = s.lines.reduce((a,l)=>a+lineTot(l),0);
+      const hasAnyPrice = s.lines.some(l=>l.unitPrice);
+      const body = s.lines.map(l=>`<tr><td>${l.kind==='fuel'?'⛽':'📦'} ${esc(l.name)}</td><td class="c-qty">${fmtNum(l.qty, Number.isInteger(l.qty)?0:2)} ${esc(l.unit)}</td><td class="c-price">${l.unitPrice ? fmtNum(l.unitPrice,2) : '<span class="na">–</span>'}</td><td class="c-total">${l.unitPrice ? fmtNum(lineTot(l),2) : '<span class="na">–</span>'}</td></tr>`).join('');
+      detail = `<tr class="ib-lines"><td class="ib-lines-gap"></td><td colspan="${ncol-1}"><table class="ib-lt"><thead><tr><th>รายการ</th><th class="c-qty">จำนวน</th><th class="c-price">ราคา/หน่วย (บาท)</th><th class="c-total">รวม (บาท)</th></tr></thead><tbody>${body}</tbody>${hasAnyPrice ? `<tfoot><tr><td colspan="3">รวมทั้งใบ</td><td class="c-total">${fmtNum(grand,2)}</td></tr></tfoot>` : ''}</table></td></tr>`;
+    }
     return `<tr class="ib-row${open?' open':''}" onclick="ibToggle('${kj}')">
       <td class="ib-date">${fmtDate(s.date)}</td>
       <td>${s.ref ? `<span class="ib-ref">${esc(s.ref)}</span>` : '<span class="ib-ref none">ยังไม่ระบุเลขที่</span>'}</td>
