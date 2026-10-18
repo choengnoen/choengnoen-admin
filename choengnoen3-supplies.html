@@ -920,14 +920,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               </select>
             </div>
           </div>
-          <div class="toolbar" style="padding:14px 20px 0;">
-            <div class="tabs" id="rep-fuel-typetabs" style="padding:0;border:none;background:transparent;flex:none;">
-              <div class="tab" data-fueltab="ดีเซล" onclick="setFuelTypeTab(this)">น้ำมันดีเซล</div>
-              <div class="tab" data-fueltab="เบนซิน" onclick="setFuelTypeTab(this)">น้ำมันเบนซิน</div>
-              <div class="tab active" data-fueltab="all" onclick="setFuelTypeTab(this)">ทั้งหมด</div>
-            </div>
-            <label class="rep-toggle" style="margin-left:auto;"><input type="checkbox" id="rep-fuel-showall" onchange="renderReportFuel(currentFuelMk())"> แสดงรถที่ไม่ได้เบิกวันนี้ (เพื่อเพิ่มรายการ)</label>
-          </div>
           <div class="draft-chip hidden" id="draft-fuel-chip">
             <span class="dc-dot"></span>
             <span id="draft-fuel-count-text"></span>
@@ -936,10 +928,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <button class="dc-btn dc-save" onclick="reviewDraftReport('fuel')">💾 บันทึก</button>
           </div>
           <div id="rep-fuel-grid-wrap" class="grid-wrap"></div>
-          <div class="legend-block" id="rep-fuel-foot-block">
-            <button type="button" class="legend-dot-btn no-print" id="rep-fuel-foot-toggle" onclick="__toggleNote('rep-fuel-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="rep-fuel-foot" style="display:none;background:transparent;border-top:none;">เลือกวันจากแถบวันที่ด้านบนเพื่อดูรายการเบิกของวันนั้น — ผู้มีสิทธิ์แก้ไขกรอก/แก้ไขจำนวนลิตรและเลขไมล์ในช่องได้ (ลิตรเป็นฉบับร่างจนกว่าจะกด "บันทึก") · ผู้มีสิทธิ์ตรวจติ๊ก "ตรวจแล้ว" ทีละรายการแล้วกด "ยืนยันตรวจครบทั้งวัน" วันนั้นจะถูกล็อกจนกว่าผู้มีสิทธิ์ตรวจจะปลดล็อก — การรับน้ำมันเข้าคลังให้ใช้ปุ่ม "+ รับเข้าคลัง" ที่แท็บทะเบียนพัสดุ (แท็บย่อยน้ำมันเชื้อเพลิง)</div>
-          </div>
         </div>
       </div>
 
@@ -3901,11 +3889,6 @@ function onGridCellBlur(el){
    อ้างถึงอีกต่อไป ถูกแทนที่ด้วยกลไก draft-before-save: onMatCellDraftInput()/
    onFuelCellDraftInput() + confirmCommitDraftReport()) */
 
-function setFuelTypeTab(el){
-  document.querySelectorAll('#rep-fuel-typetabs .tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  renderReportFuel(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'));
-}
 /* ---- แก้ไข/บันทึก ยอดยกมา โดยตรงในตาราง พ.1-02/พ.1-03 (แก้ยอดยกมาที่ผิดได้ทันทีโดยไม่ต้องเดา/สลับแท็บ) ---- */
 let repMatEditMode = false;
 let repFuelEditMode = false;
@@ -4226,9 +4209,8 @@ function stepFuelCheckDay(n){
 function renderReportFuel(mk){
   const wrap = document.getElementById('rep-fuel-grid-wrap');
   if(!wrap) return;
-  const fuelFilter = document.querySelector('#rep-fuel-typetabs .tab.active')?.dataset.fueltab || 'all';
-  const fuelTypes = fuelFilter==='all' ? ['ดีเซล','เบนซิน'] : [fuelFilter];
-  const showAll = !!document.getElementById('rep-fuel-showall')?.checked;
+  const fuelTypes = ['ดีเซล','เบนซิน'];
+  const showAll = false;
   const q = (document.getElementById('rep-fuel-search')?.value||'').trim().toLowerCase();
   const days = workdaysInMonthArr(mk);
   const dayNum = pickFuelDay(mk);
@@ -4309,7 +4291,7 @@ function renderReportFuel(mk){
       <td class="fd-c">${distTxt}</td>
       <td>${fuelFlagHtml(r)}</td></tr>`;
   });
-  if(!rows.length) body = `<tr><td colspan="10" class="fd-empty">วันนี้ไม่มีรายการเบิก — ติ๊ก "แสดงรถที่ไม่ได้เบิกวันนี้" ด้านบนเพื่อเพิ่มรายการ</td></tr>`;
+  if(!rows.length) body = `<tr><td colspan="10" class="fd-empty">วันนี้ไม่มีรายการเบิก</td></tr>`;
   const grand = rows.reduce((s,r)=>s+(r.lit||0),0);
   const table = `<div class="fd-tablewrap"><table class="fd-table"><thead><tr>
     <th style="width:54px">ตรวจ<br>แล้ว</th><th>ผู้เบิก</th><th>หมายเลขเครื่อง/รถ</th><th>ประเภท<br>พัสดุที่เบิก</th><th>เบิกครั้งล่าสุด<br><small>จำนวน · วันที่</small></th><th class="fd-cur">เบิกครั้งนี้<br><small>(ลิตร)</small></th><th>เลขไมล์<br>ครั้งก่อน</th><th class="fd-cur">เลขไมล์<br>ครั้งนี้</th><th>ระยะทาง</th><th>ผลตรวจ</th></tr></thead>
