@@ -920,10 +920,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <tbody id="mat-body"></tbody>
           </table></div>
           <div class="foot-note hidden" id="mat-neg-banner" style="background:var(--danger-bg);color:var(--danger);border-radius:8px;padding:10px 14px;margin:0 20px 14px;font-weight:600;"></div>
-          <div class="legend-block" id="mat-foot-block">
-            <button type="button" class="legend-dot-btn no-print" id="mat-foot-toggle" onclick="__toggleNote('mat-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="mat-foot" style="display:none;background:transparent;border-top:none;"></div>
-          </div>
           <div id="master-fuel-view" class="hidden" style="padding:14px 20px 20px;">
             <div class="fuel-summary-head">
               <div class="fuel-month-badge" id="fuel-month-label"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
@@ -1486,7 +1482,6 @@ function renderMaterials(){
   renderMasterToolbar(editing);
   document.getElementById('mat-cols').classList.toggle('hidden', isFuel || editing);
   document.getElementById('mat-table-wrap').classList.toggle('hidden', isFuel || !editing);
-  document.getElementById('mat-foot-block').classList.toggle('hidden', isFuel);
   document.getElementById('master-fuel-view').classList.toggle('hidden', !isFuel);
   document.getElementById('mat-search-box').classList.toggle('hidden', isFuel || editing);
   document.getElementById('mat-edit-controls').classList.toggle('hidden', isFuel || editing || !isAdmin());
@@ -1525,7 +1520,7 @@ function renderMaterials(){
       <td class="mv-center num">${stockCell}</td>
       <td class="mv-center">${reorderCell}</td>
       <td class="mv-center mv-status">${pill}</td>
-      <td class="mv-center"><button type="button" class="hist-icon-btn" title="ดูประวัติเบิก-จ่าย" onclick="openItemHistoryModal('material','${jsArg(m.code)}')">🕘</button></td>
+      <td class="mv-center"><button type="button" class="hist-icon-btn" title="ดูประวัติเบิก-จ่าย" onclick="openItemHistoryModal('material','${jsArg(m.code)}')">🕘</button>${editing ? `<button type="button" class="hist-icon-btn" title="ลบ/รวมรายการซ้ำ" onclick="openMatMerge('${jsArg(m.code)}')">🗑</button>` : ''}</td>
     </tr>`;
   }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--ink-400);padding:20px;">ไม่พบรายการ</td></tr>';
   const acctTotal = materials.filter(m=>(m.accountType||'ในบัญชี')===acctType).length;
@@ -1545,7 +1540,6 @@ function renderMaterials(){
       banner.innerHTML = `⚠ พบ ${negItems.length} รายการที่ยอดคงเหลือติดลบ (${negItems.slice(0,5).map(m=>esc(m.name)).join(', ')}${negItems.length>5?' และอื่นๆ':''}) — มักเกิดจากยอดเบิกที่บันทึกไว้มากกว่ายอดที่มีจริง เช่น กรอกจำนวนผิดหรือบันทึกซ้ำ กด "✎ แก้ไขรายการ" ด้านบนแล้วแก้ยอดคงเหลือให้ตรงกับที่นับได้จริง ระบบจะบันทึกเป็นรายการปรับปรุงในบัญชี พ.1-02 ของวันนี้โดยอัตโนมัติ`;
     }
   }
-  document.getElementById('mat-foot').textContent = `ยอดคงเหลือคำนวณจากบัญชี พ.1-02`;
 }
 /* ============================================================
    ทะเบียนพัสดุแบบ 3 คอลัมน์ตามความเร่งด่วน + เลือกดูรายเดือน (2569-10-18)
@@ -3853,6 +3847,84 @@ async function saveMaterialEdits(){
   if(eb) eb.classList.remove('hidden');
   if(sb) sb.classList.add('hidden');
   renderAll();
+}
+/* ---- ลบ/รวมวัสดุซ้ำ (2569-10-18) — เปิดจากปุ่ม 🗑 ในโหมด "แก้ไขรายการ"
+   ย้ายประวัติเบิก-รับ (material_transactions) + ยอดตั้งต้น + ค่าแก้ยอดยกมา/รับเข้า (ledger_overrides) ของรายการที่ลบ
+   ไปรวมกับรายการที่เก็บไว้ แล้วลบรายการที่ซ้ำ (เข้าถังขยะ กู้คืนได้) ---- */
+function openMatMerge(code){
+  if(!isAdmin()) return;
+  const m = matByCode(code); if(!m) return;
+  const n = materialTransactions.filter(t=>t.itemCode===code).length;
+  const others = materials.filter(x=>x.code!==code).slice().sort((a,b)=>a.name.localeCompare(b.name,'th'));
+  document.getElementById('mat-act-icon').textContent = '🗑';
+  document.getElementById('mat-act-title').textContent = 'ลบ/รวมวัสดุซ้ำ';
+  document.getElementById('mat-act-body').innerHTML =
+    `<div class="ma-hint neg">รายการที่จะ<b>ลบ</b>: <b>${esc(m.name)}</b> (${esc(m.unit)}) · ${esc(m.accountType||'ในบัญชี')} · ยอด ${fmtNum(currentStock(m),1)} · มีประวัติ ${n} รายการ</div>
+     <div class="f-row"><label>รวมประวัติเข้ากับรายการที่เก็บไว้</label>
+       <select id="mm-keep"><option value="">${n>0?'— เลือกรายการที่เก็บไว้ —':'— ไม่รวม (ลบทิ้งเฉยๆ) —'}</option>${others.map(x=>`<option value="${esc(x.code)}">${esc(x.name)} (${esc(x.unit)})${x.accountType==='นอกบัญชี'?' · นอกบัญชี':''}</option>`).join('')}</select></div>
+     <div class="foot-note" style="margin:0;">ระบบจะย้ายประวัติเบิก-รับ ยอดตั้งต้น และค่าแก้ยอดยกมาของรายการที่ลบ ไปรวมกับรายการที่เก็บไว้ ยอดคงเหลือจึงเท่ากับยอดสองรายการรวมกัน หลังรวมแล้วจะรีเฟรชตาราง ค่าที่แก้ในตารางแต่ยังไม่กด "บันทึก" จะหาย จึงควรกด "บันทึก" ก่อน · <b>รายการที่ลบเข้าถังขยะ กู้คืนได้</b></div>`;
+  document.getElementById('mat-act-foot').innerHTML = `<button type="button" class="btn btn-ghost" onclick="closeMatActModal()">ยกเลิก</button>
+    <button type="button" class="btn btn-danger" id="mm-go-btn" onclick="doMatMerge('${jsArg(code)}')">🗑 รวมและลบรายการนี้</button>`;
+  document.getElementById('mat-act-overlay').classList.remove('hidden');
+}
+async function doMatMerge(dropCode){
+  if(!isAdmin()) return;
+  const drop = matByCode(dropCode); if(!drop) return;
+  const keepCode = document.getElementById('mm-keep').value;
+  const dropTxs = materialTransactions.filter(t=>t.itemCode===dropCode);
+  if(!keepCode && dropTxs.length){ showAlertModal('กรุณาเลือกรายการที่เก็บไว้ เพื่อรวมประวัติเบิก-รับเข้าด้วยกัน'); return; }
+  const keep = keepCode ? matByCode(keepCode) : null;
+  if(keepCode && !keep) return;
+  const months = {}; dropTxs.forEach(t=>{ months[monthKeyOf(t.date)] = 1; });
+  for(const mk of Object.keys(months)){ if(blockIfMonthLocked(mk)) return; }
+  /* คำนวณค่าแก้ยอดรวม "ก่อน" ย้ายประวัติ (ยอดยกมา/รับเข้าของเดือนที่มีการแก้ไว้ฝั่งใดฝั่งหนึ่ง) */
+  const ovWrites = [];
+  if(keep){
+    [['matOpening', materialOpeningOverride, 'opening'], ['matReceived', materialReceivedOverride, 'received']].forEach(([kind, map, field])=>{
+      const ms = {};
+      Object.keys(map).forEach(k=>{ const i=k.lastIndexOf('|'); const c=k.slice(0,i); if(c===dropCode||c===keepCode) ms[k.slice(i+1)] = 1; });
+      Object.keys(ms).forEach(mk=>{
+        ovWrites.push({kind, map, mk, val: materialMonthSummary(keepCode,mk)[field] + materialMonthSummary(dropCode,mk)[field]});
+      });
+    });
+  }
+  const btn = document.getElementById('mm-go-btn');
+  if(btn){ btn.disabled = true; btn.textContent = 'กำลังบันทึก...'; }
+  try{
+    if(keep){
+      for(const t of dropTxs){
+        const note = (t.note ? t.note+' ' : '') + '(รวมจากรายการ "'+drop.name+'")';
+        await apiPost('update', 'material_transactions', {id:t.id, materialId:keepCode, note});
+        t.itemCode = keepCode; t.note = note;
+      }
+      keep.stock = (keep.stock||0) + (drop.stock||0);
+      await apiPost('update', 'materials', materialToApi(keep));
+      for(const w of ovWrites){
+        await __saveLedgerOverride(w.kind, keepCode, w.mk, w.val);
+        w.map[keepCode+'|'+w.mk] = w.val;
+      }
+    }
+    /* ล้างค่าแก้ยอดของรายการที่ลบ */
+    for(const [kind, map] of [['matOpening', materialOpeningOverride], ['matReceived', materialReceivedOverride]]){
+      for(const k of Object.keys(map)){
+        if(k.slice(0, k.lastIndexOf('|')) !== dropCode) continue;
+        const idKey = kind+'|'+k;
+        if(ledgerOverrideIds[idKey]){ await apiPost('delete', 'ledger_overrides', null, ledgerOverrideIds[idKey]); delete ledgerOverrideIds[idKey]; }
+        delete map[k];
+      }
+    }
+    await apiPost('delete', 'materials', null, dropCode);
+    materials = materials.filter(x=>x.code!==dropCode);
+  }catch(err){
+    closeMatActModal();
+    showAlertModal('รวม/ลบรายการไม่สำเร็จ: ' + err.message + '\nระบบโหลดข้อมูลล่าสุดมาแสดงให้ตรงกับของจริง กรุณาตรวจรายการทั้งสองก่อนลองใหม่');
+    try{ await loadMaterialsFromApi(); await loadMaterialTransactionsFromApi(); await loadLedgerOverridesFromApi(); }catch(e){}
+    renderAll();
+    return;
+  }
+  closeMatActModal();
+  renderAll();
+  showSuccessModal(keep ? `รวม "${drop.name}" เข้ากับ "${keep.name}" และลบรายการที่ซ้ำเรียบร้อยแล้ว` : `ลบ "${drop.name}" เรียบร้อยแล้ว`);
 }
 function toggleMatOpeningEdit(){
   if(!isAdmin()) return;
