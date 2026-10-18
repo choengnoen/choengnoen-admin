@@ -21,8 +21,9 @@
   const digits = s => String(s||'').replace(/\D/g,'');
   /* ชื่อวัสดุเทียบกันได้แม้เขียนต่างกัน: ตัดช่องว่าง/เครื่องหมายนิ้ว/คำว่า ขนาด-นิ้ว, x=×, แก้ตัวอักษรไทยที่พิมพ์สลับลำดับ (น้ำ) */
   const normText = s => String(s||'').toLowerCase()
-    .replace(/ํา/g,'ำ').replace(/ำ([่-๋])/g,'$1ำ')
-    .replace(/["'“”‘’″′]/g,'').replace(/ขนาด|นิ้ว/g,'').replace(/[×✕]/g,'x').replace(/\s+/g,'');
+    .replace(/ขนาด|นิ้ว/g,'')
+    .replace(/ํา/g,'ำ').replace(/[่-๋]/g,'')   /* ตัดไม้เอก-จัตวาทิ้ง (ต้องทำหลังตัดคำว่า นิ้ว): ออโต้ลูป = ออโตลูป, น้ำ/นำ้ เท่ากัน */
+    .replace(/["'“”‘’″′]/g,'').replace(/[×✕]/g,'x').replace(/\s+/g,'');
   const ALIAS_KEY = 'dohMatAlias';
   const aliasLoad = () => { try{ return JSON.parse(localStorage.getItem(ALIAS_KEY)||'{}')||{}; }catch(e){ return {}; } };
   const aliasSave = o => { try{ localStorage.setItem(ALIAS_KEY, JSON.stringify(o)); }catch(e){} };
@@ -122,11 +123,9 @@
   }
   function missNote(){
     const ms = missingMats(); if(!ms.length) return '';
-    const opts = matLabels().map(o=>'<option value="'+H(o.label)+'"></option>').join('');
     const rows = ms.map((m,i)=>'<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px"><span style="flex:1 1 100%">• <b>'+H(m.name)+'</b>'+(m.unit?' ('+H(m.unit)+')':'')+' ตรงกับรายการที่มีอยู่:</span>'
-      + '<input id="dohPick'+i+'" list="dohMatList" autocomplete="off" placeholder="พิมพ์ค้นหาชื่อวัสดุในทะเบียน…" style="flex:1 1 220px;min-width:0;padding:6px">'
-      + '<button class="btn btn-sm" onclick="DohImp.pickExisting('+i+')">ใช้รายการนี้</button></div>').join('')
-      + '<datalist id="dohMatList">'+opts+'</datalist>';
+      + '<input id="dohPick'+i+'" class="dohi-pick-in" autocomplete="off" placeholder="พิมพ์ชื่อวัสดุเพื่อค้นหาในทะเบียน…" oninput="DohImp.pickInput('+i+')" onfocus="DohImp.pickInput('+i+')" onkeydown="DohImp.pickKey(event,'+i+')" onblur="setTimeout(DohImp.pickClose,180)">'
+      + '<button class="btn btn-sm" onclick="DohImp.pickExisting('+i+')">ใช้รายการนี้</button></div>').join('');
     return '<div class="dohi-note warn"><b>วัสดุที่ระบบยังจับคู่กับทะเบียนพัสดุไม่ได้ ('+ms.length+')</b>'
       + '<div style="font-size:.85em;margin-top:4px">ถ้ามีในทะเบียนอยู่แล้ว ให้เลือก "ใช้รายการนี้" (ระบบจำการจับคู่ไว้ ครั้งหน้าไม่ถามอีก) — กดเพิ่มใหม่ต่อเมื่อไม่มีในทะเบียนจริง ๆ</div>'
       + rows
@@ -143,6 +142,47 @@
     else { S.mode = S.cmp.some(c=>c.exN>0) ? 'compare' : 'import'; S.cmpMsg = pre+(S.mode==='import'?' — กดนำเข้าได้เลย ระบบจะตัดคลังตามใบ':''); }
     render();
   }
+  /* ช่องค้นหาวัสดุแบบเดียวกับหน้าแก้ไขใบเบิก: พิมพ์กรอง → รายการลอยใต้ช่อง (ขาว ไฮไลต์ส้ม) → คลิกแล้วกด "ใช้รายการนี้" */
+  const PK = { i:-1, hi:0, res:[] };
+  function pickBox(){
+    let b = document.getElementById('dohi-pick-list');
+    if(!b){ b = document.createElement('div'); b.id = 'dohi-pick-list'; b.className = 'dohi-combo-list'; b.style.display = 'none'; document.body.appendChild(b); }
+    return b;
+  }
+  function pickPlace(){
+    const b = pickBox(), inp = document.getElementById('dohPick'+PK.i); if(!inp || b.style.display==='none') return;
+    const r = inp.getBoundingClientRect(), vh = window.innerHeight, gap = 6;
+    const below = vh - r.bottom - gap - 8, above = r.top - gap - 8, up = below < 200 && above > below;
+    b.style.left = r.left+'px'; b.style.width = r.width+'px'; b.style.maxHeight = Math.max(120, Math.min(320, up?above:below))+'px';
+    if(up){ b.style.top = 'auto'; b.style.bottom = (vh - r.top + gap)+'px'; } else { b.style.bottom = 'auto'; b.style.top = (r.bottom + gap)+'px'; }
+  }
+  function pickRender(){
+    const b = pickBox();
+    b.innerHTML = PK.res.length ? PK.res.map((o,k)=>'<div class="dohi-opt'+(k===PK.hi?' hi':'')+'" onmousedown="DohImp.pickChoose('+k+')">'+H(o.label)+'</div>').join('')
+      : '<div class="dohi-opt" style="cursor:default;color:#8a94a0">ไม่พบในทะเบียน</div>';
+    b.style.display = 'block'; pickPlace();
+  }
+  function pickClose(){ const b = document.getElementById('dohi-pick-list'); if(b) b.style.display = 'none'; }
+  function pickInput(i){
+    const inp = document.getElementById('dohPick'+i); if(!inp) return;
+    PK.i = i; PK.hi = 0; const q = normText(inp.value);
+    if(!q){ pickClose(); return; }
+    PK.res = matLabels().filter(o=>normText(o.label).indexOf(q)>=0).slice(0,60);
+    pickRender();
+  }
+  function pickChoose(k){
+    const o = PK.res[k], inp = document.getElementById('dohPick'+PK.i); if(!o || !inp) return;
+    inp.value = o.label; pickClose();
+  }
+  function pickKey(e, i){
+    const b = document.getElementById('dohi-pick-list'), open = b && b.style.display!=='none';
+    if(e.key==='ArrowDown' && open){ PK.hi = Math.min(PK.res.length-1, PK.hi+1); pickRender(); e.preventDefault(); }
+    else if(e.key==='ArrowUp' && open){ PK.hi = Math.max(0, PK.hi-1); pickRender(); e.preventDefault(); }
+    else if(e.key==='Enter'){ if(open && PK.res[PK.hi]) pickChoose(PK.hi); else pickExisting(i); e.preventDefault(); }
+    else if(e.key==='Escape'){ pickClose(); }
+  }
+  window.addEventListener('resize', pickPlace);
+  document.addEventListener('scroll', pickPlace, true);
   async function pickExisting(i){
     if(S.busy) return;
     const ms = missingMats(), m = ms[i]; if(!m) return;
@@ -284,13 +324,27 @@
       .dohi-pick{border:2px dashed #dfe2dd;border-radius:14px;padding:22px;text-align:center;margin:0 0 12px;}
       .dohi-pick small{display:block;margin-top:8px;color:#8792a0;font-size:12px;}
       @media(max-width:700px){.dohi-steps{grid-template-columns:1fr;}}
+      .dohi-pick-in{flex:1 1 220px;min-width:0;box-sizing:border-box;font-family:inherit;font-size:14px;padding:7px 10px;border:1px solid #d9dde3;border-radius:8px;background:#fff;color:#1d2733;}
+      .dohi-combo-list{position:fixed;z-index:2147483000;border:1px solid #d9dde3;border-radius:10px;overflow-y:auto;overscroll-behavior:contain;background:#fff;box-shadow:0 8px 24px rgba(10,37,64,.14);}
+      .dohi-opt{padding:8px 12px;cursor:pointer;border-bottom:1px solid #f1f2f5;font-size:14px;color:#1d2733;}
+      .dohi-opt:hover,.dohi-opt.hi{background:#fff4ea;}
       .dohi-note{background:#f5f6f4;border:1px solid #dfe2dd;border-radius:10px;padding:10px 14px;font-size:13px;color:#4d5a66;line-height:1.65;margin:0 0 12px;}
       .dohi-note.warn{background:#fdf1d9;color:#7a5000;border-color:#f2d28c;}
       .dohi-note.bad{background:#fbeae7;color:#c1402f;border-color:#f0b9b0;}
       .dohi-note.ok{background:#e5f4ec;color:#1c8a53;border-color:#b6dfc8;}
-      .dohi-kpi{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px;}
-      .dohi-kpi div{background:#fff;border:1px solid #dfe2dd;border-radius:10px;padding:6px 12px;font-size:12.5px;color:#4d5a66;}
-      .dohi-kpi b{display:block;font-size:19px;color:#182430;}
+      .dohi-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:0 0 14px;}
+      .dohi-kpi div{background:#fff;border:1px solid #e3e6ea;border-radius:12px;padding:10px 14px 10px 16px;font-size:12.5px;color:#4d5a66;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(10,37,64,.04);}
+      .dohi-kpi div::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#c9d0d8;}
+      .dohi-kpi div:has(b[style*="1c8a53"])::before{background:#1c8a53;}
+      .dohi-kpi div:has(b[style*="c1402f"])::before{background:#c1402f;}
+      .dohi-kpi b{display:block;font-family:'Kanit',sans-serif;font-size:24px;line-height:1.2;color:#182430;}
+      .dohi-seg{display:inline-flex;gap:4px;padding:4px;margin:0 0 14px;background:#eef0ed;border-radius:12px;max-width:100%;flex-wrap:wrap;}
+      .dohi-seg button{border:none;background:transparent;padding:8px 16px;border-radius:9px;font-family:inherit;font-size:13.5px;font-weight:600;color:#4d5a66;cursor:pointer;transition:background .15s,color .15s,box-shadow .15s;}
+      .dohi-seg button:hover{background:rgba(255,255,255,.7);}
+      .dohi-seg button.on{background:#fff;color:#c9560b;box-shadow:0 1px 4px rgba(10,37,64,.16);}
+      .dohi-tool{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 14px;margin:0 0 14px;background:#fafaf8;border:1px solid #e3e6ea;border-radius:14px;}
+      .dohi-tool .dohi-mon{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:13px;color:#4d5a66;}
+      .dohi-tool .dohi-mon select{min-width:150px;}
       .dohi-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px;}
       .dohi-bar select{font-family:inherit;font-size:14px;padding:6px 10px;border:1px solid #dfe2dd;border-radius:8px;background:#fff;}
       .dohi-table{width:100%;border-collapse:collapse;font-size:13px;}
@@ -347,13 +401,14 @@
       setFoot('<button class="btn btn-ghost" onclick="DohImp.close()">ปิด</button>'); return;
     }
     const p = S.plan;
-    const modeBar = '<div class="dohi-bar"><button class="btn btn-sm '+(S.mode==='compare'?'btn-primary':'btn-ghost')+'" onclick="DohImp.setMode(\'compare\')">🔍 เทียบกับข้อมูลในระบบ (ไม่แก้ใบเดิม)</button>'
-      + '<button class="btn btn-sm '+(S.mode==='import'?'btn-primary':'btn-ghost')+'" onclick="DohImp.setMode(\'import\')">📥 นำเข้าสร้างใบสั่งการ</button></div>';
+    const modeBar = '<div class="dohi-seg"><button class="'+(S.mode==='compare'?'on':'')+'" onclick="DohImp.setMode(\'compare\')">🔍 เทียบกับข้อมูลในระบบ <small style="font-weight:400;opacity:.75">(ไม่แก้ใบเดิม)</small></button>'
+      + '<button class="'+(S.mode==='import'?'on':'')+'" onclick="DohImp.setMode(\'import\')">📥 นำเข้าสร้างใบสั่งการ</button></div>';
+    const toolBar = '<div class="dohi-tool">'+pickHtml()+'<label class="dohi-mon">เดือนของไฟล์ <select onchange="DohImp.setMonth(this.value)">'+monthOptions(S.importMk)+'</select></label></div>';
     if(S.mode==='compare'){
       const nAct = Object.keys(S.sel).filter(k=>S.sel[k]).length;
       body.innerHTML = (S.cmpMsg?'<div class="dohi-note ok">'+H(S.cmpMsg)+'</div>':'')
         + (S.skipped.length?'<div class="dohi-note warn">ข้าม '+S.skipped.length+' ไฟล์ที่ไม่ใช่ผลงานรายกิจกรรม: '+H(S.skipped.join(', '))+'</div>':'')
-        + modeBar + '<div class="dohi-bar">'+pickHtml()+'<span>เดือนของไฟล์ <select onchange="DohImp.setMonth(this.value)">'+monthOptions(S.importMk)+'</select></span></div>'
+        + modeBar + toolBar
         + missNote() + renderCompare();
       setFoot('<button class="btn btn-ghost" onclick="DohImp.close()">ปิด</button><button class="btn btn-ghost" onclick="DohImp.copyCompare()">📋 คัดลอกผลเทียบ</button><button class="btn btn-primary" '+(nAct?'':'disabled')+' onclick="DohImp.runCompare()">ดำเนินการที่เลือก ('+nAct+')</button>');
       return;
@@ -368,7 +423,7 @@
       + (S.cmpMsg?'<div class="dohi-note ok">'+H(S.cmpMsg)+'</div>':'')
       + (S.skipped.length?'<div class="dohi-note warn">ข้าม '+S.skipped.length+' ไฟล์ที่ไม่ใช่ผลงานรายกิจกรรม: '+H(S.skipped.join(', '))+'</div>':'')
       + (S.mixed?'<div class="dohi-note warn">ไฟล์มีวันที่ปฏิบัติงานหลายเดือนปนกัน — ควรเลือกไฟล์ทีละเดือน</div>':'')
-      + modeBar + '<div class="dohi-bar">'+pickHtml()+'<span>เดือนของไฟล์ <select onchange="DohImp.setMonth(this.value)">'+monthOptions(S.importMk)+'</select></span></div>'
+      + modeBar + toolBar
       + kpi + missNote() + skipBlocks
       + (p ? '<div class="dohi-bar"><label style="display:inline-flex;gap:6px;align-items:center;font-size:13.5px;"><input type="checkbox" '+(S.ec1w?'checked':'')+' onchange="DohImp.setEc1w(this.checked)"> บันทึกชั่วโมงเครื่องจักรลง EC 1-W ด้วย ('+buildEc1w().length+' แถว เครื่อง×วัน — ลงช่อง W ชั่วโมงปฏิบัติงาน; ทับเฉพาะช่อง W เดิมของแถวนั้น)</label></div>' : '')
       ;
@@ -801,5 +856,5 @@
   setInterval(updateBadge, 2000);
 
   function setEc1w(v){ S.ec1w = !!v; }
-  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, runCompare, togFuel, addMissing, pickExisting };
+  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, runCompare, togFuel, addMissing, pickExisting, pickInput, pickKey, pickChoose, pickClose };
 })();
