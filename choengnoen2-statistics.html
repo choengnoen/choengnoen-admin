@@ -636,7 +636,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .bmm-inner-table thead th{text-align:center;}
   #panel-rollup thead th:nth-child(2),#panel-rollup thead th:nth-child(3){text-align:right;}
   /* ===== แถบเมนูงานบำรุงปกติ (ปุ่มเลือกหัวข้อปุ่มเดียว) ===== */
-  .maint-nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-4px 0 14px;}
+  /* แถบเครื่องมือเป็นการ์ดเดียว (แบบ 3): ไอคอน+ชื่อหน้า(กดเปลี่ยนหน้าได้) | ค้นหา | ปุ่มไอคอน | ปุ่มบันทึก */
+  .maint-nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-4px 0 14px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 18px;}
+  .maint-nav .menu-btn{border:none;background:none;padding:0;font-size:17px;gap:10px;}
+  .maint-nav .menu-btn:hover{color:var(--orange-600);}
+  .maint-nav .menu-pop{top:calc(100% + 10px);}
+  .icb{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;padding:0;}
+  .icb:hover{border-color:var(--orange-500);background:var(--paper-50);}
+  .nav-routine .search-box{min-width:260px;}
   .maint-nav.hidden{display:none;}
   .maint-nav .g-filter{margin:0;}
   .maint-nav .sp1{flex:1;}
@@ -814,7 +821,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <!-- แถบเมนูของกลุ่มงานบำรุงปกติ: ปุ่มเลือกหัวข้อปุ่มเดียว (แทนแท็บย่อยที่ซ้อนอีกชั้น) -->
       <div class="maint-nav no-print" id="maint-nav">
         <div class="nav-menu">
-          <button type="button" class="menu-btn" onclick="toggleNavMenu(event)">☰ <span id="nav-menu-label">ใบสั่งการรายวัน</span> ▾</button>
+          <button type="button" class="menu-btn" onclick="toggleNavMenu(event)" title="เปลี่ยนหน้า"><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M9 12h6M9 16h6M8 3h8l4 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/></svg></span><span id="nav-menu-label">ใบสั่งการรายวัน</span> ▾</button>
           <div class="menu-pop" id="nav-menu-pop">
             <div data-view="routine" class="on">1 · ใบสั่งการรายวัน</div>
             <div data-view="rollup">2 · สรุปรายเดือน</div>
@@ -824,8 +831,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         </div>
         <div class="nav-routine" id="nav-routine">
           <div class="search-box">🔍 <input id="dw-search" placeholder="ค้นหารหัสงาน / สถานที่ / ชื่อ"></div>
-          <button class="btn btn-ghost btn-sm" onclick="openDwTxAudit()" title="แสดงรายการตัดน้ำมัน/วัสดุที่อาจซ้ำหรือค้าง (ดูอย่างเดียว ไม่ลบอัตโนมัติ)">🔎 ตรวจยอดคลังซ้ำ</button>
-          <button class="btn btn-primary btn-sm" id="doh-imp-btn" onclick="DohImp.openImport()" title="นำเข้าไฟล์ CSV จากระบบกรม (rmms) สร้างเป็นรายการใบสั่งการรายวัน (ตัดคลังน้ำมัน/วัสดุให้อัตโนมัติ)">📥 นำเข้าข้อมูลจากกรม</button>
+          <button type="button" class="icb" onclick="openDwTxAudit()" title="ตรวจยอดคลังซ้ำ — แสดงรายการตัดน้ำมัน/วัสดุที่อาจซ้ำหรือค้าง (ดูอย่างเดียว ไม่ลบอัตโนมัติ)" aria-label="ตรวจยอดคลังซ้ำ">🔎</button>
+          <button type="button" class="icb" id="doh-imp-btn" onclick="DohImp.openImport()" title="นำเข้าข้อมูลจากกรม — ไฟล์ CSV จากระบบ rmms สร้างเป็นรายการใบสั่งการรายวัน (ตัดคลังน้ำมัน/วัสดุให้อัตโนมัติ)" aria-label="นำเข้าข้อมูลจากกรม">📥</button>
         </div>
         <!-- ตัวกรองปี/เดือนชุดเดียว ใช้ร่วมสรุปรายเดือน/แผน-ผลงาน (ใบสั่งการใช้แถบสัปดาห์แทน) -->
         <div class="g-filter no-print hidden" id="g-filter">
@@ -1140,13 +1147,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 
       <!-- แท็บย่อย 1: ใบสั่งการรายวัน -->
       <div class="panel active" id="panel-routine">
-        <div class="section no-print" style="margin-bottom:12px;">
-          <div class="section-head" style="border-bottom:none;">
-            <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M9 12h6M9 16h6M8 3h8l4 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/></svg></span>
-              ใบสั่งการรายวัน
-            </h2>
-          </div>
-        </div>
+        <!-- หัวข้อ "ใบสั่งการรายวัน" รวมอยู่ในการ์ดแถบเครื่องมือด้านบนแล้ว (แบบ 3) -->
         <!-- แถบสัปดาห์ (แท่งเดียว) + ไทม์ไลน์ใบสั่งการของวันที่เลือก — สร้างโดย renderDailyLog() -->
         <div id="dw-week" class="no-print"></div>
         <div id="dw-day"></div>
