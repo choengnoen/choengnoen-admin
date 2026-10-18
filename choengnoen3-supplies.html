@@ -525,7 +525,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ib-sfx span{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--ink-400);pointer-events:none;max-width:40px;overflow:hidden;white-space:nowrap;}
   .ib-sfx.pre input{padding:6px 9px 6px 26px;}
   .ib-sfx.pre span{left:9px;right:auto;}
-  .ib-combo-list{border:1px solid var(--line);border-radius:10px;max-height:220px;overflow:auto;margin-top:6px;background:#fff;}
+  .ib-combo-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;border:1px solid var(--line);border-radius:10px;max-height:220px;overflow:auto;background:#fff;box-shadow:0 8px 24px rgba(10,37,64,.14);}
   .ib-opt{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;cursor:pointer;border-bottom:1px solid #f1f2f5;font-size:14px;}
   .ib-opt:hover,.ib-opt.hi{background:#fff4ea;}
   .ib-opt small{color:var(--ink-400);white-space:nowrap;}
@@ -536,7 +536,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ib-newgrid .full{grid-column:1/-1;}
   .ib-newgrid input,.ib-newgrid select{width:100%;box-sizing:border-box;font-family:'Sarabun';font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;}
   .ib-newgrid label{display:block;font-size:12.5px;color:var(--ink-600);margin-bottom:3px;}
-  .ib-combo{flex:1;min-width:260px;}
+  .ib-combo{flex:1;min-width:260px;position:relative;}
   .ib-combo input{width:100%;box-sizing:border-box;font-family:'Sarabun';font-size:14px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;}
   .ib-gt{display:inline-block;background:#fff4ea;border:1px solid #f9c79c;border-radius:10px;padding:7px 14px;font-weight:600;}
   .ib-gt b{color:#d95f08;font-size:17px;}
@@ -2112,11 +2112,18 @@ function ibListRender(){
     : '<div class="ib-opt" style="cursor:default;color:var(--ink-400);">ไม่พบในทะเบียน</div>')
     + `<div class="ib-opt mk" onmousedown="ibStartNewMat()">＋ สร้างวัสดุใหม่${q?' “'+esc(q)+'”':' (ที่ไม่เคยมีในทะเบียน)'}</div>`;
   box.classList.remove('hidden');
+  try{ box.scrollIntoView({block:'nearest'}); }catch(e){} // รายการลอยทับ — เลื่อนโมดัลให้เห็นครบ
 }
-function ibListInput(){ if(!IbEdit) return; IbEdit.q = document.getElementById('ib-add-q').value; IbHi = 0; ibListRender(); }
+function ibListInput(){
+  if(!IbEdit) return;
+  IbEdit.q = document.getElementById('ib-add-q').value; IbHi = 0;
+  if(!IbEdit.q.trim()){ ibListClose(); return; } // ยังไม่พิมพ์ = ไม่แสดงรายการ
+  ibListRender();
+}
 function ibListClose(){ const b = document.getElementById('ib-add-list'); if(b) b.classList.add('hidden'); }
 function ibListKey(e){
   if(!IbEdit) return;
+  if(!(IbEdit.q||'').trim()){ if(e.key==='Enter') e.preventDefault(); return; }
   const r = ibMatResults();
   if(e.key==='ArrowDown'){ IbHi = Math.min(r.length-1, IbHi+1); ibListRender(); e.preventDefault(); }
   else if(e.key==='ArrowUp'){ IbHi = Math.max(0, IbHi-1); ibListRender(); e.preventDefault(); }
@@ -3872,9 +3879,11 @@ function openMatMerge(code){
     `<div class="ma-hint neg">รายการที่จะ<b>ลบ</b>: <b>${esc(m.name)}</b> (${esc(m.unit)}) · ${esc(m.accountType||'ในบัญชี')} · ยอด ${fmtNum(currentStock(m),1)} · มีประวัติ ${n} รายการ</div>
      <div class="f-row"><label>รวมประวัติเข้ากับรายการที่เก็บไว้ ${n>0?'':'(ไม่เลือก = ลบทิ้งเฉยๆ)'}</label>
        <input type="hidden" id="mm-keep" value="">
-       <input type="text" id="mm-search" autocomplete="off" placeholder="พิมพ์ชื่อบางส่วน เพื่อค้นหารายการที่เก็บไว้" oninput="mmFilter()">
        <div id="mm-picked" style="display:none;margin-top:8px;padding:8px 12px;border-radius:8px;background:var(--success-bg);color:var(--success);font-size:13px;font-weight:600;"></div>
-       <div id="mm-list" style="margin-top:8px;max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:8px;"></div></div>
+       <div style="position:relative;">
+         <input type="text" id="mm-search" autocomplete="off" placeholder="พิมพ์ชื่อบางส่วน เพื่อค้นหารายการที่เก็บไว้" oninput="mmFilter()" onfocus="mmFilter()" onblur="setTimeout(function(){var l=document.getElementById('mm-list');if(l)l.style.display='none';},180)">
+         <div id="mm-list" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:8px;background:#fff;box-shadow:0 8px 24px rgba(10,37,64,.14);"></div>
+       </div></div>
      <div class="foot-note" style="margin:0;">ระบบจะย้ายประวัติเบิก-รับ ยอดตั้งต้น และค่าแก้ยอดยกมาของรายการที่ลบ ไปรวมกับรายการที่เก็บไว้ ยอดคงเหลือจึงเท่ากับยอดสองรายการรวมกัน หลังรวมแล้วจะรีเฟรชตาราง ค่าที่แก้ในตารางแต่ยังไม่กด "บันทึก" จะหาย จึงควรกด "บันทึก" ก่อน · <b>รายการที่ลบเข้าถังขยะ กู้คืนได้</b></div>`;
   document.getElementById('mat-act-foot').innerHTML = `<button type="button" class="btn btn-ghost" onclick="closeMatActModal()">ยกเลิก</button>
     <button type="button" class="btn btn-danger" id="mm-go-btn" onclick="doMatMerge('${jsArg(code)}')">🗑 รวมและลบรายการนี้</button>`;
@@ -3884,9 +3893,12 @@ function openMatMerge(code){
 }
 function mmFilter(){
   const q = (document.getElementById('mm-search').value||'').trim().toLowerCase();
+  const listEl = document.getElementById('mm-list');
+  if(!q){ listEl.style.display = 'none'; return; } // ต้องพิมพ์ก่อนจึงแสดงรายการ
+  listEl.style.display = 'block';
   const rows = (window.__mmOthers||[]).filter(x=>!q || x.name.toLowerCase().includes(q)).slice(0,60);
   document.getElementById('mm-list').innerHTML = rows.map(x=>
-    `<div class="mm-opt" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line);font-size:13.5px;" onmouseover="this.style.background='var(--paper-50)'" onmouseout="this.style.background=''" onclick="mmPick('${jsArg(x.code)}')">${esc(x.name)} <span style="color:var(--ink-400);">(${esc(x.unit)})${x.accountType==='นอกบัญชี'?' · นอกบัญชี':''}</span></div>`
+    `<div class="mm-opt" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line);font-size:13.5px;" onmouseover="this.style.background='var(--paper-50)'" onmouseout="this.style.background=''" onmousedown="mmPick('${jsArg(x.code)}')">${esc(x.name)} <span style="color:var(--ink-400);">(${esc(x.unit)})${x.accountType==='นอกบัญชี'?' · นอกบัญชี':''}</span></div>`
   ).join('') || '<div style="padding:12px;color:var(--ink-400);font-size:13px;text-align:center;">ไม่พบรายการที่ตรงกับคำค้น</div>';
 }
 function mmPick(code){
@@ -3901,8 +3913,7 @@ function mmPick(code){
 function mmUnpick(){
   document.getElementById('mm-keep').value = '';
   document.getElementById('mm-picked').style.display = 'none';
-  document.getElementById('mm-list').style.display = '';
-  const s = document.getElementById('mm-search'); s.style.display = ''; s.focus();
+  const s = document.getElementById('mm-search'); s.style.display = ''; mmFilter(); s.focus();
 }
 async function doMatMerge(dropCode){
   if(!isAdmin()) return;
