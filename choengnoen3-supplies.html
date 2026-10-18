@@ -518,16 +518,26 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fc-bar-label{font-size:10.5px;color:rgba(255,255,255,.75);margin-top:6px;}
   /* พ.1-03 หน้าตรวจรายวัน (แบบ 3-4, 2569-10-18) */
   #rep-fuel-grid-wrap{max-height:none;padding:0 20px 20px;}
-  .fd-strip{display:flex;gap:6px;overflow-x:auto;padding:8px 2px 10px;}
-  .fd-chip{flex:none;width:58px;background:#fff;border:2px solid var(--line);border-radius:12px;text-align:center;padding:4px 0 2px;cursor:pointer;user-select:none;}
-  .fd-chip:hover{border-color:var(--orange-500);}
-  .fd-chip .fc-w{font-size:11.5px;color:var(--ink-400);}
-  .fd-chip .fc-n{font-family:'Kanit';font-size:19px;font-weight:600;line-height:1.1;color:var(--navy-900);}
-  .fd-chip .fc-s{font-size:11px;color:var(--ink-600);height:14px;}
-  .fd-chip .fc-m{font-size:11px;height:14px;}
-  .fd-chip.has{background:#eef7f1;}
-  .fd-chip.hol .fc-n,.fd-chip.hol .fc-w{color:var(--danger);}
-  .fd-chip.sel{border-color:var(--orange-500);background:#fdefe3;}
+  /* แถบวันที่ — หน้าตาเดียวกับแถบสัปดาห์ของใบสั่งการรายวัน (วันทำการทั้งเดือน เลื่อนซ้าย-ขวาได้) */
+  .dwk-bar{display:flex;align-items:stretch;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 2px rgba(10,37,64,.05),0 10px 22px -16px rgba(10,37,64,.16);}
+  .dwk-arr{width:42px;border:0;background:var(--paper-50);cursor:pointer;font-size:16px;color:var(--ink-600);flex:none;}
+  .dwk-arr:hover{background:var(--paper-100);}
+  .dwk-days{display:flex;flex:1;min-width:0;}
+  .fd-days{overflow-x:auto;scrollbar-width:none;}
+  .fd-days::-webkit-scrollbar{display:none;}
+  .dwk-d{flex:1 0 62px;text-align:center;padding:9px 2px 8px;cursor:pointer;border-left:1px solid var(--paper-100);position:relative;min-width:0;user-select:none;}
+  .dwk-d:first-child{border-left:0;}
+  .dwk-d small{display:block;font-size:11.5px;color:var(--ink-400);}
+  .dwk-d b{font-family:'Kanit';font-size:19px;color:var(--navy-900);line-height:1.25;display:block;}
+  .dwk-d .n{font-size:11px;color:var(--ink-400);height:15px;}
+  .dwk-d:hover{background:#fdf1de;}
+  .dwk-d.off{background:var(--paper-50);}
+  .dwk-d.hol small,.dwk-d.hol b{color:var(--danger);}
+  .dwk-d.on,.dwk-d.on.off{background:radial-gradient(260px 100px at 20% -30%,var(--navy-800),var(--navy-950) 80%);}
+  .dwk-d.on small,.dwk-d.on .n{color:#a9bbcc;}
+  .dwk-d.on b{color:#fff;}
+  .dwk-d.today::after{content:'';position:absolute;top:6px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--orange-500);}
+  .fd-count{background:var(--paper-100);color:var(--ink-600);border-radius:99px;padding:1px 11px;font-size:12.5px;font-weight:600;}
   .fd-dayhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 10px;}
   .fd-dayhead h3{margin:0;font-family:'Kanit';font-size:20px;color:var(--navy-900);}
   .fd-today{background:var(--orange-500);color:#fff;border-radius:99px;padding:1px 10px;font-size:12px;vertical-align:middle;}
@@ -917,11 +927,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="tab active" data-fueltab="all" onclick="setFuelTypeTab(this)">ทั้งหมด</div>
             </div>
             <label class="rep-toggle" style="margin-left:auto;"><input type="checkbox" id="rep-fuel-showall" onchange="renderReportFuel(currentFuelMk())"> แสดงรถที่ไม่ได้เบิกวันนี้ (เพื่อเพิ่มรายการ)</label>
-            <div class="toolbar" style="padding:0;flex:none;gap:8px;">
-              <button class="btn btn-ghost btn-sm" id="rep-fuel-edit-btn" onclick="toggleFuelOpeningEdit()">✎ แก้ยอดยกมา/รับเข้า</button>
-              <button class="btn btn-primary btn-sm hidden" id="rep-fuel-save-btn" onclick="saveFuelOpeningEdits()">💾 บันทึก</button>
-            </div>
-            <div class="search-box" style="min-width:220px;flex:none;">🔍 <input id="rep-fuel-search" oninput="renderReportFuel(ledgerMonthKey('rep-fuel-ledger-fy','rep-fuel-ledger-month'))" placeholder="ค้นหาชื่อ/รหัสเครื่องจักร"></div>
           </div>
           <div class="draft-chip hidden" id="draft-fuel-chip">
             <span class="dc-dot"></span>
@@ -930,7 +935,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <button class="dc-btn dc-clear" onclick="discardDraftReport('fuel')">ล้างการแก้ไข</button>
             <button class="dc-btn dc-save" onclick="reviewDraftReport('fuel')">💾 บันทึก</button>
           </div>
-          <div id="rep-fuel-kpi" class="fuel-kpi-wrap"></div>
           <div id="rep-fuel-grid-wrap" class="grid-wrap"></div>
           <div class="legend-block" id="rep-fuel-foot-block">
             <button type="button" class="legend-dot-btn no-print" id="rep-fuel-foot-toggle" onclick="__toggleNote('rep-fuel-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
@@ -4226,7 +4230,6 @@ function renderReportFuel(mk){
   const fuelTypes = fuelFilter==='all' ? ['ดีเซล','เบนซิน'] : [fuelFilter];
   const showAll = !!document.getElementById('rep-fuel-showall')?.checked;
   const q = (document.getElementById('rep-fuel-search')?.value||'').trim().toLowerCase();
-  renderFuelKpiBand(mk, fuelTypes);
   const days = workdaysInMonthArr(mk);
   const dayNum = pickFuelDay(mk);
   if(dayNum==null){ wrap.innerHTML = '<div class="fd-empty">เดือนนี้ไม่มีวันทำการ</div>'; return; }
@@ -4251,8 +4254,9 @@ function renderReportFuel(mk){
   });
   const chips = days.map(d=>{
     const dr = fuelDayRec(dateStrFor(mk,d.day));
-    return `<div class="fd-chip${d.day===dayNum?' sel':''}${dayAgg[d.day]?' has':''}${d.hol?' hol':''}" data-fday="${d.day}"${d.hol?` title="${esc(d.hol)}"`:''}>
-      <div class="fc-w">${d.dow}</div><div class="fc-n">${d.day}</div><div class="fc-s">${dayAgg[d.day]?fmtNum(dayAgg[d.day],1):'&nbsp;'}</div><div class="fc-m">${dr.confirmed?'🔒':'&nbsp;'}</div></div>`;
+    const isTd = dateStrFor(mk,d.day)===toLocalISODate(TODAY);
+    return `<div class="dwk-d fd-d${d.day===dayNum?' on':''}${d.hol?' off hol':''}${isTd?' today':''}" data-fday="${d.day}"${d.hol?` title="${esc(d.hol)}"`:''}>
+      <small>${d.dow}</small><b>${d.day}</b><div class="n">${dr.confirmed?'🔒 ':''}${dayAgg[d.day]?fmtNum(dayAgg[d.day],1):'&nbsp;'}</div></div>`;
   }).join('');
   const [yy, mm] = mk.split('-').map(Number);
   const holName = holidayNameFor(mk, dayNum);
@@ -4260,21 +4264,10 @@ function renderReportFuel(mk){
   const isToday = date===toLocalISODate(TODAY);
   const sumBy = ft=>real.filter(r=>r.ft===ft).reduce((s,r)=>s+r.lit,0);
 
-  // กล่องแก้ยอดยกมา/รับเข้า (โหมดแก้ไข — ใช้ข้อมูลชุดเดียวกับของเดิม)
-  let openPanel = '';
-  if(repFuelEditMode && isAdmin()){
-    openPanel = `<div class="fd-open"><b>แก้ยอดยกมา/รับเข้าของเดือน ${ledgerMonthLabel(mk)}</b>`+fuelTypes.map(ft=>{
-      const s = fuelMonthSummary(ft, mk);
-      return `<label>น้ำมัน${ft} · ยอดยกมา <input type="number" step="0.01" value="${s.opening}" data-open-fueltype="${ft}"></label>
-        <label>รับเข้า <input type="number" step="0.01" value="${s.received}" data-recv-fueltype="${ft}"></label>`;
-    }).join('')+`<span class="fd-mut">แก้แล้วกดปุ่ม "💾 บันทึก" ด้านบน</span></div>`;
-  }
-
-  const head = `${openPanel}<div class="fd-strip">${chips}</div>
-    <div class="fd-dayhead"><button class="btn btn-ghost btn-sm" data-fstep="-1">◀</button>
-      <h3>วัน${dayInfo.dow} ที่ ${dayNum} ${monthNamesTh[mm-1]} ${yy+543}${isToday?' <span class="fd-today">วันนี้</span>':''}${holName?` <span class="fd-hol">${esc(holName)}</span>`:''}</h3>
-      <button class="btn btn-ghost btn-sm" data-fstep="1">▶</button><span style="flex:1"></span>
-      <div class="fd-stats"><div>รายการเบิก<b>${real.length} คัน</b></div><div>ดีเซล<b>${fmtNum(sumBy('ดีเซล'),1)} ล.</b></div><div>เบนซิน<b>${fmtNum(sumBy('เบนซิน'),1)} ล.</b></div></div></div>`;
+  const head = `<div class="dwk-bar"><button type="button" class="dwk-arr" data-fstep="-1" title="วันก่อนหน้า">‹</button><div class="dwk-days fd-days">${chips}</div><button type="button" class="dwk-arr" data-fstep="1" title="วันถัดไป">›</button></div>
+    <div class="fd-dayhead">
+      <h3>วัน${dayInfo.dow} ที่ ${dayNum} ${monthNamesTh[mm-1]} ${yy+543}</h3><span class="fd-count">${real.length} คัน</span>${isToday?' <span class="fd-today">วันนี้</span>':''}${holName?` <span class="fd-hol">${esc(holName)}</span>`:''}<span style="flex:1"></span>
+      <div class="fd-stats"><div>ดีเซล<b>${fmtNum(sumBy('ดีเซล'),1)} ล.</b></div><div>เบนซิน<b>${fmtNum(sumBy('เบนซิน'),1)} ล.</b></div></div></div>`;
 
   const alertsHtml = warnRows.length
     ? `<div class="fd-alert"><b>⚠ ต้องดูเป็นพิเศษ ${warnRows.length} รายการ</b>${warnRows.map(r=>`<div class="fd-li" data-fgo="${esc(r.v.label)}"><b>${esc(vehicleShortName(r.v.label))}</b> (${esc(r.v.note||'—')}) — ${r.flags.map(f=>esc(f.t)).join(' · ')}</div>`).join('')}</div>`
@@ -4324,6 +4317,8 @@ function renderReportFuel(mk){
 
   wrap.innerHTML = head + `<div class="fd-top">${alertsHtml}${progHtml}</div>` + table;
   wrap.scrollLeft = sx; wrap.scrollTop = sy;
+  const fdDays = wrap.querySelector('.fd-days'), fdSel = fdDays && fdDays.querySelector('.on');
+  if(fdSel) fdDays.scrollLeft = fdSel.offsetLeft - (fdDays.clientWidth - fdSel.offsetWidth)/2;
   if(focusKey){
     const parts = focusKey.split('|');
     const t = Array.from(wrap.querySelectorAll('input.fd-in')).find(i=> parts[0]==='M' ? i.dataset.miVehicle===parts[1] : (i.dataset.fueltype===parts[1] && i.dataset.vehicle===parts[2]));
