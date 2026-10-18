@@ -397,14 +397,40 @@
     const labels = Array.from(new Set(Object.keys(dept).concat(Object.keys(sys)))).sort();
     return { rows: labels.map(l=>({ label:l, sys:sys[l]||0, dept:dept[l]||0, diff:r2((sys[l]||0)-(dept[l]||0)) })), unk };
   }
+  function togFuel(i){ S.fuelOpen = (S.fuelOpen===i) ? -1 : i; render(); }
+  /* รายวันของเครื่องหนึ่งคัน: ฝั่งระบบ (ใบสั่งการที่คีย์) และฝั่งกรม (ยอดต่อแผน + วันที่ปฏิบัติงานของแผน) */
+  function fuelDetail(label){
+    const months = new Set(); S.parsed.forEach(a=>a.dates.map(iso).filter(Boolean).forEach(d=>months.add(d.slice(0,7))));
+    const sysRows = [];
+    dailyWorkOrders.filter(d=>months.has(String(d.date).slice(0,7))).sort((x,y)=>x.date<y.date?-1:x.date>y.date?1:0).forEach(d=>{
+      (d.vehicles||[]).forEach(x=>{ if(x.label===label){ const j = findJob(d.code); sysRows.push({ date:d.date, job:d.code+' '+((j&&j.name)||''), loc:d.loc||'', liters:x.liters||0 }); } });
+    });
+    const deptRows = [];
+    S.parsed.forEach(a=>{
+      const dates = Array.from(new Set(a.dates.map(iso).filter(Boolean))).sort();
+      let lit = 0, hit = false;
+      a.machines.forEach(m=>{ const v = matchVehicle(m.no); if(v && v.label===label){ lit += m.liters; hit = true; } });
+      if(hit) deptRows.push({ plan:'แผน '+a.plan+' '+a.jobName+' (สาย '+a.route+')', liters:r2(lit), dates:dates.map(dateTh).join(', ') });
+    });
+    const sysTot = r2(sysRows.reduce((s,x)=>s+x.liters,0)), deptTot = r2(deptRows.reduce((s,x)=>s+x.liters,0));
+    return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">'
+      + '<div><b>ระบบเรา (ใบสั่งการที่คีย์)</b><table class="dohi-table"><thead><tr><th>วันที่</th><th>งาน / สายทาง</th><th style="text-align:right">ลิตร</th></tr></thead><tbody>'
+      + (sysRows.length ? sysRows.map(x=>'<tr><td style="white-space:nowrap">'+H(dateTh(x.date))+'</td><td>'+H(x.job)+(x.loc?'<br><small>'+H(x.loc)+'</small>':'')+'</td><td style="text-align:right">'+x.liters+'</td></tr>').join('') : '<tr><td colspan="3">ไม่มี</td></tr>')
+      + '<tr><td colspan="2"><b>รวม</b></td><td style="text-align:right"><b>'+sysTot+'</b></td></tr></tbody></table></div>'
+      + '<div><b>กรม (ยอดต่อแผน)</b><table class="dohi-table"><thead><tr><th>แผน / วันที่ปฏิบัติงาน</th><th style="text-align:right">ลิตร</th></tr></thead><tbody>'
+      + (deptRows.length ? deptRows.map(x=>'<tr><td>'+H(x.plan)+'<br><small>'+H(x.dates)+'</small></td><td style="text-align:right">'+x.liters+'</td></tr>').join('') : '<tr><td colspan="2">ไม่มี</td></tr>')
+      + '<tr><td><b>รวม</b></td><td style="text-align:right"><b>'+deptTot+'</b></td></tr></tbody></table></div></div>';
+  }
   function renderFuel(){
     const f = S.fuel; if(!f || !f.rows) return '';
     const bad = f.rows.filter(r=>Math.abs(r.diff)>0.05).length;
     return '<div class="dohi-note" style="background:#fff"><b>น้ำมันรวมต่อเครื่อง ทั้งเดือน (ทุกแผน)</b> — '
       + (bad ? '<span style="color:#c1402f">ต่างกัน '+bad+' เครื่อง</span>' : '<span style="color:#1c8a53">✓ ตรงกันทุกเครื่อง</span>')
       + '<div style="overflow:auto"><table class="dohi-table"><thead><tr><th>เครื่องจักร</th><th style="text-align:right">ระบบเรา (ลิตร)</th><th style="text-align:right">กรม (ลิตร)</th><th style="text-align:right">ต่าง</th></tr></thead><tbody>'
-      + f.rows.map(r=>{ const b = Math.abs(r.diff)>0.05; return '<tr'+(b?' style="background:#fdf1d9"':'')+'><td>'+H(r.label)+'</td><td style="text-align:right">'+r.sys+'</td><td style="text-align:right">'+r.dept+'</td><td style="text-align:right;'+(b?'color:#c1402f;font-weight:700':'')+'">'+(r.diff>0?'+':'')+r.diff+'</td></tr>'; }).join('')
-      + '</tbody></table></div>'
+      + f.rows.map((r,i)=>{ const b = Math.abs(r.diff)>0.05, open = S.fuelOpen===i;
+          return '<tr onclick="DohImp.togFuel('+i+')" style="cursor:pointer;'+(b?'background:#fdf1d9':'')+'" title="กดดูรายวัน"><td>'+(open?'▾ ':'▸ ')+H(r.label)+'</td><td style="text-align:right">'+r.sys+'</td><td style="text-align:right">'+r.dept+'</td><td style="text-align:right;'+(b?'color:#c1402f;font-weight:700':'')+'">'+(r.diff>0?'+':'')+r.diff+'</td></tr>'
+            + (open ? '<tr><td colspan="4" style="background:#fff">'+fuelDetail(r.label)+'</td></tr>' : ''); }).join('')
+      + '</tbody></table></div><div style="margin-top:6px;font-size:12.5px;color:#8792a0">กดแถวเครื่องจักรเพื่อดูรายวัน เทียบกับใบเบิกที่ลงนาม</div>'
       + (f.unk.length?'<div style="margin-top:6px">เครื่องจักรที่ไม่พบในทะเบียน: '+H(f.unk.join(', '))+'</div>':'')
       + '</div>';
   }
@@ -682,5 +708,5 @@
   setInterval(updateBadge, 2000);
 
   function setEc1w(v){ S.ec1w = !!v; }
-  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, runCompare };
+  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, runCompare, togFuel };
 })();
