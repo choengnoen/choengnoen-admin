@@ -527,7 +527,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ib-sfx span{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--ink-400);pointer-events:none;max-width:40px;overflow:hidden;white-space:nowrap;}
   .ib-sfx.pre input{padding:6px 9px 6px 26px;}
   .ib-sfx.pre span{left:9px;right:auto;}
-  .ib-combo-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;border:1px solid var(--line);border-radius:10px;max-height:220px;overflow:auto;background:#fff;box-shadow:0 8px 24px rgba(10,37,64,.14);}
+  .ib-combo-list{position:fixed;z-index:80;border:1px solid var(--line);border-radius:10px;max-height:220px;overflow-y:auto;overscroll-behavior:contain;background:#fff;box-shadow:0 8px 24px rgba(10,37,64,.14);}
   .ib-opt{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;cursor:pointer;border-bottom:1px solid #f1f2f5;font-size:14px;}
   .ib-opt:hover,.ib-opt.hi{background:#fff4ea;}
   .ib-opt small{color:var(--ink-400);white-space:nowrap;}
@@ -2114,8 +2114,24 @@ function ibListRender(){
     : '<div class="ib-opt" style="cursor:default;color:var(--ink-400);">ไม่พบในทะเบียน</div>')
     + `<div class="ib-opt mk" onmousedown="ibStartNewMat()">＋ สร้างวัสดุใหม่${q?' “'+esc(q)+'”':' (ที่ไม่เคยมีในทะเบียน)'}</div>`;
   box.classList.remove('hidden');
-  try{ box.scrollIntoView({block:'nearest'}); }catch(e){} // รายการลอยทับ — เลื่อนโมดัลให้เห็นครบ
+  ibListPlace();
 }
+/* รายการค้นหาเป็น position:fixed ลอยเหนือโมดัลทั้งใบ (ไม่ถูก modal-body ตัด/ไม่เกิดแถบเลื่อนซ้อน) — วางใต้ช่องพิมพ์ ถ้าที่ไม่พอให้กลับขึ้นไปวางด้านบน */
+function ibListPlace(){
+  const box = document.getElementById('ib-add-list'), inp = document.getElementById('ib-add-q');
+  if(!box || !inp || box.classList.contains('hidden')) return;
+  const r = inp.getBoundingClientRect(), vh = window.innerHeight, gap = 6;
+  const below = vh - r.bottom - gap - 8, above = r.top - gap - 8;
+  const up = below < 200 && above > below;
+  const h = Math.max(120, Math.min(320, up ? above : below));
+  box.style.left = r.left + 'px';
+  box.style.width = r.width + 'px';
+  box.style.maxHeight = h + 'px';
+  if(up){ box.style.top = 'auto'; box.style.bottom = (vh - r.top + gap) + 'px'; }
+  else { box.style.bottom = 'auto'; box.style.top = (r.bottom + gap) + 'px'; }
+}
+window.addEventListener('resize', ibListPlace);
+document.addEventListener('scroll', ibListPlace, true);
 function ibListInput(){
   if(!IbEdit) return;
   IbEdit.q = document.getElementById('ib-add-q').value; IbHi = 0;
