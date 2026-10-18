@@ -51,7 +51,7 @@
   }
   function parseActivity(rows, fname){
     if(!rows.length || String(rows[0][0]||'').trim()!=='รหัสหน่วยงาน') return null;
-    const a = { file:fname, plan:'', qty:0, jobCode:'', jobName:'', route:'', control:'', kmStart:'', kmEnd:'', dates:[], labor:[], extra:0, machines:[], mats:[], sum:{} };
+    const a = { file:fname, plan:'', qty:0, jobCode:'', jobName:'', route:'', control:'', kmStart:'', kmEnd:'', dates:[], labor:[], laborHrs:[], extra:0, machines:[], mats:[], sum:{} };
     let mode='';
     for(const r of rows){
       const k = String(r[0]||'').trim();
@@ -65,7 +65,7 @@
       else if(k==='รายการวัสดุ') mode='mat';
       else if(k==='หมายเลขเครื่องจักร') mode='mach';
       else if(k==='ค่าใช้สอย') mode='';
-      else if(mode==='lab' && k && k!=='รวม'){ a.labor.push(k); a.extra += num(r[4]) + num(r[5]) + num(r[6]); }   /* ชั่วโมงล่วงเวลา/ค่าตอบแทน/เบี้ยเลี้ยงรายคน */
+      else if(mode==='lab' && k && k!=='รวม'){ a.labor.push(k); a.laborHrs.push(num(r[2])); a.extra += num(r[4]) + num(r[5]) + num(r[6]); }   /* ชั่วโมงล่วงเวลา/ค่าตอบแทน/เบี้ยเลี้ยงรายคน */
       else if(mode==='mat' && k) a.mats.push({ name:k, unit:String(r[2]||'').trim(), price:num(r[3]), qty:num(r[4]) });
       else if(mode==='mach' && /^[\d-]{6,}$/.test(k)) a.machines.push({ no:k, hours:num(r[2]), liters:num(r[5]) });
       else if(!k && mode && (r[3]==='รวม' || r[1]==='รวม')) mode='';
@@ -269,7 +269,13 @@
         /* s = ข้อความสั้นที่เก็บลงหมายเหตุของใบ (ใช้แสดงในหน้าต่าง "ตรวจสอบ" ภายหลัง) */
         if(missVeh.length) issues.push({ t:'attn', s:'ไม่พบเครื่องจักรในทะเบียน(ไม่ตัดน้ำมัน) '+missVeh.join(','), msg:'ไม่พบเครื่องจักรในทะเบียน (ไม่ได้ตัดน้ำมัน): '+missVeh.join(', ') });
         if(missMat.length && i===0) issues.push({ t:'attn', s:'ไม่พบวัสดุในทะเบียน(ไม่ตัดคลัง) '+missMat.join(','), msg:'ไม่พบวัสดุในทะเบียนพัสดุ (ไม่ได้ตัดคลัง): '+missMat.join(', ') });
-        const onLeave = staffNames.filter(n=>leaves.some(l=>l.name===n && l.from<=date && date<=l.to));
+        /* ไฟล์กรมบอกแค่ชั่วโมงรวมต่อคน (วันละ 7 ชม.) ไม่บอกว่าทำวันไหน → ถือว่าชนวันลาก็ต่อเมื่อวันทำงานของคนนั้นมากกว่าวันที่ไม่ได้ลาในแผนนี้ */
+        const onLeave = staffNames.filter((n,k)=>{
+          const lvOn = d=>leaves.some(l=>l.name===n && l.from<=d && d<=l.to);
+          if(!lvOn(date)) return false;
+          const workDays = Math.round((a.laborHrs[k]||0)/7);
+          return workDays > dates.filter(d=>!lvOn(d)).length;
+        });
         if(onLeave.length) issues.push({ t:'attn', s:'มีบันทึกลาวันนี้แต่กรมลงว่าทำงาน '+onLeave.join(','), msg:'มีบันทึกการลาในวันนี้ แต่กรมลงว่าทำงาน: '+onLeave.join(', ') });
         if(i===0 && (a.extra>0 || (a.sum['ค่าตอบแทน']||0)>0 || (a.sum['ค่าใช้สอย']||0)>0)) issues.push({ t:'attn', s:'กรมมีค่าตอบแทน/ค่าใช้สอย/ล่วงเวลา ไม่ได้นำเข้า ให้ตรวจกับระบบกรม', msg:'กรมมีค่าตอบแทน '+(a.sum['ค่าตอบแทน']||0)+' / ค่าใช้สอย '+(a.sum['ค่าใช้สอย']||0)+' / ล่วงเวลา-เบี้ยเลี้ยงรายคน — ใบสั่งการไม่มีช่องเหล่านี้ จึงไม่ได้นำเข้า (ตรวจกับแผนนี้ในระบบกรม)' });
         if(approx.length && i===0) issues.push({ t:'info', msg:'จับคู่วัสดุโดยประมาณ: '+approx.join(' · ') });
@@ -769,9 +775,10 @@
   function ckProbs(d){
     const n = String(d.note||''), at = n.indexOf(FLAG);
     const probs = at<0 ? [] : n.slice(at+FLAG.length).split(' ; ').map(s=>s.trim()).filter(Boolean);
-    if(at>=0 && !probs.length) probs.push('นำเข้าด้วยเวอร์ชันเก่า ไม่ได้ระบุสาเหตุ — ตรวจค่าตอบแทน/ค่าใช้สอย/ล่วงเวลาที่ไม่ได้นำเข้า กับระบบกรม');
+    /* ใบที่นำเข้าจากกรม: ธงเปล่า (เวอร์ชันเก่า) เดิมเกิดจากเทียบวันลากับรายชื่อทั้งแผนที่ใส่ทุกวัน จึงไม่ถือเป็นจุดต้องตรวจ · เรื่องลาของใบนำเข้าใช้ข้อความที่ระบบเขียนตอนนำเข้าเท่านั้น */
+    if(TOKEN_RE.test(n)) return probs;
     const lv = leaveConflicts(d);
-    if(lv.length && !probs.some(p=>p.indexOf('ลา')>=0)) probs.push('มีบันทึกลาวันนี้แต่ลงว่าทำงาน: '+lv.join(', '));
+    if(lv.length && !probs.some(p=>p.indexOf('บันทึกลา')>=0)) probs.push('มีบันทึกลาวันนี้แต่ลงว่าทำงาน: '+lv.join(', '));
     return probs;
   }
   function flagged(){
