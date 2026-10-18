@@ -13,7 +13,7 @@
   'use strict';
   const TH_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
   const TOKEN_RE = /\[กรม:/;
-  const S = { parsed:[], skipped:[], plan:null, importMk:'', mixed:false, busy:false, result:null };
+  const S = { parsed:[], skipped:[], plan:null, importMk:'', mixed:false, busy:false, result:null, ec1w:true };
 
   const H = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const num = x => { const v = parseFloat(String(x==null?'':x).replace(/,/g,'')); return isNaN(v)?0:v; };
@@ -44,7 +44,7 @@
   }
   function parseActivity(rows, fname){
     if(!rows.length || String(rows[0][0]||'').trim()!=='รหัสหน่วยงาน') return null;
-    const a = { file:fname, plan:'', qty:0, jobCode:'', jobName:'', route:'', control:'', kmStart:'', kmEnd:'', dates:[], labor:[], machines:[], mats:[], sum:{} };
+    const a = { file:fname, plan:'', qty:0, jobCode:'', jobName:'', route:'', control:'', kmStart:'', kmEnd:'', dates:[], labor:[], extra:0, machines:[], mats:[], sum:{} };
     let mode='';
     for(const r of rows){
       const k = String(r[0]||'').trim();
@@ -58,7 +58,7 @@
       else if(k==='รายการวัสดุ') mode='mat';
       else if(k==='หมายเลขเครื่องจักร') mode='mach';
       else if(k==='ค่าใช้สอย') mode='';
-      else if(mode==='lab' && k && k!=='รวม') a.labor.push(k);
+      else if(mode==='lab' && k && k!=='รวม'){ a.labor.push(k); a.extra += num(r[4]) + num(r[5]) + num(r[6]); }   /* ชั่วโมงล่วงเวลา/ค่าตอบแทน/เบี้ยเลี้ยงรายคน */
       else if(mode==='mat' && k) a.mats.push({ name:k, unit:String(r[2]||'').trim(), price:num(r[3]), qty:num(r[4]) });
       else if(mode==='mach' && /^[\d-]{6,}$/.test(k)) a.machines.push({ no:k, hours:num(r[2]), liters:num(r[5]) });
       else if(!k && mode && (r[3]==='รวม' || r[1]==='รวม')) mode='';
@@ -142,6 +142,7 @@
         if(missMat.length && i===0) issues.push({ t:'attn', msg:'ไม่พบวัสดุในทะเบียนพัสดุ (ไม่ได้ตัดคลัง): '+missMat.join(', ') });
         const onLeave = staffNames.filter(n=>leaves.some(l=>l.name===n && l.from<=date && date<=l.to));
         if(onLeave.length) issues.push({ t:'attn', msg:'มีบันทึกการลาในวันนี้ แต่กรมลงว่าทำงาน: '+onLeave.join(', ') });
+        if(i===0 && (a.extra>0 || (a.sum['ค่าตอบแทน']||0)>0 || (a.sum['ค่าใช้สอย']||0)>0)) issues.push({ t:'attn', msg:'กรมมีค่าตอบแทน '+(a.sum['ค่าตอบแทน']||0)+' / ค่าใช้สอย '+(a.sum['ค่าใช้สอย']||0)+' / ล่วงเวลา-เบี้ยเลี้ยงรายคน — ใบสั่งการไม่มีช่องเหล่านี้ จึงไม่ได้นำเข้า (ตรวจกับแผนนี้ในระบบกรม)' });
         if(approx.length && i===0) issues.push({ t:'info', msg:'จับคู่วัสดุโดยประมาณ: '+approx.join(' · ') });
         if(staffUnmatched.length) issues.push({ t:'info', msg:'ชื่อแรงงานที่ไม่พบในทะเบียนบุคลากร: '+staffUnmatched.join(', ') });
         if(!route) issues.push({ t:'info', msg:'สาย '+a.route+' ตอน '+a.control+' ไม่อยู่ในทางหลวงควบคุม (บันทึกเป็น "อื่นๆ")' });
@@ -237,6 +238,7 @@
       + (S.mixed?'<div class="dohi-note warn">ไฟล์มีวันที่ปฏิบัติงานหลายเดือนปนกัน — ควรเลือกไฟล์ทีละเดือน</div>':'')
       + '<div class="dohi-bar">'+pickHtml()+'<span>เดือนของไฟล์ <select onchange="DohImp.setMonth(this.value)">'+monthOptions(S.importMk)+'</select></span></div>'
       + kpi + skipBlocks
+      + (p ? '<div class="dohi-bar"><label style="display:inline-flex;gap:6px;align-items:center;font-size:13.5px;"><input type="checkbox" '+(S.ec1w?'checked':'')+' onchange="DohImp.setEc1w(this.checked)"> บันทึกชั่วโมงเครื่องจักรลง EC 1-W ด้วย ('+buildEc1w().length+' แถว เครื่อง×วัน — ลงช่อง W ชั่วโมงปฏิบัติงาน; ทับเฉพาะช่อง W เดิมของแถวนั้น)</label></div>' : '')
       + '<div class="dohi-bar"><button class="btn btn-primary" '+(p&&p.items.length?'':'disabled')+' onclick="DohImp.run()">นำเข้า '+(p?p.items.length:0)+' ใบสั่งการ</button>'
       + '<button class="btn btn-ghost" onclick="DohImp.close()">ยกเลิก</button></div>';
   }
@@ -248,6 +250,7 @@
       + '</tbody></table></div></div>' : '';
     const fail = r.failed.length ? '<div class="dohi-note bad"><b>นำเข้าไม่สำเร็จ ('+r.failed.length+' ใบ — ไม่มีข้อมูลของใบเหล่านี้ถูกบันทึก)</b><ul class="dohi-list">'+r.failed.slice(0,15).map(f=>'<li>'+H(f)+'</li>').join('')+'</ul>นำเข้าไฟล์เดิมซ้ำเพื่อลองใหม่ได้ ระบบข้ามใบที่สำเร็จแล้ว</div>' : '';
     return '<div class="dohi-note ok"><b>นำเข้าเสร็จแล้ว:</b> สร้างใบสั่งการ '+r.created+' ใบ'+(r.replaced?' · แทนที่ใบเดิม '+r.replaced+' ใบ':'')+' (ตัดคลังน้ำมัน/วัสดุตามใบแล้ว) — เปิดดูได้ที่รายการใบสั่งการรายวัน ค้นหาด้วยคำว่า "นำเข้าจากกรม"</div>'
+      + (r.ec1w ? '<div class="dohi-note '+(r.ec1w.note?'warn':'ok')+'"><b>EC 1-W:</b> บันทึกชั่วโมงเครื่องจักร (ช่อง W) '+r.ec1w.n+' แถว'+(r.ec1w.note?'<br>'+H(r.ec1w.note):'')+'</div>' : '')
       + fail + attn
       + '<div class="dohi-bar"><button class="btn btn-primary" onclick="DohImp.close()">ปิด</button><button class="btn btn-ghost" onclick="DohImp.again()">นำเข้าไฟล์เพิ่ม</button></div>';
   }
@@ -275,10 +278,58 @@
   function again(){ S.parsed = []; S.skipped = []; S.plan = null; S.result = null; render(); }
 
   /* ---------- บันทึก ---------- */
-  function stockOps(rec, orderId){
-    const fuelTx = rec.vehicles.filter(r=>r.liters>0).map(r=>({ date:rec.date, fuelType:r.fuelType, kind:'issue', liters:r.liters, vehicle:r.label, note:'เบิกตามใบสั่งการรายวัน', sourceDailyId:orderId }));
-    const materialTx = rec.parts.map(p=>({ date:rec.date, itemCode:p.code, kind:'issue', qty:p.qty, note:'เบิกตามใบสั่งการรายวัน', sourceDailyId:orderId }));
+  /* prevRef = เลขที่ใบเดิมของใบที่ถูกแทนที่ (วัน+เครื่อง/วัสดุเดียวกัน) เก็บไว้ใส่กลับ จะได้ไม่ต้องคีย์เลขที่ใบใหม่ */
+  function stockOps(rec, orderId, prevRef){
+    prevRef = prevRef || { fuel:{}, mat:{} };
+    const fuelTx = rec.vehicles.filter(r=>r.liters>0).map(r=>({ date:rec.date, fuelType:r.fuelType, kind:'issue', liters:r.liters, vehicle:r.label, note:'เบิกตามใบสั่งการรายวัน', sourceDailyId:orderId, ref:prevRef.fuel[r.label+'|'+rec.date] }));
+    const materialTx = rec.parts.map(p=>({ date:rec.date, itemCode:p.code, kind:'issue', qty:p.qty, note:'เบิกตามใบสั่งการรายวัน', sourceDailyId:orderId, ref:prevRef.mat[p.code+'|'+rec.date] }));
     return buildSubsys3AddOps(fuelTx, materialTx);
+  }
+  async function previousRefs(targets){
+    const out = { fuel:{}, mat:{} };
+    for(const t of targets){
+      const found = await FBL.findDailyOrderTx(t.__backendId);
+      found.fuel.forEach(x=>{ if(x.ref) out.fuel[x.vehicleId+'|'+x.date] = x.ref; });
+      found.material.forEach(x=>{ if(x.refNo) out.mat[x.materialId+'|'+x.date] = x.refNo; });
+    }
+    return out;
+  }
+  /* EC 1-W: ชั่วโมงเครื่องจักรของกรม (รวมทั้งช่วง) แบ่งเท่ากันทุกวัน บันทึกเป็นชั่วโมงปฏิบัติงาน "W" ของเครื่อง/วันนั้น
+     (รวมทุกแผนที่ใช้เครื่องเดียวกันวันเดียวกัน) — ใส่ทับเฉพาะช่อง W ไม่แตะช่องอื่นของแถวเดิม */
+  function buildEc1w(){
+    const map = {};
+    S.parsed.forEach(a=>{
+      const dates = Array.from(new Set(a.dates.map(iso).filter(Boolean))).sort();
+      if(!dates.length) return;
+      a.machines.forEach(m=>{
+        const v = matchVehicle(m.no); if(!v || !(m.hours>0)) return;
+        const arr = splitEven(m.hours, dates.length);
+        dates.forEach((d,i)=>{
+          if(typeof ledgerLocks!=='undefined' && ledgerLocks[d.slice(0,7)]) return;
+          const k = v.label+'|'+d; const o = map[k] || (map[k] = { vehicleId:v.label, date:d, hrW:0 });
+          o.hrW = r2(o.hrW + arr[i]);
+        });
+      });
+    });
+    return Object.values(map);
+  }
+  async function writeEc1w(rows){
+    if(!rows.length) return { n:0 };
+    if(!(FBL.canWriteTable && FBL.canWriteTable('machinery_logs'))) return { n:0, note:'บัญชีนี้ไม่มีสิทธิ์แก้ไข EC 1-W (ระบบที่ 3) — ข้ามขั้นตอนบันทึกชั่วโมงเครื่องจักร' };
+    const dates = rows.map(r=>r.date).sort();
+    let existing = [];
+    try{ existing = await FBL.apiQueryRange('machinery_logs', 'date', dates[0], dates[dates.length-1]+''); }
+    catch(e){ return { n:0, note:'อ่านข้อมูล EC 1-W เดิมไม่ได้ — ข้ามขั้นตอนบันทึกชั่วโมงเครื่องจักร ('+(e&&e.message?e.message:e)+')' }; }
+    const byKey = {}; existing.forEach(l=>{ byKey[l.vehicleId+'|'+l.date] = l; });
+    const ops = rows.map(r=>{
+      const ex = byKey[r.vehicleId+'|'+r.date];
+      return ex ? { action:'update', table:'machinery_logs', data:{ id:ex.id, hrW:r.hrW } }
+                : { action:'add', table:'machinery_logs', data:{ vehicleId:r.vehicleId, date:r.date, hrW:r.hrW, dayOff:false } };
+    });
+    let n = 0;
+    try{ for(let i=0;i<ops.length;i+=120){ await apiBatch(ops.slice(i,i+120)); n += Math.min(120, ops.length-i); } }
+    catch(e){ return { n, note:'บันทึก EC 1-W ได้ '+n+' จาก '+ops.length+' แถว แล้วหยุด: '+(e&&e.message?e.message:e) }; }
+    return { n };
   }
   async function run(){
     if(S.busy || !S.plan || !S.plan.items.length) return;
@@ -297,7 +348,8 @@
         const targets = dailyWorkOrders.filter(d=>d.date===rec.date && d.code===rec.code && String(d.route||'')===String(rec.route||'') && !created.has(d.__backendId) && !TOKEN_RE.test(String(d.note||'')));
         const delOps = [];
         for(const t of targets){ delOps.push({ action:'delete', table:'daily_work_orders', id:t.__backendId }); (await buildSubsys3DeleteOps(t.__backendId, true)).forEach(o=>delOps.push(o)); }
-        const ops = [{ action:'add', table:'daily_work_orders', data:dwoToApi(rec) }].concat(stockOps(rec, orderId), delOps);
+        const prevRef = targets.length ? await previousRefs(targets) : undefined;
+        const ops = [{ action:'add', table:'daily_work_orders', data:dwoToApi(rec) }].concat(stockOps(rec, orderId, prevRef), delOps);
         const results = await apiBatch(ops);
         applySubsys3BatchResult(ops, results);
         targets.forEach(t=>{ const k = dailyWorkOrders.findIndex(x=>x.__backendId===t.__backendId); if(k>-1) dailyWorkOrders.splice(k,1); });
@@ -310,6 +362,10 @@
       }
     }
     dailyWorkOrders.forEach((r,i)=>{ r.no = i+1; });
+    if(S.ec1w){
+      render(null, 'กำลังบันทึกชั่วโมงเครื่องจักร (EC 1-W)...');
+      try{ res.ec1w = await writeEc1w(buildEc1w()); }catch(e){ res.ec1w = { n:0, note:'บันทึก EC 1-W ไม่สำเร็จ: '+(e&&e.message?e.message:e) }; }
+    }
     S.busy = false; S.result = res; S.plan = null;
     renderAll();
     render();
@@ -320,5 +376,6 @@
     editDailyEntry(rec.no);
   }
 
-  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder };
+  function setEc1w(v){ S.ec1w = !!v; }
+  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w };
 })();

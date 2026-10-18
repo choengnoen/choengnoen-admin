@@ -3825,10 +3825,10 @@ function latestFuelPriceX(fuelType){
 function buildSubsys3AddOps(fuelTx, materialTx){
   const ops = [];
   fuelTx.forEach(t=> ops.push({ action:'add', table:'fuel_transactions', data:{
-    vehicleId:t.vehicle, fuelType:t.fuelType, kind:t.kind, date:t.date, qty:t.liters, note:t.note||'',
+    vehicleId:t.vehicle, fuelType:t.fuelType, kind:t.kind, date:t.date, qty:t.liters, note:t.note||'', ref:t.ref||undefined,
     relatedDailyWorkOrderId: t.sourceDailyId!=null ? String(t.sourceDailyId) : undefined } }));
   materialTx.forEach(t=> ops.push({ action:'add', table:'material_transactions', data:{
-    materialId:t.itemCode, type:t.kind, qty:t.qty, date:t.date, note:t.note||'',
+    materialId:t.itemCode, type:t.kind, qty:t.qty, date:t.date, note:t.note||'', refNo:t.ref||undefined,
     relatedDailyWorkOrderId: t.sourceDailyId!=null ? String(t.sourceDailyId) : undefined } }));
   return ops;
 }
@@ -5539,8 +5539,15 @@ async function proceedSaveDailyEntry(date, code, kmStart, kmEnd, locText, qtyPen
   try{
     const orderId = isEdit ? record.__backendId : FBL.newId('daily_work_orders');
     record.__backendId = orderId;
-    const fuelTx = vehRows.filter(r=>r.liters>0).map(r=>({date, fuelType:r.vehicle.fuelType, kind:'issue', liters:r.liters, vehicle:r.vehicle.label, crew:staffLabel, note:'เบิกตามใบสั่งการรายวัน', sourceDailyId:orderId}));
-    const materialTx = partRows.map(p=>({date, itemCode:p.code, kind:'issue', qty:p.qty, vehicle:vehicleLabels.join(', '), crew:staffLabel, note:'เบิกตามใบสั่งการรายวัน', sourceDailyId:orderId}));
+    /* แก้ใบเดิม = ลบรายการตัดคลังแล้วสร้างใหม่ → เก็บเลขที่ใบ (ref/refNo) ของเดิมไว้ใส่กลับ (วันเดียวกัน เครื่อง/วัสดุเดียวกัน) */
+    const prevRef = { fuel:{}, mat:{} };
+    if(isEdit){
+      const prev = await FBL.findDailyOrderTx(orderId);
+      prev.fuel.forEach(t=>{ if(t.ref) prevRef.fuel[t.vehicleId+'|'+t.date] = t.ref; });
+      prev.material.forEach(t=>{ if(t.refNo) prevRef.mat[t.materialId+'|'+t.date] = t.refNo; });
+    }
+    const fuelTx = vehRows.filter(r=>r.liters>0).map(r=>({date, fuelType:r.vehicle.fuelType, kind:'issue', liters:r.liters, vehicle:r.vehicle.label, crew:staffLabel, note:'เบิกตามใบสั่งการรายวัน', sourceDailyId:orderId, ref:prevRef.fuel[r.vehicle.label+'|'+date]}));
+    const materialTx = partRows.map(p=>({date, itemCode:p.code, kind:'issue', qty:p.qty, vehicle:vehicleLabels.join(', '), crew:staffLabel, note:'เบิกตามใบสั่งการรายวัน', sourceDailyId:orderId, ref:prevRef.mat[p.code+'|'+date]}));
     const ops = [{ action: isEdit ? 'update' : 'add', table:'daily_work_orders', data:dwoToApi(record) }];
     if(isEdit) (await buildSubsys3DeleteOps(orderId, false)).forEach(o=>ops.push(o));
     buildSubsys3AddOps(fuelTx, materialTx).forEach(o=>ops.push(o));
