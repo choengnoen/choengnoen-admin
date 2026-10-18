@@ -516,6 +516,73 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fc-bar-track{height:6px;border-radius:4px;background:rgba(255,255,255,.18);margin-top:14px;overflow:hidden;}
   .fc-bar-fill{height:100%;background:#fff;border-radius:4px;}
   .fc-bar-label{font-size:10.5px;color:rgba(255,255,255,.75);margin-top:6px;}
+  /* พ.1-03 หน้าตรวจรายวัน (แบบ 3-4, 2569-10-18) */
+  #rep-fuel-grid-wrap{max-height:none;padding:0 20px 20px;}
+  .fd-strip{display:flex;gap:6px;overflow-x:auto;padding:8px 2px 10px;}
+  .fd-chip{flex:none;width:58px;background:#fff;border:2px solid var(--line);border-radius:12px;text-align:center;padding:4px 0 2px;cursor:pointer;user-select:none;}
+  .fd-chip:hover{border-color:var(--orange-500);}
+  .fd-chip .fc-w{font-size:11.5px;color:var(--ink-400);}
+  .fd-chip .fc-n{font-family:'Kanit';font-size:19px;font-weight:600;line-height:1.1;color:var(--navy-900);}
+  .fd-chip .fc-s{font-size:11px;color:var(--ink-600);height:14px;}
+  .fd-chip .fc-m{font-size:11px;height:14px;}
+  .fd-chip.has{background:#eef7f1;}
+  .fd-chip.hol .fc-n,.fd-chip.hol .fc-w{color:var(--danger);}
+  .fd-chip.sel{border-color:var(--orange-500);background:#fdefe3;}
+  .fd-dayhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 10px;}
+  .fd-dayhead h3{margin:0;font-family:'Kanit';font-size:20px;color:var(--navy-900);}
+  .fd-today{background:var(--orange-500);color:#fff;border-radius:99px;padding:1px 10px;font-size:12px;vertical-align:middle;}
+  .fd-hol{background:var(--danger-bg);color:var(--danger);border-radius:99px;padding:1px 10px;font-size:12px;vertical-align:middle;}
+  .fd-stats{display:flex;gap:8px;flex-wrap:wrap;}
+  .fd-stats div{background:var(--paper-100);border-radius:10px;padding:4px 12px;font-size:12px;color:var(--ink-600);}
+  .fd-stats b{display:block;font-family:'Kanit';font-size:16px;color:var(--navy-900);}
+  .fd-top{display:grid;grid-template-columns:1fr 320px;gap:12px;margin-bottom:12px;}
+  .fd-alert{background:#fff8e6;border:1px solid #f0cf6b;border-radius:12px;padding:10px 14px;font-size:13px;}
+  .fd-alert-ok{background:var(--success-bg);border-color:#b9ddc6;}
+  .fd-alert .fd-li{padding:3px 0;cursor:pointer;}
+  .fd-alert .fd-li:hover{text-decoration:underline;}
+  .fd-prog{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:13px;}
+  .fd-pb{height:12px;background:#e4e8ec;border-radius:6px;overflow:hidden;margin:6px 0;}
+  .fd-pb i{display:block;height:100%;background:#3fae6c;transition:width .25s;}
+  .fd-lock{background:var(--success-bg);color:var(--success);border-radius:8px;padding:7px 10px;margin-top:8px;font-weight:600;}
+  .fd-lock a{font-weight:400;margin-left:6px;color:var(--ink-600);}
+  .fd-mut{color:var(--ink-400);font-size:11.5px;}
+  .fd-tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;}
+  table.fd-table{border-collapse:collapse;width:100%;min-width:1080px;background:#fff;}
+  .fd-table th{background:var(--navy-900);color:#fff;font-size:12px;padding:7px 8px;text-align:center;font-weight:600;position:sticky;top:0;z-index:2;}
+  .fd-table th small{font-weight:400;opacity:.8;}
+  .fd-table th.fd-cur{background:var(--orange-600);}
+  .fd-table td{padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:13px;}
+  .fd-table td.fd-c{text-align:center;}
+  .fd-table td.fd-r{text-align:right;}
+  .fd-table tfoot td{background:var(--paper-100);font-weight:700;color:var(--navy-900);}
+  .fd-table tr.fd-rw td{background:#fffaf0;}
+  .fd-table tr.fd-rb td{background:#fff3f1;}
+  .fd-table tr.fd-ck td{background:#f1faf4;}
+  .fd-table tr.fd-off td{opacity:.65;}
+  .fd-table tr.fd-hl td{box-shadow:inset 0 2px 0 var(--orange-500),inset 0 -2px 0 var(--orange-500);}
+  .fd-big{font-family:'Kanit';font-size:16px;}
+  .fd-neg{color:var(--danger);}
+  .fd-in{width:100%;min-width:78px;height:38px;border:1.5px solid var(--line);border-radius:8px;font-family:'Kanit';font-size:15px;font-weight:600;text-align:center;color:var(--navy-900);background:#fff;}
+  .fd-in:focus{outline:none;border-color:var(--orange-500);box-shadow:0 0 0 3px rgba(224,98,15,.18);}
+  .fd-in.cell-dirty{background:#fff6e6;border-color:var(--amber-400);}
+  .fd-in.fd-inbad{border-color:var(--danger);background:var(--danger-bg);}
+  .fd-in-td{min-width:110px;}
+  .fd-tag{display:inline-block;border-radius:6px;padding:1px 8px;font-size:11.5px;font-weight:600;}
+  .fd-tag.fd-d{background:#e3edf6;color:var(--navy-700);}
+  .fd-tag.fd-g{background:#fdefe3;color:var(--orange-600);}
+  .fd-fl{display:inline-block;border-radius:99px;padding:2px 9px;font-size:11.5px;font-weight:600;margin:1px 3px 1px 0;}
+  .fd-fl.fd-ok{background:var(--success-bg);color:var(--success);}
+  .fd-fl.fd-w{background:#fdf1de;color:#a3660a;}
+  .fd-fl.fd-b{background:var(--danger-bg);color:var(--danger);}
+  .fd-fl.fd-n{background:var(--paper-100);color:var(--ink-400);}
+  .fd-cb{width:30px;height:30px;border-radius:8px;border:2px solid #b8c1ca;background:#fff;color:transparent;display:flex;align-items:center;justify-content:center;margin:auto;font-size:17px;}
+  .fd-cb.can{cursor:pointer;}
+  .fd-cb.can:hover{border-color:var(--success);}
+  .fd-cb.on{background:var(--success);border-color:var(--success);color:#fff;}
+  .fd-empty{text-align:center;color:var(--ink-400);padding:34px 0;}
+  .fd-open{background:#fff8e8;border:1px solid var(--amber-400);border-radius:10px;padding:8px 12px;margin:8px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px;}
+  .fd-open input{width:96px;height:32px;border:1.5px solid var(--line);border-radius:6px;text-align:center;font-family:'Kanit';}
+  @media(max-width:900px){.fd-top{grid-template-columns:1fr;}}
   .fuel-kpi-wrap{padding:14px 20px 4px;display:flex;flex-direction:column;gap:10px;}
   .fuel-kpi-row{display:grid;grid-template-columns:110px repeat(5,minmax(0,1fr));gap:10px;align-items:stretch;}
   .fk-title{font-family:'Kanit';font-size:14px;font-weight:600;color:var(--navy-900);display:flex;align-items:center;}
@@ -542,6 +609,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fuel-hist-btn-top{white-space:nowrap;}
   .fhist-row-latest td{background:#eef7ee;font-weight:700;}
   .fhist-row-latest td:first-child{position:relative;}
+  .fhist-tbl th.grp{text-align:center;font-family:'Kanit';font-size:13.5px;font-weight:600;border-bottom:1px solid var(--line);}
+  .fhist-tbl th.g-d{background:#eef3fa;color:#16457a;}
+  .fhist-tbl th.g-b{background:#fdf0e6;color:#a8470a;}
+  .fhist-tbl .sep{border-left:2px solid var(--line);}
+  .fhist-tbl td,.fhist-tbl th{white-space:nowrap;}
   .fhist-latest-tag{display:inline-block;margin-left:8px;font-family:'Kanit';font-size:10px;font-weight:600;color:#fff;background:var(--success,#2e8b57);padding:1px 8px;border-radius:20px;vertical-align:middle;}
   .fh-row-edit input{width:100%;}
   .fh-row-edit td{padding:6px 8px;}
@@ -830,7 +902,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 <option value="4">เม.ย.</option><option value="5">พ.ค.</option><option value="6">มิ.ย.</option>
                 <option value="7" selected>ก.ค.</option><option value="8">ส.ค.</option><option value="9">ก.ย.</option>
               </select>
-              <span class="rep-lock-ctl" style="display:flex;align-items:center;gap:6px;flex:none;"></span>
             </div>
           </div>
           <div class="toolbar" style="padding:14px 20px 0;">
@@ -839,8 +910,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="tab" data-fueltab="เบนซิน" onclick="setFuelTypeTab(this)">น้ำมันเบนซิน</div>
               <div class="tab active" data-fueltab="all" onclick="setFuelTypeTab(this)">ทั้งหมด</div>
             </div>
-            <label class="rep-toggle"><input type="checkbox" id="rep-fuel-showmileage" onchange="renderReportFuel(ledgerMonthKey('rep-fuel-ledger-fy','rep-fuel-ledger-month'))"> แสดงแถวเลขไมล์/สายทาง</label>
-            <label class="rep-toggle" style="margin-left:auto;"><input type="checkbox" id="rep-fuel-onlymoved" checked onchange="renderReportFuel(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'))"> แสดงเฉพาะรายการที่มีปริมาณน้ำมัน</label>
+            <label class="rep-toggle" style="margin-left:auto;"><input type="checkbox" id="rep-fuel-showall" onchange="renderReportFuel(currentFuelMk())"> แสดงรถที่ไม่ได้เบิกวันนี้ (เพื่อเพิ่มรายการ)</label>
             <div class="toolbar" style="padding:0;flex:none;gap:8px;">
               <button class="btn btn-ghost btn-sm" id="rep-fuel-edit-btn" onclick="toggleFuelOpeningEdit()">✎ แก้ยอดยกมา/รับเข้า</button>
               <button class="btn btn-primary btn-sm hidden" id="rep-fuel-save-btn" onclick="saveFuelOpeningEdits()">💾 บันทึก</button>
@@ -858,7 +928,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div id="rep-fuel-grid-wrap" class="grid-wrap"></div>
           <div class="legend-block" id="rep-fuel-foot-block">
             <button type="button" class="legend-dot-btn no-print" id="rep-fuel-foot-toggle" onclick="__toggleNote('rep-fuel-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="rep-fuel-foot" style="display:none;background:transparent;border-top:none;">คลิกช่องตัวเลข (สำหรับผู้มีสิทธิ์แก้ไข) เพื่อกรอก/แก้ไขจำนวนลิตรที่เบิกของวันนั้นๆตามใบสั่งจ่ายน้ำมันตัวจริง — การรับน้ำมันเข้าคลังให้ใช้ปุ่ม "+ รับเข้าคลัง" ที่แท็บทะเบียนพัสดุ (แท็บย่อยน้ำมันเชื้อเพลิง)</div>
+            <div class="foot-note" id="rep-fuel-foot" style="display:none;background:transparent;border-top:none;">เลือกวันจากแถบวันที่ด้านบนเพื่อดูรายการเบิกของวันนั้น — ผู้มีสิทธิ์แก้ไขกรอก/แก้ไขจำนวนลิตรและเลขไมล์ในช่องได้ (ลิตรเป็นฉบับร่างจนกว่าจะกด "บันทึก") · ผู้มีสิทธิ์ตรวจติ๊ก "ตรวจแล้ว" ทีละรายการแล้วกด "ยืนยันตรวจครบทั้งวัน" วันนั้นจะถูกล็อกจนกว่าผู้มีสิทธิ์ตรวจจะปลดล็อก — การรับน้ำมันเข้าคลังให้ใช้ปุ่ม "+ รับเข้าคลัง" ที่แท็บทะเบียนพัสดุ (แท็บย่อยน้ำมันเชื้อเพลิง)</div>
           </div>
         </div>
       </div>
@@ -995,7 +1065,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 
 <!-- ============ FUEL HISTORY MODAL — ประวัติน้ำมัน: สรุปรายเดือน / รายการรับเข้า (แก้ไข-ลบได้) ============ -->
 <div class="modal-overlay hidden no-print" id="fuel-history-overlay">
-  <div class="modal-box" style="max-width:640px;">
+  <div class="modal-box" style="max-width:900px;">
     <div class="modal-head">
       <div class="modal-head-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z"/></svg></div>
       <h3 id="fuel-history-title">ประวัติน้ำมัน</h3>
@@ -1618,12 +1688,10 @@ function renderMasterFuel(){
    แท็บ 1: สรุปยอดยกมา/รับเข้า/จ่าย/คงเหลือ รายเดือน (ข้อมูลชุดเดียวกับตาราง พ.1-03)
    แท็บ 2: รายการรับเข้าย้อนหลัง — แก้ไข/ลบได้ (แก้ปัญหาพิมพ์ยอดรับผิดแล้วแก้ไม่ได้)
    ============================================================ */
-let __fuelHistType = 'ดีเซล';
 let __fuelHistTab = 'months';
 let __fuelHistEditId = null;
 
 function openFuelHistoryModal(fuelType){
-  __fuelHistType = (fuelType==='เบนซิน') ? 'เบนซิน' : 'ดีเซล';
   __fuelHistTab = 'months';
   __fuelHistEditId = null;
   document.querySelectorAll('#fuel-history-overlay .modal-tab').forEach(t=>t.classList.toggle('active', t.dataset.histtab==='months'));
@@ -1641,35 +1709,26 @@ function setFuelHistTab(el, tab){
   el.classList.add('active');
   renderFuelHistoryModal();
 }
-function setFuelHistType(type){
-  __fuelHistType = type;
-  __fuelHistEditId = null;
-  renderFuelHistoryModal();
-}
-function fuelHistTypeToggleHtml(){
-  return `<div class="seg-toggle" style="margin-bottom:14px;">
-    <button type="button" class="seg-btn ${__fuelHistType==='ดีเซล'?'active':''}" onclick="setFuelHistType('ดีเซล')">🛢️ ดีเซล</button>
-    <button type="button" class="seg-btn ${__fuelHistType==='เบนซิน'?'active':''}" onclick="setFuelHistType('เบนซิน')">⛽ เบนซิน</button>
-  </div>`;
-}
 function renderFuelHistoryModal(){
   const body = document.getElementById('fuel-history-body');
   const title = document.getElementById('fuel-history-title');
   if(!body || !title) return;
   if(__fuelHistTab==='months'){
-    title.textContent = 'ประวัติน้ำมัน' + __fuelHistType;
-    body.innerHTML = fuelHistTypeToggleHtml() + fuelHistoryMonthsHtml();
+    title.textContent = 'ประวัติน้ำมันเชื้อเพลิง';
+    body.innerHTML = fuelHistoryMonthsHtml();
   }else{
     title.textContent = 'ประวัติน้ำมันเชื้อเพลิง';
     body.innerHTML = fuelHistoryReceivesHtml();
   }
 }
 function fuelHistoryMonthsHtml(){
-  const ft = __fuelHistType;
+  const FTS = ['ดีเซล','เบนซิน'];
   const keys = new Set();
-  fuelTransactions.filter(t=>t.fuelType===ft).forEach(t=>{ if(t.date) keys.add(monthKeyOf(t.date)); });
-  Object.keys(fuelOpeningOverride).forEach(k=>{ if(k.startsWith(ft+'|')) keys.add(k.split('|')[1]); });
-  Object.keys(fuelReceivedOverride).forEach(k=>{ if(k.startsWith(ft+'|')) keys.add(k.split('|')[1]); });
+  fuelTransactions.filter(t=>FTS.includes(t.fuelType)).forEach(t=>{ if(t.date) keys.add(monthKeyOf(t.date)); });
+  FTS.forEach(ft=>{
+    Object.keys(fuelOpeningOverride).forEach(k=>{ if(k.startsWith(ft+'|')) keys.add(k.split('|')[1]); });
+    Object.keys(fuelReceivedOverride).forEach(k=>{ if(k.startsWith(ft+'|')) keys.add(k.split('|')[1]); });
+  });
   const latest = latestActivityMonthKey();
   keys.add(latest);
   const minKey = Array.from(keys).sort()[0];
@@ -1677,20 +1736,27 @@ function fuelHistoryMonthsHtml(){
   let mk = latest;
   while(mk >= minKey && list.length < 18){ list.push(mk); mk = prevMonthKey(mk); }
   const rows = list.map((k,i)=>{
-    const s = fuelMonthSummary(ft, k);
     const [y,m] = k.split('-').map(Number);
-    const neg = s.closing < 0;
     const isLatest = k===latest;
-    return `<tr${isLatest?' class="fhist-row-latest"':''}>
-      <td>${monthNamesTh[m-1]} ${y+543}${isLatest?'<span class="fhist-latest-tag">ล่าสุด</span>':''}</td>
-      <td class="num">${fmtNum(s.opening,1)}</td>
+    const cells = FTS.map(ft=>{
+      const s = fuelMonthSummary(ft, k);
+      const neg = s.closing < 0;
+      return `<td class="num sep">${fmtNum(s.opening,1)}</td>
       <td class="num" style="color:var(--success);">+${fmtNum(s.received,1)}</td>
       <td class="num" style="color:var(--danger);">−${fmtNum(s.issued,1)}</td>
-      <td class="num" style="font-weight:700;${neg?'color:var(--danger);':''}">${fmtNum(s.closing,1)}</td>
+      <td class="num" style="font-weight:700;${neg?'color:var(--danger);':''}">${fmtNum(s.closing,1)}</td>`;
+    }).join('');
+    return `<tr${isLatest?' class="fhist-row-latest"':''}>
+      <td>${monthNamesTh[m-1]} ${y+543}${isLatest?'<span class="fhist-latest-tag">ล่าสุด</span>':''}</td>
+      ${cells}
     </tr>`;
   }).join('');
-  return `<div class="table-wrap"><table>
-    <thead><tr><th>เดือน</th><th class="num">ยกมา</th><th class="num">รับเข้า</th><th class="num">จ่าย</th><th class="num">คงเหลือ</th></tr></thead>
+  const sub = `<th class="num sep">ยกมา</th><th class="num">รับเข้า</th><th class="num">จ่าย</th><th class="num">คงเหลือ</th>`;
+  return `<div class="table-wrap"><table class="fhist-tbl">
+    <thead>
+      <tr><th rowspan="2">เดือน</th><th class="grp g-d sep" colspan="4">🛢️ ดีเซล (ลิตร)</th><th class="grp g-b sep" colspan="4">⛽ เบนซิน (ลิตร)</th></tr>
+      <tr>${sub}${sub}</tr>
+    </thead>
     <tbody>${rows}</tbody>
   </table></div>`;
 }
@@ -3921,8 +3987,7 @@ async function saveMatOpeningEdits(){
 }
 function toggleFuelOpeningEdit(){
   if(!isAdmin()) return;
-  if(!repFuelEditMode && blockIfMonthLocked(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'))) return;
-  repFuelEditMode = !repFuelEditMode;
+  repFuelEditMode = !repFuelEditMode; /* พ.1-03 ไม่ใช้ล็อกเดือนแล้ว (ใช้ล็อกรายวันจากการตรวจแทน) */
   const eb=document.getElementById('rep-fuel-edit-btn'), sb=document.getElementById('rep-fuel-save-btn');
   if(eb) eb.classList.toggle('hidden', repFuelEditMode);
   if(sb) sb.classList.toggle('hidden', !repFuelEditMode);
@@ -3974,7 +4039,6 @@ async function __commitOverrideInputs(wrapSel, attrs, mk){
 async function saveFuelOpeningEdits(){
   if(!isAdmin()) return;
   const mk = ledgerMonthKey('rep-ledger-fy','rep-ledger-month');
-  if(blockIfMonthLocked(mk)) return;
   await __commitOverrideInputs('#rep-fuel-grid-wrap', [
     {sel:'data-open-fueltype', dataKey:'openFueltype', kind:'fuelOpening', map:fuelOpeningOverride, effective:ft=>fuelMonthSummary(ft,mk).opening},
     {sel:'data-recv-fueltype', dataKey:'recvFueltype', kind:'fuelReceived', map:fuelReceivedOverride, effective:ft=>fuelMonthSummary(ft,mk).received}
@@ -4006,152 +4070,285 @@ function renderFuelKpiBand(mk, fuelTypes){
     </div>`;
   }).join('');
 }
+/* ============================================================
+   พ.1-03 หน้าตรวจรายวัน (แบบ 3-4, 2569-10-18)
+   เลือกวัน → เห็นรายการเบิกของวันนั้น: ผู้เบิก/เครื่อง/ประเภท/ครั้งล่าสุด/ครั้งนี้/เลขไมล์ก่อน-นี้ + ผลตรวจอัตโนมัติ
+   ผู้มีสิทธิ์ตรวจ (perm.checkFuel) ติ๊ก "ตรวจแล้ว" รายแถว แล้วกด "ยืนยันตรวจครบทั้งวัน" → วันนั้นถูกล็อก (แก้ไม่ได้จนกว่าผู้มีสิทธิ์ตรวจจะปลดล็อก)
+   สถานะเก็บที่ตาราง fuel_day_checks (1 วัน = 1 รายการ) — แทนการล็อกเดือนในแท็บ พ.1-03 (ล็อกเดือนยังใช้ที่ พ.1-02)
+   ช่องลิตรใช้ระบบฉบับร่าง (draftFuelCells) + ช่องเลขไมล์บันทึกทันที เหมือนเดิมทุกประการ
+   ============================================================ */
+let fuelDayChecks = {};     // 'YYYY-MM-DD' -> {checked:[ป้ายรถ], checkedBy, checkedAt, confirmed, confirmedBy, confirmedAt}
+let fuelCheckDay = null;    // เลขวันที่ที่กำลังตรวจ
+let fuelCheckDayMk = null;  // เดือนที่เลขวันข้างบนสังกัดอยู่
+const FUEL_CHECK_MAX_KM_PER_DAY = 300; // เกณฑ์เลขไมล์เพิ่มสูงสุดต่อวัน (ใช้เมื่อรถคันนั้นไม่ได้กำหนด maxKmPerDay เอง)
+const FUEL_SHORT_MONTH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+async function loadFuelDayChecksFromApi(){
+  try{
+    (await apiGet('fuel_day_checks')).forEach(r=>{
+      fuelDayChecks[r.dayKey] = {checked:Array.isArray(r.checkedJson)?r.checkedJson:[], checkedBy:r.checkedBy||'', checkedAt:r.checkedAt||'',
+        confirmed:!!r.confirmed, confirmedBy:r.confirmedBy||'', confirmedAt:r.confirmedAt||''};
+    });
+  }catch(err){
+    console.error('โหลดสถานะตรวจน้ำมันรายวันจากฐานข้อมูลกลางไม่สำเร็จ', err);
+  }
+}
+function canCheckFuel(){ return !!(window.FBL && FBL.canCheckFuel && FBL.canCheckFuel()); } // เจ้าของระบบ/หมวด/ผู้ช่วยหมวด (หรือผู้ที่ถูกติ๊กสิทธิ์ checkFuel)
+function fuelDayRec(date){ return fuelDayChecks[date] || {checked:[], confirmed:false}; }
+function currentFuelMk(){ return ledgerMonthKey('rep-fuel-ledger-fy','rep-fuel-ledger-month'); }
+function fuelShortDate(ds){
+  const d = new Date(ds+'T00:00:00');
+  return DOW_TH[d.getDay()]+' '+(+ds.slice(8,10))+' '+FUEL_SHORT_MONTH[+ds.slice(5,7)-1];
+}
+function fuelStamp(iso){ return String(iso||'').slice(0,16).replace('T',' '); }
+async function saveFuelDayCheck(date, patch){
+  const next = Object.assign({checked:[], checkedBy:'', checkedAt:'', confirmed:false, confirmedBy:'', confirmedAt:''}, fuelDayChecks[date]||{}, patch);
+  await apiPost('update', 'fuel_day_checks', {dayKey:date, checkedJson:next.checked, checkedBy:next.checkedBy, checkedAt:next.checkedAt,
+    confirmed:next.confirmed?'1':'', confirmedBy:next.confirmedBy, confirmedAt:next.confirmedAt});
+  fuelDayChecks[date] = next;
+}
+async function toggleFuelRowCheck(date, label){
+  if(!canCheckFuel() || fuelDayRec(date).confirmed) return;
+  const set = new Set(fuelDayRec(date).checked);
+  if(set.has(label)) set.delete(label); else set.add(label);
+  try{ await saveFuelDayCheck(date, {checked:Array.from(set), checkedBy:apiCurrentUsername(), checkedAt:new Date().toISOString()}); }
+  catch(err){ showAlertModal('บันทึกสถานะ "ตรวจแล้ว" ไม่สำเร็จ: '+err.message); return; }
+  renderReportFuel(currentFuelMk());
+}
+function confirmFuelDay(date){
+  if(!canCheckFuel()) return;
+  if(draftCountFor('fuel')>0){ showAlertModal('ยังมีข้อมูลฉบับร่างที่ยังไม่ได้กดบันทึก — กรุณากด "บันทึก" หรือ "ล้างการแก้ไข" ก่อนยืนยันตรวจ'); return; }
+  showConfirmModal('ยืนยันตรวจครบทั้งวัน', `ยืนยันว่าตรวจรายการเบิกน้ำมันของ ${fuelShortDate(date)} ครบถ้วนแล้ว?\nหลังยืนยัน วันนี้จะแก้ไขตัวเลขไม่ได้ จนกว่าผู้มีสิทธิ์ตรวจจะปลดล็อก`, 'ยืนยัน', async function(){
+    try{ await saveFuelDayCheck(date, {confirmed:true, confirmedBy:apiCurrentUsername(), confirmedAt:new Date().toISOString()}); }
+    catch(err){ showAlertModal('บันทึกการยืนยันตรวจไม่สำเร็จ: '+err.message); return; }
+    renderReportFuel(currentFuelMk());
+  });
+}
+function unlockFuelDay(date){
+  if(!canCheckFuel()) return;
+  showConfirmModal('ปลดล็อกวันที่ตรวจแล้ว', `ปลดล็อก ${fuelShortDate(date)}? หลังปลดล็อกจะแก้ไขตัวเลขของวันนี้ได้อีกครั้ง (รายการที่ติ๊กตรวจแล้วยังคงอยู่)`, 'ปลดล็อก', async function(){
+    try{ await saveFuelDayCheck(date, {confirmed:false, confirmedBy:'', confirmedAt:''}); }
+    catch(err){ showAlertModal('ปลดล็อกไม่สำเร็จ: '+err.message); return; }
+    renderReportFuel(currentFuelMk());
+  });
+}
+/* ---- ตัวช่วยคำนวณของแถวตรวจ ---- */
+function fuelEffLiters(ft, label, date){
+  const key = ft+'|'+label+'|'+date;
+  if(Object.prototype.hasOwnProperty.call(draftFuelCells, key)){ const v = parseFloat(draftFuelCells[key].raw); return (!isNaN(v) && v>0) ? v : 0; }
+  return fuelTransactions.filter(t=>t.vehicle===label && t.date===date && t.kind==='issue' && t.fuelType===ft).reduce((s,t)=>s+(t.liters||0),0);
+}
+function fuelLastIssueBefore(ft, label, date){
+  let best = null;
+  fuelTransactions.forEach(t=>{ if(t.vehicle===label && t.kind==='issue' && t.fuelType===ft && t.date<date && t.liters>0 && (!best || t.date>best)) best = t.date; });
+  if(!best) return null;
+  return {date:best, liters:fuelTransactions.filter(t=>t.vehicle===label && t.kind==='issue' && t.fuelType===ft && t.date===best).reduce((s,t)=>s+(t.liters||0),0)};
+}
+function mileageNumeric(val){ const s = String(val==null?'':val).trim(); return /^-?\d+(\.\d+)?$/.test(s) ? parseFloat(s) : null; }
+function mileagePrevBefore(label, date){
+  const pre = label+'|'; let best = null;
+  Object.keys(vehicleMileage).forEach(k=>{
+    if(k.indexOf(pre)!==0) return;
+    const d = k.slice(pre.length);
+    if(d>=date) return;
+    const n = mileageNumeric(vehicleMileage[k]);
+    if(n!=null && (!best || d>best.date)) best = {date:d, val:n};
+  });
+  return best;
+}
+function fuelDayRows(date, fuelTypes, q, showAll){
+  const rows = [];
+  fuelTypes.forEach(ft=>{
+    vehicles.filter(v=>v.fuelType===ft).forEach(v=>{
+      if(q && !((v.label||'')+' '+(v.note||'')).toLowerCase().includes(q)) return;
+      const lit = fuelEffLiters(ft, v.label, date);
+      if(!(lit>0) && !showAll) return;
+      const hasMile = ft==='ดีเซล'; // เครื่องมือกลุ่มเบนซิน (เครื่องตัดหญ้า/เครื่องมือถือ) ไม่มีเลขไมล์
+      const mRaw = vehicleMileage[v.label+'|'+date];
+      const mNow = mileageNumeric(mRaw), mPrev = hasMile ? mileagePrevBefore(v.label, date) : null;
+      const last = fuelLastIssueBefore(ft, v.label, date);
+      const flags = [];
+      let dist = null;
+      if(lit>0 && approvedLeaveOnDate(v.note, date)) flags.push({c:'w', t:'ผู้รับผิดชอบลาในวันนี้'});
+      if(lit>0 && hasMile && (mRaw==null || String(mRaw).trim()==='')) flags.push({c:'w', t:'ยังไม่กรอกเลขไมล์'});
+      if(hasMile && mNow!=null && mPrev){
+        dist = mNow - mPrev.val;
+        const maxPerDay = (v.maxKmPerDay!=null && v.maxKmPerDay!=='') ? parseFloat(v.maxKmPerDay) : FUEL_CHECK_MAX_KM_PER_DAY;
+        const gap = Math.max(1, Math.round((new Date(date)-new Date(mPrev.date))/86400000));
+        if(dist<0) flags.push({c:'b', t:'เลขไมล์ลดลง '+fmtNum(-dist,0)+' กม.'});
+        else if(dist>maxPerDay*gap) flags.push({c:'w', t:'ไมล์เพิ่ม '+fmtNum(dist,0)+' กม. ผิดปกติ'});
+      }
+      if(lit>0 && last && last.liters>0 && (lit>last.liters*1.6 || lit<last.liters*0.5)) flags.push({c:'w', t:'ปริมาณต่างจากครั้งก่อนมาก'});
+      rows.push({v, ft, lit, last, hasMile, mRaw, mNow, mPrev, dist, kmpl:(dist>0 && lit>0) ? dist/lit : null, flags});
+    });
+  });
+  return rows;
+}
+function fuelFlagHtml(r){
+  if(!(r.lit>0)) return '<span class="fd-fl fd-n">ไม่ได้เบิก</span>';
+  if(!r.flags.length) return '<span class="fd-fl fd-ok">✔ ปกติ</span>';
+  return r.flags.map(f=>`<span class="fd-fl ${f.c==='b'?'fd-b':'fd-w'}">${f.c==='b'?'⛔':'⚠'} ${esc(f.t)}</span>`).join('');
+}
+function pickFuelDay(mk){
+  const days = workdaysInMonthArr(mk);
+  if(fuelCheckDayMk!==mk || !days.some(d=>d.day===fuelCheckDay)){
+    fuelCheckDayMk = mk;
+    let pick = null;
+    const todayStr = toLocalISODate(TODAY);
+    if(monthKeyOf(todayStr)===mk){ const td = +todayStr.slice(8,10); pick = days.filter(d=>d.day<=td).pop(); }
+    if(!pick){
+      const withData = days.filter(d=>fuelTransactions.some(t=>t.kind==='issue' && t.date===dateStrFor(mk,d.day)));
+      pick = withData.pop() || days[0];
+    }
+    fuelCheckDay = pick ? pick.day : null;
+  }
+  return fuelCheckDay;
+}
+function fuelMileageBlur(el){
+  onGridCellBlur(el);
+  __saveMileageEntry(el.dataset.miVehicle, el.dataset.miDate);
+  setTimeout(()=>renderReportFuel(currentFuelMk()), 0); // รอให้โฟกัสย้ายไปช่องถัดไปก่อน แล้วค่อยวาดใหม่ (วาดแล้วคืนโฟกัสให้เอง)
+}
+function setFuelCheckDay(day){ fuelCheckDay = day; fuelCheckDayMk = currentFuelMk(); renderReportFuel(fuelCheckDayMk); }
+function stepFuelCheckDay(n){
+  const mk = currentFuelMk(), days = workdaysInMonthArr(mk), i = days.findIndex(d=>d.day===fuelCheckDay)+n;
+  if(days[i]) setFuelCheckDay(days[i].day);
+}
 function renderReportFuel(mk){
-  const fuelFilter = document.querySelector('#rep-fuel-typetabs .tab.active')?.dataset.fueltab || 'ดีเซล';
-  const fuelTypes = fuelFilter==='all' ? ['ดีเซล','เบนซิน'] : [fuelFilter];
-  const onlyQty = document.getElementById('rep-fuel-onlymoved')?.checked;
-  const q = (document.getElementById('rep-fuel-search')?.value||'').trim().toLowerCase();
   const wrap = document.getElementById('rep-fuel-grid-wrap');
   if(!wrap) return;
-  const admin = isAdmin() && !isMonthLocked(mk);
-  renderLedgerLockControls();
+  const fuelFilter = document.querySelector('#rep-fuel-typetabs .tab.active')?.dataset.fueltab || 'all';
+  const fuelTypes = fuelFilter==='all' ? ['ดีเซล','เบนซิน'] : [fuelFilter];
+  const showAll = !!document.getElementById('rep-fuel-showall')?.checked;
+  const q = (document.getElementById('rep-fuel-search')?.value||'').trim().toLowerCase();
   renderFuelKpiBand(mk, fuelTypes);
-  const showMileage = document.getElementById('rep-fuel-showmileage')?.checked !== false;
   const days = workdaysInMonthArr(mk);
-  const dayTotals = {}; days.forEach(d=>dayTotals[d.day]=0);
+  const dayNum = pickFuelDay(mk);
+  if(dayNum==null){ wrap.innerHTML = '<div class="fd-empty">เดือนนี้ไม่มีวันทำการ</div>'; return; }
+  const date = dateStrFor(mk, dayNum);
+  const rec = fuelDayRec(date), confirmed = !!rec.confirmed;
+  const editable = isAdmin() && !confirmed;
+  const canCk = canCheckFuel();
+  const rows = fuelDayRows(date, fuelTypes, q, showAll);
+  const real = rows.filter(r=>r.lit>0);
+  const ckSet = new Set(rec.checked||[]);
+  const ckCount = real.filter(r=>ckSet.has(r.v.label)).length;
+  const warnRows = real.filter(r=>r.flags.length);
+  // เก็บตำแหน่งโฟกัสไว้คืนหลังวาดใหม่
+  const ae = document.activeElement;
+  const focusKey = (ae && wrap.contains(ae) && ae.matches('input.fd-in')) ? (ae.dataset.miVehicle ? 'M|'+ae.dataset.miVehicle : 'L|'+ae.dataset.fueltype+'|'+ae.dataset.vehicle) : null;
+  const sx = wrap.scrollLeft, sy = wrap.scrollTop;
 
-  const headDayCells = days.map((d,i)=>`<th data-di="${i}"${d.hol?` class="hol" title="${esc(d.hol)}"`:''}>${String(d.day).padStart(2,'0')}</th>`).join('');
-  const headDowCells = days.map((d,i)=>`<th data-di="${i}"${d.hol?` class="hol" title="${esc(d.hol)}"`:''}>${d.dow}</th>`).join('');
-
-  let bodyRows = '';
-  fuelTypes.forEach((ft,gi)=>{
-    const s = fuelMonthSummary(ft, mk);
-    const openCell = (admin && repFuelEditMode)
-      ? `<td class="num-col"><input type="number" step="0.01" value="${s.opening}" data-open-fueltype="${ft}" style="max-width:90px" onfocus="onGridCellFocus(this)" onblur="onGridCellBlur(this)"></td>`
-      : `<td class="${numClass(s.opening)}">${fmtNum(s.opening,1)}</td>`;
-    const recvCell = (admin && repFuelEditMode)
-      ? `<td class="num-col"><input type="number" step="0.01" value="${s.received}" data-recv-fueltype="${ft}" style="max-width:90px" onfocus="onGridCellFocus(this)" onblur="onGridCellBlur(this)"></td>`
-      : `<td class="${numClass(s.received)}">${fmtNum(s.received,1)}</td>`;
-    /* รับเข้ารายวัน — ลิ้งค์ข้อมูลจากรายการรับเข้า (fuelTransactions kind:'receive') ลงในช่องวันที่ตรงกับวันเบิกของประเภทน้ำมันนี้ */
-    const recvTxsThisMonth = fuelTransactions.filter(t=>t.fuelType===ft && t.kind==='receive' && monthKeyOf(t.date)===mk);
-    const recvByDay = {};
-    recvTxsThisMonth.forEach(t=>{ const d=+t.date.slice(8,10); recvByDay[d]=(recvByDay[d]||0)+(t.liters||0); });
-    const recvDayCells = days.map((d,i)=>{
-      const v0 = recvByDay[d.day];
-      const titleParts = v0 ? recvTxsThisMonth.filter(t=>+t.date.slice(8,10)===d.day).map(t=>t.ref?`เลขที่ใบรับ ${t.ref}: ${fmtNum(t.liters,1)} ล.`:`รับเข้า ${fmtNum(t.liters,1)} ล.`).join('; ') : '';
-      return `<td class="daycell${d.hol?' hol':''}${v0?' recv-cell':''}" data-di="${i}"${titleParts?` title="${esc(titleParts)}"`:''}><span>${v0!=null?fmtNum(v0,1):''}</span></td>`;
-    }).join('');
-    // ผ่าน 1 รอบก่อนเพื่อรวมยอดเบิกจริง+ฉบับร่างของทุกคันในประเภทน้ำมันนี้ ก่อนสร้างแถวสรุปหัวกลุ่ม (ให้ยอด "รวมเดือนนี้/คงเหลือ" หัวกลุ่มพรีวิวรวมฉบับร่างด้วย)
-    let ftEffIssuedTotal = 0;
-    const vehicleRowsHtml = [];
-    vehicles.filter(v=>v.fuelType===ft).forEach(v=>{
-      const txs = fuelTransactions.filter(t=>t.vehicle===v.label && t.kind==='issue' && t.fuelType===ft && monthKeyOf(t.date)===mk);
-      const byDay = {};
-      txs.forEach(t=>{ const d=+t.date.slice(8,10); byDay[d]=(byDay[d]||0)+(t.liters||0); });
-      const effDay = {};
-      days.forEach(d=>{
-        const date = dateStrFor(mk,d.day);
-        const key = ft+'|'+v.label+'|'+date;
-        if(Object.prototype.hasOwnProperty.call(draftFuelCells,key)){
-          const val = parseFloat(draftFuelCells[key].raw);
-          if(!isNaN(val) && val>0) effDay[d.day]=val;
-        } else if(byDay[d.day]!=null) effDay[d.day]=byDay[d.day];
-      });
-      const effTotal = Object.values(effDay).reduce((a,b)=>a+b,0);
-      if(q && !v.label.toLowerCase().includes(q)) return;
-      if(onlyQty && effTotal===0) return;
-      ftEffIssuedTotal += effTotal;
-      Object.keys(effDay).forEach(d=>{ dayTotals[d]=(dayTotals[d]||0)+effDay[d]; });
-      const dayCells = days.map((d,i)=>{
-        const v0 = effDay[d.day];
-        const date = dateStrFor(mk,d.day);
-        const isDirty = Object.prototype.hasOwnProperty.call(draftFuelCells, ft+'|'+v.label+'|'+date);
-        const leave = approvedLeaveOnDate(v.note, date);
-        const leaveTitle = leave ? `ผู้รับผิดชอบลา (${leave.type}) — อนุมัติแล้ว` : '';
-        let cellContent;
-        if(admin){
-          cellContent = `<input type="number" min="0" step="0.1" value="${v0!=null?v0:''}" class="${isDirty?'cell-dirty':''}${leave&&v0==null?' leave-input':''}" placeholder="${leave&&v0==null?'X':''}" data-kind="fuel" data-fueltype="${ft}" data-vehicle="${esc(v.label)}" data-date="${date}" oninput="onFuelCellDraftInput(this)" onfocus="onGridCellFocus(this)" onblur="onGridCellBlur(this)"${leaveTitle?` title="${esc(leaveTitle)}"`:''}>`;
-        } else if(v0!=null){
-          cellContent = `<span>${fmtNum(v0,1)}</span>`;
-        } else if(leave){
-          cellContent = `<span class="leave-x" title="${esc(leaveTitle)}">X</span>`;
-        } else {
-          cellContent = `<span></span>`;
-        }
-        return `<td class="daycell${d.hol?' hol':''}${leave&&v0==null?' leave-cell':''}" data-di="${i}"${leave&&v0==null?` title="${esc(leaveTitle)}"`:''}>${cellContent}</td>`;
-      }).join('');
-      vehicleRowsHtml.push(`<tr><td class="stuck1">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
-          <span style="display:flex;align-items:center;gap:6px;"><span class="fuel-veh-icon">⛽</span>${esc(vehicleShortName(v.label))}</span>
-          <span style="color:var(--ink-400);font-weight:400;font-size:11px;flex:none;">${esc(vehicleRegNo(v.label))}</span>
-        </div>
-        <div style="color:var(--ink-400);font-weight:400;font-size:11px;">${esc(v.note||'—')}</div>
-      </td><td></td><td></td>
-        ${dayCells}
-        <td class="${numClass(effTotal)}">${effTotal?fmtNum(effTotal,1):''}</td><td></td></tr>`);
-      if(showMileage){
-        const MI_MAX_KM_PER_DAY = 300; // เกณฑ์เลขไมล์เพิ่มขึ้นสูงสุดที่ยอมรับได้ต่อวัน (ค่ามาตรฐาน — ใช้เมื่อรถคันนั้นไม่ได้กำหนดเกณฑ์เฉพาะ)
-        const miMaxPerDay = (v.maxKmPerDay!=null && v.maxKmPerDay!=='') ? parseFloat(v.maxKmPerDay) : MI_MAX_KM_PER_DAY;
-        let miPrevVal = null, miPrevDate = null;
-        /* เครื่องมือกลุ่มน้ำมันเบนซิน (เครื่องตัดหญ้า/เครื่องมือถือ) ไม่มีเลขไมล์/มาตรวัดระยะทาง — แสดงแถวนี้เฉพาะกลุ่มดีเซล (รถ/เครื่องจักรมีล้อ) เท่านั้น */
-        if(ft==='ดีเซล'){
-        const miCells = days.map((d,i)=>{
-          const date = dateStrFor(mk,d.day);
-          const key = v.label+'|'+date;
-          const val = vehicleMileage[key];
-          let warnClass = '', warnTitle = '';
-          if(val!=null && val!==''){
-            const numeric = parseFloat(val);
-            const isNumeric = /^-?\d+(\.\d+)?$/.test(String(val).trim());
-            if(isNumeric){
-              if(miPrevVal!=null){
-                if(numeric < miPrevVal){
-                  warnClass = ' mi-decrease'; warnTitle = `เลขไมล์ลดลงจากวันก่อนหน้า (${fmtNum(miPrevVal,0)} → ${fmtNum(numeric,0)}) — ตรวจสอบการกรอกข้อมูล`;
-                } else {
-                  const diffDays = Math.max(1, Math.round((new Date(date)-new Date(miPrevDate))/86400000));
-                  const delta = numeric - miPrevVal;
-                  if(delta > miMaxPerDay*diffDays){
-                    warnClass = ' mi-jump'; warnTitle = `เลขไมล์เพิ่มขึ้น ${fmtNum(delta,0)} กม. ผิดปกติ (เกินเกณฑ์ ${fmtNum(miMaxPerDay,0)} กม./วัน) จากวันที่ ${miPrevDate} — ตรวจสอบการกรอกข้อมูล`;
-                  }
-                }
-              }
-              miPrevVal = numeric; miPrevDate = date;
-            }
-          }
-          const cellContent = admin
-            ? `<input type="text" value="${val!=null?esc(String(val)):''}" class="${warnClass.trim()}" data-mi-vehicle="${esc(v.label)}" data-mi-date="${date}" oninput="onMileageInput(this)" onfocus="onGridCellFocus(this)" onblur="onMileageBlur(this)"${warnTitle?` title="${esc(warnTitle)}"`:''}>`
-            : `<span class="${warnClass.trim()}"${warnTitle?` title="${esc(warnTitle)}"`:''}>${esc(val!=null?val:'')}${warnClass?' ⚠️':''}</span>`;
-          return `<td class="daycell${d.hol?' hol':''}${warnClass}" data-di="${i}">${cellContent}</td>`;
-        }).join('');
-        vehicleRowsHtml.push(`<tr class="mileage-row"><td class="stuck1"><span class="mi-label"><span class="mi-icon">📏</span>เลขไมล์</span></td><td></td><td></td>${miCells}<td></td><td></td></tr>`);
-        }
-        const routeCells = days.map((d,i)=>{
-          const date = dateStrFor(mk,d.day);
-          const label = routeLabelForVehicleDate(v.label, date);
-          return `<td class="daycell${d.hol?' hol':''}" data-di="${i}">${label?`<span style="color:var(--ink-500);font-size:11px;font-weight:600;">${esc(label)}</span>`:''}</td>`;
-        }).join('');
-        vehicleRowsHtml.push(`<tr class="mileage-row route-row"><td class="stuck1"><span class="mi-label"><span class="mi-icon">🛣️</span>สายทาง</span></td><td></td><td></td>${routeCells}<td></td><td></td></tr>`);
-      }
-    });
-    const ftEffClosing = s.opening + s.received - ftEffIssuedTotal;
-    bodyRows += `<tr><td class="grp stuck1 numcell"><span class="rn">${gi+1}.</span><span class="rt" style="display:flex;justify-content:space-between;align-items:baseline;">${ft}<span style="font-weight:400;color:var(--ink-400);font-size:11px;">(ลิตร)</span></span></td>
-      ${openCell}${recvCell}
-      ${recvDayCells}
-      <td class="${numClass(ftEffIssuedTotal)}">${fmtNum(ftEffIssuedTotal,1)}</td><td class="${numClass(ftEffClosing)}">${fmtNum(ftEffClosing,1)}</td></tr>`;
-    bodyRows += vehicleRowsHtml.join('');
+  const dayAgg = {};
+  fuelTransactions.forEach(t=>{
+    if(t.kind!=='issue' || monthKeyOf(t.date)!==mk || !fuelTypes.includes(t.fuelType)) return;
+    const d = +t.date.slice(8,10); dayAgg[d] = (dayAgg[d]||0) + (t.liters||0);
   });
-  const footCells = days.map(d=>`<td${d.hol?' class="hol"':''}>${dayTotals[d.day]?fmtNum(dayTotals[d.day],1):''}</td>`).join('');
-  const grandTotal = Object.values(dayTotals).reduce((a,b)=>a+b,0);
+  const chips = days.map(d=>{
+    const dr = fuelDayRec(dateStrFor(mk,d.day));
+    return `<div class="fd-chip${d.day===dayNum?' sel':''}${dayAgg[d.day]?' has':''}${d.hol?' hol':''}" data-fday="${d.day}"${d.hol?` title="${esc(d.hol)}"`:''}>
+      <div class="fc-w">${d.dow}</div><div class="fc-n">${d.day}</div><div class="fc-s">${dayAgg[d.day]?fmtNum(dayAgg[d.day],1):'&nbsp;'}</div><div class="fc-m">${dr.confirmed?'🔒':'&nbsp;'}</div></div>`;
+  }).join('');
+  const [yy, mm] = mk.split('-').map(Number);
+  const holName = holidayNameFor(mk, dayNum);
+  const dayInfo = days.find(d=>d.day===dayNum);
+  const isToday = date===toLocalISODate(TODAY);
+  const sumBy = ft=>real.filter(r=>r.ft===ft).reduce((s,r)=>s+r.lit,0);
 
-  wrap.innerHTML = `<table class="dgrid">
-    <thead>
-      <tr><th class="stuck1" style="left:0;" rowspan="2">ประเภท/รถ-เครื่องจักร</th><th rowspan="2">ยอดยกมา</th><th rowspan="2">รับเข้า</th>${headDayCells}<th rowspan="2">รวมเดือนนี้</th><th rowspan="2">คงเหลือ</th></tr>
-      <tr class="dow-row">${headDowCells}</tr>
-    </thead>
-    <tbody>${bodyRows}</tbody>
-    <tfoot><tr><td class="stuck1">รวมเบิกต่อวัน</td><td></td><td></td>${footCells}<td>${fmtNum(grandTotal,1)}</td><td></td></tr></tfoot>
-  </table>`;
+  // กล่องแก้ยอดยกมา/รับเข้า (โหมดแก้ไข — ใช้ข้อมูลชุดเดียวกับของเดิม)
+  let openPanel = '';
+  if(repFuelEditMode && isAdmin()){
+    openPanel = `<div class="fd-open"><b>แก้ยอดยกมา/รับเข้าของเดือน ${ledgerMonthLabel(mk)}</b>`+fuelTypes.map(ft=>{
+      const s = fuelMonthSummary(ft, mk);
+      return `<label>น้ำมัน${ft} · ยอดยกมา <input type="number" step="0.01" value="${s.opening}" data-open-fueltype="${ft}"></label>
+        <label>รับเข้า <input type="number" step="0.01" value="${s.received}" data-recv-fueltype="${ft}"></label>`;
+    }).join('')+`<span class="fd-mut">แก้แล้วกดปุ่ม "💾 บันทึก" ด้านบน</span></div>`;
+  }
+
+  const head = `${openPanel}<div class="fd-strip">${chips}</div>
+    <div class="fd-dayhead"><button class="btn btn-ghost btn-sm" data-fstep="-1">◀</button>
+      <h3>วัน${dayInfo.dow} ที่ ${dayNum} ${monthNamesTh[mm-1]} ${yy+543}${isToday?' <span class="fd-today">วันนี้</span>':''}${holName?` <span class="fd-hol">${esc(holName)}</span>`:''}</h3>
+      <button class="btn btn-ghost btn-sm" data-fstep="1">▶</button><span style="flex:1"></span>
+      <div class="fd-stats"><div>รายการเบิก<b>${real.length} คัน</b></div><div>ดีเซล<b>${fmtNum(sumBy('ดีเซล'),1)} ล.</b></div><div>เบนซิน<b>${fmtNum(sumBy('เบนซิน'),1)} ล.</b></div></div></div>`;
+
+  const alertsHtml = warnRows.length
+    ? `<div class="fd-alert"><b>⚠ ต้องดูเป็นพิเศษ ${warnRows.length} รายการ</b>${warnRows.map(r=>`<div class="fd-li" data-fgo="${esc(r.v.label)}"><b>${esc(vehicleShortName(r.v.label))}</b> (${esc(r.v.note||'—')}) — ${r.flags.map(f=>esc(f.t)).join(' · ')}</div>`).join('')}</div>`
+    : `<div class="fd-alert fd-alert-ok"><b>${real.length?'✔ ไม่พบความผิดปกติในวันนี้':'วันนี้ยังไม่มีรายการเบิก'}</b>${real.length?'<div>ปริมาณและเลขไมล์เหมาะสมเมื่อเทียบกับครั้งก่อน</div>':''}</div>`;
+  let progHtml = `<div class="fd-prog"><b>ความคืบหน้าการตรวจ</b><div class="fd-pb"><i style="width:${real.length?ckCount/real.length*100:0}%"></i></div><span>ตรวจแล้ว <b>${ckCount}</b> / ${real.length} รายการ</span>`;
+  if(confirmed){
+    progHtml += `<div class="fd-lock">🔒 ยืนยันตรวจครบแล้ว — ${esc(rec.confirmedBy||'')} · ${esc(fuelStamp(rec.confirmedAt))}${canCk?` <a href="#" data-funlock="1">ปลดล็อก</a>`:''}</div>`;
+  } else if(canCk){
+    const ready = real.length>0 && ckCount===real.length;
+    progHtml += `<button class="btn btn-primary" style="width:100%;margin-top:8px;"${ready?' data-fconfirm="1"':' disabled title="ติ๊กตรวจให้ครบทุกรายการก่อน"'}>✔ ยืนยันตรวจครบทั้งวัน</button>`;
+  } else {
+    progHtml += `<div class="fd-mut" style="margin-top:6px;">เฉพาะผู้มีสิทธิ์ตรวจเท่านั้นที่ติ๊ก/ยืนยันได้</div>`;
+  }
+  progHtml += `</div>`;
+
+  let body = '';
+  rows.forEach(r=>{
+    const label = r.v.label, on = ckSet.has(label);
+    const cls = !(r.lit>0) ? 'fd-off' : on ? 'fd-ck' : r.flags.some(f=>f.c==='b') ? 'fd-rb' : r.flags.length ? 'fd-rw' : '';
+    const dkey = r.ft+'|'+label+'|'+date;
+    const isDirty = Object.prototype.hasOwnProperty.call(draftFuelCells, dkey);
+    const litCell = editable
+      ? `<input type="number" min="0" step="0.1" class="fd-in${isDirty?' cell-dirty':''}" value="${r.lit>0?r.lit:''}" placeholder="—" data-kind="fuel" data-fueltype="${r.ft}" data-vehicle="${esc(label)}" data-date="${date}" oninput="onFuelCellDraftInput(this)">`
+      : `<b class="fd-big">${r.lit>0?fmtNum(r.lit,1):'—'}</b>`;
+    const badMi = r.flags.some(f=>f.c==='b') ? ' fd-inbad' : '';
+    const miCell = !r.hasMile ? '<span class="fd-mut">ไม่มีเลขไมล์</span>'
+      : editable ? `<input type="text" class="fd-in fd-mi${badMi}" value="${r.mRaw!=null?esc(String(r.mRaw)):''}" placeholder="เลขไมล์" data-mi-vehicle="${esc(label)}" data-mi-date="${date}" oninput="onMileageInput(this)" onblur="fuelMileageBlur(this)">`
+      : `<b>${r.mRaw!=null&&String(r.mRaw)!==''?esc(String(r.mRaw)):'—'}</b>`;
+    const distTxt = r.dist!=null ? `<b${r.dist<0?' class="fd-neg"':''}>${r.dist>=0?'+':''}${fmtNum(r.dist,0)} กม.</b>${r.kmpl?`<div class="fd-mut">${fmtNum(r.kmpl,1)} กม./ล.</div>`:''}` : '—';
+    body += `<tr class="${cls}" data-flabel="${esc(label)}">
+      <td class="fd-c"><div class="fd-cb${on?' on':''}${canCk&&!confirmed&&r.lit>0?' can':''}"${r.lit>0?` data-fck="${esc(label)}"`:''} title="${r.lit>0?(canCk?'ติ๊กเมื่อตรวจแล้ว':'เฉพาะผู้มีสิทธิ์ตรวจ'):''}">✔</div></td>
+      <td><b>${esc(r.v.note||'—')}</b><div class="fd-mut">${fuelShortDate(date)}</div></td>
+      <td><b>${esc(vehicleShortName(label))}</b><div class="fd-mut">${esc(vehicleRegNo(label))}</div></td>
+      <td class="fd-c"><span class="fd-tag ${r.ft==='ดีเซล'?'fd-d':'fd-g'}">น้ำมัน${r.ft}</span></td>
+      <td class="fd-r">${r.last?`<b>${fmtNum(r.last.liters,1)} ล.</b><div class="fd-mut">${fuelShortDate(r.last.date)}</div>`:'<span class="fd-mut">ไม่มีประวัติ</span>'}</td>
+      <td class="fd-in-td">${litCell}</td>
+      <td class="fd-r">${r.hasMile?(r.mPrev?`<b>${fmtNum(r.mPrev.val,0)}</b><div class="fd-mut">${fuelShortDate(r.mPrev.date)}</div>`:'<span class="fd-mut">—</span>'):''}</td>
+      <td class="fd-in-td">${miCell}</td>
+      <td class="fd-c">${distTxt}</td>
+      <td>${fuelFlagHtml(r)}</td></tr>`;
+  });
+  if(!rows.length) body = `<tr><td colspan="10" class="fd-empty">วันนี้ไม่มีรายการเบิก — ติ๊ก "แสดงรถที่ไม่ได้เบิกวันนี้" ด้านบนเพื่อเพิ่มรายการ</td></tr>`;
+  const grand = rows.reduce((s,r)=>s+(r.lit||0),0);
+  const table = `<div class="fd-tablewrap"><table class="fd-table"><thead><tr>
+    <th style="width:54px">ตรวจ<br>แล้ว</th><th>ผู้เบิก</th><th>หมายเลขเครื่อง/รถ</th><th>ประเภท<br>พัสดุที่เบิก</th><th>เบิกครั้งล่าสุด<br><small>จำนวน · วันที่</small></th><th class="fd-cur">เบิกครั้งนี้<br><small>(ลิตร)</small></th><th>เลขไมล์<br>ครั้งก่อน</th><th class="fd-cur">เลขไมล์<br>ครั้งนี้</th><th>ระยะทาง</th><th>ผลตรวจ</th></tr></thead>
+    <tbody>${body}</tbody><tfoot><tr><td colspan="5" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${fmtNum(grand,1)} ล.</td><td colspan="4"></td></tr></tfoot></table></div>`;
+
+  wrap.innerHTML = head + `<div class="fd-top">${alertsHtml}${progHtml}</div>` + table;
+  wrap.scrollLeft = sx; wrap.scrollTop = sy;
+  if(focusKey){
+    const parts = focusKey.split('|');
+    const t = Array.from(wrap.querySelectorAll('input.fd-in')).find(i=> parts[0]==='M' ? i.dataset.miVehicle===parts[1] : (i.dataset.fueltype===parts[1] && i.dataset.vehicle===parts[2]));
+    if(t) t.focus();
+  }
+  updateDraftChip('fuel');
 }
+/* เหตุการณ์คลิก/คีย์บอร์ดของหน้าตรวจรายวัน (ผูกครั้งเดียว) */
+(function(){
+  const wrap = document.getElementById('rep-fuel-grid-wrap');
+  if(!wrap) return;
+  wrap.addEventListener('click', function(e){
+    const chip = e.target.closest('[data-fday]'); if(chip){ setFuelCheckDay(+chip.dataset.fday); return; }
+    const st = e.target.closest('[data-fstep]'); if(st){ stepFuelCheckDay(+st.dataset.fstep); return; }
+    const ck = e.target.closest('[data-fck]'); if(ck){ toggleFuelRowCheck(dateStrFor(currentFuelMk(), fuelCheckDay), ck.dataset.fck); return; }
+    if(e.target.closest('[data-fconfirm]')){ confirmFuelDay(dateStrFor(currentFuelMk(), fuelCheckDay)); return; }
+    const ul = e.target.closest('[data-funlock]'); if(ul){ e.preventDefault(); unlockFuelDay(dateStrFor(currentFuelMk(), fuelCheckDay)); return; }
+    const go = e.target.closest('[data-fgo]');
+    if(go){
+      const tr = Array.from(wrap.querySelectorAll('tr[data-flabel]')).find(r=>r.dataset.flabel===go.dataset.fgo);
+      if(tr){ tr.scrollIntoView({block:'center', behavior:'smooth'}); tr.classList.add('fd-hl'); setTimeout(()=>tr.classList.remove('fd-hl'), 1600); }
+    }
+  });
+  wrap.addEventListener('focusin', function(e){ if(e.target.matches && e.target.matches('input.fd-in')) e.target.select(); });
+  wrap.addEventListener('keydown', function(e){
+    if(e.key!=='Enter' || !e.target.matches || !e.target.matches('input.fd-in')) return;
+    e.preventDefault();
+    const ins = Array.from(wrap.querySelectorAll('input.fd-in')), n = ins[ins.indexOf(e.target)+1];
+    if(n) n.focus(); else e.target.blur();
+  });
+})();
 
 function setMatAcctTab(el){
   document.querySelectorAll('#rep-mat-accttabs .tab').forEach(t=>t.classList.remove('active'));
@@ -4999,6 +5196,7 @@ renderAll();
     loadFuelTransactionsFromApi(),
     loadFuelSettingsFromApi(),
     loadLedgerLocksFromApi(),
+    loadFuelDayChecksFromApi(),
     loadLedgerOverridesFromApi(),
     loadVehicleMileageFromApi(),
     loadMachineryLogsFromApi(),
