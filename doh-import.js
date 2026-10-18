@@ -113,13 +113,20 @@
     S.parsed.forEach(a=>a.mats.forEach(m=>{ const k = normText(m.name); if(!k || seen[k] || matchMaterial(m.name)) return; seen[k] = 1; out.push({ name:String(m.name).trim(), unit:m.unit, price:m.price }); }));
     return out;
   }
+  /* ป้ายชื่อวัสดุในทะเบียนสำหรับช่องค้นหา (ชื่อซ้ำ → ต่อท้ายรหัสให้เลือกได้ไม่สับสน) */
+  function matLabels(){
+    const arr = getMaterialsX().slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'th')).map(m=>({ m, label:String(m.name)+(m.unit?' ('+m.unit+')':'') }));
+    const cnt = {}; arr.forEach(o=>{ cnt[o.label] = (cnt[o.label]||0)+1; });
+    arr.forEach(o=>{ if(cnt[o.label]>1) o.label += ' ['+o.m.code+']'; });
+    return arr;
+  }
   function missNote(){
     const ms = missingMats(); if(!ms.length) return '';
-    const opts = getMaterialsX().slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'th'))
-      .map(x=>'<option value="'+H(x.code)+'">'+H(x.name)+(x.unit?' ('+H(x.unit)+')':'')+'</option>').join('');
+    const opts = matLabels().map(o=>'<option value="'+H(o.label)+'"></option>').join('');
     const rows = ms.map((m,i)=>'<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px"><span style="flex:1 1 100%">• <b>'+H(m.name)+'</b>'+(m.unit?' ('+H(m.unit)+')':'')+' ตรงกับรายการที่มีอยู่:</span>'
-      + '<select id="dohPick'+i+'" style="flex:1 1 220px;min-width:0;padding:6px"><option value="">— เลือกรายการในทะเบียน —</option>'+opts+'</select>'
-      + '<button class="btn btn-sm" onclick="DohImp.pickExisting('+i+')">ใช้รายการนี้</button></div>').join('');
+      + '<input id="dohPick'+i+'" list="dohMatList" autocomplete="off" placeholder="พิมพ์ค้นหาชื่อวัสดุในทะเบียน…" style="flex:1 1 220px;min-width:0;padding:6px">'
+      + '<button class="btn btn-sm" onclick="DohImp.pickExisting('+i+')">ใช้รายการนี้</button></div>').join('')
+      + '<datalist id="dohMatList">'+opts+'</datalist>';
     return '<div class="dohi-note warn"><b>วัสดุที่ระบบยังจับคู่กับทะเบียนพัสดุไม่ได้ ('+ms.length+')</b>'
       + '<div style="font-size:.85em;margin-top:4px">ถ้ามีในทะเบียนอยู่แล้ว ให้เลือก "ใช้รายการนี้" (ระบบจำการจับคู่ไว้ ครั้งหน้าไม่ถามอีก) — กดเพิ่มใหม่ต่อเมื่อไม่มีในทะเบียนจริง ๆ</div>'
       + rows
@@ -139,9 +146,10 @@
   async function pickExisting(i){
     if(S.busy) return;
     const ms = missingMats(), m = ms[i]; if(!m) return;
-    const sel = document.getElementById('dohPick'+i); const code = sel && sel.value;
-    if(!code){ alert('กรุณาเลือกรายการในทะเบียนก่อน'); return; }
-    const mat = getMaterialsX().find(x=>x.code===code); if(!mat) return;
+    const inp = document.getElementById('dohPick'+i); const v = inp ? inp.value.trim() : '';
+    const hit = matLabels().find(o=>o.label===v);
+    if(!hit){ alert(v ? 'ไม่พบชื่อนี้ในทะเบียน — พิมพ์ค้นหาแล้วเลือกจากรายการที่ขึ้นมา' : 'กรุณาพิมพ์ค้นหาและเลือกรายการในทะเบียนก่อน'); return; }
+    const mat = hit.m, code = mat.code;
     const al = aliasLoad(); al[normText(m.name)] = code; aliasSave(al);
     await afterMatsChanged('จับคู่ "'+m.name+'" กับ "'+mat.name+'" แล้ว');
   }
