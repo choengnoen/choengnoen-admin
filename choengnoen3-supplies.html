@@ -3860,12 +3860,39 @@ function openMatMerge(code){
   document.getElementById('mat-act-title').textContent = 'ลบ/รวมวัสดุซ้ำ';
   document.getElementById('mat-act-body').innerHTML =
     `<div class="ma-hint neg">รายการที่จะ<b>ลบ</b>: <b>${esc(m.name)}</b> (${esc(m.unit)}) · ${esc(m.accountType||'ในบัญชี')} · ยอด ${fmtNum(currentStock(m),1)} · มีประวัติ ${n} รายการ</div>
-     <div class="f-row"><label>รวมประวัติเข้ากับรายการที่เก็บไว้</label>
-       <select id="mm-keep"><option value="">${n>0?'— เลือกรายการที่เก็บไว้ —':'— ไม่รวม (ลบทิ้งเฉยๆ) —'}</option>${others.map(x=>`<option value="${esc(x.code)}">${esc(x.name)} (${esc(x.unit)})${x.accountType==='นอกบัญชี'?' · นอกบัญชี':''}</option>`).join('')}</select></div>
+     <div class="f-row"><label>รวมประวัติเข้ากับรายการที่เก็บไว้ ${n>0?'':'(ไม่เลือก = ลบทิ้งเฉยๆ)'}</label>
+       <input type="hidden" id="mm-keep" value="">
+       <input type="text" id="mm-search" autocomplete="off" placeholder="พิมพ์ชื่อบางส่วน เพื่อค้นหารายการที่เก็บไว้" oninput="mmFilter()">
+       <div id="mm-picked" style="display:none;margin-top:8px;padding:8px 12px;border-radius:8px;background:var(--success-bg);color:var(--success);font-size:13px;font-weight:600;"></div>
+       <div id="mm-list" style="margin-top:8px;max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:8px;"></div></div>
      <div class="foot-note" style="margin:0;">ระบบจะย้ายประวัติเบิก-รับ ยอดตั้งต้น และค่าแก้ยอดยกมาของรายการที่ลบ ไปรวมกับรายการที่เก็บไว้ ยอดคงเหลือจึงเท่ากับยอดสองรายการรวมกัน หลังรวมแล้วจะรีเฟรชตาราง ค่าที่แก้ในตารางแต่ยังไม่กด "บันทึก" จะหาย จึงควรกด "บันทึก" ก่อน · <b>รายการที่ลบเข้าถังขยะ กู้คืนได้</b></div>`;
   document.getElementById('mat-act-foot').innerHTML = `<button type="button" class="btn btn-ghost" onclick="closeMatActModal()">ยกเลิก</button>
     <button type="button" class="btn btn-danger" id="mm-go-btn" onclick="doMatMerge('${jsArg(code)}')">🗑 รวมและลบรายการนี้</button>`;
   document.getElementById('mat-act-overlay').classList.remove('hidden');
+  window.__mmOthers = others;
+  mmFilter();
+}
+function mmFilter(){
+  const q = (document.getElementById('mm-search').value||'').trim().toLowerCase();
+  const rows = (window.__mmOthers||[]).filter(x=>!q || x.name.toLowerCase().includes(q)).slice(0,60);
+  document.getElementById('mm-list').innerHTML = rows.map(x=>
+    `<div class="mm-opt" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line);font-size:13.5px;" onmouseover="this.style.background='var(--paper-50)'" onmouseout="this.style.background=''" onclick="mmPick('${jsArg(x.code)}')">${esc(x.name)} <span style="color:var(--ink-400);">(${esc(x.unit)})${x.accountType==='นอกบัญชี'?' · นอกบัญชี':''}</span></div>`
+  ).join('') || '<div style="padding:12px;color:var(--ink-400);font-size:13px;text-align:center;">ไม่พบรายการที่ตรงกับคำค้น</div>';
+}
+function mmPick(code){
+  const x = matByCode(code); if(!x) return;
+  document.getElementById('mm-keep').value = code;
+  const p = document.getElementById('mm-picked');
+  p.style.display = 'block';
+  p.innerHTML = `✓ เก็บไว้: ${esc(x.name)} (${esc(x.unit)}) <a href="javascript:void(0)" style="font-weight:400;margin-left:8px;color:inherit;text-decoration:underline;" onclick="mmUnpick()">เปลี่ยน</a>`;
+  document.getElementById('mm-list').style.display = 'none';
+  document.getElementById('mm-search').style.display = 'none';
+}
+function mmUnpick(){
+  document.getElementById('mm-keep').value = '';
+  document.getElementById('mm-picked').style.display = 'none';
+  document.getElementById('mm-list').style.display = '';
+  const s = document.getElementById('mm-search'); s.style.display = ''; s.focus();
 }
 async function doMatMerge(dropCode){
   if(!isAdmin()) return;
