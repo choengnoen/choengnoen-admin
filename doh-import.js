@@ -437,8 +437,7 @@
   function renderCompare(){
     if(!S.cmp.length) return '';
     const bad = S.cmp.filter(c=>c.diffs.length||c.skip).length;
-    const head = '<div class="dohi-kpi"><div><b>'+S.cmp.length+'</b>แผนในไฟล์กรม</div><div><b style="color:#1c8a53">'+(S.cmp.length-bad)+'</b>ตรงกับระบบ</div><div><b style="color:#c1402f">'+bad+'</b>มีจุดต่าง</div></div>'
-      + '<div class="dohi-note">โหมดนี้ <b>ไม่ลบ ไม่แทนที่ ไม่แก้ใบเดิม</b> — แสดงความต่างให้ตรวจ จะมีการเปลี่ยนแปลงก็ต่อเมื่อติ๊กรายการด้านล่างแล้วกด "ดำเนินการที่เลือก" เท่านั้น (ตัวเลขที่ต่างให้ไปแก้ในใบเอง)</div>';
+    const head = '<div class="dohi-kpi"><div><b>'+S.cmp.length+'</b>แผนในไฟล์กรม</div><div><b style="color:#1c8a53">'+(S.cmp.length-bad)+'</b>ตรงกับระบบ</div><div><b style="color:#c1402f">'+bad+'</b>มีจุดต่าง</div></div>';
     return head + renderFuel() + S.cmp.map((c,i)=>{
       const state = c.skip ? '<span style="color:#7a5000">ข้าม</span>' : (!c.exN && c.actions.length ? '<span style="color:#c1402f">ระบบยังไม่มีใบ</span>' : (c.diffs.length ? '<span style="color:#c1402f">มีจุดต่าง '+c.diffs.length+'</span>' : '<span style="color:#1c8a53">✓ ตรงกัน</span>'));
       return '<div class="dohi-note" style="background:#fff"><b>'+H(c.label)+'</b> — '+state+' <small>(ใบในระบบ '+c.exN+' ใบ)</small>'
