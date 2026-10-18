@@ -949,6 +949,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </div>
             <div class="mc-actions">
               <button class="btn btn-primary" id="ib-add-btn" onclick="openIbCreate()" title="บันทึกของที่หมวดรับจากแขวงตามใบเบิก (พัสดุหรือน้ำมัน)">+ รับเข้าคลัง</button>
+              <button class="btn btn-ghost" id="ib-add-off-btn" onclick="openIbCreate('off')" title="บันทึกพัสดุนอกบัญชีที่หมวดได้รับอนุเคราะห์หรือจัดหาเอง (ไม่ได้มาจากใบเบิกแขวง)">+ รับของนอกบัญชี</button>
             </div>
           </div>
           <div class="mc-tabrow">
@@ -1860,11 +1861,13 @@ const ibOpen = new Set();
 let IbEdit = null;
 
 function ibIsFuelRecv(t){ return t.kind==='receive' && !isAdjustmentTx(t) && (t.fuelType==='ดีเซล' || t.fuelType==='เบนซิน'); }
+/* พัสดุนอกบัญชี = ไม่ได้มาจากใบเบิกแขวง (ได้รับอนุเคราะห์/จัดหาเอง) — ตรวจจากประเภทบัญชี หรือชื่อที่ต่อท้ายว่า (นอก บช.) */
+function ibIsOffMat(m){ return !!m && (m.accountType==='นอกบัญชี' || /นอก\s*บช/.test(String(m.name||''))); }
 function ibSlips(){
   const map = new Map();
-  const slipOf = t=>{
+  const slipOf = (t, off)=>{
     const ref = String(t.ref||'').trim();
-    const key = ref ? 'r:'+ref : 'd:'+(t.date||'');
+    const key = ref ? 'r:'+ref : 'd:'+(t.date||'')+(off?':off':'');
     let s = map.get(key);
     if(!s){ s = {key, ref, date:t.date||'', lines:[]}; map.set(key, s); }
     if(t.date && t.date>s.date) s.date = t.date;
@@ -1873,7 +1876,7 @@ function ibSlips(){
   const byCode = {}; materials.forEach(m=>{ byCode[m.code]=m; });
   materialTransactions.filter(t=>t.kind==='receive' && !isAdjustmentTx(t)).forEach(t=>{
     const m = byCode[t.itemCode];
-    slipOf(t).lines.push({kind:'mat', tbl:'material_transactions', tx:t, code:t.itemCode, name:m?m.name:String(t.itemCode||''), unit:m?m.unit:'', qty:t.qty||0, unitPrice:t.unitPrice});
+    slipOf(t, ibIsOffMat(m)).lines.push({kind:'mat', tbl:'material_transactions', tx:t, code:t.itemCode, name:m?m.name:String(t.itemCode||''), unit:m?m.unit:'', qty:t.qty||0, unitPrice:t.unitPrice});
   });
   fuelTransactions.filter(ibIsFuelRecv).forEach(t=>{
     slipOf(t).lines.push({kind:'fuel', tbl:'fuel_transactions', tx:t, fuelType:t.fuelType, name:'น้ำมัน'+t.fuelType, unit:'ลิตร', qty:t.liters||0, unitPrice:t.unitPrice});
@@ -1882,13 +1885,14 @@ function ibSlips(){
   arr.forEach(s=>{
     s.hasMat = s.lines.some(l=>l.kind==='mat');
     s.hasFuel = s.lines.some(l=>l.kind==='fuel');
+    s.off = !s.hasFuel && s.lines.length>0 && s.lines.every(l=>ibIsOffMat(byCode[l.code]));
     s.dates = new Set(s.lines.map(l=>l.tx.date));
   });
   return arr.sort((a,b)=>String(b.date).localeCompare(String(a.date)) || String(b.ref).localeCompare(String(a.ref)));
 }
 function ibWarns(s){
   const w = [];
-  if(!s.ref) w.push('ยังไม่ระบุเลขที่');
+  if(!s.ref && !s.off) w.push('ยังไม่ระบุเลขที่');
   if(s.dates.size>1) w.push('วันที่ในใบไม่ตรงกัน');
   return w;
 }
@@ -1942,6 +1946,8 @@ function renderInbound(){
   }
   const addBtn = document.getElementById('ib-add-btn');
   if(addBtn) addBtn.classList.toggle('hidden', !admin);
+  const addOffBtn = document.getElementById('ib-add-off-btn');
+  if(addOffBtn) addOffBtn.classList.toggle('hidden', !admin);
   const sub = document.getElementById('ib-sub');
   if(sub) sub.textContent = all.length ? '📌 ใบเบิกล่าสุดที่รับเข้า '+fmtDate(all[0].date) : 'ยังไม่มีใบเบิกรับเข้า';
 
@@ -1963,7 +1969,8 @@ function renderInbound(){
     const open = ibOpen.has(s.key);
     const matLines = s.lines.filter(l=>l.kind==='mat');
     const fs = ft => s.lines.filter(l=>l.fuelType===ft).reduce((a,l)=>a+l.qty,0);
-    const tags = (matLines.length ? `<span class="ib-tag mat">📦 พัสดุ ${matLines.length} รายการ</span>` : '') +
+    const tags = (s.off ? '<span class="ib-tag warn" style="background:#f3e8ff;color:#6b21a8;border-color:#e9d5ff;">🎁 นอกบัญชี</span>' : '') +
+      (matLines.length ? `<span class="ib-tag mat">📦 พัสดุ ${matLines.length} รายการ</span>` : '') +
       (fs('ดีเซล')>0 ? `<span class="ib-tag fuel">🛢️ ดีเซล ${fmtNum(fs('ดีเซล'),1)} ล.</span>` : '') +
       (fs('เบนซิน')>0 ? `<span class="ib-tag fuel">⛽ เบนซิน ${fmtNum(fs('เบนซิน'),1)} ล.</span>` : '');
     const status = warns.map(w=>`<span class="ib-tag warn">⚠ ${esc(w)}</span>`).join('') + (locked ? '<span class="ib-tag lock">🔒 ล็อกบัญชีแล้ว</span>' : '') + (!warns.length && !locked ? '<span class="ib-tag ok">✓ ครบ</span>' : '');
@@ -1983,7 +1990,7 @@ function renderInbound(){
     }
     return `<tr class="ib-row${open?' open':''}" onclick="ibToggle('${kj}')">
       <td class="ib-date">${fmtDate(s.date)}</td>
-      <td>${s.ref ? `<span class="ib-ref">${esc(s.ref)}</span>` : '<span class="ib-ref none">ยังไม่ระบุเลขที่</span>'}</td>
+      <td>${s.ref ? `<span class="ib-ref">${esc(s.ref)}</span>` : (s.off ? '<span class="ib-ref none">ไม่มีใบเบิก (ได้รับอนุเคราะห์)</span>' : '<span class="ib-ref none">ยังไม่ระบุเลขที่</span>')}</td>
       <td>${tags}</td>
       <td>${status}</td>${acts}
     </tr>${detail}`;
@@ -1998,7 +2005,7 @@ function openIbEdit(key){
   if(!isAdmin()) return;
   const s = ibSlips().find(x=>x.key===key);
   if(!s) return;
-  IbEdit = { key, ref:s.ref, date:s.date, title: s.ref ? 'แก้ไขใบเบิก '+s.ref : 'ระบุเลขที่ใบเบิก ('+fmtDate(s.date)+')',
+  IbEdit = { key, off:!!s.off, ref:s.ref, date:s.date, title: s.off ? 'แก้ไขรายการรับพัสดุนอกบัญชี ('+fmtDate(s.date)+')' : (s.ref ? 'แก้ไขใบเบิก '+s.ref : 'ระบุเลขที่ใบเบิก ('+fmtDate(s.date)+')'),
     lines: s.lines.map(l=>({tbl:l.tbl, kind:l.kind, tx:l.tx, code:l.code, fuelType:l.fuelType, name:l.name, unit:l.unit, qty:l.qty, unitPrice:l.unitPrice||0, del:false})) };
   document.getElementById('ib-edit-overlay').classList.remove('hidden');
   renderIbEdit();
@@ -2060,25 +2067,25 @@ function renderIbEdit(){
       <div class="ib-newgrid">
         <div class="full"><label>ชื่อวัสดุ</label><input type="text" id="ib-nf-name" value="${esc(nf.name)}" placeholder="เช่น ยางมะตอย CRS-2" autocomplete="off"></div>
         <div><label>หน่วยนับ</label><input type="text" id="ib-nf-unit" value="${esc(nf.unit)}" placeholder="เช่น ถัง, กก., ชิ้น"></div>
-        <div><label>ประเภทบัญชี</label><select id="ib-nf-acct"><option${nf.acct!=='นอกบัญชี'?' selected':''}>ในบัญชี</option><option${nf.acct==='นอกบัญชี'?' selected':''}>นอกบัญชี</option></select></div>
+        <div><label>ประเภทบัญชี</label><input type="text" id="ib-nf-acct" value="${E.off?'นอกบัญชี':'ในบัญชี'}" disabled></div>
         <div><label>จำนวน</label><input type="number" min="0" step="0.01" id="ib-nf-qty" value="${esc(nf.qty)}"></div>
         <div><label>ราคา/หน่วย (บาท)</label><input type="number" min="0" step="0.01" id="ib-nf-price" value="${esc(nf.price)}"></div>
       </div>
       <button type="button" class="btn btn-primary btn-sm" onclick="ibSubmitNewMat()">＋ เพิ่มเข้าใบ</button>
       <button type="button" class="btn btn-ghost btn-sm" onclick="ibCancelNewMat()">ยกเลิก</button>
       <div class="foot-note" style="margin-top:6px;">ระบบจะสร้างวัสดุนี้ในทะเบียนให้พร้อมกันตอนกด "บันทึก"</div></div>`
-    : `<div class="ib-combo"><input type="text" id="ib-add-q" placeholder="＋ พิมพ์ชื่อวัสดุเพื่อค้นหา หรือสร้างวัสดุใหม่" autocomplete="off" value="${esc(E.q||'')}" oninput="ibListInput()" onfocus="ibListInput()" onkeydown="ibListKey(event)" onblur="setTimeout(ibListClose,180)"><div class="ib-combo-list hidden" id="ib-add-list"></div></div>`;
+    : `<div class="ib-combo"><input type="text" id="ib-add-q" placeholder="${E.off ? '＋ พิมพ์ชื่อพัสดุนอกบัญชีเพื่อค้นหา หรือสร้างใหม่' : '＋ พิมพ์ชื่อวัสดุเพื่อค้นหา หรือสร้างวัสดุใหม่'}" autocomplete="off" value="${esc(E.q||'')}" oninput="ibListInput()" onfocus="ibListInput()" onkeydown="ibListKey(event)" onblur="setTimeout(ibListClose,180)"><div class="ib-combo-list hidden" id="ib-add-list"></div></div>`;
   document.getElementById('ib-edit-body').innerHTML = `
     <div class="ib-hd">
-      <div class="f-row"><label>เลขที่ใบเบิก</label><input type="text" id="ib-e-ref" value="${esc(E.ref || FUEL_REF_PREFIX)}" oninput="ibCheckRef()"><div class="fh-err" id="ib-e-err"></div></div>
+      <div class="f-row"><label>${E.off ? 'เลขที่เอกสาร / แหล่งที่ได้รับ (ถ้ามี)' : 'เลขที่ใบเบิก'}</label><input type="text" id="ib-e-ref" value="${esc(E.off ? (E.ref||'') : (E.ref || FUEL_REF_PREFIX))}" ${E.off ? 'placeholder="เช่น ได้รับอนุเคราะห์จาก ... (เว้นว่างได้)" ' : ''}oninput="ibCheckRef()"><div class="fh-err" id="ib-e-err"></div></div>
       <div class="f-row"><label>วันที่รับ</label><input type="date" id="ib-e-date" value="${esc(E.date)}"></div>
     </div>
     <div class="ib-sec-t">รายการในใบ</div>
     ${lineHtml}
     <div class="ib-add">
       ${addHtml}
-      ${hasFt('ดีเซล') ? '' : `<button type="button" class="btn btn-ghost btn-sm" onclick="ibAddFuel('ดีเซล')">＋ ดีเซล</button>`}
-      ${hasFt('เบนซิน') ? '' : `<button type="button" class="btn btn-ghost btn-sm" onclick="ibAddFuel('เบนซิน')">＋ เบนซิน</button>`}
+      ${E.off || hasFt('ดีเซล') ? '' : `<button type="button" class="btn btn-ghost btn-sm" onclick="ibAddFuel('ดีเซล')">＋ ดีเซล</button>`}
+      ${E.off || hasFt('เบนซิน') ? '' : `<button type="button" class="btn btn-ghost btn-sm" onclick="ibAddFuel('เบนซิน')">＋ เบนซิน</button>`}
     </div>
     <div class="mrv-grand-total" id="ib-e-total"></div>`;
   document.getElementById('ib-edit-foot').innerHTML = `
@@ -2093,7 +2100,8 @@ let IbHi = 0;
 function ibMatResults(){
   const q = (IbEdit && IbEdit.q || '').trim().toLowerCase();
   const used = new Set(IbEdit.lines.filter(l=>!l.del && l.kind==='mat' && l.code).map(l=>l.code));
-  return materials.filter(m=>!used.has(m.code) && (!q || m.name.toLowerCase().includes(q)))
+  const off = !!IbEdit.off; // ใบเบิกแขวง → เฉพาะในบัญชี / รับของนอกบัญชี → เฉพาะนอกบัญชี
+  return materials.filter(m=>!used.has(m.code) && ibIsOffMat(m)===off && (!q || m.name.toLowerCase().includes(q)))
     .sort((a,b)=>a.name.localeCompare(b.name,'th')).slice(0,60);
 }
 function ibListRender(){
@@ -2135,7 +2143,7 @@ function ibSubmitNewMat(){
   ibSync();
   const name = (document.getElementById('ib-nf-name').value||'').trim();
   const unit = (document.getElementById('ib-nf-unit').value||'').trim() || 'หน่วย';
-  const acct = document.getElementById('ib-nf-acct').value==='นอกบัญชี' ? 'นอกบัญชี' : 'ในบัญชี';
+  const acct = IbEdit.off ? 'นอกบัญชี' : 'ในบัญชี';
   const qty = parseFloat(document.getElementById('ib-nf-qty').value)||0;
   const price = parseFloat(document.getElementById('ib-nf-price').value)||0;
   if(!name){ showAlertModal('กรุณากรอกชื่อวัสดุใหม่'); return; }
@@ -2364,12 +2372,14 @@ function renderItemHistoryModal(){
    ============================================================ */
 function openIbCreate(kind, code){
   if(!isAdmin()) return;
-  IbEdit = { key:null, ref:'', date:toLocalISODate(TODAY), title:'บันทึกใบเบิกรับเข้า (จากแขวง)', lines:[] };
+  // รับของนอกบัญชี: เปิดจากปุ่มโดยตรง หรือเปิดจากการ์ดยอดติดลบของพัสดุนอกบัญชี
+  const off = kind==='off' || (!!code && ibIsOffMat(materials.find(x=>x.code===code)));
+  IbEdit = { key:null, off, ref:'', date:toLocalISODate(TODAY), title: off ? 'บันทึกรับพัสดุนอกบัญชี (ได้รับอนุเคราะห์/จัดหาเอง)' : 'บันทึกใบเบิกรับเข้า (จากแขวง)', lines:[] };
   document.getElementById('ib-edit-overlay').classList.remove('hidden');
   renderIbEdit();
   if(code){ ibPickMat(code); return; }
   if(kind==='fuel') return;
-  setTimeout(()=>{ const el = document.getElementById('ib-e-ref'); if(el){ el.focus(); const n=el.value.length; try{ el.setSelectionRange(n,n); }catch(e){} } }, 0);
+  setTimeout(()=>{ const el = document.getElementById(off ? 'ib-add-q' : 'ib-e-ref'); if(el){ el.focus(); const n=el.value.length; try{ el.setSelectionRange(n,n); }catch(e){} } }, 0);
 }
 function computeNextMaterialCode(accountType){
   const prefix = accountType==='นอกบัญชี' ? 'N' : 'M';
