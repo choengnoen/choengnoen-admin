@@ -928,10 +928,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <button type="button" class="btn btn-ghost btn-sm fuel-hist-btn-top" onclick="openFuelHistoryModal('ดีเซล')" title="ตารางสรุปยอดยกมา/รับเข้า/จ่าย/คงเหลือ น้ำมันแต่ละเดือน">🕘 สรุปยอดน้ำมันรายเดือน</button>
             </div>
             <div class="fuel-cards" id="master-fuel-cards"></div>
-            <div class="legend-block" id="fuel-master-foot-block">
-              <button type="button" class="legend-dot-btn no-print" id="fuel-master-foot-toggle" onclick="__toggleNote('fuel-master-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-              <div class="foot-note" id="fuel-master-foot" style="display:none;background:transparent;border-top:none;">ยอดคงเหลือคำนวณจากบัญชี พ.1-03 ของเดือนปัจจุบัน (แท็บ "พ.1-02 / พ.1-03") — แยกตามประเภทน้ำมัน</div>
-            </div>
           </div>
         </div>
       </div>
@@ -1806,8 +1802,7 @@ function renderFuelHistoryModal(){
   const title = document.getElementById('fuel-history-title');
   if(!body || !title) return;
   title.textContent = 'สรุปยอดน้ำมันเชื้อเพลิงรายเดือน';
-  body.innerHTML = fuelHistoryMonthsHtml() +
-    `<div class="foot-note" style="margin-top:10px;">รายการใบเบิกที่รับน้ำมันเข้าหมวด ดูและแก้ไขได้ที่แท็บ <b>ใบเบิกรับเข้า</b></div>`;
+  body.innerHTML = fuelHistoryMonthsHtml();
 }
 function fuelHistoryMonthsHtml(){
   const FTS = ['ดีเซล','เบนซิน'];
