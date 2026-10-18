@@ -464,6 +464,50 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .mc-mv{display:flex;gap:12px;flex-wrap:wrap;margin-top:9px;padding-top:8px;border-top:1px dashed var(--line);font-size:12px;color:var(--ink-600);}
   .mc-mv b{font-family:'Kanit',sans-serif;font-weight:600;}
   .mc-mv .in{color:var(--success);}.mc-mv .out{color:#a3350f;}
+  .mc-alt{margin-left:auto;color:var(--ink-600);text-decoration:underline;cursor:pointer;font-size:12px;}
+  .mc-alt:hover{color:var(--navy-900);}
+  /* ท้ายหน้าทะเบียนพัสดุ: ไม่แสดงแถบเทาว่างเปล่า (ปุ่ม ⋮ ลอยอยู่มุมขวา เปิดหมายเหตุเมื่อกด) */
+  #panel-master .legend-block{background:transparent;border-top:none;min-height:30px;}
+  input.bad{border-color:var(--danger) !important;background:#fff8f7 !important;}
+  /* แท็บใบเบิกรับเข้า (จากแขวง) */
+  .ib-kpi{display:flex;gap:10px;flex-wrap:wrap;padding:14px 20px 0;}
+  .ib-kpi>div{background:var(--paper-50);border:1px solid var(--line);border-radius:10px;padding:8px 16px;font-size:12.5px;color:var(--ink-600);min-width:104px;}
+  .ib-kpi b{display:block;font-family:'Kanit',sans-serif;font-size:21px;font-weight:600;color:var(--ink-900);line-height:1.25;}
+  .ib-kpi .warn{background:var(--danger-bg);border-color:#f0b9b0;color:var(--danger);}
+  .ib-kpi .warn b{color:var(--danger);}
+  .ib-list{padding:14px 20px 8px;}
+  .ib-tbl{width:100%;border-collapse:collapse;font-size:14px;}
+  .ib-tbl th{text-align:left;font-size:12.5px;font-weight:600;color:var(--ink-600);padding:8px 10px;border-bottom:2px solid var(--line);white-space:nowrap;}
+  .ib-tbl th small{font-weight:400;color:var(--ink-400);}
+  .ib-tbl td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+  .ib-row{cursor:pointer;}
+  .ib-row:hover td{background:var(--paper-50);}
+  .ib-row.open td{background:var(--paper-50);border-bottom-color:transparent;}
+  .ib-date{white-space:nowrap;color:var(--ink-600);}
+  .ib-ref{font-family:'Kanit',sans-serif;font-weight:600;color:var(--navy-900);word-break:break-all;}
+  .ib-ref.none{color:var(--danger);font-weight:500;font-size:13px;}
+  .ib-names{margin-top:3px;font-size:12.5px;color:var(--ink-400);}
+  .ib-tag{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;margin:0 5px 4px 0;white-space:nowrap;}
+  .ib-tag.mat{background:#e8f1fd;color:#1d6fd8;}
+  .ib-tag.fuel{background:#fdf1de;color:#a3660a;}
+  .ib-tag.warn{background:var(--danger-bg);color:var(--danger);}
+  .ib-tag.lock{background:var(--paper-100);color:var(--ink-600);}
+  .ib-tag.ok{background:var(--success-bg);color:var(--success);}
+  .ib-lines td{background:var(--paper-50);padding:0 10px 12px 10px;}
+  .ib-lines ul{margin:0;padding:8px 14px;list-style:none;display:grid;gap:5px;background:#fff;border:1px solid var(--line);border-radius:10px;}
+  .ib-lines li{display:flex;justify-content:space-between;gap:14px;font-size:13px;}
+  .ib-lines li span:last-child{color:var(--ink-600);white-space:nowrap;}
+  .ib-empty{text-align:center;color:var(--ink-400);padding:38px 0;font-size:14px;line-height:1.8;}
+  .ib-hd{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .ib-sec-t{font-weight:600;font-size:13px;color:var(--ink-600);margin:6px 0 8px;}
+  .ib-ln{display:grid;grid-template-columns:minmax(0,1.5fr) 118px 130px 34px;gap:10px;align-items:end;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;}
+  .ib-ln .f-row{margin:0;}
+  .ib-ln-nm{font-weight:600;font-size:14px;padding-bottom:8px;}
+  .ib-x{border:none;background:transparent;color:var(--ink-400);font-size:15px;cursor:pointer;padding:8px 6px;border-radius:6px;}
+  .ib-x:hover{background:#fdeceb;color:#c0392b;}
+  .ib-add{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 8px;}
+  .ib-add select{font-family:'Sarabun';font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;min-width:220px;max-width:100%;}
+  @media(max-width:600px){.ib-hd{grid-template-columns:1fr;}.ib-ln{grid-template-columns:1fr 1fr;}.ib-ln-nm{grid-column:1/-1;padding-bottom:0;}.ib-x{justify-self:end;}.ib-kpi>div{min-width:calc(50% - 5px);}}
   .mc-watch{display:inline-block;margin-top:4px;background:#fdeede;color:#a3350f;border-radius:99px;padding:1px 8px;font-size:11px;font-weight:600;}
   .mc-empty{text-align:center;color:var(--ink-400);padding:18px;font-size:13px;}
   @media(max-width:900px){.mc-cols{grid-template-columns:1fr;}.mc-search{min-width:0;flex:1;}}
@@ -616,8 +660,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fc-hist-btn{margin-top:12px;width:100%;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:8px;padding:8px 10px;font-family:'Sarabun';font-size:12.5px;font-weight:600;cursor:pointer;text-align:center;}
   .fc-hist-btn:hover{background:rgba(255,255,255,.24);}
   .fuel-summary-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;flex-wrap:wrap;}
-  .fuel-month-badge{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(150deg,var(--navy-900),var(--navy-700));color:#fff;font-family:'Kanit';font-size:15px;font-weight:600;letter-spacing:.2px;padding:9px 16px;border-radius:9px;box-shadow:0 2px 6px rgba(10,37,64,.18);}
-  .fuel-month-badge svg{flex-shrink:0;}
+  /* หัวข้อสรุปประจำเดือน = ตัวอักษรหัวข้อธรรมดา (เดิมเป็นแถบสีกรมท่าหน้าตาเหมือนปุ่ม ทำให้สับสนว่ากดได้) */
+  .fuel-month-badge{display:inline-flex;align-items:center;gap:8px;color:var(--navy-900);font-family:'Kanit';font-size:17px;font-weight:600;letter-spacing:.2px;padding:0;}
+  .fuel-month-badge svg{flex-shrink:0;stroke:var(--orange-600);}
   .fuel-hist-btn-top{white-space:nowrap;}
   .fhist-row-latest td{background:#eef7ee;font-weight:700;}
   .fhist-row-latest td:first-child{position:relative;}
@@ -796,6 +841,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
     <div class="content">
       <div class="sec-tabs no-print" id="sec-tabs">
         <div class="sec-tab active" data-sec="master">ทะเบียนพัสดุ</div>
+        <div class="sec-tab" data-sec="inbound">ใบเบิกรับเข้า</div>
         <div class="sec-tab" data-sec="report">พ.1-02 วัสดุ</div>
         <div class="sec-tab" data-sec="reportfuel">พ.1-03 น้ำมัน</div>
         <div class="sec-tab" data-sec="machinery">EC 1-W</div>
@@ -816,8 +862,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="mc-upd" id="mc-upd"></div>
             </div>
             <div class="mc-actions">
-              <button class="btn btn-ghost" id="docno-btn" onclick="openDocNo()" title="บันทึกเลขที่ใบเบิก/ใบสั่งจ่ายน้ำมันของแต่ละรายการ และตรวจเลขที่ขาด/ซ้ำ">🔢 เลขที่ใบเบิก</button>
-              <button class="btn btn-primary" id="mat-add-btn" onclick="openItemModal()">+ รับเข้าคลัง</button>
+              <button class="btn btn-primary" id="mat-add-btn" onclick="goInbound()" title="บันทึก/แก้ไข/ตรวจใบเบิกที่รับเข้าหมวดจากแขวง (พัสดุและน้ำมัน) — ที่เดียว">📥 ใบเบิกรับเข้า</button>
             </div>
           </div>
           <div class="mc-tabrow">
@@ -848,13 +893,49 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div id="master-fuel-view" class="hidden" style="padding:14px 20px 20px;">
             <div class="fuel-summary-head">
               <div class="fuel-month-badge" id="fuel-month-label"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
-              <button type="button" class="btn btn-ghost btn-sm fuel-hist-btn-top" onclick="openFuelHistoryModal('ดีเซล')">🕘 ดูข้อมูลย้อนหลัง / รายการรับเข้า</button>
+              <button type="button" class="btn btn-ghost btn-sm fuel-hist-btn-top" onclick="openFuelHistoryModal('ดีเซล')" title="ตารางสรุปยอดยกมา/รับเข้า/จ่าย/คงเหลือ น้ำมันแต่ละเดือน">🕘 สรุปยอดน้ำมันรายเดือน</button>
             </div>
             <div class="fuel-cards" id="master-fuel-cards"></div>
             <div class="legend-block" id="fuel-master-foot-block">
               <button type="button" class="legend-dot-btn no-print" id="fuel-master-foot-toggle" onclick="__toggleNote('fuel-master-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
               <div class="foot-note" id="fuel-master-foot" style="display:none;background:transparent;border-top:none;">ยอดคงเหลือคำนวณจากบัญชี พ.1-03 ของเดือนปัจจุบัน (แท็บ "พ.1-02 / พ.1-03") — แยกตามประเภทน้ำมัน</div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ ใบเบิกรับเข้า (จากแขวง) — ที่เดียวสำหรับรับพัสดุ/น้ำมันเข้าหมวด ============ -->
+      <div class="panel" id="panel-inbound">
+        <div class="section">
+          <div class="section-head">
+            <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.7 4H7.3a2 2 0 0 0-1.8 1.1Z"/></svg></span>
+              ใบเบิกรับเข้า (จากแขวง)
+            </h2>
+          </div>
+          <div class="mc-top">
+            <div>
+              <div class="mc-month"><select id="ib-month" onchange="onIbMonthChange(this.value)" aria-label="เลือกเดือน"></select><span class="mc-car">▾</span></div>
+              <div class="mc-upd" id="ib-sub"></div>
+            </div>
+            <div class="mc-actions">
+              <button class="btn btn-primary" id="ib-add-btn" onclick="openItemModal('material')" title="บันทึกของที่หมวดรับจากแขวงตามใบเบิก (พัสดุหรือน้ำมัน)">+ รับเข้าคลัง</button>
+            </div>
+          </div>
+          <div class="mc-tabrow">
+            <div class="tabs" id="ib-tabs" style="padding:0;border:none;background:transparent;flex:none;">
+              <div class="tab active" data-ibkind="all" onclick="setIbKind(this)">ทั้งหมด</div>
+              <div class="tab" data-ibkind="mat" onclick="setIbKind(this)">พัสดุ</div>
+              <div class="tab" data-ibkind="fuel" onclick="setIbKind(this)">น้ำมันเชื้อเพลิง</div>
+            </div>
+            <span class="mc-sp"></span>
+            <label class="rep-toggle"><input type="checkbox" id="ib-only-warn" onchange="renderInbound()"> เฉพาะใบที่ต้องแก้ไข</label>
+            <div class="search-box mc-search">🔍 <input id="ib-search" oninput="renderInbound()" placeholder="ค้นหาเลขที่/รายการ (ทุกเดือน)"></div>
+          </div>
+          <div class="ib-kpi" id="ib-kpi"></div>
+          <div class="ib-list" id="ib-list"></div>
+          <div class="legend-block" id="ib-foot-block">
+            <button type="button" class="legend-dot-btn no-print" id="ib-foot-toggle" onclick="__toggleNote('ib-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
+            <div class="foot-note" id="ib-foot" style="display:none;background:transparent;border-top:none;">ใบเบิก 1 ใบ = 1 เลขที่ ที่หมวดรับจากแขวง (ใส่ได้ทั้งพัสดุและน้ำมันในใบเดียว) · ใบเบิก-จ่ายที่หมวดจ่ายออก และเลขที่ใบสั่งจ่ายน้ำมัน ดูที่แท็บ พ.1-02 / พ.1-03 · ใบที่ยังไม่ระบุเลขที่ กดไอคอนแก้ไขเพื่อใส่เลขที่ได้</div>
           </div>
         </div>
       </div>
@@ -875,6 +956,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 <option value="7" selected>ก.ค.</option><option value="8">ส.ค.</option><option value="9">ก.ย.</option>
               </select>
               <span class="rep-lock-ctl" style="display:flex;align-items:center;gap:6px;flex:none;"></span>
+              <button class="btn btn-ghost btn-sm" style="flex:none;white-space:nowrap;" onclick="openDocNo('mat')" title="บันทึกเลขที่ใบเบิก-จ่ายพัสดุที่หมวดจ่ายออก และตรวจเลขที่ขาด/ซ้ำ">🔢 เลขที่ใบเบิกจ่าย</button>
             </div>
           </div>
           <div class="toolbar" style="padding:14px 20px 0;">
@@ -885,7 +967,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </div>
             <label class="rep-toggle" style="margin-left:auto;"><input type="checkbox" id="rep-mat-onlymoved" checked onchange="renderReportMaterial(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'))"> แสดงเฉพาะรายการที่มีปริมาณพัสดุ</label>
             <div class="toolbar" style="padding:0;flex:none;gap:8px;">
-              <button class="btn btn-ghost btn-sm" id="rep-mat-edit-btn" onclick="toggleMatOpeningEdit()">✎ แก้ยอดยกมา/รับเข้า</button>
+              <button class="btn btn-ghost btn-sm" id="rep-mat-edit-btn" onclick="toggleMatOpeningEdit()" title="แก้ยอดรวมยกมา/รับเข้าของเดือน (สำหรับปรับยอดรวม) — การรับของจากแขวงให้บันทึกที่แท็บ ใบเบิกรับเข้า">✎ แก้ยอดยกมา/รับเข้า</button>
               <button class="btn btn-primary btn-sm hidden" id="rep-mat-save-btn" onclick="saveMatOpeningEdits()">💾 บันทึก</button>
             </div>
             <div class="search-box" style="min-width:220px;flex:none;">🔍 <input id="rep-mat-search" oninput="renderReportMaterial(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'))" placeholder="ค้นหาชื่อพัสดุ"></div>
@@ -900,7 +982,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div id="rep-mat-grid-wrap" class="grid-wrap"></div>
           <div class="legend-block" id="rep-mat-foot-block">
             <button type="button" class="legend-dot-btn no-print" id="rep-mat-foot-toggle" onclick="__toggleNote('rep-mat-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="rep-mat-foot" style="display:none;background:transparent;border-top:none;">คลิกช่องตัวเลข เพื่อกรอก/แก้ไขจำนวนที่เบิกของวันนั้นๆตามใบเบิก-จ่ายพัสดุตัวจริง , การรับพัสดุเข้าคลังให้ใช้ปุ่ม "+ รับเข้าคลัง" ที่แท็บทะเบียนพัสดุ</div>
+            <div class="foot-note" id="rep-mat-foot" style="display:none;background:transparent;border-top:none;">คลิกช่องตัวเลข เพื่อกรอก/แก้ไขจำนวนที่เบิกของวันนั้นๆตามใบเบิก-จ่ายพัสดุตัวจริง , การรับพัสดุเข้าคลังจากแขวงให้บันทึกที่แท็บ "ใบเบิกรับเข้า" (ปุ่ม "แก้ยอดยกมา/รับเข้า" ด้านบนใช้แก้ยอดรวมของเดือนเท่านั้น)</div>
           </div>
         </div>
       </div>
@@ -920,6 +1002,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 <option value="4">เม.ย.</option><option value="5">พ.ค.</option><option value="6">มิ.ย.</option>
                 <option value="7" selected>ก.ค.</option><option value="8">ส.ค.</option><option value="9">ก.ย.</option>
               </select>
+              <button class="btn btn-ghost btn-sm" style="flex:none;white-space:nowrap;" onclick="openDocNo('fuel')" title="บันทึกเลขที่ใบสั่งจ่ายน้ำมันที่หมวดจ่ายออก และตรวจเลขที่ขาด/ซ้ำ">🔢 เลขที่ใบสั่งจ่าย</button>
             </div>
           </div>
           <div class="draft-chip hidden" id="draft-fuel-chip">
@@ -1032,10 +1115,23 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <button type="button" class="modal-close" onclick="closeItemModal()">✕</button>
     </div>
     <div class="modal-tabs">
-      <div class="modal-tab active" data-modaltab="receive" onclick="setItemModalTab(this,'receive')">📥 รับพัสดุ/น้ำมันเข้าคลัง</div>
+      <div class="modal-tab active" data-modaltab="receive" onclick="setItemModalTab(this,'receive')">📥 บันทึกใบเบิกรับเข้า</div>
       <div class="modal-tab" data-modaltab="new" onclick="setItemModalTab(this,'new')">＋ เพิ่มรายการวัสดุใหม่</div>
     </div>
     <div class="modal-body" id="item-modal-body"></div>
+  </div>
+</div>
+
+<!-- ============ แก้ไขใบเบิกรับเข้า (จากแขวง) ============ -->
+<div class="modal-overlay hidden no-print" id="ib-edit-overlay">
+  <div class="modal-box modal-l">
+    <div class="modal-head">
+      <div class="modal-head-icon" style="font-size:19px;">📥</div>
+      <h3 id="ib-edit-title">แก้ไขใบเบิก</h3>
+      <button type="button" class="modal-close" onclick="closeIbEdit()">✕</button>
+    </div>
+    <div class="modal-body" id="ib-edit-body"></div>
+    <div class="modal-foot" id="ib-edit-foot"></div>
   </div>
 </div>
 
@@ -1044,7 +1140,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   <div class="modal-box">
     <div class="modal-head">
       <div class="modal-head-icon" style="font-size:19px;">🔢</div>
-      <h3>เลขที่ใบเบิก / ใบสั่งจ่ายน้ำมัน</h3>
+      <h3>เลขที่ใบเบิก-จ่าย / ใบสั่งจ่ายน้ำมัน (ที่หมวดจ่ายออก)</h3>
       <button type="button" class="modal-close" onclick="closeDocNo()">✕</button>
     </div>
     <div class="modal-body" id="docno-body"></div>
@@ -1070,10 +1166,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <div class="modal-head-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z"/></svg></div>
       <h3 id="fuel-history-title">ประวัติน้ำมัน</h3>
       <button type="button" class="modal-close" onclick="closeFuelHistoryModal()">✕</button>
-    </div>
-    <div class="modal-tabs">
-      <div class="modal-tab active" data-histtab="months" onclick="setFuelHistTab(this,'months')">📊 สรุปยอดรายเดือน</div>
-      <div class="modal-tab" data-histtab="receives" onclick="setFuelHistTab(this,'receives')">📥 รายการรับเข้า</div>
     </div>
     <div class="modal-body" id="fuel-history-body"></div>
   </div>
@@ -1335,6 +1427,7 @@ document.querySelectorAll('.sec-tab').forEach(t=>{
       document.querySelector('#master-tabs .tab[data-mastertab="fuel"]').classList.add('active');
       renderMaterials();
     }
+    if(t.dataset.sec==='inbound') renderInbound();
   });
 });
 
@@ -1509,16 +1602,19 @@ function renderMaterialCols(){
     })
     .sort((a,b)=>a.m.name.localeCompare(b.m.name,'th'));
   const card = r=>{
-    const act = !isCur ? 'history' : r.k==='neg' ? 'check' : r.k==='low' ? 'buy' : 'history';
-    const lab = act==='check' ? 'ตรวจสอบ' : act==='buy' ? 'แจ้งซื้อ' : 'ประวัติ';
-    const onclick = act==='history' ? `openItemHistoryModal('material','${jsArg(r.m.code)}')` : `openMatAction('${act}','${jsArg(r.m.code)}')`;
+    // ยอดติดลบ: ผู้ดูแลกด "รับเข้า" เปิดฟอร์มใบเบิกรับเข้าโดยเลือกวัสดุไว้ให้ (สาเหตุส่วนใหญ่คือของเข้าแล้วยังไม่ได้ลงใบเบิก)
+    const act = !isCur ? 'history' : r.k==='neg' ? (isAdmin() ? 'recv' : 'check') : r.k==='low' ? 'buy' : 'history';
+    const lab = act==='recv' ? 'รับเข้า' : act==='check' ? 'ตรวจสอบ' : act==='buy' ? 'แจ้งซื้อ' : 'ประวัติ';
+    const cj0 = jsArg(r.m.code);
+    const onclick = act==='history' ? `openItemHistoryModal('material','${cj0}')` : act==='recv' ? `openReceiveFor('${cj0}')` : `openMatAction('${act}','${cj0}')`;
+    const alt = act==='recv' ? `<a class="mc-alt" onclick="openMatAction('check','${cj0}')" title="ดูรายการเคลื่อนไหวล่าสุด / ปรับยอดตามที่นับได้จริง">ตรวจสอบ/ปรับยอด</a>` : '';
     return `<div class="mc-card">
       <div class="mc-l1">
         <div class="mc-nm">${esc(r.m.name)}<small>จุดสั่งซื้อ ${fmtNum(r.m.reorder,1)} ${esc(r.m.unit)}</small>${r.watch?'<span class="mc-watch">ใกล้ถึงจุดสั่งซื้อ</span>':''}</div>
         <div class="mc-v ${r.k}">${fmtNum(r.c,1)}<small>${esc(r.m.unit)}</small></div>
         <button type="button" class="mc-go" onclick="${onclick}">${lab}</button>
       </div>
-      <div class="mc-mv"><span>ยกมา <b>${fmtNum(r.s.opening,1)}</b></span><span class="in">รับเข้า <b>+${fmtNum(r.s.received,1)}</b></span><span class="out">เบิก <b>−${fmtNum(r.s.issued,1)}</b></span></div>
+      <div class="mc-mv"><span>ยกมา <b>${fmtNum(r.s.opening,1)}</b></span><span class="in">รับเข้า <b>+${fmtNum(r.s.received,1)}</b></span><span class="out">เบิก <b>−${fmtNum(r.s.issued,1)}</b></span>${alt}</div>
     </div>`;
   };
   const col = (k,title,ic)=>{
@@ -1556,7 +1652,8 @@ function openMatAction(kind, code){
         : '<div class="ma-hint low">การปรับยอดทำได้เฉพาะผู้ดูแลระบบ — แจ้งผู้ดูแลให้ตรวจสอบรายการนี้</div>');
     foot.innerHTML = `<button type="button" class="btn btn-ghost" onclick="closeMatActModal()">ปิด</button>
       <button type="button" class="btn btn-ghost" onclick="closeMatActModal();openItemHistoryModal('material','${cj}')">🕘 ประวัติทั้งหมด</button>` +
-      (admin ? `<button type="button" class="btn btn-primary" id="ma-save-btn" onclick="saveMatCheck('${cj}')">บันทึกการปรับยอด</button>` : '');
+      (admin ? `<button type="button" class="btn btn-ghost" onclick="closeMatActModal();openReceiveFor('${cj}')">📥 บันทึกรับเข้า</button>
+        <button type="button" class="btn btn-primary" id="ma-save-btn" onclick="saveMatCheck('${cj}')">บันทึกการปรับยอด</button>` : '');
   } else {
     icon.textContent = '🛒'; title.textContent = 'แจ้งจัดซื้อ: '+m.name;
     const qty = m.reorder>0 ? m.reorder : 1;
@@ -1688,38 +1785,20 @@ function renderMasterFuel(){
    แท็บ 1: สรุปยอดยกมา/รับเข้า/จ่าย/คงเหลือ รายเดือน (ข้อมูลชุดเดียวกับตาราง พ.1-03)
    แท็บ 2: รายการรับเข้าย้อนหลัง — แก้ไข/ลบได้ (แก้ปัญหาพิมพ์ยอดรับผิดแล้วแก้ไม่ได้)
    ============================================================ */
-let __fuelHistTab = 'months';
-let __fuelHistEditId = null;
-
 function openFuelHistoryModal(fuelType){
-  __fuelHistTab = 'months';
-  __fuelHistEditId = null;
-  document.querySelectorAll('#fuel-history-overlay .modal-tab').forEach(t=>t.classList.toggle('active', t.dataset.histtab==='months'));
   document.getElementById('fuel-history-overlay').classList.remove('hidden');
   renderFuelHistoryModal();
 }
 function closeFuelHistoryModal(){
   document.getElementById('fuel-history-overlay').classList.add('hidden');
-  __fuelHistEditId = null;
-}
-function setFuelHistTab(el, tab){
-  __fuelHistTab = tab;
-  __fuelHistEditId = null;
-  document.querySelectorAll('#fuel-history-overlay .modal-tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  renderFuelHistoryModal();
 }
 function renderFuelHistoryModal(){
   const body = document.getElementById('fuel-history-body');
   const title = document.getElementById('fuel-history-title');
   if(!body || !title) return;
-  if(__fuelHistTab==='months'){
-    title.textContent = 'ประวัติน้ำมันเชื้อเพลิง';
-    body.innerHTML = fuelHistoryMonthsHtml();
-  }else{
-    title.textContent = 'ประวัติน้ำมันเชื้อเพลิง';
-    body.innerHTML = fuelHistoryReceivesHtml();
-  }
+  title.textContent = 'สรุปยอดน้ำมันเชื้อเพลิงรายเดือน';
+  body.innerHTML = fuelHistoryMonthsHtml() +
+    `<div class="foot-note" style="margin-top:10px;">รายการใบเบิกที่รับน้ำมันเข้าหมวด ดูและแก้ไขได้ที่แท็บ <b>ใบเบิกรับเข้า</b></div>`;
 }
 function fuelHistoryMonthsHtml(){
   const FTS = ['ดีเซล','เบนซิน'];
@@ -1760,181 +1839,343 @@ function fuelHistoryMonthsHtml(){
     <tbody>${rows}</tbody>
   </table></div>`;
 }
-/* รายการรับเข้าน้ำมัน — แสดงเป็นรายใบเบิก (1 แถว = 1 ใบเบิก มีดีเซล/เบนซินในใบเดียวกันได้)
-   แก้ 2569-10-18: จัดกลุ่มตามเลขที่ใบเบิก (field ref) และกันลงเลขที่ใบเบิกซ้ำ; รายการเก่าที่ไม่มีเลขที่แสดงแยกเป็นแถวละรายการ */
 const FUEL_REF_PREFIX = '426/35/'; // คำนำหน้าเลขที่ใบเบิก เติมให้อัตโนมัติ (ต่อด้วย ปี/ลำดับ เช่น 69/1062)
-let __fuelHistEditKey = null;
-let __fuelHistAdding = false;
-function fuelReceiveSlips(){
+/* ============================================================
+   ใบเบิกรับเข้า (จากแขวง) — แท็บเดียวรวมการรับเข้าทั้งพัสดุและน้ำมัน (2569-10-18)
+   - 1 ใบเบิก = 1 เลขที่ (ช่อง ref ของ fuel_transactions / refNo ของ material_transactions) — ไม่มีตารางใหม่
+   - รายการเก่าที่ยังไม่มีเลขที่ จัดกลุ่มตามวันที่ แล้วระบุเลขที่ทีหลังได้ (กดแก้ไขใบนั้น)
+   - ไม่ตรวจ "เลขขาด" เพราะเลขใบเบิกจากแขวงเป็นเลขรวมทั้งแขวง ขาดช่วงเป็นเรื่องปกติ
+     (ตรวจเลขขาดเฉพาะใบเบิก-จ่ายของหมวดเอง ที่แท็บ พ.1-02 / พ.1-03)
+   - ใบ [ปรับยอด] ไม่นับเป็นใบเบิก (เป็นแค่การแก้ยอดให้ตรงของจริง)
+   ============================================================ */
+let ibMonth = 'cur';   // 'cur' | 'all' | 'YYYY-MM'
+let ibKind = 'all';    // 'all' | 'mat' | 'fuel'
+const ibOpen = new Set();
+let IbEdit = null;
+
+function ibIsFuelRecv(t){ return t.kind==='receive' && !isAdjustmentTx(t) && (t.fuelType==='ดีเซล' || t.fuelType==='เบนซิน'); }
+function ibSlips(){
   const map = new Map();
-  fuelTransactions.filter(t=>t.kind==='receive').forEach(t=>{
-    if(t.fuelType!=='ดีเซล' && t.fuelType!=='เบนซิน') return;
+  const slipOf = t=>{
     const ref = String(t.ref||'').trim();
-    const key = ref ? 'r:'+ref : 'i:'+t.id;
+    const key = ref ? 'r:'+ref : 'd:'+(t.date||'');
     let s = map.get(key);
-    if(!s){ s = {key, ref, date:t.date||'', maxId:Number(t.id)||0, tx:{'ดีเซล':[], 'เบนซิน':[]}}; map.set(key, s); }
+    if(!s){ s = {key, ref, date:t.date||'', lines:[]}; map.set(key, s); }
     if(t.date && t.date>s.date) s.date = t.date;
-    if((Number(t.id)||0)>s.maxId) s.maxId = Number(t.id)||0;
-    s.tx[t.fuelType].push(t);
+    return s;
+  };
+  const byCode = {}; materials.forEach(m=>{ byCode[m.code]=m; });
+  materialTransactions.filter(t=>t.kind==='receive' && !isAdjustmentTx(t)).forEach(t=>{
+    const m = byCode[t.itemCode];
+    slipOf(t).lines.push({kind:'mat', tbl:'material_transactions', tx:t, code:t.itemCode, name:m?m.name:String(t.itemCode||''), unit:m?m.unit:'', qty:t.qty||0, unitPrice:t.unitPrice});
   });
-  return Array.from(map.values()).sort((a,b)=>b.date.localeCompare(a.date) || (b.maxId-a.maxId));
+  fuelTransactions.filter(ibIsFuelRecv).forEach(t=>{
+    slipOf(t).lines.push({kind:'fuel', tbl:'fuel_transactions', tx:t, fuelType:t.fuelType, name:'น้ำมัน'+t.fuelType, unit:'ลิตร', qty:t.liters||0, unitPrice:t.unitPrice});
+  });
+  const arr = Array.from(map.values());
+  arr.forEach(s=>{
+    s.hasMat = s.lines.some(l=>l.kind==='mat');
+    s.hasFuel = s.lines.some(l=>l.kind==='fuel');
+    s.dates = new Set(s.lines.map(l=>l.tx.date));
+  });
+  return arr.sort((a,b)=>String(b.date).localeCompare(String(a.date)) || String(b.ref).localeCompare(String(a.ref)));
 }
-function fuelSlipLiters(s, ft){ return s.tx[ft].reduce((a,t)=>a+(t.liters||0),0); }
-function fuelSlipRefConflict(ref, ownKey){
+function ibWarns(s){
+  const w = [];
+  if(!s.ref) w.push('ยังไม่ระบุเลขที่');
+  if(s.dates.size>1) w.push('วันที่ในใบไม่ตรงกัน');
+  return w;
+}
+function ibRefConflict(ref, ownKey){
   ref = String(ref||'').trim();
   if(!ref) return null;
   const key = 'r:'+ref;
   if(key===ownKey) return null;
-  return fuelReceiveSlips().find(s=>s.key===key) || null;
+  return ibSlips().find(s=>s.key===key) || null;
 }
-function fhCheckRef(){
-  const inp = document.getElementById('fh-edit-ref'), err = document.getElementById('fh-ref-err'), btn = document.getElementById('fh-save-btn');
-  if(!inp) return true;
-  const hit = fuelSlipRefConflict(inp.value, __fuelHistEditKey);
+/* หมายเหตุของรายการรับเข้า: คงข้อความอื่น (เช่น ผู้ส่ง) ไว้ เปลี่ยนเฉพาะส่วนเลขที่ใบรับและราคา */
+function ibNote(oldNote, ref, price, qty){
+  const keep = String(oldNote||'').split(' · ').map(x=>x.trim()).filter(x=>x && x!=='รับเข้าคลัง' && x.indexOf('เลขที่ใบรับ ')!==0 && x.indexOf('ราคา ')!==0);
+  const parts = [];
+  if(ref) parts.push('เลขที่ใบรับ '+ref);
+  keep.forEach(x=>parts.push(x));
+  if(price) parts.push('ราคา '+fmtNum(price,2)+' บาท/หน่วย รวม '+fmtNum(qty*price,2)+' บาท');
+  return parts.length ? parts.join(' · ') : 'รับเข้าคลัง';
+}
+function ibMk(){ return ibMonth==='cur' ? currentMonthKey() : ibMonth; }
+function onIbMonthChange(v){ ibMonth = v; renderInbound(); }
+function setIbKind(el){
+  ibKind = el.dataset.ibkind;
+  document.querySelectorAll('#ib-tabs .tab').forEach(t=>t.classList.toggle('active', t===el));
+  renderInbound();
+}
+function goInbound(){ const t = document.querySelector('.sec-tab[data-sec="inbound"]'); if(t) t.click(); }
+function ibToggle(key){ if(ibOpen.has(key)) ibOpen.delete(key); else ibOpen.add(key); renderInbound(); }
+function renderInbound(){
+  const listEl = document.getElementById('ib-list');
+  if(!listEl) return;
+  const admin = isAdmin();
+  const all = ibSlips();
+  const cur = currentMonthKey();
+  const keySet = new Set([cur]);
+  all.forEach(s=>{ if(s.date) keySet.add(monthKeyOf(s.date)); });
+  const mk = ibMonth==='all' ? 'all' : ibMk();
+  keySet.add(mk==='all' ? cur : mk);
+  const sel = document.getElementById('ib-month');
+  if(sel){
+    sel.innerHTML = `<option value="all" ${mk==='all'?'selected':''}>ทุกเดือน</option>` +
+      Array.from(keySet).sort().reverse().map(o=>{
+        const [y,m] = o.split('-').map(Number);
+        return `<option value="${o}" ${o===mk?'selected':''}>${o===cur?'เดือนนี้ · ':''}${monthNamesTh[m-1]} ${y+543}</option>`;
+      }).join('');
+  }
+  const addBtn = document.getElementById('ib-add-btn');
+  if(addBtn) addBtn.classList.toggle('hidden', !admin);
+  const sub = document.getElementById('ib-sub');
+  if(sub) sub.textContent = all.length ? '📌 ใบเบิกล่าสุดที่รับเข้า '+fmtDate(all[0].date) : 'ยังไม่มีใบเบิกรับเข้า';
+
+  const q = (document.getElementById('ib-search')?.value||'').trim().toLowerCase();
+  const onlyWarn = !!document.getElementById('ib-only-warn')?.checked;
+  const monthRows = all.filter(s=> mk==='all' || monthKeyOf(s.date)===mk);
+  // KPI นับตามเดือนที่เลือก (ไม่ขึ้นกับตัวกรองชนิด/คำค้น)
+  const fuelSum = ft => monthRows.reduce((a,s)=>a+s.lines.filter(l=>l.fuelType===ft).reduce((b,l)=>b+l.qty,0),0);
+  const nMat = monthRows.reduce((a,s)=>a+s.lines.filter(l=>l.kind==='mat').length,0);
+  const warnN = monthRows.filter(s=>ibWarns(s).length).length;
+  document.getElementById('ib-kpi').innerHTML =
+    `<div><b>${monthRows.length}</b>ใบเบิก</div><div><b>${nMat}</b>รายการพัสดุ</div>` +
+    `<div><b>${fmtNum(fuelSum('ดีเซล'),1)}</b>ดีเซล (ลิตร)</div><div><b>${fmtNum(fuelSum('เบนซิน'),1)}</b>เบนซิน (ลิตร)</div>` +
+    `<div class="${warnN?'warn':''}"><b>${warnN}</b>ใบที่ต้องแก้ไข</div>`;
+
+  let rows = q ? all : monthRows; // ค้นหา = ค้นทุกเดือน
+  rows = rows.filter(s=> ibKind==='all' || (ibKind==='mat' ? s.hasMat : s.hasFuel));
+  if(q) rows = rows.filter(s=> (s.ref||'').toLowerCase().includes(q) || s.lines.some(l=>l.name.toLowerCase().includes(q)));
+  if(onlyWarn) rows = rows.filter(s=>ibWarns(s).length);
+  if(!rows.length){
+    listEl.innerHTML = `<div class="ib-empty">${q ? 'ไม่พบใบเบิกที่ตรงกับคำค้น' : onlyWarn ? 'ไม่มีใบเบิกที่ต้องแก้ไข 👍' : 'ยังไม่มีใบเบิกรับเข้าในเดือนนี้'}${admin && !q && !onlyWarn ? '<br><small>เมื่อได้รับของจากแขวง กดปุ่ม <b>+ รับเข้าคลัง</b> ด้านบนเพื่อบันทึกใบเบิก</small>' : ''}</div>`;
+    return;
+  }
+  const trs = rows.map(s=>{
+    const warns = ibWarns(s);
+    const locked = isMonthLocked(s.date);
+    const open = ibOpen.has(s.key);
+    const matLines = s.lines.filter(l=>l.kind==='mat');
+    const fs = ft => s.lines.filter(l=>l.fuelType===ft).reduce((a,l)=>a+l.qty,0);
+    const tags = (matLines.length ? `<span class="ib-tag mat">📦 พัสดุ ${matLines.length} รายการ</span>` : '') +
+      (fs('ดีเซล')>0 ? `<span class="ib-tag fuel">🛢️ ดีเซล ${fmtNum(fs('ดีเซล'),1)} ล.</span>` : '') +
+      (fs('เบนซิน')>0 ? `<span class="ib-tag fuel">⛽ เบนซิน ${fmtNum(fs('เบนซิน'),1)} ล.</span>` : '');
+    const names = matLines.slice(0,2).map(l=>esc(l.name)).join(', ') + (matLines.length>2 ? ` … อีก ${matLines.length-2}` : '');
+    const status = warns.map(w=>`<span class="ib-tag warn">⚠ ${esc(w)}</span>`).join('') + (locked ? '<span class="ib-tag lock">🔒 ล็อกบัญชีแล้ว</span>' : '') + (!warns.length && !locked ? '<span class="ib-tag ok">✓ ครบ</span>' : '');
+    const kj = jsArg(s.key);
+    const acts = admin ? `<td class="fh-act">
+        <button type="button" class="fh-ico fh-ico-edit" onclick="event.stopPropagation();openIbEdit('${kj}')" title="แก้ไขใบเบิก" aria-label="แก้ไขใบเบิก"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+        <button type="button" class="fh-ico fh-ico-del" onclick="event.stopPropagation();deleteIbSlip('${kj}')" title="ลบทั้งใบ" aria-label="ลบทั้งใบ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
+      </td>` : '';
+    const ncol = admin ? 5 : 4;
+    const detail = open ? `<tr class="ib-lines"><td colspan="${ncol}"><ul>${s.lines.map(l=>`<li><span>${l.kind==='fuel'?'⛽':'📦'} ${esc(l.name)}</span><span>${fmtNum(l.qty, Number.isInteger(l.qty)?0:2)} ${esc(l.unit)}${l.unitPrice ? ' · '+fmtNum(l.unitPrice,2)+' บาท/หน่วย' : ''}</span></li>`).join('')}</ul></td></tr>` : '';
+    return `<tr class="ib-row${open?' open':''}" onclick="ibToggle('${kj}')">
+      <td class="ib-date">${fmtDate(s.date)}</td>
+      <td>${s.ref ? `<span class="ib-ref">${esc(s.ref)}</span>` : '<span class="ib-ref none">ยังไม่ระบุเลขที่</span>'}</td>
+      <td>${tags}${names ? `<div class="ib-names">${names}</div>` : ''}</td>
+      <td>${status}</td>${acts}
+    </tr>${detail}`;
+  }).join('');
+  listEl.innerHTML = `<div class="table-wrap"><table class="ib-tbl">
+    <thead><tr><th>วันที่รับ</th><th>เลขที่ใบเบิก</th><th>รายการในใบ <small>(กดแถวเพื่อดูรายละเอียด)</small></th><th>สถานะ</th>${admin?'<th></th>':''}</tr></thead>
+    <tbody>${trs}</tbody></table></div>`;
+}
+
+/* ---- แก้ไขใบเบิก: เลขที่/วันที่/จำนวน/ราคา, เอารายการออก, เพิ่มรายการ ---- */
+function openIbEdit(key){
+  if(!isAdmin()) return;
+  const s = ibSlips().find(x=>x.key===key);
+  if(!s) return;
+  IbEdit = { key, ref:s.ref, date:s.date, title: s.ref ? 'แก้ไขใบเบิก '+s.ref : 'ระบุเลขที่ใบเบิก ('+fmtDate(s.date)+')',
+    lines: s.lines.map(l=>({tbl:l.tbl, kind:l.kind, tx:l.tx, code:l.code, fuelType:l.fuelType, name:l.name, unit:l.unit, qty:l.qty, unitPrice:l.unitPrice||0, del:false})) };
+  document.getElementById('ib-edit-overlay').classList.remove('hidden');
+  renderIbEdit();
+}
+function closeIbEdit(){
+  IbEdit = null;
+  document.getElementById('ib-edit-overlay').classList.add('hidden');
+}
+function ibSync(){
+  if(!IbEdit) return;
+  const r = document.getElementById('ib-e-ref'); if(r) IbEdit.ref = r.value.trim();
+  const d = document.getElementById('ib-e-date'); if(d) IbEdit.date = d.value;
+  IbEdit.lines.forEach((l,i)=>{
+    const q = document.getElementById('ib-e-q'+i), p = document.getElementById('ib-e-p'+i);
+    if(q) l.qty = parseFloat(q.value)||0;
+    if(p) l.unitPrice = parseFloat(p.value)||0;
+  });
+}
+function ibCalc(){
+  if(!IbEdit) return;
+  let sum = 0;
+  IbEdit.lines.forEach((l,i)=>{
+    if(l.del) return;
+    const q = parseFloat(document.getElementById('ib-e-q'+i)?.value)||0, p = parseFloat(document.getElementById('ib-e-p'+i)?.value)||0;
+    sum += q*p;
+  });
+  const el = document.getElementById('ib-e-total');
+  if(el) el.textContent = sum ? 'รวมทั้งใบ (ที่มีราคา): '+fmtNum(sum,2)+' บาท' : '';
+}
+function ibCheckRef(){
+  const inp = document.getElementById('ib-e-ref'), err = document.getElementById('ib-e-err'), btn = document.getElementById('ib-e-save');
+  if(!inp || !IbEdit) return true;
+  let v = inp.value.trim(); if(v===FUEL_REF_PREFIX.trim()) v = '';
+  const hit = ibRefConflict(v, IbEdit.key);
   inp.classList.toggle('bad', !!hit);
-  if(err) err.textContent = hit ? 'ซ้ำ! มีแล้วเมื่อ '+fmtDate(hit.date) : '';
+  if(err) err.textContent = hit ? 'ซ้ำ! เลขที่นี้มีแล้ว (รับเมื่อ '+fmtDate(hit.date)+') — ถ้าเป็นใบเดียวกัน ให้เปิดใบนั้นแล้วเพิ่มรายการแทน' : '';
   if(btn) btn.disabled = !!hit;
   return !hit;
 }
-function fuelHistoryReceivesHtml(){
-  const admin = isAdmin();
-  const slips = fuelReceiveSlips();
-  const dash = '<span style="color:#b4bac2;">—</span>';
-  const cell = n => n>0 ? fmtNum(n,1) : dash;
-  const numIn = (id,v) => `<input type="number" step="0.01" min="0" class="no-spin" id="${id}" value="${v>0?esc(v):''}" placeholder="0.0" style="text-align:right;">`;
-  const formRow = s => `<tr class="fh-row-edit">
-      <td><input type="date" id="fh-edit-date" value="${esc(s?s.date:toLocalISODate(TODAY))}"></td>
-      <td><input type="text" id="fh-edit-ref" value="${esc(s && s.ref ? s.ref : FUEL_REF_PREFIX)}" placeholder="เลขที่ใบเบิก" oninput="fhCheckRef()"><div class="fh-err" id="fh-ref-err"></div></td>
-      <td>${numIn('fh-edit-d', s?fuelSlipLiters(s,'ดีเซล'):0)}</td>
-      <td>${numIn('fh-edit-g', s?fuelSlipLiters(s,'เบนซิน'):0)}</td>
-      <td class="fh-act">
-        <button type="button" class="btn btn-sm btn-primary" id="fh-save-btn" onclick="saveFuelSlip()">💾 บันทึก</button>
-        <button type="button" class="btn btn-sm btn-ghost" onclick="cancelFuelSlipEdit()">✕</button>
-      </td>
-    </tr>`;
-  let body = __fuelHistAdding ? formRow(null) : '';
-  body += slips.map(s=>{
-    if(__fuelHistEditKey===s.key) return formRow(s);
-    return `<tr>
-      <td>${fmtDate(s.date)}</td>
-      <td>${s.ref ? esc(s.ref) : '<span style="color:var(--danger);font-size:13px;">ยังไม่ระบุเลขที่</span>'}</td>
-      <td class="num">${cell(fuelSlipLiters(s,'ดีเซล'))}</td>
-      <td class="num">${cell(fuelSlipLiters(s,'เบนซิน'))}</td>
-      <td class="fh-act">
-        ${admin ? `<button type="button" class="fh-ico fh-ico-edit" onclick="editFuelSlip('${jsArg(s.key)}')" title="แก้ไข" aria-label="แก้ไข"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
-        <button type="button" class="fh-ico fh-ico-del" onclick="deleteFuelSlip('${jsArg(s.key)}')" title="ลบ" aria-label="ลบ"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
-      </td>
-    </tr>`;
-  }).join('');
-  if(!body) return `<div class="foot-note">ยังไม่มีรายการรับเข้า</div>`;
-  return `${admin ? `<div class="fh-bar"><button type="button" class="btn btn-sm btn-primary" onclick="startFuelSlipAdd()">＋ เพิ่มใบเบิก</button></div>` : ''}
-  <div class="table-wrap"><table>
-    <thead><tr><th>วันที่รับเข้า</th><th>เลขที่ใบเบิก</th><th class="num">ดีเซล (ล.)</th><th class="num">เบนซิน (ล.)</th><th></th></tr></thead>
-    <tbody>${body}</tbody>
-  </table></div>
-  ${admin ? '' : `<div class="legend-block" id="fuel-recv-foot-block">
-    <button type="button" class="legend-dot-btn no-print" id="fuel-recv-foot-toggle" onclick="__toggleNote('fuel-recv-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-    <div class="foot-note" id="fuel-recv-foot" style="display:none;background:transparent;border-top:none;">เข้าสู่ระบบผู้ดูแลเพื่อแก้ไขหรือลบรายการ</div>
-  </div>`}`;
+function renderIbEdit(){
+  const E = IbEdit; if(!E) return;
+  document.getElementById('ib-edit-title').textContent = E.title;
+  const live = E.lines.map((l,i)=>({l,i})).filter(x=>!x.l.del);
+  const lineHtml = live.map(({l,i})=>`<div class="ib-ln">
+      <div class="ib-ln-nm">${l.kind==='fuel'?'⛽':'📦'} ${esc(l.name)}${l.tx?'':' <span class="ib-tag ok">ใหม่</span>'}</div>
+      <div class="f-row"><label>จำนวน (${esc(l.unit)})</label><input type="number" min="0" step="0.01" class="no-spin" id="ib-e-q${i}" value="${l.qty||''}" oninput="ibCalc()"></div>
+      <div class="f-row"><label>ราคา/หน่วย (บาท)</label><input type="number" min="0" step="0.01" id="ib-e-p${i}" value="${l.unitPrice||''}" oninput="ibCalc()"></div>
+      <button type="button" class="ib-x" title="เอารายการนี้ออกจากใบ" onclick="ibRemoveLine(${i})">✕</button>
+    </div>`).join('') || '<div class="foot-note">ไม่เหลือรายการในใบนี้ — กด "ลบทั้งใบ" ถ้าต้องการลบใบเบิกนี้</div>';
+  const used = new Set(live.filter(x=>x.l.kind==='mat').map(x=>x.l.code));
+  const matOpts = materials.slice().sort((a,b)=>a.name.localeCompare(b.name,'th')).filter(m=>!used.has(m.code))
+    .map(m=>`<option value="${esc(m.code)}">${esc(m.name)} (${esc(m.unit)})</option>`).join('');
+  const hasFt = ft => live.some(x=>x.l.fuelType===ft);
+  document.getElementById('ib-edit-body').innerHTML = `
+    <div class="ib-hd">
+      <div class="f-row"><label>เลขที่ใบเบิก</label><input type="text" id="ib-e-ref" value="${esc(E.ref || FUEL_REF_PREFIX)}" oninput="ibCheckRef()"><div class="fh-err" id="ib-e-err"></div></div>
+      <div class="f-row"><label>วันที่รับ</label><input type="date" id="ib-e-date" value="${esc(E.date)}"></div>
+    </div>
+    <div class="ib-sec-t">รายการในใบ</div>
+    ${lineHtml}
+    <div class="ib-add">
+      <select id="ib-add-sel"><option value="">＋ เพิ่มรายการวัสดุ…</option>${matOpts}</select>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="ibAddMat()">เพิ่ม</button>
+      ${hasFt('ดีเซล') ? '' : `<button type="button" class="btn btn-ghost btn-sm" onclick="ibAddFuel('ดีเซล')">＋ ดีเซล</button>`}
+      ${hasFt('เบนซิน') ? '' : `<button type="button" class="btn btn-ghost btn-sm" onclick="ibAddFuel('เบนซิน')">＋ เบนซิน</button>`}
+    </div>
+    <div class="mrv-grand-total" id="ib-e-total"></div>`;
+  document.getElementById('ib-edit-foot').innerHTML = `
+    <button type="button" class="btn btn-ghost" style="color:var(--danger);" onclick="ibDeleteFromEdit()">🗑 ลบทั้งใบ</button>
+    <button type="button" class="btn btn-ghost" onclick="closeIbEdit()">ยกเลิก</button>
+    <button type="button" class="btn btn-primary" id="ib-e-save" onclick="ibSave()">💾 บันทึก</button>`;
+  ibCalc(); ibCheckRef();
 }
-function startFuelSlipAdd(){
-  if(!isAdmin()) return;
-  __fuelHistAdding = true; __fuelHistEditKey = null;
-  renderFuelHistoryModal();
+function ibRemoveLine(i){ ibSync(); const l = IbEdit.lines[i]; if(!l) return; if(l.tx) l.del = true; else IbEdit.lines.splice(i,1); renderIbEdit(); }
+function ibAddMat(){
+  ibSync();
+  const code = document.getElementById('ib-add-sel')?.value;
+  if(!code) return;
+  const m = materials.find(x=>x.code===code); if(!m) return;
+  IbEdit.lines.push({tbl:'material_transactions', kind:'mat', tx:null, code:m.code, name:m.name, unit:m.unit, qty:0, unitPrice:m.unitPrice||0, del:false});
+  renderIbEdit();
 }
-function editFuelSlip(key){
-  if(!isAdmin()) return;
-  __fuelHistEditKey = key; __fuelHistAdding = false;
-  renderFuelHistoryModal();
+function ibAddFuel(ft){
+  ibSync();
+  IbEdit.lines.push({tbl:'fuel_transactions', kind:'fuel', tx:null, fuelType:ft, name:'น้ำมัน'+ft, unit:'ลิตร', qty:0, unitPrice:0, del:false});
+  renderIbEdit();
 }
-function cancelFuelSlipEdit(){
-  __fuelHistEditKey = null; __fuelHistAdding = false;
-  renderFuelHistoryModal();
-}
-function fuelSlipNote(ref, price, liters){
-  const parts = [];
-  if(ref) parts.push('เลขที่ใบรับ '+ref);
-  if(price) parts.push('ราคา '+fmtNum(price,2)+' บาท/หน่วย รวม '+fmtNum(liters*price,2)+' บาท');
-  return parts.length ? parts.join(' · ') : 'รับเข้าคลัง';
-}
-/* บันทึกใบเบิก (เพิ่มใหม่/แก้ไข) — ชนิดน้ำมันที่เว้นว่างในใบที่มีอยู่เดิม = ลบรายการชนิดนั้นออกจากใบ
-   ถ้าบันทึกกลางทางไม่สำเร็จ โหลดข้อมูลจากฐานข้อมูลกลางใหม่เพื่อให้หน้าจอตรงกับของจริง */
-async function saveFuelSlip(){
-  if(!isAdmin()) return;
-  const editing = __fuelHistEditKey ? fuelReceiveSlips().find(s=>s.key===__fuelHistEditKey) : null;
-  const date = document.getElementById('fh-edit-date')?.value;
-  let ref = (document.getElementById('fh-edit-ref')?.value||'').trim();
-  if(ref===FUEL_REF_PREFIX.trim()) ref = ''; // มีแค่คำนำหน้า = ยังไม่ได้กรอกเลขที่
-  const lit = {'ดีเซล': parseFloat(document.getElementById('fh-edit-d')?.value)||0, 'เบนซิน': parseFloat(document.getElementById('fh-edit-g')?.value)||0};
-  if(!date){ showAlertModal('กรุณากรอกวันที่'); return; }
-  if(!editing && !ref){ showAlertModal('กรุณากรอกเลขที่ใบเบิก'); return; }
-  if(lit['ดีเซล']<=0 && lit['เบนซิน']<=0){ showAlertModal('กรุณากรอกปริมาณอย่างน้อย 1 ชนิด (ดีเซลหรือเบนซิน)'); return; }
-  if(!fhCheckRef()){ showAlertModal('เลขที่ใบเบิกนี้ลงข้อมูลไว้แล้ว ไม่สามารถบันทึกซ้ำได้'); return; }
-  if(blockIfMonthLocked(date)) return;
-  if(editing && blockIfMonthLocked(editing.date)) return;
-  const saveBtn = document.getElementById('fh-save-btn');
-  if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'กำลังบันทึก...'; }
+async function ibSave(){
+  if(!isAdmin() || !IbEdit) return;
+  ibSync();
+  const E = IbEdit;
+  let ref = E.ref; if(ref===FUEL_REF_PREFIX.trim()) ref = '';
+  if(!E.date){ showAlertModal('กรุณากรอกวันที่รับ'); return; }
+  const live = E.lines.filter(l=>!l.del);
+  if(!live.length){ showAlertModal('ไม่เหลือรายการในใบนี้ — ถ้าต้องการลบใบเบิก ให้กด "ลบทั้งใบ"'); return; }
+  if(live.some(l=>!(l.qty>0))){ showAlertModal('กรุณากรอกจำนวนให้มากกว่า 0 ทุกรายการ (หรือกด ✕ เอารายการนั้นออก)'); return; }
+  if(!ibCheckRef()){ showAlertModal('เลขที่ใบเบิกนี้ลงข้อมูลไว้แล้ว ไม่สามารถบันทึกซ้ำได้'); return; }
+  if(blockIfMonthLocked(E.date)) return;
+  for(const l of E.lines){ if(l.tx && l.tx.date && blockIfMonthLocked(l.tx.date)) return; }
+  const btn = document.getElementById('ib-e-save');
+  if(btn){ btn.disabled = true; btn.textContent = 'กำลังบันทึก...'; }
   try{
-    for(const ft of ['ดีเซล','เบนซิน']){
-      const list = editing ? editing.tx[ft] : [];
-      const q = lit[ft];
-      if(q>0){
-        if(list.length){
-          const t = list[0];
-          const u = Object.assign({}, t, {date, liters:q, ref:ref||undefined});
-          u.totalPrice = t.unitPrice ? q*t.unitPrice : undefined;
-          u.note = fuelSlipNote(ref, t.unitPrice, q);
-          await apiPost('update', 'fuel_transactions', fuelTxToApi(u));
-          Object.assign(t, u);
-          for(const x of list.slice(1)){
-            await apiPost('delete', 'fuel_transactions', null, x.id);
-            fuelTransactions = fuelTransactions.filter(y=>y.id!==x.id);
-          }
-        }else{
-          const rec = {date, fuelType:ft, kind:'receive', liters:q, note:fuelSlipNote(ref,0,q), ref:ref||undefined};
+    for(const l of E.lines){
+      const isF = l.kind==='fuel', qk = isF ? 'liters' : 'qty';
+      const price = l.unitPrice>0 ? l.unitPrice : 0;
+      if(l.tx){
+        if(l.del){
+          await apiPost('delete', l.tbl, null, l.tx.id);
+          if(isF) fuelTransactions = fuelTransactions.filter(y=>y.id!==l.tx.id);
+          else materialTransactions = materialTransactions.filter(y=>y.id!==l.tx.id);
+          continue;
+        }
+        const changed = l.tx.date!==E.date || String(l.tx.ref||'')!==ref || (l.tx[qk]||0)!==l.qty || (l.tx.unitPrice||0)!==price;
+        if(!changed) continue;
+        const u = Object.assign({}, l.tx, {date:E.date, ref:ref, unitPrice:price||'', totalPrice: price ? l.qty*price : '', note: ibNote(l.tx.note, ref, price, l.qty)});
+        u[qk] = l.qty;
+        await apiPost('update', l.tbl, isF ? fuelTxToApi(u) : matTxToApi(u));
+        Object.assign(l.tx, u);
+        if(!l.tx.ref) l.tx.ref = undefined;
+      } else {
+        const rec = {date:E.date, kind:'receive', note: ibNote('', ref, price, l.qty), ref:ref||undefined, unitPrice:price||undefined, totalPrice: price ? l.qty*price : undefined};
+        if(isF){
+          rec.fuelType = l.fuelType; rec.liters = l.qty;
           const saved = await apiPost('add', 'fuel_transactions', fuelTxToApi(rec));
           fuelTransactions.push(fuelTxFromApi(saved));
-        }
-      }else{
-        for(const x of list){
-          await apiPost('delete', 'fuel_transactions', null, x.id);
-          fuelTransactions = fuelTransactions.filter(y=>y.id!==x.id);
+        } else {
+          rec.itemCode = l.code; rec.qty = l.qty;
+          const saved = await apiPost('add', 'material_transactions', matTxToApi(rec));
+          materialTransactions.push(matTxFromApi(saved));
         }
       }
     }
   }catch(err){
-    showAlertModal('บันทึกใบเบิกไปยังฐานข้อมูลกลางไม่สำเร็จ: ' + err.message);
-    try{ await loadFuelTransactionsFromApi(); }catch(e){}
+    showAlertModal('บันทึกใบเบิกไปยังฐานข้อมูลกลางไม่สำเร็จ: ' + err.message + '\nระบบโหลดข้อมูลล่าสุดมาแสดงให้ตรงกับของจริง กรุณาตรวจใบเบิกนี้อีกครั้ง');
+    try{ await loadMaterialTransactionsFromApi(); await loadFuelTransactionsFromApi(); }catch(e){}
+    closeIbEdit();
     renderAll();
-    renderFuelHistoryModal();
     return;
   }
-  __fuelHistEditKey = null; __fuelHistAdding = false;
+  closeIbEdit();
   renderAll();
-  renderFuelHistoryModal();
+  showSuccessModal('บันทึกใบเบิกเรียบร้อยแล้ว');
 }
-function deleteFuelSlip(key){
-  if(!isAdmin()) return;
-  const txs = fuelTransactions.filter(t=>t.kind==='receive' && (String(t.ref||'').trim() ? 'r:'+String(t.ref).trim() : 'i:'+t.id)===key);
-  if(!txs.length) return;
-  for(const t of txs){ if(blockIfMonthLocked(t.date)) return; }
-  showConfirmModal('ยืนยันลบใบเบิก', 'ยืนยันลบใบเบิกนี้ทั้งใบ (ทุกชนิดน้ำมันในใบ)? การลบไม่สามารถย้อนกลับได้', 'ลบใบเบิก', async function(){
+function ibDeleteLines(lines){
+  return (async function(){
     try{
-      for(const t of txs){
-        await apiPost('delete', 'fuel_transactions', null, t.id);
-        fuelTransactions = fuelTransactions.filter(y=>y.id!==t.id);
+      for(const l of lines){
+        await apiPost('delete', l.tbl, null, l.tx.id);
+        if(l.kind==='fuel') fuelTransactions = fuelTransactions.filter(y=>y.id!==l.tx.id);
+        else materialTransactions = materialTransactions.filter(y=>y.id!==l.tx.id);
       }
     }catch(err){
-      showAlertModal('ลบรายการรับน้ำมันในฐานข้อมูลกลางไม่สำเร็จ: ' + err.message);
-      try{ await loadFuelTransactionsFromApi(); }catch(e){}
+      showAlertModal('ลบใบเบิกในฐานข้อมูลกลางไม่สำเร็จ: ' + err.message);
+      try{ await loadMaterialTransactionsFromApi(); await loadFuelTransactionsFromApi(); }catch(e){}
       renderAll();
-      renderFuelHistoryModal();
-      return;
+      return false;
     }
     renderAll();
-    renderFuelHistoryModal();
-    showSuccessModal('ลบใบเบิกเรียบร้อยแล้ว');
+    return true;
+  })();
+}
+function ibConfirmDelete(lines, after){
+  if(!lines.length) return;
+  for(const l of lines){ if(blockIfMonthLocked(l.tx.date)) return; }
+  const n = lines.length;
+  showConfirmModal('ยืนยันลบใบเบิก', `ยืนยันลบใบเบิกนี้ทั้งใบ (${n} รายการ)? ยอดคงเหลือจะลดลงตามของที่รับเข้า การลบไม่สามารถย้อนกลับได้`, 'ลบใบเบิก', async function(){
+    const ok = await ibDeleteLines(lines);
+    if(ok){ if(after) after(); showSuccessModal('ลบใบเบิกเรียบร้อยแล้ว'); }
   });
+}
+function deleteIbSlip(key){
+  if(!isAdmin()) return;
+  const s = ibSlips().find(x=>x.key===key);
+  if(s) ibConfirmDelete(s.lines, null);
+}
+function ibDeleteFromEdit(){
+  if(!isAdmin() || !IbEdit) return;
+  const lines = IbEdit.lines.filter(l=>l.tx);
+  ibConfirmDelete(lines, closeIbEdit);
+}
+/* จากการ์ดยอดติดลบ: เปิดฟอร์มรับเข้า โดยเลือกวัสดุนั้นไว้ให้ */
+function openReceiveFor(code){
+  if(!isAdmin()){ openMatAction('check', code); return; }
+  openItemModal('material');
+  const rid = recvMatRows[0] && recvMatRows[0].rid;
+  if(rid) pickRecvItem(rid, code);
 }
 function updateMaterial(i, field, val){
   if(!isAdmin()) return;
@@ -2047,10 +2288,10 @@ function renderItemHistoryModal(){
 let itemModalTab = 'receive';       // 'receive' | 'new'
 let itemModalRecvType = 'material'; // 'material' | 'fuel'
 
-function openItemModal(){
+function openItemModal(kind){
   if(!isAdmin()) return;
   itemModalTab = 'receive';
-  itemModalRecvType = currentMasterTab()==='fuel' ? 'fuel' : 'material';
+  itemModalRecvType = (kind==='fuel' || kind==='material') ? kind : (currentMasterTab()==='fuel' ? 'fuel' : 'material');
   document.querySelectorAll('#item-modal-overlay .modal-tab').forEach(t=>t.classList.toggle('active', t.dataset.modaltab==='receive'));
   document.getElementById('item-modal-overlay').classList.remove('hidden');
   renderItemModalBody();
@@ -2069,7 +2310,7 @@ function renderItemModalBody(){
   const title = document.getElementById('item-modal-title');
   if(!body || !title) return;
   if(itemModalTab==='receive'){
-    title.textContent = 'รับพัสดุ/น้ำมันเข้าคลัง';
+    title.textContent = 'บันทึกใบเบิกรับเข้า (จากแขวง)';
     body.innerHTML = receiveFormHtml();
     resetRecvItemField();
   } else {
@@ -2202,7 +2443,7 @@ function receiveFormHtml(){
       ${recvKindToggleHtml()}
     </div>
     <div class="two-col">
-      <div class="f-row"><label>เลขที่ใบรับ/ใบส่งของ</label><input type="text" id="recv-ref" value="${FUEL_REF_PREFIX}"></div>
+      <div class="f-row"><label>เลขที่ใบเบิก (จากแขวง)</label><input type="text" id="recv-ref" value="${FUEL_REF_PREFIX}" oninput="onRecvRefInput()"><div class="fh-err" id="recv-ref-err"></div></div>
       <div class="f-row"><label>วันที่รับ</label><input type="date" id="recv-date" value="${todayStr}"></div>
     </div>
     <div class="f-row"><label>ผู้ขาย/หน่วยงานที่ส่งของ (ถ้ามี)</label><input type="text" id="recv-supplier" placeholder="ไม่บังคับ"></div>
@@ -2212,6 +2453,16 @@ function receiveFormHtml(){
       <button class="btn btn-ghost" id="recv-cancel-btn" onclick="closeItemModal()">ยกเลิก</button>
       <button class="btn btn-primary" id="recv-save-btn" onclick="submitReceiveForm()">💾 บันทึกรับเข้า</button>
     </div>`;
+}
+/* เตือนทันทีที่พิมพ์เลขที่ใบเบิกซ้ำกับที่เคยบันทึกไว้ */
+function onRecvRefInput(){
+  const inp = document.getElementById('recv-ref'), err = document.getElementById('recv-ref-err'), btn = document.getElementById('recv-save-btn');
+  if(!inp) return;
+  let v = inp.value.trim(); if(v===FUEL_REF_PREFIX.trim()) v = '';
+  const hit = ibRefConflict(v, null);
+  inp.classList.toggle('bad', !!hit);
+  if(err) err.textContent = hit ? 'ซ้ำ! เลขที่นี้ลงไว้แล้วเมื่อ '+fmtDate(hit.date)+' — ให้เปิดใบนั้นที่แท็บ "ใบเบิกรับเข้า" แล้วเพิ่มรายการแทน' : '';
+  if(btn) btn.disabled = !!hit;
 }
 function onRecvKindBtn(el){
   const prevRef = document.getElementById('recv-ref')?.value || '';
@@ -2332,9 +2583,9 @@ async function submitReceiveForm(){
   if(ref===FUEL_REF_PREFIX.trim()) ref = ''; // มีแค่คำนำหน้า = ยังไม่ได้กรอกเลขที่
   const date = document.getElementById('recv-date')?.value || toLocalISODate(TODAY);
   if(blockIfMonthLocked(date)) return;
-  if(itemModalRecvType==='fuel' && ref){
-    const dupSlip = fuelSlipRefConflict(ref, null);
-    if(dupSlip){ showAlertModal('เลขที่ใบเบิก '+ref+' ลงข้อมูลไว้แล้วเมื่อ '+fmtDate(dupSlip.date)+' ไม่สามารถบันทึกซ้ำได้ ถ้าต้องการแก้ไขให้ไปที่ประวัติน้ำมัน > รายการรับเข้า'); return; }
+  if(ref){
+    const dupSlip = ibRefConflict(ref, null);
+    if(dupSlip){ showAlertModal('เลขที่ใบเบิก '+ref+' ลงข้อมูลไว้แล้วเมื่อ '+fmtDate(dupSlip.date)+' ไม่สามารถบันทึกซ้ำได้\nถ้าต้องการเพิ่มรายการหรือแก้ไขใบนี้ ให้ไปที่แท็บ "ใบเบิกรับเข้า" แล้วกดไอคอนแก้ไขที่ใบนั้น'); return; }
   }
   const supplier = (document.getElementById('recv-supplier')?.value||'').trim();
   const noteExtra = (document.getElementById('recv-note')?.value||'').trim();
@@ -4956,6 +5207,7 @@ window.addEventListener('afterprint', ()=>{ document.querySelectorAll('.print-on
 function renderAll(){
   populateLogin();
   renderMaterials();
+  renderInbound();
   renderVehicles();
   populateLedgerFySelects();
   renderMachinery();
@@ -5357,7 +5609,12 @@ function docNoAnalyze(rows){
   const dups = Object.keys(groupsByRef).filter(k=>groupsByRef[k].size>1);
   return { main:main||'', missing, dups, otherPrefix: Object.keys(pc).filter(k=>k!==main) , filled:filled.length, total:rows.length };
 }
-function openDocNo(){
+function openDocNo(type){
+  // เปิดจากแท็บ พ.1-02 / พ.1-03: ใช้ชนิดใบและเดือนที่เลือกอยู่ในแท็บนั้น
+  if(type==='mat' || type==='fuel'){
+    DocNo.type = type;
+    DocNo.mk = type==='fuel' ? ledgerMonthKey('rep-fuel-ledger-fy','rep-fuel-ledger-month') : ledgerMonthKey('rep-ledger-fy','rep-ledger-month');
+  }
   if(!DocNo.mk) DocNo.mk = masterMk();
   document.getElementById('docno-overlay').classList.remove('hidden');
   renderDocNo();
