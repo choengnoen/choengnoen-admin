@@ -772,9 +772,22 @@
     const names = Array.isArray(d.staff) ? d.staff : [];
     return names.filter(n=>leaves.some(l=>l.name===n && l.from<=d.date && d.date<=l.to));
   }
+  /* ข้อความ "ไม่พบวัสดุ …" ในหมายเหตุ: ตรวจสดกับทะเบียนพัสดุ+การจับคู่ที่จำไว้ — วัสดุที่จับคู่/เพิ่มเข้าทะเบียนแล้วไม่ถือเป็นจุดต้องตรวจอีก
+     (ชื่อวัสดุคั่นด้วย "," แต่ชื่ออาจมีจุลภาคในตัวเลข เช่น "แบบที่ 7,8,9" → ท่อนที่ขึ้นต้นด้วยตัวเลขต่อกลับเข้าท่อนก่อนหน้า) */
+  function stillMissingMats(txt){
+    const parts = [];
+    String(txt).split(',').forEach(s=>{ if(parts.length && /^\s*\d/.test(s)) parts[parts.length-1] += ','+s; else parts.push(s); });
+    return parts.map(s=>s.trim()).filter(Boolean).filter(nm=>{ try{ return !matchMaterial(nm); }catch(e){ return true; } });
+  }
   function ckProbs(d){
     const n = String(d.note||''), at = n.indexOf(FLAG);
-    const probs = at<0 ? [] : n.slice(at+FLAG.length).split(' ; ').map(s=>s.trim()).filter(Boolean);
+    const probs = [];
+    (at<0 ? [] : n.slice(at+FLAG.length).split(' ; ')).map(s=>s.trim()).filter(Boolean).forEach(p=>{
+      const m = p.match(/^ไม่พบวัสดุ(?:ในทะเบียน\(ไม่ตัดคลัง\))?\s+([\s\S]+)$/);
+      if(!m){ probs.push(p); return; }
+      const left = stillMissingMats(m[1]);
+      if(left.length) probs.push('ไม่พบวัสดุ '+left.join(', '));
+    });
     /* ใบที่นำเข้าจากกรม: ธงเปล่า (เวอร์ชันเก่า) เดิมเกิดจากเทียบวันลากับรายชื่อทั้งแผนที่ใส่ทุกวัน จึงไม่ถือเป็นจุดต้องตรวจ · เรื่องลาของใบนำเข้าใช้ข้อความที่ระบบเขียนตอนนำเข้าเท่านั้น */
     if(TOKEN_RE.test(n)) return probs;
     const lv = leaveConflicts(d);
