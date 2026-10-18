@@ -5052,11 +5052,12 @@ function dwTotal(d){ return (d.material||0)+(d.labor||0)+(d.rent||0)+(d.fuel||0)
    ============================================================ */
 const TH_WEEKDAYS = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
 const TH_WEEKDAYS_SHORT = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
+const TH_MONTHS_LONG = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 function fmtMoney(v){ v = v||0; return fmtNum(v, Math.abs(v%1)<0.005 ? 0 : 2); }
 function fmtQtyShort(v){ v = v||0; return fmtNum(v, Math.abs(v%1)<0.005 ? 0 : 2); }
 function fmtDayHeading(iso){
   const d = new Date(iso+'T00:00:00');
-  return 'วัน'+TH_WEEKDAYS[d.getDay()]+'ที่ '+fmtDateShort(iso);
+  return 'วัน'+TH_WEEKDAYS[d.getDay()]+'ที่ '+d.getDate()+' '+TH_MONTHS_LONG[d.getMonth()]+' '+(d.getFullYear()+543);
 }
 let dwSel = TODAY.toISOString().slice(0,10);   /* วันที่ที่เลือกอยู่ในแถบสัปดาห์ */
 function isoLocal(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -5136,7 +5137,7 @@ function renderDailyLog(){
     + days.map(iso=>{
       const dt = new Date(iso+'T00:00:00'), n = cnt[iso]||0, wd = dt.getDay();
       const mon = (dt.getDate()===1 || iso===days[0]) ? ' '+THDATE_MONTHS[dt.getMonth()] : '';
-      return `<div class="dwk-d ${iso===dwSel?'on':''} ${iso===todayIso?'today':''} ${(wd===0||wd===6)?'off':''}" onclick="dwPickDay('${iso}')"><small>${TH_WEEKDAYS_SHORT[wd]}${mon}</small><b>${dt.getDate()}</b><div class="n">${n?n+' ใบ':''}</div></div>`;
+      return `<div class="dwk-d ${iso===dwSel?'on':''} ${iso===todayIso?'today':''} ${(wd===0||wd===6)?'off':''}" onclick="dwPickDay('${iso}')"><small>${TH_WEEKDAYS[wd]}${mon}</small><b>${dt.getDate()}</b><div class="n">${n?n+' ใบ':''}</div></div>`;
     }).join('')
     + `</div><button type="button" class="dwk-arr" onclick="dwShiftWeek(1)" title="สัปดาห์ถัดไป">›</button></div>`;
   const list = dailyWorkOrders.filter(d=>d.date===dwSel).sort((a,b)=> a.no-b.no);

@@ -561,7 +561,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fd-table th{background:var(--navy-900);color:#fff;font-size:12px;padding:7px 8px;text-align:center;font-weight:600;position:sticky;top:0;z-index:2;}
   .fd-table th small{font-weight:400;opacity:.8;}
   .fd-table th.fd-cur{background:var(--orange-600);}
-  .fd-table td{padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:13px;}
+  .fd-table td{padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:13px;white-space:nowrap;}
+  .fd-table td.fd-flags{white-space:normal;}
+  .fd-table td.fd-flags .fd-fl{white-space:nowrap;}
   .fd-table td.fd-c{text-align:center;}
   .fd-table td.fd-r{text-align:right;}
   .fd-table tfoot td{background:var(--paper-100);font-weight:700;color:var(--navy-900);}
@@ -572,11 +574,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fd-table tr.fd-hl td{box-shadow:inset 0 2px 0 var(--orange-500),inset 0 -2px 0 var(--orange-500);}
   .fd-big{font-family:'Kanit';font-size:16px;}
   .fd-neg{color:var(--danger);}
-  .fd-in{width:100%;min-width:78px;height:38px;border:1.5px solid var(--line);border-radius:8px;font-family:'Kanit';font-size:15px;font-weight:600;text-align:center;color:var(--navy-900);background:#fff;}
+  .fd-in{width:100%;min-width:64px;height:38px;border:1.5px solid var(--line);border-radius:8px;font-family:'Kanit';font-size:15px;font-weight:600;text-align:center;color:var(--navy-900);background:#fff;}
   .fd-in:focus{outline:none;border-color:var(--orange-500);box-shadow:0 0 0 3px rgba(224,98,15,.18);}
   .fd-in.cell-dirty{background:#fff6e6;border-color:var(--amber-400);}
   .fd-in.fd-inbad{border-color:var(--danger);background:var(--danger-bg);}
-  .fd-in-td{min-width:110px;}
+  .fd-in-td{width:96px;min-width:84px;max-width:104px;}
   .fd-tag{display:inline-block;border-radius:6px;padding:1px 8px;font-size:11.5px;font-weight:600;}
   .fd-tag.fd-d{background:#e3edf6;color:var(--navy-700);}
   .fd-tag.fd-g{background:#fdefe3;color:var(--orange-600);}
@@ -3816,6 +3818,7 @@ function syncRepLedger(fyId, monthId){
   const month = document.getElementById(monthId)?.value;
   if(fy) ['rep-ledger-fy','rep-fuel-ledger-fy'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value = fy; });
   if(month) ['rep-ledger-month','rep-fuel-ledger-month'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value = month; });
+  fuelPickFirstDay = true;   // เลือกปีงบ/เดือนใหม่ → หน้าตรวจน้ำมันไปวันทำการแรกของเดือน
   renderReport();
 }
 /* renderFuelLedger()/receiveFuel() ของเดิมถูกลบออก (โค้ดตายจากหน้าจอรุ่นก่อน — ไม่มี
@@ -4073,6 +4076,7 @@ function renderFuelKpiBand(mk, fuelTypes){
 let fuelDayChecks = {};     // 'YYYY-MM-DD' -> {checked:[ป้ายรถ], checkedBy, checkedAt, confirmed, confirmedBy, confirmedAt}
 let fuelCheckDay = null;    // เลขวันที่ที่กำลังตรวจ
 let fuelCheckDayMk = null;  // เดือนที่เลขวันข้างบนสังกัดอยู่
+let fuelPickFirstDay = false; // true = ผู้ใช้เพิ่งเลือกปีงบ/เดือน → แสดงวันทำการแรกของเดือน
 const FUEL_CHECK_MAX_KM_PER_DAY = 300; // เกณฑ์เลขไมล์เพิ่มสูงสุดต่อวัน (ใช้เมื่อรถคันนั้นไม่ได้กำหนด maxKmPerDay เอง)
 const FUEL_SHORT_MONTH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 async function loadFuelDayChecksFromApi(){
@@ -4182,8 +4186,13 @@ function fuelFlagHtml(r){
   return r.flags.map(f=>`<span class="fd-fl ${f.c==='b'?'fd-b':'fd-w'}">${f.c==='b'?'⛔':'⚠'} ${esc(f.t)}</span>`).join('');
 }
 function pickFuelDay(mk){
-  const days = workdaysInMonthArr(mk);
-  if(fuelCheckDayMk!==mk || !days.some(d=>d.day===fuelCheckDay)){
+  const days = daysInMonthArr(mk);
+  if(fuelPickFirstDay){
+    fuelPickFirstDay = false;
+    const first = days.find(d=>d.dow!=='ส.' && d.dow!=='อา.' && !THAI_HOLIDAYS[dateStrFor(mk,d.day)]) || days[0];
+    fuelCheckDayMk = mk;
+    fuelCheckDay = first ? first.day : null;
+  } else if(fuelCheckDayMk!==mk || !days.some(d=>d.day===fuelCheckDay)){
     fuelCheckDayMk = mk;
     let pick = null;
     const todayStr = toLocalISODate(TODAY);
@@ -4202,9 +4211,28 @@ function fuelMileageBlur(el){
   setTimeout(()=>renderReportFuel(currentFuelMk()), 0); // รอให้โฟกัสย้ายไปช่องถัดไปก่อน แล้วค่อยวาดใหม่ (วาดแล้วคืนโฟกัสให้เอง)
 }
 function setFuelCheckDay(day){ fuelCheckDay = day; fuelCheckDayMk = currentFuelMk(); renderReportFuel(fuelCheckDayMk); }
+/* แถบสัปดาห์ (จันทร์–อาทิตย์) หน้าตาเดียวกับใบสั่งการรายวัน — ไปยังวันที่ iso (ข้ามเดือนได้ โดยเปลี่ยนตัวเลือกปีงบ/เดือนให้ตรงกัน) */
+const FUEL_WEEKDAY_FULL = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+function fuelIsoLocal(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fuelWeekDays(iso){
+  const d = new Date(iso+'T00:00:00'), off = (d.getDay()+6)%7, out = [];
+  for(let i=0;i<7;i++) out.push(fuelIsoLocal(new Date(d.getFullYear(), d.getMonth(), d.getDate()-off+i)));
+  return out;
+}
+function fuelGoDate(iso){
+  const mk = monthKeyOf(iso), day = +iso.slice(8,10);
+  fuelPickFirstDay = false;   // กดเลือกวัน/เลื่อนสัปดาห์เอง → ใช้วันที่นั้นตามที่กด
+  if(mk===currentFuelMk()){ fuelCheckDay = day; fuelCheckDayMk = mk; renderReportFuel(mk); return; }
+  const fm = fyMonthOf(mk), fySel = document.getElementById('rep-fuel-ledger-fy');
+  if(!fySel || !Array.from(fySel.options).some(o=>+o.value===fm.fy)) return;   // ปีงบนั้นยังไม่มีในตัวเลือก
+  ['rep-ledger-fy','rep-fuel-ledger-fy'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value = fm.fy; });
+  ['rep-ledger-month','rep-fuel-ledger-month'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value = fm.month; });
+  fuelCheckDay = day; fuelCheckDayMk = mk;
+  renderReport();
+}
 function stepFuelCheckDay(n){
-  const mk = currentFuelMk(), days = workdaysInMonthArr(mk), i = days.findIndex(d=>d.day===fuelCheckDay)+n;
-  if(days[i]) setFuelCheckDay(days[i].day);
+  const d = new Date(dateStrFor(currentFuelMk(), fuelCheckDay)+'T00:00:00');
+  fuelGoDate(fuelIsoLocal(new Date(d.getFullYear(), d.getMonth(), d.getDate()+7*n)));
 }
 function renderReportFuel(mk){
   const wrap = document.getElementById('rep-fuel-grid-wrap');
@@ -4212,7 +4240,6 @@ function renderReportFuel(mk){
   const fuelTypes = ['ดีเซล','เบนซิน'];
   const showAll = false;
   const q = (document.getElementById('rep-fuel-search')?.value||'').trim().toLowerCase();
-  const days = workdaysInMonthArr(mk);
   const dayNum = pickFuelDay(mk);
   if(dayNum==null){ wrap.innerHTML = '<div class="fd-empty">เดือนนี้ไม่มีวันทำการ</div>'; return; }
   const date = dateStrFor(mk, dayNum);
@@ -4231,24 +4258,25 @@ function renderReportFuel(mk){
 
   const dayAgg = {};
   fuelTransactions.forEach(t=>{
-    if(t.kind!=='issue' || monthKeyOf(t.date)!==mk || !fuelTypes.includes(t.fuelType)) return;
-    const d = +t.date.slice(8,10); dayAgg[d] = (dayAgg[d]||0) + (t.liters||0);
+    if(t.kind!=='issue' || !fuelTypes.includes(t.fuelType)) return;
+    dayAgg[t.date] = (dayAgg[t.date]||0) + (t.liters||0);
   });
-  const chips = days.map(d=>{
-    const dr = fuelDayRec(dateStrFor(mk,d.day));
-    const isTd = dateStrFor(mk,d.day)===toLocalISODate(TODAY);
-    return `<div class="dwk-d fd-d${d.day===dayNum?' on':''}${d.hol?' off hol':''}${isTd?' today':''}" data-fday="${d.day}"${d.hol?` title="${esc(d.hol)}"`:''}>
-      <small>${d.dow}</small><b>${d.day}</b><div class="n">${dr.confirmed?'🔒 ':''}${dayAgg[d.day]?fmtNum(dayAgg[d.day],1):'&nbsp;'}</div></div>`;
+  const weekIsos = fuelWeekDays(date), todayIso = toLocalISODate(TODAY);
+  const chips = weekIsos.map(iso=>{
+    const dr = fuelDayRec(iso), dt = new Date(iso+'T00:00:00'), wd = dt.getDay(), hol = THAI_HOLIDAYS[iso] || null;
+    const mon = (dt.getDate()===1 || iso===weekIsos[0]) ? ' '+FUEL_SHORT_MONTH[dt.getMonth()] : '';
+    return `<div class="dwk-d fd-d${iso===date?' on':''}${(wd===0||wd===6||hol)?' off':''}${hol?' hol':''}${iso===todayIso?' today':''}" data-fdate="${iso}"${hol?` title="${esc(hol)}"`:''}>
+      <small>${FUEL_WEEKDAY_FULL[wd]}${mon}</small><b>${dt.getDate()}</b><div class="n">${dr.confirmed?'🔒 ':''}${dayAgg[iso]?fmtNum(dayAgg[iso],1):'&nbsp;'}</div></div>`;
   }).join('');
   const [yy, mm] = mk.split('-').map(Number);
   const holName = holidayNameFor(mk, dayNum);
-  const dayInfo = days.find(d=>d.day===dayNum);
+  const dayInfo = {dow: FUEL_WEEKDAY_FULL[new Date(date+'T00:00:00').getDay()]};
   const isToday = date===toLocalISODate(TODAY);
   const sumBy = ft=>real.filter(r=>r.ft===ft).reduce((s,r)=>s+r.lit,0);
 
-  const head = `<div class="dwk-bar"><button type="button" class="dwk-arr" data-fstep="-1" title="วันก่อนหน้า">‹</button><div class="dwk-days fd-days">${chips}</div><button type="button" class="dwk-arr" data-fstep="1" title="วันถัดไป">›</button></div>
+  const head = `<div class="dwk-bar"><button type="button" class="dwk-arr" data-fstep="-1" title="สัปดาห์ก่อนหน้า">‹</button><div class="dwk-days fd-days">${chips}</div><button type="button" class="dwk-arr" data-fstep="1" title="สัปดาห์ถัดไป">›</button></div>
     <div class="fd-dayhead">
-      <h3>วัน${dayInfo.dow} ที่ ${dayNum} ${monthNamesTh[mm-1]} ${yy+543}</h3><span class="fd-count">${real.length} คัน</span>${isToday?' <span class="fd-today">วันนี้</span>':''}${holName?` <span class="fd-hol">${esc(holName)}</span>`:''}<span style="flex:1"></span>
+      <h3>วัน${dayInfo.dow}ที่ ${dayNum} ${monthNamesTh[mm-1]} ${yy+543}</h3><span class="fd-count">${real.length} คัน</span>${isToday?' <span class="fd-today">วันนี้</span>':''}${holName?` <span class="fd-hol">${esc(holName)}</span>`:''}<span style="flex:1"></span>
       <div class="fd-stats"><div>ดีเซล<b>${fmtNum(sumBy('ดีเซล'),1)} ล.</b></div><div>เบนซิน<b>${fmtNum(sumBy('เบนซิน'),1)} ล.</b></div></div></div>`;
 
   const alertsHtml = warnRows.length
@@ -4289,7 +4317,7 @@ function renderReportFuel(mk){
       <td class="fd-r">${r.hasMile?(r.mPrev?`<b>${fmtNum(r.mPrev.val,0)}</b><div class="fd-mut">${fuelShortDate(r.mPrev.date)}</div>`:'<span class="fd-mut">—</span>'):''}</td>
       <td class="fd-in-td">${miCell}</td>
       <td class="fd-c">${distTxt}</td>
-      <td>${fuelFlagHtml(r)}</td></tr>`;
+      <td class="fd-flags">${fuelFlagHtml(r)}</td></tr>`;
   });
   if(!rows.length) body = `<tr><td colspan="10" class="fd-empty">วันนี้ไม่มีรายการเบิก</td></tr>`;
   const grand = rows.reduce((s,r)=>s+(r.lit||0),0);
@@ -4313,7 +4341,7 @@ function renderReportFuel(mk){
   const wrap = document.getElementById('rep-fuel-grid-wrap');
   if(!wrap) return;
   wrap.addEventListener('click', function(e){
-    const chip = e.target.closest('[data-fday]'); if(chip){ setFuelCheckDay(+chip.dataset.fday); return; }
+    const chip = e.target.closest('[data-fdate]'); if(chip){ fuelGoDate(chip.dataset.fdate); return; }
     const st = e.target.closest('[data-fstep]'); if(st){ stepFuelCheckDay(+st.dataset.fstep); return; }
     const ck = e.target.closest('[data-fck]'); if(ck){ toggleFuelRowCheck(dateStrFor(currentFuelMk(), fuelCheckDay), ck.dataset.fck); return; }
     if(e.target.closest('[data-fconfirm]')){ confirmFuelDay(dateStrFor(currentFuelMk(), fuelCheckDay)); return; }
