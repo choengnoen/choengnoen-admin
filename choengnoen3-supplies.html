@@ -448,6 +448,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .dn-in{font-family:'Sarabun';font-size:13.5px;width:100%;min-width:230px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;}
   .dn-in.dup{border-color:var(--danger);background:var(--danger-bg);}
   .dn-sug{border:1px dashed var(--line);background:#fff;border-radius:7px;padding:3px 8px;font-size:12px;color:var(--ink-600);cursor:pointer;margin-left:4px;}
+  .mc-usagebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 20px 0;}
+  .mc-usagebar.hidden{display:none;}
+  .mu-chip{border:1px solid var(--line);background:#fff;color:var(--ink-600);border-radius:99px;padding:6px 14px;font-family:'Sarabun';font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+  .mu-chip b{color:var(--navy-900);}
+  .mu-chip.active{background:var(--navy-900);color:#fff;border-color:var(--navy-900);}
+  .mu-chip.active b{color:#fff;}
+  .mu-chip .mu-warn{background:#fdeede;color:#a3350f;border-radius:99px;padding:0 8px;font-size:11.5px;font-weight:600;}
+  .mc-use{display:inline-block;margin-top:4px;margin-left:4px;background:#e8eef7;color:#27466f;border-radius:99px;padding:1px 8px;font-size:11px;font-weight:600;}
   .mc-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start;padding:16px 20px 20px;}
   .mc-cols.hidden{display:none;}
   .mc-col{border-radius:14px;padding:12px;}
@@ -640,13 +648,15 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fd-lock a{font-weight:400;margin-left:6px;color:var(--ink-600);}
   .fd-mut{color:var(--ink-400);font-size:11.5px;}
   .fd-tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;}
-  table.fd-table{border-collapse:collapse;width:100%;min-width:1080px;background:#fff;}
+  table.fd-table{border-collapse:collapse;width:100%;min-width:1040px;background:#fff;table-layout:fixed;}
+  .fd-table tbody tr{height:60px;}
+  .fd-table tbody td{height:60px;overflow:hidden;text-overflow:ellipsis;}
   .fd-table th{background:var(--navy-900);color:#fff;font-size:12px;padding:7px 8px;text-align:center;font-weight:600;position:sticky;top:0;z-index:2;}
   .fd-table th small{font-weight:400;opacity:.8;}
   .fd-table th.fd-cur{background:var(--orange-600);}
   .fd-table td{padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:13px;white-space:nowrap;}
-  .fd-table td.fd-flags{white-space:normal;}
-  .fd-table td.fd-flags .fd-fl{white-space:nowrap;}
+  .fd-table td.fd-flags{white-space:nowrap;}
+  .fd-table td.fd-flags .fd-fl{white-space:nowrap;margin:0;}
   .fd-table td.fd-c{text-align:center;}
   .fd-table td.fd-r{text-align:right;}
   .fd-table tfoot td{background:var(--paper-100);font-weight:700;color:var(--navy-900);}
@@ -915,6 +925,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="mc-menu hidden" id="mc-menu"><button type="button" id="mat-edit-btn" onclick="toggleMcMenu();toggleMaterialEdit()">✎ แก้ไขรายการ</button></div>
             </div>
           </div>
+          <div class="mc-usagebar hidden" id="mat-usage-bar"></div>
           <div class="mc-cols" id="mat-cols"></div>
           <div class="table-wrap hidden" id="mat-table-wrap"><table>
             <colgroup><col style="width:28%"><col style="width:11%"><col style="width:10%"><col style="width:15%"><col style="width:12%"><col style="width:14%"><col style="width:10%"></colgroup>
@@ -988,6 +999,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="tab" data-accttab="นอกบัญชี" onclick="setMatAcctTab(this)">พัสดุนอกบัญชี (<span id="cnt-nok">0</span>)</div>
               <div class="tab" data-accttab="all" onclick="setMatAcctTab(this)">ทั้งหมด (<span id="cnt-all">0</span>)</div>
             </div>
+            <select id="rep-mat-usage" aria-label="ลักษณะการใช้งาน" style="flex:none;font-family:'Sarabun';font-size:13.5px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;" onchange="renderReportMaterial(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'))">
+              <option value="all">ใช้งาน: ทั้งหมด</option><option value="งานบำรุง">ใช้งาน: งานบำรุง</option><option value="สำนักงาน">ใช้งาน: สำนักงาน</option>
+            </select>
             <label class="rep-toggle" style="margin-left:auto;"><input type="checkbox" id="rep-mat-onlymoved" checked onchange="renderReportMaterial(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'))"> แสดงเฉพาะรายการที่มีปริมาณพัสดุ</label>
             <div class="toolbar" style="padding:0;flex:none;gap:8px;">
               <button class="btn btn-ghost btn-sm" id="rep-mat-edit-btn" onclick="toggleMatOpeningEdit()" title="แก้ยอดรวมยกมา/รับเข้าของเดือน (สำหรับปรับยอดรวม) — การรับของจากแขวงให้บันทึกที่แท็บ ใบเบิกรับเข้า">✎ แก้ยอดยกมา/รับเข้า</button>
@@ -1446,13 +1460,17 @@ document.querySelectorAll('.sec-tab').forEach(t=>{
    openingStock/reorderPoint/unitPrice) — ชื่อ field ส่วนใหญ่ต่างกันแค่ชื่อ ความหมายตรงกัน */
 function materialFromApi(row){
   return { code:row.code, name:row.itemName, unit:row.unit, accountType:row.category,
+    usage: row.usage==='สำนักงาน' ? 'สำนักงาน' : 'งานบำรุง',
     stock:Number(row.openingStock)||0, reorder:Number(row.reorderPoint)||0,
     unitPrice: row.unitPrice!==''&&row.unitPrice!=null ? Number(row.unitPrice) : undefined };
 }
 function materialToApi(m){
   return { code:m.code, itemName:m.name, category:m.accountType, unit:m.unit,
-    openingStock:m.stock, reorderPoint:m.reorder, unitPrice:m.unitPrice, status:'ใช้งาน' };
+    openingStock:m.stock, reorderPoint:m.reorder, unitPrice:m.unitPrice, status:'ใช้งาน',
+    usage:matUsage(m) };
 }
+/* ลักษณะการใช้งาน (2569-10-18): งานบำรุง | สำนักงาน — คนละแกนกับ ในบัญชี/นอกบัญชี (แหล่งที่มา) ค่าว่าง = งานบำรุง */
+function matUsage(m){ return m && m.usage==='สำนักงาน' ? 'สำนักงาน' : 'งานบำรุง'; }
 /* ข้อมูลพัสดุจริงย้ายไปอยู่ที่ Google Sheets แท็บ "materials" แล้ว
    หน้านี้โหลดจาก API ตอนเปิดหน้าเสมอ ดูฟังก์ชัน loadMaterialsFromApi() ด้านล่าง */
 let materials = [];
@@ -1473,6 +1491,22 @@ function setMasterTab(el){
   el.classList.add('active');
   renderMaterials();
 }
+let masterUsage = 'all'; // ตัวกรองลักษณะการใช้งานในหน้าทะเบียน: all | งานบำรุง | สำนักงาน
+function usageMatch(m){ return masterUsage==='all' || matUsage(m)===masterUsage; }
+function setMatUsage(v){ masterUsage = v; renderMaterials(); }
+/* แถบสรุปตามลักษณะการใช้งาน: จำนวนรายการ + จำนวนที่ต้องจัดการ (ยอดติดลบหรือต่ำกว่าจุดสั่งซื้อ) ของแท็บบัญชีที่เปิดอยู่ ณ เดือนที่เลือก */
+function renderMatUsageBar(){
+  const el = document.getElementById('mat-usage-bar'); if(!el) return;
+  const acctType = currentMasterTab()==='nok' ? 'นอกบัญชี' : 'ในบัญชี', mk = masterMk();
+  const st = {all:{n:0,w:0}, 'งานบำรุง':{n:0,w:0}, 'สำนักงาน':{n:0,w:0}};
+  materials.forEach(m=>{
+    if((m.accountType||'ในบัญชี')!==acctType) return;
+    const c = materialMonthSummary(m.code, mk).closing, bad = c<=m.reorder ? 1 : 0, u = matUsage(m);
+    st.all.n++; st.all.w += bad; st[u].n++; st[u].w += bad;
+  });
+  const chip = (v,label)=>`<button type="button" class="mu-chip ${masterUsage===v?'active':''}" onclick="setMatUsage('${v}')">${label} <b>${st[v].n}</b>${st[v].w?`<span class="mu-warn">ต้องจัดการ ${st[v].w}</span>`:''}</button>`;
+  el.innerHTML = chip('all','ทั้งหมด') + chip('งานบำรุง','🛠 งานบำรุง') + chip('สำนักงาน','🗂 สำนักงาน');
+}
 function renderMaterials(){
   const tab = currentMasterTab();
   const isFuel = tab==='fuel';
@@ -1484,12 +1518,14 @@ function renderMaterials(){
   document.getElementById('master-fuel-view').classList.toggle('hidden', !isFuel);
   document.getElementById('mat-search-box').classList.toggle('hidden', isFuel || editing);
   document.getElementById('mat-edit-controls').classList.toggle('hidden', isFuel || editing || !isAdmin());
+  document.getElementById('mat-usage-bar').classList.toggle('hidden', isFuel);
   if(isFuel){ renderMasterFuel(); return; }
+  renderMatUsageBar();
   renderMaterialCols();
   const acctType = tab==='nok' ? 'นอกบัญชี' : 'ในบัญชี';
   const q = (document.getElementById('mat-search')?.value||'').toLowerCase();
   const dis = isAdmin() ? '' : 'disabled';
-  const rows = materials.filter(m=>(m.accountType||'ในบัญชี')===acctType && m.name.toLowerCase().includes(q));
+  const rows = materials.filter(m=>(m.accountType||'ในบัญชี')===acctType && usageMatch(m) && m.name.toLowerCase().includes(q));
   // แถวที่ต่ำกว่าจุดสั่งซื้อ (รวมยอดติดลบ) เลื่อนขึ้นแสดงบนสุดเสมอ เพื่อให้เห็นรายการที่ต้องจัดการก่อนได้ง่าย
   rows.sort((a,b)=>{
     const aUrgent = matStatus(a)==='low' ? 0 : 1;
@@ -1514,7 +1550,7 @@ function renderMaterials(){
       : `<span style="font-weight:600;color:${isNeg?'var(--danger)':'var(--navy-900)'}">${fmtNum(stock,1)}</span>`;
     return `<tr data-idx="${i}">
       <td class="mv-name">${nameCell}</td>
-      <td class="mv-center">${acctPill}</td>
+      <td class="mv-center">${acctPill}${editing ? `<select class="edit-input" data-edit-usage style="width:100%;margin-top:4px;font-size:12.5px;" title="ลักษณะการใช้งาน"><option value="งานบำรุง" ${matUsage(m)==='งานบำรุง'?'selected':''}>งานบำรุง</option><option value="สำนักงาน" ${matUsage(m)==='สำนักงาน'?'selected':''}>สำนักงาน</option></select>` : ''}</td>
       <td class="mv-center">${unitCell}</td>
       <td class="mv-center num">${stockCell}</td>
       <td class="mv-center">${reorderCell}</td>
@@ -1599,7 +1635,7 @@ function renderMaterialCols(){
   const q = (document.getElementById('mat-search')?.value||'').trim().toLowerCase();
   const mk = masterMk(), isCur = mk===currentMonthKey();
   const rows = materials
-    .filter(m=>(m.accountType||'ในบัญชี')===acctType && m.name.toLowerCase().includes(q))
+    .filter(m=>(m.accountType||'ในบัญชี')===acctType && usageMatch(m) && m.name.toLowerCase().includes(q))
     .map(m=>{
       const s = materialMonthSummary(m.code, mk), c = s.closing;
       const k = c<0 ? 'neg' : (c<=m.reorder ? 'low' : 'ok');
@@ -1615,7 +1651,7 @@ function renderMaterialCols(){
     const alt = act==='recv' ? `<a class="mc-alt" onclick="openMatAction('check','${cj0}')" title="ดูรายการเคลื่อนไหวล่าสุด / ปรับยอดตามที่นับได้จริง">ตรวจสอบ/ปรับยอด</a>` : '';
     return `<div class="mc-card">
       <div class="mc-l1">
-        <div class="mc-nm">${esc(r.m.name)}<small>จุดสั่งซื้อ ${fmtNum(r.m.reorder,1)} ${esc(r.m.unit)}</small>${r.watch?'<span class="mc-watch">ใกล้ถึงจุดสั่งซื้อ</span>':''}</div>
+        <div class="mc-nm">${esc(r.m.name)}<small>จุดสั่งซื้อ ${fmtNum(r.m.reorder,1)} ${esc(r.m.unit)}</small>${r.watch?'<span class="mc-watch">ใกล้ถึงจุดสั่งซื้อ</span>':''}${masterUsage==='all' && matUsage(r.m)==='สำนักงาน'?'<span class="mc-use">🗂 สำนักงาน</span>':''}</div>
         <div class="mc-v ${r.k}">${fmtNum(r.c,1)}<small>${esc(r.m.unit)}</small></div>
         <button type="button" class="mc-go" onclick="${onclick}">${lab}</button>
       </div>
@@ -2065,6 +2101,7 @@ function renderIbEdit(){
         <div class="full"><label>ชื่อวัสดุ</label><input type="text" id="ib-nf-name" value="${esc(nf.name)}" placeholder="เช่น ยางมะตอย CRS-2" autocomplete="off"></div>
         <div><label>หน่วยนับ</label><input type="text" id="ib-nf-unit" value="${esc(nf.unit)}" placeholder="เช่น ถัง, กก., ชิ้น"></div>
         <div><label>ประเภทบัญชี</label><input type="text" id="ib-nf-acct" value="${E.off?'นอกบัญชี':'ในบัญชี'}" disabled></div>
+        <div><label>ลักษณะการใช้งาน</label><select id="ib-nf-usage"><option value="งานบำรุง" ${nf.usage!=='สำนักงาน'?'selected':''}>งานบำรุง</option><option value="สำนักงาน" ${nf.usage==='สำนักงาน'?'selected':''}>สำนักงาน</option></select></div>
         <div><label>จำนวน</label><input type="number" min="0" step="0.01" id="ib-nf-qty" value="${esc(nf.qty)}"></div>
         <div><label>ราคา/หน่วย (บาท)</label><input type="number" min="0" step="0.01" id="ib-nf-price" value="${esc(nf.price)}"></div>
       </div>
@@ -2153,7 +2190,7 @@ function ibPickMat(code){
 }
 function ibStartNewMat(){
   ibSync();
-  IbEdit.nf = {name:(IbEdit.q||'').trim(), unit:'', acct:'ในบัญชี', qty:'', price:''};
+  IbEdit.nf = {name:(IbEdit.q||'').trim(), unit:'', acct:'ในบัญชี', usage:(masterUsage==='สำนักงาน'?'สำนักงาน':'งานบำรุง'), qty:'', price:''};
   IbEdit.q = '';
   renderIbEdit();
   setTimeout(()=>{ const el = document.getElementById('ib-nf-name'); if(el) el.focus(); }, 0);
@@ -2164,12 +2201,13 @@ function ibSubmitNewMat(){
   const name = (document.getElementById('ib-nf-name').value||'').trim();
   const unit = (document.getElementById('ib-nf-unit').value||'').trim() || 'หน่วย';
   const acct = IbEdit.off ? 'นอกบัญชี' : 'ในบัญชี';
+  const usage = document.getElementById('ib-nf-usage').value==='สำนักงาน' ? 'สำนักงาน' : 'งานบำรุง';
   const qty = parseFloat(document.getElementById('ib-nf-qty').value)||0;
   const price = parseFloat(document.getElementById('ib-nf-price').value)||0;
   if(!name){ showAlertModal('กรุณากรอกชื่อวัสดุใหม่'); return; }
   const dup = materials.find(m=>m.name.trim()===name) || IbEdit.lines.some(l=>!l.del && l.newMat && l.newMat.name===name);
   if(dup){ showAlertModal('มีวัสดุชื่อ "'+name+'" อยู่แล้ว กรุณาพิมพ์ค้นหาแล้วเลือกรายการเดิมจากทะเบียน'); return; }
-  IbEdit.lines.push({tbl:'material_transactions', kind:'mat', tx:null, code:null, newMat:{name, unit, accountType:acct}, name, unit, qty, unitPrice:price, del:false});
+  IbEdit.lines.push({tbl:'material_transactions', kind:'mat', tx:null, code:null, newMat:{name, unit, accountType:acct, usage}, name, unit, qty, unitPrice:price, del:false});
   IbEdit.nf = null;
   renderIbEdit();
 }
@@ -2220,7 +2258,7 @@ async function ibSave(){
           if(l.newMat){
             // วัสดุใหม่ที่ยังไม่มีในทะเบียน — สร้างก่อน แล้วค่อยบันทึกรับเข้า
             const nm = l.newMat;
-            const mNew = {code:computeNextMaterialCode(nm.accountType), name:nm.name, unit:nm.unit, accountType:nm.accountType, stock:0, reorder:0};
+            const mNew = {code:computeNextMaterialCode(nm.accountType), name:nm.name, unit:nm.unit, accountType:nm.accountType, usage:nm.usage, stock:0, reorder:0};
             await apiPost('add', 'materials', materialToApi(mNew));
             materials.push(mNew);
             l.code = mNew.code; l.newMat = null;
@@ -3838,8 +3876,10 @@ async function saveMaterialEdits(){
     const unitInp = tr.querySelector('[data-edit-unit]');
     const reorderInp = tr.querySelector('[data-edit-reorder]');
     const stockInp = tr.querySelector('[data-edit-stock]');
+    const usageSel = tr.querySelector('[data-edit-usage]');
     const m = materials[i];
     if(!m) return;
+    if(usageSel) m.usage = usageSel.value==='สำนักงาน' ? 'สำนักงาน' : 'งานบำรุง';
     if(nameInp && nameInp.value.trim()) m.name = nameInp.value.trim();
     if(unitInp && unitInp.value.trim()) m.unit = unitInp.value.trim();
     if(reorderInp) m.reorder = parseFloat(reorderInp.value)||0;
@@ -4194,16 +4234,17 @@ function fuelDayRows(date, fuelTypes, q, showAll){
       const last = fuelLastIssueBefore(ft, v.label, date);
       const flags = [];
       let dist = null;
-      if(lit>0 && approvedLeaveOnDate(v.note, date)) flags.push({c:'w', t:'ผู้รับผิดชอบลาในวันนี้'});
-      if(lit>0 && hasMile && (mRaw==null || String(mRaw).trim()==='')) flags.push({c:'w', t:'ยังไม่กรอกเลขไมล์'});
+      if(lit>0 && approvedLeaveOnDate(v.note, date)) flags.push({c:'w', t:'ผู้รับผิดชอบลาในวันนี้', s:'ลา'});
+      if(lit>0 && hasMile && (mRaw==null || String(mRaw).trim()==='')) flags.push({c:'w', t:'ยังไม่กรอกเลขไมล์', s:'ไม่มีไมล์'});
       if(hasMile && mNow!=null && mPrev){
         dist = mNow - mPrev.val;
         const maxPerDay = (v.maxKmPerDay!=null && v.maxKmPerDay!=='') ? parseFloat(v.maxKmPerDay) : FUEL_CHECK_MAX_KM_PER_DAY;
         const gap = Math.max(1, Math.round((new Date(date)-new Date(mPrev.date))/86400000));
-        if(dist<0) flags.push({c:'b', t:'เลขไมล์ลดลง '+fmtNum(-dist,0)+' กม.'});
-        else if(dist>maxPerDay*gap) flags.push({c:'w', t:'ไมล์เพิ่ม '+fmtNum(dist,0)+' กม. ผิดปกติ'});
+        const isPatrol = /^44-/.test(vehicleRegNo(v.label));   // รถลาดตะเวน (44-xxxx) ระยะทางขึ้นกับสายทางที่ได้รับมอบหมาย ไม่ตรวจเพดานกม./วัน
+        if(dist<0) flags.push({c:'b', t:'เลขไมล์ลดลง '+fmtNum(-dist,0)+' กม.', s:'ไมล์ลดลง'});
+        else if(!isPatrol && dist>maxPerDay*gap) flags.push({c:'w', t:'ไมล์เพิ่ม '+fmtNum(dist,0)+' กม. ผิดปกติ', s:'ไมล์ผิดปกติ'});
       }
-      if(lit>0 && last && last.liters>0 && (lit>last.liters*1.6 || lit<last.liters*0.5)) flags.push({c:'w', t:'ปริมาณต่างจากครั้งก่อนมาก'});
+      if(lit>0 && last && last.liters>0 && (lit>last.liters*1.6 || lit<last.liters*0.5)) flags.push({c:'w', t:'ปริมาณต่างจากครั้งก่อนมาก', s:'ปริมาณต่างมาก'});
       rows.push({v, ft, lit, last, hasMile, mRaw, mNow, mPrev, dist, kmpl:(dist>0 && lit>0) ? dist/lit : null, flags});
     });
   });
@@ -4212,7 +4253,9 @@ function fuelDayRows(date, fuelTypes, q, showAll){
 function fuelFlagHtml(r){
   if(!(r.lit>0)) return '<span class="fd-fl fd-n">ไม่ได้เบิก</span>';
   if(!r.flags.length) return '<span class="fd-fl fd-ok">✔ ปกติ</span>';
-  return r.flags.map(f=>`<span class="fd-fl ${f.c==='b'?'fd-b':'fd-w'}">${f.c==='b'?'⛔':'⚠'} ${esc(f.t)}</span>`).join('');
+  // แสดงแค่รายการแรกแบบสั้น (+จำนวนที่เหลือ) เพื่อให้แถวสูงเท่ากันทุกแถว — ข้อความเต็มอยู่ใน title และกล่อง "ต้องดูเป็นพิเศษ"
+  const f0 = r.flags[0], full = r.flags.map(f=>f.t).join(' · ');
+  return `<span class="fd-fl ${r.flags.some(f=>f.c==='b')?'fd-b':'fd-w'}" title="${esc(full)}">${f0.c==='b'?'⛔':'⚠'} ${esc(f0.s||f0.t)}${r.flags.length>1?' +'+(r.flags.length-1):''}</span>`;
 }
 function pickFuelDay(mk){
   const days = daysInMonthArr(mk);
@@ -4350,7 +4393,7 @@ function renderReportFuel(mk){
   });
   if(!rows.length) body = `<tr><td colspan="10" class="fd-empty">วันนี้ไม่มีรายการเบิก</td></tr>`;
   const grand = rows.reduce((s,r)=>s+(r.lit||0),0);
-  const table = `<div class="fd-tablewrap"><table class="fd-table"><thead><tr>
+  const table = `<div class="fd-tablewrap"><table class="fd-table"><colgroup><col style="width:54px"><col style="width:140px"><col style="width:150px"><col style="width:104px"><col style="width:112px"><col style="width:104px"><col style="width:100px"><col style="width:112px"><col style="width:96px"><col style="width:118px"></colgroup><thead><tr>
     <th style="width:54px">ตรวจ<br>แล้ว</th><th>ผู้เบิก</th><th>หมายเลขเครื่อง/รถ</th><th>ประเภท<br>พัสดุที่เบิก</th><th>เบิกครั้งล่าสุด<br><small>จำนวน · วันที่</small></th><th class="fd-cur">เบิกครั้งนี้<br><small>(ลิตร)</small></th><th>เลขไมล์<br>ครั้งก่อน</th><th class="fd-cur">เลขไมล์<br>ครั้งนี้</th><th>ระยะทาง</th><th>ผลตรวจ</th></tr></thead>
     <tbody>${body}</tbody><tfoot><tr><td colspan="5" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${fmtNum(grand,1)} ล.</td><td colspan="4"></td></tr></tfoot></table></div>`;
 
@@ -4406,15 +4449,25 @@ function renderReportMaterial(mk){
   const days = workdaysInMonthArr(mk);
   const dayTotals = {}; days.forEach(d=>dayTotals[d.day]=0);
 
-  const nAll = materials.length;
-  const nNai = materials.filter(m=>(m.accountType||'ในบัญชี')==='ในบัญชี').length;
-  const nNok = materials.filter(m=>m.accountType==='นอกบัญชี').length;
+  const useSel = document.getElementById('rep-mat-usage');
+  const useFilter = useSel ? useSel.value : 'all';
+  if(useSel){
+    const cu = {'งานบำรุง':0,'สำนักงาน':0}; materials.forEach(m=>cu[matUsage(m)]++);
+    useSel.options[0].textContent = 'ใช้งาน: ทั้งหมด ('+materials.length+')';
+    useSel.options[1].textContent = 'ใช้งาน: งานบำรุง ('+cu['งานบำรุง']+')';
+    useSel.options[2].textContent = 'ใช้งาน: สำนักงาน ('+cu['สำนักงาน']+')';
+  }
+  const inUse = m=> useFilter==='all' || matUsage(m)===useFilter;
+  const nAll = materials.filter(inUse).length;
+  const nNai = materials.filter(m=>inUse(m) && (m.accountType||'ในบัญชี')==='ในบัญชี').length;
+  const nNok = materials.filter(m=>inUse(m) && m.accountType==='นอกบัญชี').length;
   const cntNai = document.getElementById('cnt-nai'); if(cntNai) cntNai.textContent = nNai;
   const cntNok = document.getElementById('cnt-nok'); if(cntNok) cntNok.textContent = nNok;
   const cntAll = document.getElementById('cnt-all'); if(cntAll) cntAll.textContent = nAll;
 
   const list = materials.filter(m=>{
     if(acctFilter!=='all' && (m.accountType||'ในบัญชี')!==acctFilter) return false;
+    if(!inUse(m)) return false;
     if(q && !((m.name+' '+m.code).toLowerCase().includes(q))) return false;
     return true;
   }).sort((a,b)=>a.name.localeCompare(b.name,'th'));
