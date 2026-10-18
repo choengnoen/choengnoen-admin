@@ -973,7 +973,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               รายงานเบิก-จ่ายพัสดุ พ.1-02
             </h2>
             <div class="toolbar" style="flex-wrap:nowrap;overflow-x:auto;">
-              <div class="md-seg" id="rep-mat-view" role="group" aria-label="มุมมอง"><button type="button" data-mview="day" class="on" onclick="setMatView('day')">รายวัน</button><button type="button" data-mview="month" onclick="setMatView('month')">ทั้งเดือน</button></div>
               <select id="rep-ledger-fy" class="edit-input" style="width:175px;flex:none;" onchange="syncRepLedger('rep-ledger-fy','rep-ledger-month')"></select>
               <select id="rep-ledger-month" class="edit-input" style="width:80px;flex:none;" onchange="syncRepLedger('rep-ledger-fy','rep-ledger-month')">
                 <option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option>
@@ -981,7 +980,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 <option value="4">เม.ย.</option><option value="5">พ.ค.</option><option value="6">มิ.ย.</option>
                 <option value="7" selected>ก.ค.</option><option value="8">ส.ค.</option><option value="9">ก.ย.</option>
               </select>
-              <span class="rep-lock-ctl" style="display:flex;align-items:center;gap:6px;flex:none;"></span>
             </div>
           </div>
           <div class="toolbar day-mode" id="rep-mat-toolbar" style="padding:14px 20px 0;">
@@ -4526,13 +4524,6 @@ function unlockMatDay(date){
     renderReportMaterial(currentMatMk());
   });
 }
-function setMatView(mode){
-  if(mode===matViewMode) return;
-  if(mode==='day' && repMatEditMode){ showAlertModal('กำลังแก้ยอดยกมา/รับเข้าอยู่ — กรุณากด "บันทึก" ก่อน แล้วค่อยสลับเป็นมุมมองรายวัน'); return; }
-  matViewMode = mode;
-  document.querySelectorAll('#rep-mat-view button').forEach(b=>b.classList.toggle('on', b.dataset.mview===mode));
-  renderReportMaterial(currentMatMk());
-}
 function pickMatDay(mk){
   const days = daysInMonthArr(mk);
   if(matPickFirstDay){
@@ -4618,8 +4609,7 @@ function addMatDayRow(el){
 function renderReportMaterialDay(mk){
   const wrap = document.getElementById('rep-mat-grid-wrap');
   if(!wrap) return;
-  renderLedgerLockControls();
-  const locked = isMonthLocked(mk);
+  const locked = false;   /* เหมือน พ.1-03: ไม่ใช้ล็อกรายเดือน ใช้ "ยืนยันตรวจครบทั้งวัน" ล็อกรายวันแทน */
   const {inUse} = updateMatFilterCounts();
   const q = (document.getElementById('rep-mat-search')?.value||'').trim().toLowerCase();
   const acctFilter = document.querySelector('#rep-mat-accttabs .tab.active')?.dataset.accttab || 'ในบัญชี';
@@ -4804,86 +4794,8 @@ function updateMatFilterCounts(){
 function renderReportMaterial(mk){
   const wrap = document.getElementById('rep-mat-grid-wrap');
   if(!wrap) return;
-  const dayMode = matViewMode==='day';
-  wrap.classList.toggle('md-day', dayMode);
-  const tb = document.getElementById('rep-mat-toolbar'); if(tb) tb.classList.toggle('day-mode', dayMode);
-  if(dayMode) renderReportMaterialDay(mk); else renderReportMaterialMonth(mk);
+  renderReportMaterialDay(mk);   /* พ.1-02 มีมุมมองรายวันอย่างเดียว (ตัดมุมมองทั้งเดือนออก 2569-10-19) */
 }
-function renderReportMaterialMonth(mk){
-  const wrap = document.getElementById('rep-mat-grid-wrap');
-  if(!wrap) return;
-  const admin = isAdmin() && !isMonthLocked(mk);
-  renderLedgerLockControls();
-  const q = (document.getElementById('rep-mat-search')?.value||'').trim().toLowerCase();
-  const acctFilter = document.querySelector('#rep-mat-accttabs .tab.active')?.dataset.accttab || 'ในบัญชี';
-  const onlyMoved = document.getElementById('rep-mat-onlymoved')?.checked;
-  const days = workdaysInMonthArr(mk);
-  const dayTotals = {}; days.forEach(d=>dayTotals[d.day]=0);
-
-  const {inUse} = updateMatFilterCounts();
-
-  const list = materials.filter(m=>{
-    if(acctFilter!=='all' && (m.accountType||'ในบัญชี')!==acctFilter) return false;
-    if(!inUse(m)) return false;
-    if(q && !((m.name+' '+m.code).toLowerCase().includes(q))) return false;
-    return true;
-  }).sort((a,b)=>a.name.localeCompare(b.name,'th'));
-
-  const headDayCells = days.map((d,i)=>`<th data-di="${i}"${d.hol?` class="hol" title="${esc(d.hol)}"`:''}>${String(d.day).padStart(2,'0')}</th>`).join('');
-  const headDowCells = days.map((d,i)=>`<th data-di="${i}"${d.hol?` class="hol" title="${esc(d.hol)}"`:''}>${d.dow}</th>`).join('');
-
-  const bodyRows = list.map(m=>{
-    const s = materialMonthSummary(m.code, mk);
-    const issues = s.txs.filter(t=>t.kind==='issue');
-    const byDay = {};
-    issues.forEach(t=>{ const d=+t.date.slice(8,10); byDay[d]=(byDay[d]||0)+(t.qty||0); });
-    const effDay = {};
-    days.forEach(d=>{
-      const date = dateStrFor(mk,d.day);
-      const key = m.code+'|'+date;
-      if(Object.prototype.hasOwnProperty.call(draftMatCells,key)){
-        const val = parseFloat(draftMatCells[key].raw);
-        if(!isNaN(val) && val>0) effDay[d.day]=val;
-      } else if(byDay[d.day]!=null) effDay[d.day]=byDay[d.day];
-    });
-    const effIssued = Object.values(effDay).reduce((a,b)=>a+b,0);
-    const effClosing = s.opening + s.received - effIssued;
-    const hasQty = s.opening!==0 || s.received!==0 || effClosing!==0 || effIssued>0;
-    if(onlyMoved && !hasQty) return '';
-    Object.keys(effDay).forEach(d=>{ dayTotals[d]=(dayTotals[d]||0)+effDay[d]; });
-    const dayCells = days.map((d,i)=>{
-      const v0 = effDay[d.day];
-      const date = dateStrFor(mk,d.day);
-      const isDirty = Object.prototype.hasOwnProperty.call(draftMatCells, m.code+'|'+date);
-      const cellContent = admin
-        ? `<input type="number" min="0" step="0.1" value="${v0!=null?v0:''}" class="${isDirty?'cell-dirty':''}" data-kind="mat" data-code="${esc(m.code)}" data-date="${date}" oninput="onMatCellDraftInput(this)" onfocus="onGridCellFocus(this)" onblur="onGridCellBlur(this)">`
-        : `<span>${v0!=null?fmtNum(v0,1):''}</span>`;
-      return `<td class="daycell${d.hol?' hol':''}" data-di="${i}">${cellContent}</td>`;
-    }).join('');
-    const openCell = (admin && repMatEditMode)
-      ? `<td class="num-col"><input type="number" step="0.01" value="${s.opening}" data-open-code="${esc(m.code)}" style="max-width:90px" onfocus="onGridCellFocus(this)" onblur="onGridCellBlur(this)"></td>`
-      : `<td class="${numClass(s.opening)}">${fmtNum(s.opening,1)}</td>`;
-    const recvCell = (admin && repMatEditMode)
-      ? `<td class="num-col"><input type="number" step="0.01" value="${s.received}" data-recv-code="${esc(m.code)}" style="max-width:90px" onfocus="onGridCellFocus(this)" onblur="onGridCellBlur(this)"></td>`
-      : `<td class="${numClass(s.received)}">${fmtNum(s.received,1)}</td>`;
-    return `<tr><td class="stuck1 numcell"><span class="rt">${esc(m.name)}</span></td>
-      <td class="stuck2 unit-col">${esc(m.unit)}</td>${openCell}${recvCell}
-      ${dayCells}
-      <td class="${numClass(effIssued)}">${effIssued?fmtNum(effIssued,1):''}</td><td class="${numClass(effClosing)}">${fmtNum(effClosing,1)}</td></tr>`;
-  }).join('');
-
-  const footCells = days.map(d=>`<td${d.hol?' class="hol"':''}>${dayTotals[d.day]?fmtNum(dayTotals[d.day],1):''}</td>`).join('');
-
-  wrap.innerHTML = `<table class="dgrid">
-    <thead>
-      <tr><th class="stuck1" style="left:0;" rowspan="2">ประเภท - ชื่อวัสดุ</th><th class="stuck2 unit-col" rowspan="2">หน่วย</th><th rowspan="2">ยอดยกมา</th><th rowspan="2">รับเข้า</th>${headDayCells}<th rowspan="2">รวมเดือนนี้</th><th rowspan="2">คงเหลือ</th></tr>
-      <tr class="dow-row">${headDowCells}</tr>
-    </thead>
-    <tbody>${bodyRows || `<tr><td colspan="${5+days.length}" class="rep-empty">ไม่พบรายการที่ตรงกับเงื่อนไข</td></tr>`}</tbody>
-    <tfoot><tr><td class="stuck1">รวมเบิกต่อวัน</td><td class="stuck2 unit-col"></td><td></td><td></td>${footCells}<td></td><td></td></tr></tfoot>
-  </table>`;
-}
-
 function renderReport(){
   populateLedgerFySelects();
   const fy = document.getElementById('rep-ledger-fy')?.value, month = document.getElementById('rep-ledger-month')?.value;
