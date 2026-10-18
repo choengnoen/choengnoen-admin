@@ -588,6 +588,19 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fc-bar-label{font-size:10.5px;color:rgba(255,255,255,.75);margin-top:6px;}
   /* พ.1-03 หน้าตรวจรายวัน (แบบ 3-4, 2569-10-18) */
   #rep-fuel-grid-wrap{max-height:none;padding:0 20px 20px;}
+  /* พ.1-02 มุมมองรายวัน (2569-10-19) — หน้าตาเดียวกับ พ.1-03 (ใช้คลาส dwk-/fd- ร่วมกัน) ส่วนมุมมองทั้งเดือนยังเป็นตารางเดิม */
+  #rep-mat-grid-wrap.md-day{max-height:none;padding:0 20px 20px;}
+  table.fd-table.md-table{min-width:900px;}
+  .md-seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none;background:#fff;}
+  .md-seg button{border:0;background:transparent;padding:6px 14px;font-family:'Sarabun';font-size:13px;color:var(--ink-600);cursor:pointer;}
+  .md-seg button+button{border-left:1px solid var(--line);}
+  .md-seg button.on{background:var(--navy-900);color:#fff;font-weight:600;}
+  #rep-mat-toolbar.day-mode .rep-toggle,#rep-mat-toolbar.day-mode #rep-mat-edit-grp{display:none !important;}
+  #rep-mat-toolbar.day-mode .search-box{margin-left:auto;}
+  .md-add{background:#fff8e8;border:1px solid var(--amber-400);border-radius:10px;padding:8px 12px;margin:0 0 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;}
+  .md-add input{flex:1 1 260px;max-width:420px;height:34px;border:1.5px solid var(--line);border-radius:8px;padding:0 10px;font-family:'Sarabun';font-size:13.5px;background:#fff;}
+  .md-add input:focus{outline:none;border-color:var(--orange-500);box-shadow:0 0 0 3px rgba(224,98,15,.18);}
+  .fd-table td.md-name{overflow:hidden;text-overflow:ellipsis;}
   /* แถบวันที่ — หน้าตาเดียวกับแถบสัปดาห์ของใบสั่งการรายวัน (วันทำการทั้งเดือน เลื่อนซ้าย-ขวาได้) */
   .dwk-bar{display:flex;align-items:stretch;background:var(--paper-50);border:solid var(--line);border-width:1px 0;border-radius:0;overflow:hidden;margin:0 -20px 14px;box-shadow:none;}
   .dwk-arr{width:42px;border:0;background:transparent;cursor:pointer;font-size:16px;color:var(--ink-600);flex:none;}
@@ -960,6 +973,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               รายงานเบิก-จ่ายพัสดุ พ.1-02
             </h2>
             <div class="toolbar" style="flex-wrap:nowrap;overflow-x:auto;">
+              <div class="md-seg" id="rep-mat-view" role="group" aria-label="มุมมอง"><button type="button" data-mview="day" class="on" onclick="setMatView('day')">รายวัน</button><button type="button" data-mview="month" onclick="setMatView('month')">ทั้งเดือน</button></div>
               <select id="rep-ledger-fy" class="edit-input" style="width:175px;flex:none;" onchange="syncRepLedger('rep-ledger-fy','rep-ledger-month')"></select>
               <select id="rep-ledger-month" class="edit-input" style="width:80px;flex:none;" onchange="syncRepLedger('rep-ledger-fy','rep-ledger-month')">
                 <option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option>
@@ -970,7 +984,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <span class="rep-lock-ctl" style="display:flex;align-items:center;gap:6px;flex:none;"></span>
             </div>
           </div>
-          <div class="toolbar" style="padding:14px 20px 0;">
+          <div class="toolbar day-mode" id="rep-mat-toolbar" style="padding:14px 20px 0;">
             <div class="tabs" id="rep-mat-accttabs" style="padding:0;border:none;background:transparent;flex:none;">
               <div class="tab active" data-accttab="ในบัญชี" onclick="setMatAcctTab(this)">พัสดุในบัญชี (<span id="cnt-nai">0</span>)</div>
               <div class="tab" data-accttab="นอกบัญชี" onclick="setMatAcctTab(this)">พัสดุนอกบัญชี (<span id="cnt-nok">0</span>)</div>
@@ -980,7 +994,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <option value="all">ใช้งาน: ทั้งหมด</option><option value="งานบำรุง">ใช้งาน: งานบำรุง</option><option value="สำนักงาน">ใช้งาน: สำนักงาน</option>
             </select>
             <label class="rep-toggle" style="margin-left:auto;"><input type="checkbox" id="rep-mat-onlymoved" checked onchange="renderReportMaterial(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'))"> แสดงเฉพาะรายการที่มีปริมาณพัสดุ</label>
-            <div class="toolbar" style="padding:0;flex:none;gap:8px;">
+            <div class="toolbar" id="rep-mat-edit-grp" style="padding:0;flex:none;gap:8px;">
               <button class="btn btn-ghost btn-sm" id="rep-mat-edit-btn" onclick="toggleMatOpeningEdit()" title="แก้ยอดรวมยกมา/รับเข้าของเดือน (สำหรับปรับยอดรวม) — การรับของจากแขวงให้บันทึกที่แท็บ ใบเบิกรับเข้า">✎ แก้ยอดยกมา/รับเข้า</button>
               <button class="btn btn-primary btn-sm hidden" id="rep-mat-save-btn" onclick="saveMatOpeningEdits()">💾 บันทึก</button>
             </div>
@@ -993,7 +1007,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <button class="dc-btn dc-clear" onclick="discardDraftReport('mat')">ล้างการแก้ไข</button>
             <button class="dc-btn dc-save" onclick="reviewDraftReport('mat')">💾 บันทึก</button>
           </div>
-          <div id="rep-mat-grid-wrap" class="grid-wrap"></div>
+          <div id="rep-mat-grid-wrap" class="grid-wrap md-day"></div>
           <div class="legend-block" id="rep-mat-foot-block">
             <button type="button" class="legend-dot-btn no-print" id="rep-mat-foot-toggle" onclick="__toggleNote('rep-mat-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
             <div class="foot-note" id="rep-mat-foot" style="display:none;background:transparent;border-top:none;">คลิกช่องตัวเลข เพื่อกรอก/แก้ไขจำนวนที่เบิกของวันนั้นๆตามใบเบิก-จ่ายพัสดุตัวจริง , การรับพัสดุเข้าคลังจากแขวงให้บันทึกที่แท็บ "ใบเบิกรับเข้า" (ปุ่ม "แก้ยอดยกมา/รับเข้า" ด้านบนใช้แก้ยอดรวมของเดือนเท่านั้น)</div>
@@ -3760,6 +3774,7 @@ function syncRepLedger(fyId, monthId){
   if(fy) ['rep-ledger-fy','rep-fuel-ledger-fy'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value = fy; });
   if(month) ['rep-ledger-month','rep-fuel-ledger-month'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value = month; });
   fuelPickFirstDay = true;   // เลือกปีงบ/เดือนใหม่ → หน้าตรวจน้ำมันไปวันทำการแรกของเดือน
+  matPickFirstDay = true;    // เช่นเดียวกับ พ.1-02 มุมมองรายวัน
   renderReport();
 }
 /* renderFuelLedger()/receiveFuel() ของเดิมถูกลบออก (โค้ดตายจากหน้าจอรุ่นก่อน — ไม่มี
@@ -4455,22 +4470,320 @@ function renderReportFuel(mk){
   });
 })();
 
+/* ============================================================
+   พ.1-02 มุมมองรายวัน (2569-10-19) — หน้าตาเดียวกับ พ.1-03
+   เลือกวันจากแถบสัปดาห์ → เห็นรายการพัสดุที่เบิกของวันนั้น (1 วัน = ใบเบิกของวันนั้น) กรอกจำนวนได้เลย
+   ช่องกรอกใช้ระบบฉบับร่างเดิม (draftMatCells + onMatCellDraftInput) → บันทึกผ่านปุ่ม "บันทึก" ตัวเดียวกับตารางทั้งเดือน
+   ตารางทั้งเดือนเดิมยังอยู่ — สลับได้ที่ปุ่ม "รายวัน | ทั้งเดือน" มุมขวาบน
+   ============================================================ */
+let matViewMode = 'day';
+let matCheckDay = null, matCheckDayMk = null, matPickFirstDay = false;
+let matDayAdded = {};        // 'YYYY-MM-DD' -> Set(รหัสพัสดุที่ผู้ใช้กด "เพิ่มรายการ" ไว้ในวันนั้น แม้ยังไม่ได้ใส่จำนวน)
+let matDayAddMap = {};       // ข้อความในช่องค้นหา -> รหัสพัสดุ
+function currentMatMk(){ return ledgerMonthKey('rep-ledger-fy','rep-ledger-month'); }
+/* ตรวจรายวัน — เหมือน พ.1-03: ผู้มีสิทธิ์ตรวจ (canCheckFuel) ติ๊ก "ตรวจแล้ว" รายแถว แล้วกด "ยืนยันตรวจครบทั้งวัน" → วันนั้นแก้ไขไม่ได้จนกว่าจะปลดล็อก
+   เก็บที่ตาราง mat_day_checks (1 วัน = 1 รายการ, โครงเดียวกับ fuel_day_checks; checkedJson = รหัสพัสดุที่ตรวจแล้ว) */
+let matDayChecks = {};   // 'YYYY-MM-DD' -> {checked:[รหัสพัสดุ], checkedBy, checkedAt, confirmed, confirmedBy, confirmedAt}
+async function loadMatDayChecksFromApi(){
+  try{
+    (await apiGet('mat_day_checks')).forEach(r=>{
+      matDayChecks[r.dayKey] = {checked:Array.isArray(r.checkedJson)?r.checkedJson:[], checkedBy:r.checkedBy||'', checkedAt:r.checkedAt||'',
+        confirmed:!!r.confirmed, confirmedBy:r.confirmedBy||'', confirmedAt:r.confirmedAt||''};
+    });
+  }catch(err){
+    console.error('โหลดสถานะตรวจวัสดุรายวันจากฐานข้อมูลกลางไม่สำเร็จ', err);
+  }
+}
+function matDayRec(date){ return matDayChecks[date] || {checked:[], confirmed:false}; }
+async function saveMatDayCheck(date, patch){
+  const next = Object.assign({checked:[], checkedBy:'', checkedAt:'', confirmed:false, confirmedBy:'', confirmedAt:''}, matDayChecks[date]||{}, patch);
+  await apiPost('update', 'mat_day_checks', {dayKey:date, checkedJson:next.checked, checkedBy:next.checkedBy, checkedAt:next.checkedAt,
+    confirmed:next.confirmed?'1':'', confirmedBy:next.confirmedBy, confirmedAt:next.confirmedAt});
+  matDayChecks[date] = next;
+}
+async function toggleMatRowCheck(date, code){
+  if(!canCheckFuel() || matDayRec(date).confirmed) return;
+  const set = new Set(matDayRec(date).checked);
+  if(set.has(code)) set.delete(code); else set.add(code);
+  try{ await saveMatDayCheck(date, {checked:Array.from(set), checkedBy:apiCurrentUsername(), checkedAt:new Date().toISOString()}); }
+  catch(err){ showAlertModal('บันทึกสถานะ "ตรวจแล้ว" ไม่สำเร็จ: '+err.message); return; }
+  renderReportMaterial(currentMatMk());
+}
+function confirmMatDay(date){
+  if(!canCheckFuel()) return;
+  if(draftCountFor('mat')>0){ showAlertModal('ยังมีข้อมูลฉบับร่างที่ยังไม่ได้กดบันทึก — กรุณากด "บันทึก" หรือ "ล้างการแก้ไข" ก่อนยืนยันตรวจ'); return; }
+  showConfirmModal('ยืนยันตรวจครบทั้งวัน', `ยืนยันว่าตรวจรายการเบิกวัสดุของ ${fuelShortDate(date)} ครบถ้วนแล้ว?\nหลังยืนยัน วันนี้จะแก้ไขตัวเลขไม่ได้ จนกว่าผู้มีสิทธิ์ตรวจจะปลดล็อก`, 'ยืนยัน', async function(){
+    try{ await saveMatDayCheck(date, {confirmed:true, confirmedBy:apiCurrentUsername(), confirmedAt:new Date().toISOString()}); }
+    catch(err){ showAlertModal('บันทึกการยืนยันตรวจไม่สำเร็จ: '+err.message); return; }
+    renderReportMaterial(currentMatMk());
+  });
+}
+function unlockMatDay(date){
+  if(!canCheckFuel()) return;
+  showConfirmModal('ปลดล็อกวันที่ตรวจแล้ว', `ปลดล็อก ${fuelShortDate(date)}? หลังปลดล็อกจะแก้ไขตัวเลขของวันนี้ได้อีกครั้ง (รายการที่ติ๊กตรวจแล้วยังคงอยู่)`, 'ปลดล็อก', async function(){
+    try{ await saveMatDayCheck(date, {confirmed:false, confirmedBy:'', confirmedAt:''}); }
+    catch(err){ showAlertModal('ปลดล็อกไม่สำเร็จ: '+err.message); return; }
+    renderReportMaterial(currentMatMk());
+  });
+}
+function setMatView(mode){
+  if(mode===matViewMode) return;
+  if(mode==='day' && repMatEditMode){ showAlertModal('กำลังแก้ยอดยกมา/รับเข้าอยู่ — กรุณากด "บันทึก" ก่อน แล้วค่อยสลับเป็นมุมมองรายวัน'); return; }
+  matViewMode = mode;
+  document.querySelectorAll('#rep-mat-view button').forEach(b=>b.classList.toggle('on', b.dataset.mview===mode));
+  renderReportMaterial(currentMatMk());
+}
+function pickMatDay(mk){
+  const days = daysInMonthArr(mk);
+  if(matPickFirstDay){
+    matPickFirstDay = false;
+    const first = days.find(d=>d.dow!=='ส.' && d.dow!=='อา.' && !THAI_HOLIDAYS[dateStrFor(mk,d.day)]) || days[0];
+    matCheckDayMk = mk; matCheckDay = first ? first.day : null;
+  } else if(matCheckDayMk!==mk || !days.some(d=>d.day===matCheckDay)){
+    matCheckDayMk = mk;
+    let pick = null;
+    const todayStr = toLocalISODate(TODAY);
+    if(monthKeyOf(todayStr)===mk){ const td = +todayStr.slice(8,10); pick = days.filter(d=>d.day<=td).pop(); }
+    if(!pick){
+      const withData = days.filter(d=>materialTransactions.some(t=>t.kind==='issue' && t.date===dateStrFor(mk,d.day)));
+      pick = withData.pop() || days[0];
+    }
+    matCheckDay = pick ? pick.day : null;
+  }
+  return matCheckDay;
+}
+function matGoDate(iso){
+  const mk = monthKeyOf(iso), day = +iso.slice(8,10);
+  matPickFirstDay = false;
+  if(mk===currentMatMk()){ matCheckDay = day; matCheckDayMk = mk; renderReportMaterial(mk); return; }
+  const fm = fyMonthOf(mk), fySel = document.getElementById('rep-ledger-fy');
+  if(!fySel || !Array.from(fySel.options).some(o=>+o.value===fm.fy)) return;   // ปีงบนั้นยังไม่มีในตัวเลือก
+  ['rep-ledger-fy','rep-fuel-ledger-fy'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value = fm.fy; });
+  ['rep-ledger-month','rep-fuel-ledger-month'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value = fm.month; });
+  matCheckDay = day; matCheckDayMk = mk;
+  renderReport();
+}
+function stepMatDay(n){
+  const d = new Date(dateStrFor(currentMatMk(), matCheckDay)+'T00:00:00');
+  matGoDate(fuelIsoLocal(new Date(d.getFullYear(), d.getMonth(), d.getDate()+7*n)));
+}
+/* ปริมาณเบิกจริงของวัน (รวมฉบับร่างที่ยังไม่บันทึก) */
+function matEffQty(code, date){
+  const key = code+'|'+date;
+  if(Object.prototype.hasOwnProperty.call(draftMatCells, key)){ const v = parseFloat(draftMatCells[key].raw); return (!isNaN(v) && v>0) ? v : 0; }
+  return materialTransactions.filter(t=>t.itemCode===code && t.date===date && t.kind==='issue').reduce((s,t)=>s+(t.qty||0),0);
+}
+function matLastIssueBefore(code, date){
+  let best = null;
+  materialTransactions.forEach(t=>{ if(t.itemCode===code && t.kind==='issue' && t.date<date && t.qty>0 && (!best || t.date>best)) best = t.date; });
+  if(!best) return null;
+  return {date:best, qty:materialTransactions.filter(t=>t.itemCode===code && t.kind==='issue' && t.date===best).reduce((s,t)=>s+(t.qty||0),0)};
+}
+function matIssueHistory(code, date, days){
+  const from = new Date(new Date(date).getTime() - days*86400000).toISOString().slice(0,10);
+  const by = {};
+  materialTransactions.forEach(t=>{ if(t.itemCode===code && t.kind==='issue' && t.date<date && t.date>=from && t.qty>0) by[t.date] = (by[t.date]||0) + t.qty; });
+  return Object.values(by);
+}
+/* คงเหลือหลังเบิกของวันนั้น = ยอดยกมา + รับเข้า(ถึงวันนั้น) − เบิก(ถึงวันนั้น) ในเดือนเดียวกัน (รวมฉบับร่าง) */
+function matBalanceAfter(m, mk, date){
+  const s = materialMonthSummary(m.code, mk);
+  const ovKey = m.code+'|'+mk;
+  const recv = materialReceivedOverride[ovKey] !== undefined ? s.received
+    : s.txs.filter(t=>t.kind==='receive' && t.date<=date).reduce((a,t)=>a+(t.qty||0),0);
+  let issued = 0;
+  s.txs.forEach(t=>{ if(t.kind==='issue' && t.date<=date && !Object.prototype.hasOwnProperty.call(draftMatCells, m.code+'|'+t.date)) issued += (t.qty||0); });
+  Object.values(draftMatCells).forEach(d=>{
+    if(d.code!==m.code || d.date>date || monthKeyOf(d.date)!==mk) return;
+    const v = parseFloat(d.raw); if(!isNaN(v) && v>0) issued += v;
+  });
+  return s.opening + recv - issued;
+}
+function matDayInput(el){
+  const date = el.dataset.date;
+  (matDayAdded[date] || (matDayAdded[date] = new Set())).add(el.dataset.code);
+  onMatCellDraftInput(el);
+}
+function matDayChange(){ setTimeout(()=>renderReportMaterial(currentMatMk()), 0); }  // คำนวณคงเหลือ/ผลตรวจใหม่หลังกรอกเสร็จ
+function addMatDayRow(el){
+  const code = matDayAddMap[el.value.trim()];
+  if(!code){ if(el.value.trim()) showAlertModal('ไม่พบพัสดุชื่อ "'+el.value.trim()+'" — เลือกจากรายการที่ขึ้นให้'); return; }
+  const date = dateStrFor(currentMatMk(), matCheckDay);
+  (matDayAdded[date] || (matDayAdded[date] = new Set())).add(code);
+  el.value = '';
+  renderReportMaterial(currentMatMk());
+  const inp = Array.from(document.querySelectorAll('#rep-mat-grid-wrap input.fd-in')).find(i=>i.dataset.code===code);
+  if(inp){ inp.scrollIntoView({block:'center', behavior:'smooth'}); inp.focus(); }
+}
+function renderReportMaterialDay(mk){
+  const wrap = document.getElementById('rep-mat-grid-wrap');
+  if(!wrap) return;
+  renderLedgerLockControls();
+  const locked = isMonthLocked(mk);
+  const {inUse} = updateMatFilterCounts();
+  const q = (document.getElementById('rep-mat-search')?.value||'').trim().toLowerCase();
+  const acctFilter = document.querySelector('#rep-mat-accttabs .tab.active')?.dataset.accttab || 'ในบัญชี';
+  const dayNum = pickMatDay(mk);
+  if(dayNum==null){ wrap.innerHTML = '<div class="fd-empty">เดือนนี้ไม่มีวันทำการ</div>'; return; }
+  const date = dateStrFor(mk, dayNum);
+  const rec = matDayRec(date), confirmed = !!rec.confirmed, canCk = canCheckFuel();
+  const ckSet = new Set(rec.checked||[]);
+  const editable = isAdmin() && !locked && !confirmed;
+  const added = matDayAdded[date] || new Set();
+  const ae = document.activeElement;
+  const focusCode = (ae && wrap.contains(ae) && ae.matches('input.fd-in')) ? ae.dataset.code : null;
+  const sx = wrap.scrollLeft, sy = wrap.scrollTop;
+
+  // จำนวนรายการที่เบิกในแต่ละวัน (รวมฉบับร่าง) สำหรับแถบสัปดาห์
+  const dayCodes = {};
+  materialTransactions.forEach(t=>{ if(t.kind==='issue' && t.qty>0) (dayCodes[t.date] || (dayCodes[t.date] = new Set())).add(t.itemCode); });
+  Object.values(draftMatCells).forEach(d=>{
+    const v = parseFloat(d.raw), set = dayCodes[d.date] || (dayCodes[d.date] = new Set());
+    if(!isNaN(v) && v>0) set.add(d.code); else set.delete(d.code);
+  });
+  const weekIsos = fuelWeekDays(date), todayIso = toLocalISODate(TODAY);
+  const chips = weekIsos.map(iso=>{
+    const dt = new Date(iso+'T00:00:00'), wd = dt.getDay(), hol = THAI_HOLIDAYS[iso] || null;
+    const mon = (dt.getDate()===1 || iso===weekIsos[0]) ? ' '+FUEL_SHORT_MONTH[dt.getMonth()] : '';
+    const cnt = dayCodes[iso] ? dayCodes[iso].size : 0;
+    return `<div class="dwk-d fd-d${iso===date?' on':''}${(wd===0||wd===6||hol)?' off':''}${hol?' hol':''}${iso===todayIso?' today':''}" data-mdate="${iso}"${hol?` title="${esc(hol)}"`:''}>
+      <small>${FUEL_WEEKDAY_FULL[wd]}${mon}</small><b>${dt.getDate()}</b><div class="n">${matDayRec(iso).confirmed?'🔒 ':''}${cnt?cnt+' รายการ':'&nbsp;'}</div></div>`;
+  }).join('');
+
+  // รายการของวันนั้น: มีจำนวนเบิก หรือผู้ใช้กดเพิ่มไว้
+  const list = materials.filter(m=>{
+    if(added.has(m.code)) return true;
+    if(!(matEffQty(m.code, date)>0)) return false;
+    if(acctFilter!=='all' && (m.accountType||'ในบัญชี')!==acctFilter) return false;
+    if(!inUse(m)) return false;
+    if(q && !((m.name+' '+m.code).toLowerCase().includes(q))) return false;
+    return true;
+  }).sort((a,b)=>a.name.localeCompare(b.name,'th'));
+
+  const rows = list.map(m=>{
+    const qty = matEffQty(m.code, date);
+    const last = matLastIssueBefore(m.code, date);
+    const after = matBalanceAfter(m, mk, date);
+    const flags = [];
+    if(qty>0){
+      if(after<0) flags.push({c:'b', t:'ยอดคงเหลือติดลบ ('+fmtNum(after,1)+' '+(m.unit||'')+') — เบิกมากกว่าที่มี หรือยังไม่ได้บันทึกรับเข้า', s:'ติดลบ'});
+      const hist = matIssueHistory(m.code, date, 90);
+      if(hist.length>=3){ const avg = hist.reduce((s,x)=>s+x,0)/hist.length; if(qty>avg*2 || qty<avg*0.25) flags.push({c:'w', t:'ปริมาณต่างจากค่าเฉลี่ย 90 วัน ('+fmtNum(avg,1)+') มาก', s:'ปริมาณต่างมาก'}); }
+    }
+    return {m, qty, last, after, flags};
+  });
+  const real = rows.filter(r=>r.qty>0);
+  const warnRows = real.filter(r=>r.flags.length);
+  const nNai = real.filter(r=>(r.m.accountType||'ในบัญชี')==='ในบัญชี').length, nNok = real.length - nNai;
+  const [yy, mm] = mk.split('-').map(Number);
+  const holName = holidayNameFor(mk, dayNum);
+  const dowName = FUEL_WEEKDAY_FULL[new Date(date+'T00:00:00').getDay()];
+
+  const head = `<div class="dwk-bar"><button type="button" class="dwk-arr" data-mstep="-1" title="สัปดาห์ก่อนหน้า">‹</button><div class="dwk-days fd-days">${chips}</div><button type="button" class="dwk-arr" data-mstep="1" title="สัปดาห์ถัดไป">›</button></div>
+    <div class="fd-dayhead">
+      <h3>วัน${dowName}ที่ ${dayNum} ${monthNamesTh[mm-1]} ${yy+543}</h3><span class="fd-count">${real.length} รายการ</span>${date===todayIso?' <span class="fd-today">วันนี้</span>':''}${holName?` <span class="fd-hol">${esc(holName)}</span>`:''}<span style="flex:1"></span>
+      <div class="fd-stats"><div>ในบัญชี<b>${nNai} รายการ</b></div><div>นอกบัญชี<b>${nNok} รายการ</b></div></div></div>`;
+
+  const alertsHtml = warnRows.length
+    ? `<div class="fd-alert"><b>⚠ ต้องดูเป็นพิเศษ ${warnRows.length} รายการ</b>${warnRows.map(r=>`<div class="fd-li" data-mgo="${esc(r.m.code)}"><b>${esc(r.m.name)}</b> — ${r.flags.map(f=>esc(f.t)).join(' · ')}</div>`).join('')}</div>`
+    : `<div class="fd-alert fd-alert-ok"><b>${real.length?'✔ ไม่พบความผิดปกติในวันนี้':'วันนี้ยังไม่มีรายการเบิก'}</b>${real.length?'<div>ปริมาณและยอดคงเหลือเหมาะสมเมื่อเทียบกับที่ผ่านมา</div>':''}</div>`;
+  const ckCount = real.filter(r=>ckSet.has(r.m.code)).length;
+  let sumHtml = `<div class="fd-prog"><b>ความคืบหน้าการตรวจ</b><div class="fd-pb"><i style="width:${real.length?ckCount/real.length*100:0}%"></i></div><span>ตรวจแล้ว <b>${ckCount}</b> / ${real.length} รายการ</span>`;
+  if(confirmed){
+    sumHtml += `<div class="fd-lock">🔒 ยืนยันตรวจครบแล้ว — ${esc(rec.confirmedBy||'')} · ${esc(fuelStamp(rec.confirmedAt))}${canCk?` <a href="#" data-munlock="1">ปลดล็อก</a>`:''}</div>`;
+  } else if(canCk){
+    const ready = real.length>0 && ckCount===real.length;
+    sumHtml += `<button class="btn btn-primary" style="width:100%;margin-top:8px;"${ready?' data-mconfirm="1"':' disabled title="ติ๊กตรวจให้ครบทุกรายการก่อน"'}>✔ ยืนยันตรวจครบทั้งวัน</button>`;
+  } else {
+    sumHtml += `<div class="fd-mut" style="margin-top:6px;">เฉพาะผู้มีสิทธิ์ตรวจเท่านั้นที่ติ๊ก/ยืนยันได้</div>`;
+  }
+  if(locked) sumHtml += `<div class="fd-lock" style="background:var(--paper-100);color:var(--ink-600);">🔒 เดือนนี้ล็อกบัญชีแล้ว — แก้ตัวเลขไม่ได้</div>`;
+  sumHtml += `</div>`;
+
+  let addHtml = '';
+  if(editable){
+    matDayAddMap = {};
+    const nameCount = {}; materials.forEach(m=>{ nameCount[m.name] = (nameCount[m.name]||0)+1; });
+    const opts = materials.slice().sort((a,b)=>a.name.localeCompare(b.name,'th')).map(m=>{
+      const v = nameCount[m.name]>1 ? m.name+' ('+m.code+')' : m.name;
+      matDayAddMap[v] = m.code;
+      return `<option value="${esc(v)}"></option>`;
+    }).join('');
+    addHtml = `<div class="md-add"><b>➕ เพิ่มรายการเบิกของวันนี้</b><input id="mat-day-add" list="mat-day-dl" autocomplete="off" placeholder="พิมพ์ชื่อพัสดุแล้วเลือกจากรายการ" onchange="addMatDayRow(this)"><datalist id="mat-day-dl">${opts}</datalist><span class="fd-mut">พัสดุที่ไม่อยู่ในรายการด้านล่างให้เพิ่มจากช่องนี้</span></div>`;
+  }
+
+  let body = '';
+  rows.forEach(r=>{
+    const m = r.m, key = m.code+'|'+date;
+    const isDirty = Object.prototype.hasOwnProperty.call(draftMatCells, key);
+    const on = ckSet.has(m.code);
+    const cls = !(r.qty>0) ? 'fd-off' : on ? 'fd-ck' : r.flags.some(f=>f.c==='b') ? 'fd-rb' : r.flags.length ? 'fd-rw' : '';
+    const qtyCell = editable
+      ? `<input type="number" min="0" step="0.1" class="fd-in${isDirty?' cell-dirty':''}" value="${r.qty>0?r.qty:''}" placeholder="—" data-kind="mat" data-code="${esc(m.code)}" data-date="${date}" oninput="matDayInput(this)" onchange="matDayChange()">`
+      : `<b class="fd-big">${r.qty>0?fmtNum(r.qty,1):'—'}</b>`;
+    const flagHtml = !(r.qty>0) ? '<span class="fd-fl fd-n">ยังไม่ได้เบิก</span>'
+      : !r.flags.length ? '<span class="fd-fl fd-ok">✔ ปกติ</span>'
+      : `<span class="fd-fl ${r.flags.some(f=>f.c==='b')?'fd-b':'fd-w'}" title="${esc(r.flags.map(f=>f.t).join(' · '))}">${r.flags[0].c==='b'?'⛔':'⚠'} ${esc(r.flags[0].s||r.flags[0].t)}${r.flags.length>1?' +'+(r.flags.length-1):''}</span>`;
+    const acct = m.accountType==='นอกบัญชี' ? 'นอกบัญชี' : 'ในบัญชี';
+    body += `<tr class="${cls}" data-mlabel="${esc(m.code)}">
+      <td class="fd-c"><div class="fd-cb${on?' on':''}${canCk&&!confirmed&&r.qty>0?' can':''}"${r.qty>0?` data-mck="${esc(m.code)}"`:''} title="${r.qty>0?(canCk?'ติ๊กเมื่อตรวจแล้ว':'เฉพาะผู้มีสิทธิ์ตรวจ'):''}">✔</div></td>
+      <td class="md-name" title="${esc(m.name)}"><b>${esc(m.name)}</b><div class="fd-mut">${esc(m.code||'')}</div></td>
+      <td class="fd-c">${esc(m.unit||'')}</td>
+      <td class="fd-c"><span class="fd-tag ${acct==='นอกบัญชี'?'fd-g':'fd-d'}">${acct}</span></td>
+      <td class="fd-r">${r.last?`<b>${fmtNum(r.last.qty,1)}</b><div class="fd-mut">${fuelShortDate(r.last.date)}</div>`:'<span class="fd-mut">ไม่มีประวัติ</span>'}</td>
+      <td class="fd-in-td">${qtyCell}</td>
+      <td class="fd-r"><b class="fd-big${r.after<0?' fd-neg':''}">${fmtNum(r.after,1)}</b></td>
+      <td class="fd-flags">${flagHtml}</td></tr>`;
+  });
+  if(!rows.length) body = `<tr><td colspan="8" class="fd-empty">วันนี้ไม่มีรายการเบิก${editable?' — เพิ่มรายการได้ที่ช่องด้านบน':''}</td></tr>`;
+  const table = `<div class="fd-tablewrap"><table class="fd-table md-table"><colgroup><col style="width:54px"><col style="width:300px"><col style="width:84px"><col style="width:104px"><col style="width:120px"><col style="width:112px"><col style="width:112px"><col style="width:140px"></colgroup><thead><tr>
+    <th style="width:54px">ตรวจ<br>แล้ว</th><th>ชื่อพัสดุ</th><th>หน่วย</th><th>ประเภทบัญชี</th><th>เบิกครั้งล่าสุด<br><small>จำนวน · วันที่</small></th><th class="fd-cur">เบิกวันนี้<br><small>(จำนวน)</small></th><th>คงเหลือ<br>หลังเบิก</th><th>ผลตรวจ</th></tr></thead>
+    <tbody>${body}</tbody><tfoot><tr><td colspan="5" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${real.length} รายการ</td><td colspan="2"></td></tr></tfoot></table></div>`;
+
+  wrap.innerHTML = head + `<div class="fd-top">${alertsHtml}${sumHtml}</div>` + addHtml + table;
+  wrap.scrollLeft = sx; wrap.scrollTop = sy;
+  const fdDays = wrap.querySelector('.fd-days'), fdSel = fdDays && fdDays.querySelector('.on');
+  if(fdSel) fdDays.scrollLeft = fdSel.offsetLeft - (fdDays.clientWidth - fdSel.offsetWidth)/2;
+  if(focusCode){ const t = Array.from(wrap.querySelectorAll('input.fd-in')).find(i=>i.dataset.code===focusCode); if(t) t.focus(); }
+  updateDraftChip('mat');
+}
+/* เหตุการณ์ของมุมมองรายวัน (ผูกครั้งเดียว) — ใช้ mousedown กับแถบวัน เพราะช่องกรอกที่กำลังพิมพ์จะวาดใหม่ตอนเสียโฟกัส ทำให้ click หลุด */
+(function(){
+  const wrap = document.getElementById('rep-mat-grid-wrap');
+  if(!wrap) return;
+  wrap.addEventListener('mousedown', function(e){
+    if(matViewMode!=='day') return;
+    const chip = e.target.closest('[data-mdate]'); if(chip){ matGoDate(chip.dataset.mdate); return; }
+    const st = e.target.closest('[data-mstep]'); if(st){ stepMatDay(+st.dataset.mstep); return; }
+  });
+  wrap.addEventListener('click', function(e){
+    if(matViewMode!=='day') return;
+    const date = dateStrFor(currentMatMk(), matCheckDay);
+    const ck = e.target.closest('[data-mck]'); if(ck){ toggleMatRowCheck(date, ck.dataset.mck); return; }
+    if(e.target.closest('[data-mconfirm]')){ confirmMatDay(date); return; }
+    const ul = e.target.closest('[data-munlock]'); if(ul){ e.preventDefault(); unlockMatDay(date); return; }
+    const go = e.target.closest('[data-mgo]');
+    if(go){
+      const tr = Array.from(wrap.querySelectorAll('tr[data-mlabel]')).find(r=>r.dataset.mlabel===go.dataset.mgo);
+      if(tr){ tr.scrollIntoView({block:'center', behavior:'smooth'}); tr.classList.add('fd-hl'); setTimeout(()=>tr.classList.remove('fd-hl'), 1600); }
+    }
+  });
+  wrap.addEventListener('focusin', function(e){ if(matViewMode==='day' && e.target.matches && e.target.matches('input.fd-in')) e.target.select(); });
+  wrap.addEventListener('keydown', function(e){
+    if(matViewMode!=='day' || e.key!=='Enter' || !e.target.matches || !e.target.matches('input.fd-in')) return;
+    e.preventDefault();
+    const ins = Array.from(wrap.querySelectorAll('input.fd-in')), n = ins[ins.indexOf(e.target)+1];
+    if(n) n.focus(); else e.target.blur();
+  });
+})();
+
 function setMatAcctTab(el){
   document.querySelectorAll('#rep-mat-accttabs .tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   renderReportMaterial(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'));
 }
-function renderReportMaterial(mk){
-  const wrap = document.getElementById('rep-mat-grid-wrap');
-  if(!wrap) return;
-  const admin = isAdmin() && !isMonthLocked(mk);
-  renderLedgerLockControls();
-  const q = (document.getElementById('rep-mat-search')?.value||'').trim().toLowerCase();
-  const acctFilter = document.querySelector('#rep-mat-accttabs .tab.active')?.dataset.accttab || 'ในบัญชี';
-  const onlyMoved = document.getElementById('rep-mat-onlymoved')?.checked;
-  const days = workdaysInMonthArr(mk);
-  const dayTotals = {}; days.forEach(d=>dayTotals[d.day]=0);
-
+/* ตัวกรอง "ใช้งาน" + จำนวนบนแท็บบัญชี — ใช้ร่วมกันทั้งมุมมองรายวันและทั้งเดือน */
+function updateMatFilterCounts(){
   const useSel = document.getElementById('rep-mat-usage');
   const useFilter = useSel ? useSel.value : 'all';
   if(useSel){
@@ -4486,6 +4799,28 @@ function renderReportMaterial(mk){
   const cntNai = document.getElementById('cnt-nai'); if(cntNai) cntNai.textContent = nNai;
   const cntNok = document.getElementById('cnt-nok'); if(cntNok) cntNok.textContent = nNok;
   const cntAll = document.getElementById('cnt-all'); if(cntAll) cntAll.textContent = nAll;
+  return {useFilter, inUse};
+}
+function renderReportMaterial(mk){
+  const wrap = document.getElementById('rep-mat-grid-wrap');
+  if(!wrap) return;
+  const dayMode = matViewMode==='day';
+  wrap.classList.toggle('md-day', dayMode);
+  const tb = document.getElementById('rep-mat-toolbar'); if(tb) tb.classList.toggle('day-mode', dayMode);
+  if(dayMode) renderReportMaterialDay(mk); else renderReportMaterialMonth(mk);
+}
+function renderReportMaterialMonth(mk){
+  const wrap = document.getElementById('rep-mat-grid-wrap');
+  if(!wrap) return;
+  const admin = isAdmin() && !isMonthLocked(mk);
+  renderLedgerLockControls();
+  const q = (document.getElementById('rep-mat-search')?.value||'').trim().toLowerCase();
+  const acctFilter = document.querySelector('#rep-mat-accttabs .tab.active')?.dataset.accttab || 'ในบัญชี';
+  const onlyMoved = document.getElementById('rep-mat-onlymoved')?.checked;
+  const days = workdaysInMonthArr(mk);
+  const dayTotals = {}; days.forEach(d=>dayTotals[d.day]=0);
+
+  const {inUse} = updateMatFilterCounts();
 
   const list = materials.filter(m=>{
     if(acctFilter!=='all' && (m.accountType||'ในบัญชี')!==acctFilter) return false;
@@ -5313,6 +5648,7 @@ renderAll();
     loadFuelSettingsFromApi(),
     loadLedgerLocksFromApi(),
     loadFuelDayChecksFromApi(),
+    loadMatDayChecksFromApi(),
     loadLedgerOverridesFromApi(),
     loadVehicleMileageFromApi(),
     loadMachineryLogsFromApi(),

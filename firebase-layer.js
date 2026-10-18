@@ -64,7 +64,7 @@
     { key: 'viewLog', label: 'ดูประวัติการใช้งาน', desc: 'ดูว่าใครเพิ่ม/แก้ไข/ลบอะไร เมื่อไร และดูสถานะออนไลน์' },
     { key: 'unlockLedger', label: 'ปลดล็อกบัญชีรายเดือน', desc: 'ปลดล็อกเดือนที่ปิดบัญชี พ.1-02 / พ.1-03 แล้ว' },
     { key: 'export', label: 'ส่งออก/สำรองข้อมูล', desc: 'ดาวน์โหลดข้อมูลทั้งระบบเป็น Excel / JSON' },
-    { key: 'checkFuel', label: 'ตรวจน้ำมันรายวัน (พ.1-03)', desc: 'ติ๊ก "ตรวจแล้ว" รายการเบิกน้ำมันแต่ละวัน ยืนยันปิดวัน และปลดล็อกวันที่ยืนยันแล้ว (เจ้าของระบบ/หมวด/ผู้ช่วยหมวดมีสิทธิ์นี้อยู่แล้วตามบทบาท — ติ๊กที่นี่เฉพาะเมื่อต้องการให้คนอื่นตรวจได้ด้วย)' }
+    { key: 'checkFuel', label: 'ตรวจรายวัน (พ.1-02 วัสดุ / พ.1-03 น้ำมัน)', desc: 'ติ๊ก "ตรวจแล้ว" รายการเบิกวัสดุ/น้ำมันแต่ละวัน ยืนยันปิดวัน และปลดล็อกวันที่ยืนยันแล้ว (เจ้าของระบบ/หมวด/ผู้ช่วยหมวดมีสิทธิ์นี้อยู่แล้วตามบทบาท — ติ๊กที่นี่เฉพาะเมื่อต้องการให้คนอื่นตรวจได้ด้วย)' }
   ];
   FBL.FLAGS = FLAGS;
 
@@ -142,6 +142,7 @@
     // ตรวจน้ำมันรายวัน พ.1-03 (18 ต.ค. 2569): 1 วัน = 1 รายการ (dayKey 'YYYY-MM-DD'), checkedJson = รายชื่อรถ/เครื่องที่ติ๊กตรวจแล้ว, confirmed = '1' เมื่อยืนยันปิดวัน (ล็อกวัน)
     // เขียน/ลบได้เฉพาะผู้มีสิทธิ์พิเศษ checkFuel (ไม่ใช่ผู้แก้ไขระบบ 3 ทั่วไป) — บังคับที่ firestore.rules
     fuel_day_checks: { section: 's3', label: 'ตรวจน้ำมันรายวัน', idField: 'dayKey', idPrefix: null, columns: ['dayKey', 'checkedJson', 'checkedBy', 'checkedAt', 'confirmed', 'confirmedBy', 'confirmedAt', 'lastUpdated'], numericFields: [], jsonFields: ['checkedJson'], trash: false },
+    mat_day_checks: { section: 's3', label: 'ตรวจวัสดุรายวัน (พ.1-02)', idField: 'dayKey', idPrefix: null, columns: ['dayKey', 'checkedJson', 'checkedBy', 'checkedAt', 'confirmed', 'confirmedBy', 'confirmedAt', 'lastUpdated'], numericFields: [], jsonFields: ['checkedJson'], trash: false },
     ledger_overrides: { section: 's3', label: 'แก้ยอดยกมา/รับเข้า', idField: 'id', idPrefix: 'LOV', columns: ['id', 'kind', 'itemKey', 'monthKey', 'value', 'lastUpdated'], numericFields: ['value'], trash: false },
 
     ot_requests: { section: 's4', label: 'งานนอกเวลา (OT)', idField: 'id', idPrefix: 'OT', columns: ['id', 'staffName', 'requestDate', 'workDate', 'reason', 'requestedHours', 'status', 'approverName', 'approvedDate', 'performedHours', 'reportDate', 'reportNote', 'lastUpdated', 'no', 'team', 'time', 'amount'], numericFields: ['amount', 'requestedHours', 'performedHours'] },
@@ -552,7 +553,7 @@
   function canWriteTable(table) {
     const sec = sectionOf(table);
     if (!sec) return false;
-    if (table === 'fuel_day_checks') return FBL.canCheckFuel(); // ตรวจน้ำมันรายวัน: ต้องมีสิทธิ์ตรวจโดยเฉพาะ
+    if (table === 'fuel_day_checks' || table === 'mat_day_checks') return FBL.canCheckFuel(); // ตรวจรายวัน (น้ำมัน/วัสดุ): ต้องมีสิทธิ์ตรวจโดยเฉพาะ
     if (FBL.canEdit(sec)) return true;
     return (CROSS_WRITE[table] || []).some(function (s) { return FBL.canEdit(s); });
   }
@@ -560,7 +561,7 @@
   function canDeleteRow(table) {
     if (!canWriteTable(table)) return false;
     if (table === 'ledger_locks') return FBL.can('unlockLedger');
-    if (table === 'fuel_day_checks') return FBL.canCheckFuel();
+    if (table === 'fuel_day_checks' || table === 'mat_day_checks') return FBL.canCheckFuel();
     if (TABLES[table].trash === false || CROSS_WRITE[table]) return true; // ข้อมูลเชิงเทคนิค/รายการลูก — ผู้แก้ไขลบได้เสมอ
     return FBL.can('delete');
   }
