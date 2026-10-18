@@ -756,6 +756,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="dsel.js"></script>
 <script src="firebase-layer.js" data-page="s2"></script>
 <script src="emoji-img.js" defer></script>
+<script src="doh-import.js" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
 .route-header .topbar-right{flex-direction:column;align-items:flex-end;gap:6px}
@@ -823,6 +824,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         <div class="nav-routine" id="nav-routine">
           <div class="search-box">🔍 <input id="dw-search" placeholder="ค้นหารหัสงาน / สถานที่ / ชื่อ"></div>
           <button class="btn btn-ghost btn-sm" onclick="openDwTxAudit()" title="แสดงรายการตัดน้ำมัน/วัสดุที่อาจซ้ำหรือค้าง (ดูอย่างเดียว ไม่ลบอัตโนมัติ)">🔎 ตรวจยอดคลังซ้ำ</button>
+          <button class="btn btn-primary btn-sm" id="doh-imp-btn" onclick="DohImp.openImport()" title="นำเข้าไฟล์ CSV จากระบบกรม (rmms) สร้างเป็นรายการใบสั่งการรายวัน (ตัดคลังน้ำมัน/วัสดุให้อัตโนมัติ)">📥 นำเข้าข้อมูลจากกรม</button>
         </div>
         <!-- ตัวกรองปี/เดือนชุดเดียว ใช้ร่วมสรุปรายเดือน/แผน-ผลงาน (ใบสั่งการใช้แถบสัปดาห์แทน) -->
         <div class="g-filter no-print hidden" id="g-filter">
