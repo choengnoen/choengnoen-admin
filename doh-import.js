@@ -198,6 +198,11 @@
     const ms = missingMats(); if(!ms.length) return;
     if(!(window.FBL && FBL.canWriteTable && FBL.canWriteTable('materials'))){ alert('บัญชีนี้ไม่มีสิทธิ์เพิ่มรายการในทะเบียนพัสดุ'); return; }
     if(!confirm('จะเพิ่มวัสดุเหล่านี้เข้าทะเบียนพัสดุ (ประเภท "ในบัญชี" ยอดยกมา 0 ใช้หน่วยและราคาตามไฟล์กรม) แล้วตัดคลังให้ใบที่เกี่ยวข้อง:\n\n'+ms.map(m=>'• '+m.name+' ('+(m.unit||'หน่วย')+')').join('\n')+'\n\nต้องการดำเนินการต่อหรือไม่?')) return;
+    const r = await addMatsToRegister(ms);
+    await afterMatsChanged('เพิ่มวัสดุเข้าทะเบียน '+r.added+' รายการ'+(r.failed.length?' (ไม่สำเร็จ '+r.failed.length+': '+r.failed.join(' ; ')+')':''));
+  }
+  /* เพิ่มวัสดุใหม่เข้าทะเบียนพัสดุ (ในบัญชี ยอดยกมา 0) — ใช้ทั้งปุ่มเพิ่มเอง และเพิ่มอัตโนมัติตอนเลือกไฟล์ */
+  async function addMatsToRegister(ms){
     S.busy = true;
     const used = new Set(); getMaterialsX().forEach(x=>{ const t = String(x.code||'').match(/^M(\d+)$/); if(t) used.add(parseInt(t[1],10)); });
     let added = 0; const failed = [];
@@ -210,7 +215,7 @@
       }catch(e){ failed.push(m.name+' — '+(e&&e.message?e.message:e)); }
     }
     S.busy = false;
-    await afterMatsChanged('เพิ่มวัสดุเข้าทะเบียน '+added+' รายการ'+(failed.length?' (ไม่สำเร็จ '+failed.length+': '+failed.join(' ; ')+')':''));
+    return { added, failed };
   }
   /* เอาเฉพาะข้อความเตือนเรื่องวัสดุไม่พบออกจากหมายเหตุ เก็บเตือนเรื่องอื่นไว้ */
   function stripMatFlag(note){
@@ -460,7 +465,17 @@
     S.mixed = ks.length>1;
     S.importMk = ks[0] || new Date().toISOString().slice(0,7);
     S.cmpMsg = '';
+    /* วัสดุที่ชื่อไม่ตรงทะเบียนและไม่เคยจับคู่ไว้ → เพิ่มเข้าทะเบียนให้เลย (เหมือนน้ำมันที่ขึ้น พ.1-03 เอง) แล้วตัดคลังตามใบ
+       ถ้าอยากให้ไปผูกกับรายการเดิมแทน ให้แก้ชื่อในทะเบียนหรือจับคู่ก่อนเลือกไฟล์ (ระบบจำการจับคู่ไว้) · ไม่มีสิทธิ์เขียนทะเบียน → ใช้ช่องจับคู่เดิม */
+    let autoMsg = '';
+    const ms0 = missingMats();
+    if(ms0.length && window.FBL && FBL.canWriteTable && FBL.canWriteTable('materials')){
+      render(null, 'กำลังเพิ่มวัสดุใหม่เข้าทะเบียนพัสดุ...');
+      const r0 = await addMatsToRegister(ms0);
+      autoMsg = 'เพิ่มวัสดุใหม่เข้าทะเบียนอัตโนมัติ '+r0.added+' รายการ ('+ms0.slice(0,5).map(m=>m.name).join(', ')+(ms0.length>5?' ฯลฯ':'')+')'+(r0.failed.length?' · ไม่สำเร็จ '+r0.failed.length+': '+r0.failed.join(' ; '):'');
+    }
     await rebuild();
+    if(autoMsg) S.cmpMsg = autoMsg;
     /* ถ้าในระบบมีใบของเดือน/รหัสงานเหล่านี้อยู่แล้ว → เข้าโหมดเทียบ (ไม่ลบ/แทนที่ใบเดิม) */
     S.mode = S.cmp.some(c=>c.exN>0) ? 'compare' : 'import';
     render();

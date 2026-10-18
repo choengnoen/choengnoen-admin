@@ -983,32 +983,20 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </div>
           </div>
           <div class="toolbar day-mode" id="rep-mat-toolbar" style="padding:14px 20px 0;">
-            <div class="tabs" id="rep-mat-accttabs" style="padding:0;border:none;background:transparent;flex:none;">
-              <div class="tab active" data-accttab="ในบัญชี" onclick="setMatAcctTab(this)">พัสดุในบัญชี (<span id="cnt-nai">0</span>)</div>
-              <div class="tab" data-accttab="นอกบัญชี" onclick="setMatAcctTab(this)">พัสดุนอกบัญชี (<span id="cnt-nok">0</span>)</div>
-              <div class="tab" data-accttab="all" onclick="setMatAcctTab(this)">ทั้งหมด (<span id="cnt-all">0</span>)</div>
-            </div>
-            <select id="rep-mat-usage" aria-label="ลักษณะการใช้งาน" style="flex:none;font-family:'Sarabun';font-size:13.5px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;" onchange="renderReportMaterial(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'))">
-              <option value="all">ใช้งาน: ทั้งหมด</option><option value="งานบำรุง">ใช้งาน: งานบำรุง</option><option value="สำนักงาน">ใช้งาน: สำนักงาน</option>
-            </select>
             <label class="rep-toggle" style="margin-left:auto;"><input type="checkbox" id="rep-mat-onlymoved" checked onchange="renderReportMaterial(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'))"> แสดงเฉพาะรายการที่มีปริมาณพัสดุ</label>
             <div class="toolbar" id="rep-mat-edit-grp" style="padding:0;flex:none;gap:8px;">
               <button class="btn btn-ghost btn-sm" id="rep-mat-edit-btn" onclick="toggleMatOpeningEdit()" title="แก้ยอดรวมยกมา/รับเข้าของเดือน (สำหรับปรับยอดรวม) — การรับของจากแขวงให้บันทึกที่แท็บ ใบเบิกรับเข้า">✎ แก้ยอดยกมา/รับเข้า</button>
               <button class="btn btn-primary btn-sm hidden" id="rep-mat-save-btn" onclick="saveMatOpeningEdits()">💾 บันทึก</button>
             </div>
-            <div class="search-box" style="min-width:220px;flex:none;">🔍 <input id="rep-mat-search" oninput="renderReportMaterial(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'))" placeholder="ค้นหาชื่อพัสดุ"></div>
+            <div class="search-box" style="min-width:220px;flex:none;margin-left:auto;">🔍 <input id="rep-mat-search" oninput="renderReportMaterial(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'))" placeholder="ค้นหาชื่อพัสดุ"></div>
           </div>
-          <div class="draft-chip hidden" id="draft-mat-chip">
+          <div id="rep-mat-grid-wrap" class="grid-wrap md-day"></div>
+          <div class="draft-chip hidden" id="draft-mat-chip" style="margin:12px 20px;">
             <span class="dc-dot"></span>
             <span id="draft-mat-count-text"></span>
             <span style="flex:1;"></span>
             <button class="dc-btn dc-clear" onclick="discardDraftReport('mat')">ล้างการแก้ไข</button>
             <button class="dc-btn dc-save" onclick="reviewDraftReport('mat')">💾 บันทึก</button>
-          </div>
-          <div id="rep-mat-grid-wrap" class="grid-wrap md-day"></div>
-          <div class="legend-block" id="rep-mat-foot-block">
-            <button type="button" class="legend-dot-btn no-print" id="rep-mat-foot-toggle" onclick="__toggleNote('rep-mat-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="rep-mat-foot" style="display:none;background:transparent;border-top:none;">คลิกช่องตัวเลข เพื่อกรอก/แก้ไขจำนวนที่เบิกของวันนั้นๆตามใบเบิก-จ่ายพัสดุตัวจริง , การรับพัสดุเข้าคลังจากแขวงให้บันทึกที่แท็บ "ใบเบิกรับเข้า" (ปุ่ม "แก้ยอดยกมา/รับเข้า" ด้านบนใช้แก้ยอดรวมของเดือนเท่านั้น)</div>
           </div>
         </div>
       </div>
@@ -4612,7 +4600,7 @@ function renderReportMaterialDay(mk){
   const locked = false;   /* เหมือน พ.1-03: ไม่ใช้ล็อกรายเดือน ใช้ "ยืนยันตรวจครบทั้งวัน" ล็อกรายวันแทน */
   const {inUse} = updateMatFilterCounts();
   const q = (document.getElementById('rep-mat-search')?.value||'').trim().toLowerCase();
-  const acctFilter = document.querySelector('#rep-mat-accttabs .tab.active')?.dataset.accttab || 'ในบัญชี';
+  const acctFilter = 'all';
   const dayNum = pickMatDay(mk);
   if(dayNum==null){ wrap.innerHTML = '<div class="fd-empty">เดือนนี้ไม่มีวันทำการ</div>'; return; }
   const date = dateStrFor(mk, dayNum);
