@@ -637,7 +637,23 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   #panel-rollup thead th:nth-child(2),#panel-rollup thead th:nth-child(3){text-align:right;}
   /* ===== แถบเมนูงานบำรุงปกติ (ปุ่มเลือกหัวข้อปุ่มเดียว) ===== */
   /* แถบเครื่องมือเป็นการ์ดเดียว (แบบ 3): ไอคอน+ชื่อหน้า(กดเปลี่ยนหน้าได้) | ค้นหา | ปุ่มไอคอน | ปุ่มบันทึก */
-  .maint-nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-4px 0 14px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 18px;}
+  /* แบบ ค: การ์ดใบเดียว 3 ชั้น = หัว(ชื่อ+คำอธิบาย+ปุ่มหลัก) / ชั้นกลางเทา(ตัวกรอง-แท็บ-แถบสัปดาห์) / เนื้อหา (.section หรือ #dw-day ต่อเนื่องกัน) */
+  .maint-nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-4px 0 0;background:#fff;border:1px solid var(--line);border-radius:16px 16px 0 0;padding:14px 20px;min-height:72px;box-sizing:border-box;}
+  .maint-nav .btn.hidden,.maint-nav .nav-routine.hidden{display:none;}
+  .mn-sub{font-size:12.5px;color:var(--ink-600);margin-top:2px;}
+  .mn-strip{background:var(--paper-50);border:1px solid var(--line);border-top:0;padding:10px 20px;display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap;}
+  .mn-strip.hidden{display:none;}
+  .mn-strip .g-filter{margin:0;}
+  .mn-strip .set-tabs{margin:0;}
+  .mn-strip #dw-week{flex:1;min-width:0;margin:-10px -20px;}
+  .mn-strip .dwk-bar{border:0;border-radius:0;box-shadow:none;margin:0;background:transparent;}
+  .maint-nav.hidden ~ .mn-strip{display:none;}
+  /* เนื้อหาต่อจากการ์ดหัว: ไม่มีขอบบน ไม่ซ้ำหัวข้อ */
+  #maint-nav ~ #panel-rollup .section,#maint-nav ~ #panel-routine2 .section,#maint-nav ~ #panel-crews .section,#maint-nav ~ #panel-refdata .section,#maint-nav ~ #panel-routes .section{border-top:0;border-radius:0 0 16px 16px;}
+  #panel-rollup .section-head,#panel-routine2 .section-head,#panel-crews .section-head{display:none;}
+  #panel-routine #dw-day{background:#fff;border:1px solid var(--line);border-top:0;border-radius:0 0 16px 16px;padding:18px 20px 12px;}
+  #panel-routine #dw-day .dwt-head{margin-top:0;}
+  #panel-routine #dw-day .dwt-empty{border-radius:14px;}
   .maint-nav .menu-btn{border:none;background:none;padding:0;font-size:17px;gap:10px;}
   .maint-nav .menu-btn:hover{color:var(--orange-600);}
   .maint-nav .menu-pop{top:calc(100% + 10px);}
@@ -828,23 +844,40 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div data-view="routine2">3 · แผน - ผลงาน</div>
             <div data-view="settings">4 · ตั้งค่า</div>
           </div>
+          <div class="mn-sub" id="nav-sub"></div>
         </div>
+        <span class="sp1"></span>
+        <!-- ปุ่มหลักของหน้า (แบบ ค: อยู่แถวบนขวา) — ปุ่มของแต่ละหน้าย้ายมารวมที่นี่ แสดงทีละหน้าด้วย showView() -->
         <div class="nav-routine" id="nav-routine">
           <button type="button" class="icb" id="doh-imp-btn" onclick="DohImp.openImport()" title="นำเข้าข้อมูลจากกรม — ไฟล์ CSV จากระบบ rmms สร้างเป็นรายการใบสั่งการรายวัน (ตัดคลังน้ำมัน/วัสดุให้อัตโนมัติ)" aria-label="นำเข้าข้อมูลจากกรม">📥</button>
         </div>
+        <button type="button" class="btn btn-primary" id="nav-add-btn" onclick="toggleDailyForm()">+ บันทึกใบสั่งการ</button>
+        <button class="btn btn-primary hidden" id="rollup-commit-btn" style="flex:none;white-space:nowrap;" onclick="commitRollupToActual()">ปิดยอดเดือนนี้</button>
+        <button type="button" class="btn btn-primary hidden" id="nav-act-bmm" onclick="openBmmForm()">+ บันทึกแผน/ผลรายเดือน</button>
+        <button type="button" class="btn btn-primary hidden" id="nav-act-crews" onclick="openCrewModal(null)">+ เพิ่มชุดทำงาน</button>
+      </div>
+      <!-- ชั้นกลาง (เทาอ่อน): ตัวกรอง/แท็บของหน้านั้น — ใบสั่งการรายวันใช้แถบสัปดาห์ -->
+      <div class="mn-strip no-print" id="mn-strip">
         <!-- ตัวกรองปี/เดือนชุดเดียว ใช้ร่วมสรุปรายเดือน/แผน-ผลงาน (ใบสั่งการใช้แถบสัปดาห์แทน) -->
         <div class="g-filter no-print hidden" id="g-filter">
           <span class="g-filter-label">แสดงข้อมูลของ</span>
           <select id="g-fy" class="edit-input" onchange="applyGlobalFilter()"></select>
           <select id="g-month" class="edit-input" onchange="applyGlobalFilter()"></select>
         </div>
-        <span class="sp1"></span>
-        <button type="button" class="btn btn-primary" id="nav-add-btn" onclick="toggleDailyForm()">+ บันทึกใบสั่งการ</button>
-      </div>
-      <div class="set-tabs no-print hidden" id="set-tabs">
-        <div class="set-tab active" data-view="crews">ชุดปฏิบัติงาน</div>
-        <div class="set-tab" data-view="refdata">ข้อมูลอ้างอิงงาน</div>
-        <div class="set-tab" data-view="routes">ทางหลวงควบคุม</div>
+        <div class="g-filter no-print hidden" id="g-kind-wrap">
+          <span class="g-filter-label">มุมมอง</span>
+          <select id="bmm-kind" class="edit-input" onchange="renderBmmTable()">
+            <option value="all">แผน + ผล</option>
+            <option value="plan">เฉพาะแผน</option>
+            <option value="actual">เฉพาะผล</option>
+          </select>
+        </div>
+        <div class="set-tabs no-print hidden" id="set-tabs">
+          <div class="set-tab active" data-view="crews">ชุดปฏิบัติงาน</div>
+          <div class="set-tab" data-view="refdata">ข้อมูลอ้างอิงงาน</div>
+          <div class="set-tab" data-view="routes">ทางหลวงควบคุม</div>
+        </div>
+        <div id="dw-week" class="no-print"></div>
       </div>
       <!-- ============ ทางหลวงควบคุม (CONTROLLED ROUTES) ============ -->
       <div class="panel" id="panel-routes">
@@ -1083,9 +1116,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
               ชุดปฏิบัติงานภาคสนาม
             </h2>
-            <div class="toolbar">
-              <button class="btn btn-primary" onclick="openCrewModal(null)">+ เพิ่มชุดทำงาน</button>
-            </div>
           </div>
           <div id="crew-list"></div>
         </div>
@@ -1147,7 +1177,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <div class="panel active" id="panel-routine">
         <!-- หัวข้อ "ใบสั่งการรายวัน" รวมอยู่ในการ์ดแถบเครื่องมือด้านบนแล้ว (แบบ 3) -->
         <!-- แถบสัปดาห์ (แท่งเดียว) + ไทม์ไลน์ใบสั่งการของวันที่เลือก — สร้างโดย renderDailyLog() -->
-        <div id="dw-week" class="no-print"></div>
+        <!-- แถบสัปดาห์ (#dw-week) ย้ายขึ้นไปอยู่ชั้นกลางของการ์ดด้านบน (#mn-strip) -->
         <div id="dw-day"></div>
         <!-- ตัวกรองเดิม (ซ่อนไว้ ใช้ร่วมกับตัวกรองรวมของสรุปรายเดือน/แผน-ผลงาน) -->
         <div style="display:none;">
@@ -1303,7 +1333,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 <option value="4">เม.ย.</option><option value="5">พ.ค.</option><option value="6">มิ.ย.</option>
                 <option value="7" selected>ก.ค.</option><option value="8">ส.ค.</option><option value="9">ก.ย.</option>
               </select>
-              <button class="btn btn-primary" id="rollup-commit-btn" style="flex:none;white-space:nowrap;" onclick="commitRollupToActual()">ปิดยอดเดือนนี้</button>
             </div>
           </div>
           <div id="rollup-status" class="rollup-status"></div>
@@ -1328,12 +1357,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </h2>
             <div class="toolbar" id="bmm-toolbar" style="flex-wrap:nowrap;overflow-x:auto;">
               <select id="bmm-fy" class="edit-input" style="display:none;" onchange="renderBmmTable()"></select>
-              <select id="bmm-kind" class="edit-input" style="width:120px;flex:none;" onchange="renderBmmTable()">
-                <option value="all">แผน + ผล</option>
-                <option value="plan">เฉพาะแผน</option>
-                <option value="actual">เฉพาะผล</option>
-              </select>
-              <button class="btn btn-primary" style="flex:none;white-space:nowrap;" onclick="openBmmForm()">+ บันทึกแผน/ผลรายเดือน</button>
             </div>
           </div>
           <div id="bmm-summary" style="padding:10px 20px 0 20px;font-size:12.5px;color:var(--ink-600);"></div>
@@ -2701,8 +2724,15 @@ function showView(view){
   document.querySelectorAll('#set-tabs .set-tab').forEach(x=>x.classList.toggle('active', x.dataset.view===view));
   document.getElementById('nav-routine')?.classList.toggle('hidden', view!=='routine');
   document.getElementById('nav-add-btn')?.classList.toggle('hidden', view!=='routine');
+  /* ปุ่มหลักของแต่ละหน้า (แถวบนขวาของการ์ด) + คำอธิบายใต้ชื่อหน้า */
+  [['rollup-commit-btn','rollup'],['nav-act-bmm','routine2'],['nav-act-crews','crews']].forEach(([id,v])=> document.getElementById(id)?.classList.toggle('hidden', view!==v));
+  const NAV_SUB = {routine:'เลือกวันจากแถบสัปดาห์เพื่อดูหรือบันทึกใบสั่งการ', rollup:'ผลงานรวมทุกงานของเดือนที่เลือก และปิดยอดประจำเดือน', routine2:'แผนงานและผลงาน งานบำรุงปกติ ของปีงบประมาณที่เลือก', settings:'ชุดปฏิบัติงาน ข้อมูลอ้างอิงงาน และทางหลวงควบคุม'};
+  const sub = document.getElementById('nav-sub'); if(sub) sub.textContent = NAV_SUB[menuView] || '';
   const showFilter = (view==='rollup' || view==='routine2');
   document.getElementById('g-filter')?.classList.toggle('hidden', !showFilter);
+  document.getElementById('g-kind-wrap')?.classList.toggle('hidden', view!=='routine2');
+  document.getElementById('dw-week')?.classList.toggle('hidden', view!=='routine');
+  const strip = document.getElementById('mn-strip'); if(strip) strip.classList.toggle('hidden', !(showFilter || inSettings || view==='routine'));
   const gm = document.getElementById('g-month'); if(gm) gm.style.display = (view==='routine2') ? 'none' : '';
   document.getElementById('nav-menu-pop')?.classList.remove('show');
 }
