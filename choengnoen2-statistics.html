@@ -849,6 +849,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         <!-- ปุ่มหลักของหน้า (แบบ ค: อยู่แถวบนขวา) — ปุ่มของแต่ละหน้าย้ายมารวมที่นี่ แสดงทีละหน้าด้วย showView() -->
         <div class="nav-routine" id="nav-routine">
           <button type="button" class="icb" id="doh-imp-btn" onclick="DohImp.openImport()" title="นำเข้าข้อมูลจากกรม — ไฟล์ CSV จากระบบ rmms สร้างเป็นรายการใบสั่งการรายวัน (ตัดคลังน้ำมัน/วัสดุให้อัตโนมัติ)" aria-label="นำเข้าข้อมูลจากกรม">📥</button>
+          <button type="button" class="icb" id="doh-ck-btn" style="position:relative;" onclick="DohImp.openCheck()" title="จุดที่ต้องตรวจสอบ — รายการใบที่นำเข้าจากกรมแล้วข้อมูลไม่ครบ คัดลอกส่งเจ้าหน้าที่ได้" aria-label="จุดที่ต้องตรวจสอบ">🔍</button>
         </div>
         <button type="button" class="btn btn-primary" id="nav-add-btn" onclick="toggleDailyForm()">+ บันทึกใบสั่งการ</button>
         <button class="btn btn-primary hidden" id="rollup-commit-btn" style="flex:none;white-space:nowrap;" onclick="commitRollupToActual()">ปิดยอดเดือนนี้</button>

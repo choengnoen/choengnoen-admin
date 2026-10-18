@@ -138,15 +138,16 @@
         if(typeof ledgerLocks!=='undefined' && ledgerLocks[mk]){ out.skipLocked.push(dateTh(date)+' · '+label); return; }
         if(dailyWorkOrders.some(d=>d.date===date && String(d.note||'').indexOf(token)>=0)){ out.skipDone++; return; }
         const issues = [];
-        if(missVeh.length) issues.push({ t:'attn', msg:'ไม่พบเครื่องจักรในทะเบียน (ไม่ได้ตัดน้ำมัน): '+missVeh.join(', ') });
-        if(missMat.length && i===0) issues.push({ t:'attn', msg:'ไม่พบวัสดุในทะเบียนพัสดุ (ไม่ได้ตัดคลัง): '+missMat.join(', ') });
+        /* s = ข้อความสั้นที่เก็บลงหมายเหตุของใบ (ใช้แสดงในหน้าต่าง "ตรวจสอบ" ภายหลัง) */
+        if(missVeh.length) issues.push({ t:'attn', s:'ไม่พบเครื่องจักรในทะเบียน(ไม่ตัดน้ำมัน) '+missVeh.join(','), msg:'ไม่พบเครื่องจักรในทะเบียน (ไม่ได้ตัดน้ำมัน): '+missVeh.join(', ') });
+        if(missMat.length && i===0) issues.push({ t:'attn', s:'ไม่พบวัสดุในทะเบียน(ไม่ตัดคลัง) '+missMat.join(','), msg:'ไม่พบวัสดุในทะเบียนพัสดุ (ไม่ได้ตัดคลัง): '+missMat.join(', ') });
         const onLeave = staffNames.filter(n=>leaves.some(l=>l.name===n && l.from<=date && date<=l.to));
-        if(onLeave.length) issues.push({ t:'attn', msg:'มีบันทึกการลาในวันนี้ แต่กรมลงว่าทำงาน: '+onLeave.join(', ') });
-        if(i===0 && (a.extra>0 || (a.sum['ค่าตอบแทน']||0)>0 || (a.sum['ค่าใช้สอย']||0)>0)) issues.push({ t:'attn', msg:'กรมมีค่าตอบแทน '+(a.sum['ค่าตอบแทน']||0)+' / ค่าใช้สอย '+(a.sum['ค่าใช้สอย']||0)+' / ล่วงเวลา-เบี้ยเลี้ยงรายคน — ใบสั่งการไม่มีช่องเหล่านี้ จึงไม่ได้นำเข้า (ตรวจกับแผนนี้ในระบบกรม)' });
+        if(onLeave.length) issues.push({ t:'attn', s:'มีบันทึกลาวันนี้แต่กรมลงว่าทำงาน '+onLeave.join(','), msg:'มีบันทึกการลาในวันนี้ แต่กรมลงว่าทำงาน: '+onLeave.join(', ') });
+        if(i===0 && (a.extra>0 || (a.sum['ค่าตอบแทน']||0)>0 || (a.sum['ค่าใช้สอย']||0)>0)) issues.push({ t:'attn', s:'กรมมีค่าตอบแทน/ค่าใช้สอย/ล่วงเวลา ไม่ได้นำเข้า ให้ตรวจกับระบบกรม', msg:'กรมมีค่าตอบแทน '+(a.sum['ค่าตอบแทน']||0)+' / ค่าใช้สอย '+(a.sum['ค่าใช้สอย']||0)+' / ล่วงเวลา-เบี้ยเลี้ยงรายคน — ใบสั่งการไม่มีช่องเหล่านี้ จึงไม่ได้นำเข้า (ตรวจกับแผนนี้ในระบบกรม)' });
         if(approx.length && i===0) issues.push({ t:'info', msg:'จับคู่วัสดุโดยประมาณ: '+approx.join(' · ') });
         if(staffUnmatched.length) issues.push({ t:'info', msg:'ชื่อแรงงานที่ไม่พบในทะเบียนบุคลากร: '+staffUnmatched.join(', ') });
         if(!route) issues.push({ t:'info', msg:'สาย '+a.route+' ตอน '+a.control+' ไม่อยู่ในทางหลวงควบคุม (บันทึกเป็น "อื่นๆ")' });
-        const attnTxt = issues.filter(x=>x.t==='attn').length ? ' ⚠ต้องตรวจ: '+[missVeh.length?'ไม่พบเครื่อง '+missVeh.join(','):'', (missMat.length&&i===0)?'ไม่พบวัสดุ '+missMat.join(','):''].filter(Boolean).join(' ; ') : '';
+        const attnTxt = issues.filter(x=>x.t==='attn').length ? ' ⚠ต้องตรวจ: '+issues.filter(x=>x.t==='attn').map(x=>x.s).join(' ; ') : '';
         const rec = {
           no:0, __backendId:null, date, code:a.jobCode, kmStart:a.kmStart, kmEnd:a.kmEnd, route:routeValue, loc,
           staff:staffNames.slice(), staffLabel:staffNames.map(n=>{ const c = crewLabelOf(n); return c?n+' ('+c+')':n; }).join(', '),
@@ -155,7 +156,7 @@
           parts: i===0 ? partsAll.map(p=>({ code:p.code, qty:p.qty })) : [],
           qty:qtyArr[i], qtyPending:false, unit:job.unit||'',
           material: i===0 ? (a.sum['ค่าวัสดุ']||0) : 0, labor:laborArr[i], rent:rentArr[i], fuel:fuelArr[i],
-          note:('นำเข้าจากกรม '+mkLabel(mk)+' แผน '+a.plan+' (วันที่ '+(i+1)+'/'+days+') '+token+attnTxt).slice(0,400)
+          note:('นำเข้าจากกรม '+mkLabel(mk)+' แผน '+a.plan+' (วันที่ '+(i+1)+'/'+days+') '+token+attnTxt).slice(0,700)
         };
         out.items.push({ rec, issues, label, planNo:a.plan });
       });
@@ -208,6 +209,7 @@
       .dohi-table th,.dohi-table td{padding:6px 8px;border-bottom:1px solid #dfe2dd;text-align:left;vertical-align:top;}
       .dohi-table th{color:#4d5a66;font-size:12.5px;background:#f5f6f4;}
       .dohi-list{margin:4px 0 0;padding-left:18px;}
+      .dohi-badge{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#c1402f;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;box-sizing:border-box;}
     `;
     document.head.appendChild(st);
   }
@@ -399,12 +401,97 @@
     renderAll();
     render();
   }
-  function editOrder(id){
+  function editOrder(id, fromCheck){
     const rec = dailyWorkOrders.find(d=>d.__backendId===id); if(!rec){ alert('ไม่พบใบสั่งการนี้ (อาจถูกแก้ไขหรือลบไปแล้ว)'); return; }
-    document.getElementById('doh-imp-overlay').classList.add('hidden');
+    if(fromCheck) closeCheck(); else document.getElementById('doh-imp-overlay').classList.add('hidden');
     editDailyEntry(rec.no);
   }
 
+  /* ---------- หน้าต่าง "ตรวจสอบ": รายการใบที่นำเข้าจากกรมแล้วมีจุดต้องตรวจ (อ่านจากหมายเหตุของใบ) ---------- */
+  const FLAG = '⚠ต้องตรวจ: ';
+  const CK = { mk:'' };
+  function flagged(){
+    return (typeof dailyWorkOrders!=='undefined' ? dailyWorkOrders : []).filter(d=>{ const n = String(d.note||''); return TOKEN_RE.test(n) && n.indexOf(FLAG)>=0; });
+  }
+  function ckItems(mk){
+    return flagged().filter(d=>String(d.date).slice(0,7)===mk).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.code<b.code?-1:1)).map(d=>{
+      const n = String(d.note), j = findJob(d.code);
+      const probs = n.slice(n.indexOf(FLAG)+FLAG.length).split(' ; ').map(s=>s.trim()).filter(Boolean);
+      return { id:d.__backendId, no:d.no, date:d.date, code:d.code, name:(j&&j.name)||'', loc:d.loc||'', probs };
+    });
+  }
+  function ckDefaultMonth(){
+    const sel = (typeof dwSel!=='undefined' && dwSel) ? String(dwSel).slice(0,7) : '';
+    return sel || new Date().toISOString().slice(0,7);
+  }
+  function ckText(mk){
+    const items = ckItems(mk);
+    if(!items.length) return 'ข้อมูลนำเข้าจากกรม '+mkLabel(mk)+' — ไม่มีรายการที่ต้องตรวจ';
+    const lines = ['รายการที่ต้องตรวจสอบ — ข้อมูลนำเข้าจากกรม (rmms) ประจำ'+mkLabel(mk)+' รวม '+items.length+' ใบ',''];
+    items.forEach((x,i)=>{
+      lines.push((i+1)+'. วันที่ '+dateTh(x.date)+' · รหัสงาน '+x.code+(x.name?' '+x.name:'')+(x.loc?' · '+x.loc:''));
+      x.probs.forEach(p=>lines.push('   - '+p));
+    });
+    lines.push('','กรุณาตรวจเทียบกับเอกสารจริง แล้วแจ้งผลกลับ');
+    return lines.join('\n');
+  }
+  function ckOverlay(){
+    let ov = document.getElementById('doh-ck-overlay');
+    if(!ov){
+      ov = document.createElement('div'); ov.id = 'doh-ck-overlay'; ov.className = 'modal-overlay no-print hidden';
+      ov.innerHTML = '<div class="modal-box modal-l dohi-box"><div class="modal-head dohi-head">'
+        + '<div class="dohi-head-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8.5 11l2 2 3.5-4"/></svg></div>'
+        + '<div><h3>จุดที่ต้องตรวจสอบ</h3><div class="dohi-sub">ใบสั่งการที่นำเข้าจากกรมแล้วมีข้อมูลไม่ครบ — คัดลอกส่งเจ้าหน้าที่ตรวจได้</div></div>'
+        + '<button class="modal-close" onclick="DohImp.closeCheck()" aria-label="ปิด">✕</button></div>'
+        + '<div class="modal-body" id="doh-ck-body"></div><div class="modal-foot dohi-foot" id="doh-ck-foot"></div></div>';
+      document.body.appendChild(ov);
+    }
+    return ov;
+  }
+  function ckRender(){
+    const body = document.getElementById('doh-ck-body'), foot = document.getElementById('doh-ck-foot'); if(!body) return;
+    const mks = new Set(flagged().map(d=>String(d.date).slice(0,7))); mks.add(CK.mk);
+    const opts = Array.from(mks).sort().reverse().map(k=>'<option value="'+k+'" '+(k===CK.mk?'selected':'')+'>'+mkLabel(k)+'</option>').join('');
+    const items = ckItems(CK.mk);
+    const list = items.length
+      ? '<div style="overflow:auto"><table class="dohi-table"><thead><tr><th>วันที่</th><th>รหัสงาน / สายทาง</th><th>สิ่งที่ต้องตรวจ</th><th></th></tr></thead><tbody>'
+        + items.map(x=>'<tr><td style="white-space:nowrap">'+H(dateTh(x.date))+'</td><td>'+H(x.code)+(x.name?' '+H(x.name):'')+(x.loc?'<br><small>'+H(x.loc)+'</small>':'')+'</td><td>'+x.probs.map(p=>H(p)).join('<br>')+'</td><td><button class="btn btn-ghost btn-sm" onclick="DohImp.editOrder(\''+H(x.id)+'\',true)">✎ แก้ไข</button></td></tr>').join('')
+        + '</tbody></table></div>'
+      : '<div class="dohi-note ok">เดือนนี้ไม่มีใบที่ต้องตรวจ</div>';
+    body.innerHTML = '<div class="dohi-bar"><span>เดือน <select onchange="DohImp.setCheckMonth(this.value)">'+opts+'</select></span><span><b>'+items.length+'</b> ใบที่ต้องตรวจ</span></div>'
+      + list
+      + '<div class="dohi-note" style="margin-top:12px">ตรวจ/แก้ใบแล้ว ให้ลบข้อความ "⚠ต้องตรวจ: ..." ออกจากช่องหมายเหตุของใบนั้น รายการจะหายไปจากหน้านี้</div>';
+    if(foot) foot.innerHTML = '<span id="doh-ck-msg" style="margin-right:auto;font-size:13px;color:#1c8a53"></span><button class="btn btn-ghost" onclick="DohImp.closeCheck()">ปิด</button><button class="btn btn-primary" '+(items.length?'':'disabled')+' onclick="DohImp.copyCheck()">📋 คัดลอกรายการ</button>';
+  }
+  function openCheck(){
+    ensureCss();
+    CK.mk = ckDefaultMonth();
+    ckOverlay().classList.remove('hidden');
+    ckRender();
+  }
+  function closeCheck(){ const ov = document.getElementById('doh-ck-overlay'); if(ov) ov.classList.add('hidden'); }
+  function setCheckMonth(v){ CK.mk = v; ckRender(); }
+  async function copyCheck(){
+    const t = ckText(CK.mk), msg = document.getElementById('doh-ck-msg');
+    let ok = false;
+    try{ await navigator.clipboard.writeText(t); ok = true; }
+    catch(e){
+      const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;opacity:0;'; document.body.appendChild(ta); ta.select();
+      try{ ok = document.execCommand('copy'); }catch(e2){} ta.remove();
+    }
+    if(msg){ msg.textContent = ok ? '✓ คัดลอกแล้ว นำไปวางในไลน์/ข้อความได้เลย' : 'คัดลอกไม่สำเร็จ'; msg.style.color = ok ? '#1c8a53' : '#c1402f'; }
+  }
+  /* ตัวเลขบนไอคอน = จำนวนใบที่ต้องตรวจของเดือนที่กำลังดูอยู่ (ตามวันที่เลือกในแถบสัปดาห์) */
+  function updateBadge(){
+    const btn = document.getElementById('doh-ck-btn'); if(!btn) return;
+    let n = 0; try{ n = ckItems(ckDefaultMonth()).length; }catch(e){}
+    let b = btn.querySelector('.dohi-badge');
+    if(!n){ if(b) b.remove(); return; }
+    if(!b){ b = document.createElement('span'); b.className = 'dohi-badge'; btn.appendChild(b); }
+    b.textContent = n > 99 ? '99+' : n;
+  }
+  setInterval(updateBadge, 2000);
+
   function setEc1w(v){ S.ec1w = !!v; }
-  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w };
+  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, openCheck, closeCheck, setCheckMonth, copyCheck };
 })();
