@@ -93,6 +93,50 @@
     if(n.length>=4){ hit = list.find(m=>{ const k = normText(m.name); return k.length>=4 && (k.indexOf(n)>=0 || n.indexOf(k)>=0); }); if(hit) return { m:hit, approx:true }; }
     return null;
   }
+  /* วัสดุในไฟล์กรมที่ยังไม่มีในทะเบียนพัสดุ (ไม่ซ้ำชื่อ) */
+  function missingMats(){
+    const seen = {}, out = [];
+    S.parsed.forEach(a=>a.mats.forEach(m=>{ const k = normText(m.name); if(!k || seen[k] || matchMaterial(m.name)) return; seen[k] = 1; out.push({ name:String(m.name).trim(), unit:m.unit, price:m.price }); }));
+    return out;
+  }
+  function missNote(){
+    const ms = missingMats(); if(!ms.length) return '';
+    return '<div class="dohi-note warn"><b>วัสดุที่ยังไม่มีในทะเบียนพัสดุ ('+ms.length+')</b>: '+ms.map(m=>H(m.name)).join(', ')
+      + '<div style="margin-top:8px"><button class="btn btn-primary btn-sm" onclick="DohImp.addMissing()">➕ เพิ่มเข้าทะเบียน แล้วตัดคลังให้เลย</button></div></div>';
+  }
+  async function addMissing(){
+    if(S.busy) return;
+    const ms = missingMats(); if(!ms.length) return;
+    if(!(window.FBL && FBL.canWriteTable && FBL.canWriteTable('materials'))){ alert('บัญชีนี้ไม่มีสิทธิ์เพิ่มรายการในทะเบียนพัสดุ'); return; }
+    if(!confirm('จะเพิ่มวัสดุเหล่านี้เข้าทะเบียนพัสดุ (ประเภท "ในบัญชี" ยอดยกมา 0 ใช้หน่วยและราคาตามไฟล์กรม) แล้วตัดคลังให้ใบที่เกี่ยวข้อง:\n\n'+ms.map(m=>'• '+m.name+' ('+(m.unit||'หน่วย')+')').join('\n')+'\n\nต้องการดำเนินการต่อหรือไม่?')) return;
+    S.busy = true;
+    const used = new Set(); getMaterialsX().forEach(x=>{ const t = String(x.code||'').match(/^M(\d+)$/); if(t) used.add(parseInt(t[1],10)); });
+    let added = 0; const failed = [];
+    for(const m of ms){
+      let n = 1; while(used.has(n)) n++; used.add(n);
+      const rec = { code:'M'+String(n).padStart(2,'0'), name:m.name, unit:m.unit||'หน่วย', accountType:'ในบัญชี', stock:0, reorder:0, unitPrice:(m.price>0?m.price:undefined) };
+      try{
+        await apiPost('add', 'materials', { code:rec.code, itemName:rec.name, category:rec.accountType, unit:rec.unit, openingStock:0, reorderPoint:0, unitPrice:rec.unitPrice, status:'ใช้งาน' });
+        getMaterialsX().push(rec); added++;
+      }catch(e){ failed.push(m.name+' — '+(e&&e.message?e.message:e)); }
+    }
+    S.busy = false;
+    await rebuild();
+    const parts = [];
+    S.cmp.forEach((c,i)=>c.actions.forEach(a=>{ if(a.type==='parts') parts.push(i+':parts'); }));
+    S.sel = {}; parts.forEach(k=>{ S.sel[k] = true; });
+    S.result = null; S.mode = 'compare';
+    const pre = 'เพิ่มวัสดุเข้าทะเบียน '+added+' รายการ'+(failed.length?' (ไม่สำเร็จ '+failed.length+': '+failed.join(' ; ')+')':'');
+    if(parts.length){ await runCompare(true); S.cmpMsg = pre+' · '+S.cmpMsg; }
+    else { S.mode = S.cmp.some(c=>c.exN>0) ? 'compare' : 'import'; S.cmpMsg = pre+(S.mode==='import'?' — กดนำเข้าได้เลย ระบบจะตัดคลังตามใบ':''); }
+    render();
+  }
+  /* เอาเฉพาะข้อความเตือนเรื่องวัสดุไม่พบออกจากหมายเหตุ เก็บเตือนเรื่องอื่นไว้ */
+  function stripMatFlag(note){
+    const FL = '⚠ต้องตรวจ:'; note = String(note||''); const at = note.indexOf(FL); if(at<0) return note;
+    const keep = note.slice(at+FL.length).split(' ; ').map(s=>s.trim()).filter(s=>s && s.indexOf('ไม่พบวัสดุในทะเบียน')!==0);
+    return (note.slice(0,at).replace(/\s+$/,'') + (keep.length ? ' '+FL+' '+keep.join(' ; ') : '')).slice(0,700);
+  }
   function splitEven(total, n){
     const base = r2(total/n), arr = new Array(n).fill(base);
     arr[n-1] = r2(total - base*(n-1));
@@ -266,7 +310,7 @@
       body.innerHTML = (S.cmpMsg?'<div class="dohi-note ok">'+H(S.cmpMsg)+'</div>':'')
         + (S.skipped.length?'<div class="dohi-note warn">ข้าม '+S.skipped.length+' ไฟล์ที่ไม่ใช่ผลงานรายกิจกรรม: '+H(S.skipped.join(', '))+'</div>':'')
         + modeBar + '<div class="dohi-bar">'+pickHtml()+'<span>เดือนของไฟล์ <select onchange="DohImp.setMonth(this.value)">'+monthOptions(S.importMk)+'</select></span></div>'
-        + renderCompare();
+        + missNote() + renderCompare();
       setFoot('<button class="btn btn-ghost" onclick="DohImp.close()">ปิด</button><button class="btn btn-ghost" onclick="DohImp.copyCompare()">📋 คัดลอกผลเทียบ</button><button class="btn btn-primary" '+(nAct?'':'disabled')+' onclick="DohImp.runCompare()">ดำเนินการที่เลือก ('+nAct+')</button>');
       return;
     }
@@ -277,10 +321,11 @@
     const skipBlocks = p ? [['ข้าม: ไฟล์กรมไม่ระบุวันที่ปฏิบัติงาน (ต้องคีย์เอง)', p.skipNoDate],['ข้าม: ไม่พบรหัสงานในข้อมูลอ้างอิง', p.skipNoJob],['ข้าม: เดือนถูกล็อกบัญชีพัสดุแล้ว', p.skipLocked]]
       .filter(x=>x[1].length).map(x=>'<div class="dohi-note warn"><b>'+x[0]+' ('+x[1].length+')</b><ul class="dohi-list">'+x[1].slice(0,12).map(s=>'<li>'+H(s)+'</li>').join('')+(x[1].length>12?'<li>… อีก '+(x[1].length-12)+'</li>':'')+'</ul></div>').join('') : '';
     body.innerHTML = (msg?'<div class="dohi-note bad">'+H(msg)+'</div>':'')
+      + (S.cmpMsg?'<div class="dohi-note ok">'+H(S.cmpMsg)+'</div>':'')
       + (S.skipped.length?'<div class="dohi-note warn">ข้าม '+S.skipped.length+' ไฟล์ที่ไม่ใช่ผลงานรายกิจกรรม: '+H(S.skipped.join(', '))+'</div>':'')
       + (S.mixed?'<div class="dohi-note warn">ไฟล์มีวันที่ปฏิบัติงานหลายเดือนปนกัน — ควรเลือกไฟล์ทีละเดือน</div>':'')
       + modeBar + '<div class="dohi-bar">'+pickHtml()+'<span>เดือนของไฟล์ <select onchange="DohImp.setMonth(this.value)">'+monthOptions(S.importMk)+'</select></span></div>'
-      + kpi + skipBlocks
+      + kpi + missNote() + skipBlocks
       + (p ? '<div class="dohi-bar"><label style="display:inline-flex;gap:6px;align-items:center;font-size:13.5px;"><input type="checkbox" '+(S.ec1w?'checked':'')+' onchange="DohImp.setEc1w(this.checked)"> บันทึกชั่วโมงเครื่องจักรลง EC 1-W ด้วย ('+buildEc1w().length+' แถว เครื่อง×วัน — ลงช่อง W ชั่วโมงปฏิบัติงาน; ทับเฉพาะช่อง W เดิมของแถวนั้น)</label></div>' : '')
       ;
     setFoot('<button class="btn btn-ghost" onclick="DohImp.close()">ยกเลิก</button><button class="btn btn-primary" '+(p&&p.items.length?'':'disabled')+' onclick="DohImp.run()">นำเข้า '+(p?p.items.length:0)+' ใบสั่งการ</button>');
@@ -294,7 +339,7 @@
     const fail = r.failed.length ? '<div class="dohi-note bad"><b>นำเข้าไม่สำเร็จ ('+r.failed.length+' ใบ — ไม่มีข้อมูลของใบเหล่านี้ถูกบันทึก)</b><ul class="dohi-list">'+r.failed.slice(0,15).map(f=>'<li>'+H(f)+'</li>').join('')+'</ul>นำเข้าไฟล์เดิมซ้ำเพื่อลองใหม่ได้ ระบบข้ามใบที่สำเร็จแล้ว</div>' : '';
     return '<div class="dohi-note ok"><b>นำเข้าเสร็จแล้ว:</b> สร้างใบสั่งการ '+r.created+' ใบ'+(r.replaced?' · แทนที่ใบเดิม '+r.replaced+' ใบ':'')+' (ตัดคลังน้ำมัน/วัสดุตามใบแล้ว) — เปิดดูได้ที่รายการใบสั่งการรายวัน (หมายเหตุของใบจะขึ้นว่า "นำเข้าจากกรม")</div>'
       + (r.ec1w ? '<div class="dohi-note '+(r.ec1w.note?'warn':'ok')+'"><b>EC 1-W:</b> บันทึกชั่วโมงเครื่องจักร (ช่อง W) '+r.ec1w.n+' แถว'+(r.ec1w.note?'<br>'+H(r.ec1w.note):'')+'</div>' : '')
-      + fail + attn;
+      + fail + missNote() + attn;
   }
   async function onFiles(input){
     const files = Array.from(input.files||[]); if(!files.length || S.busy) return;
@@ -474,12 +519,12 @@
     catch(e){ const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText='position:fixed;opacity:0;'; document.body.appendChild(ta); ta.select(); try{ ok = document.execCommand('copy'); }catch(e2){} ta.remove(); }
     S.cmpMsg = ok ? '✓ คัดลอกผลเทียบแล้ว นำไปวางในไลน์/ข้อความได้เลย' : ''; render(); if(!ok) alert('คัดลอกไม่สำเร็จ');
   }
-  async function runCompare(){
+  async function runCompare(silent){
     if(S.busy) return;
     const todo = [];
     S.cmp.forEach((c,i)=>c.actions.forEach(a=>{ if(S.sel[i+':'+a.type]) todo.push({ c, a }); }));
     if(!todo.length) return;
-    if(!confirm('จะดำเนินการ '+todo.length+' รายการที่เลือก (สร้างใบที่ขาด / เติมวัสดุที่ไม่มีในใบ พร้อมตัดคลัง)\nใบเดิมไม่ถูกลบหรือแก้ส่วนอื่น\n\nต้องการดำเนินการต่อหรือไม่?')) return;
+    if(silent!==true && !confirm('จะดำเนินการ '+todo.length+' รายการที่เลือก (สร้างใบที่ขาด / เติมวัสดุที่ไม่มีในใบ พร้อมตัดคลัง)\nใบเดิมไม่ถูกลบหรือแก้ส่วนอื่น\n\nต้องการดำเนินการต่อหรือไม่?')) return;
     S.busy = true;
     let made = 0, filled = 0; const failed = [];
     for(const t of todo){
@@ -494,7 +539,7 @@
         } else {
           const old = t.a.target;
           if(!dailyWorkOrders.some(d=>d.__backendId===old.__backendId)) throw new Error('ไม่พบใบเดิม');
-          const merged = Object.assign({}, old, { parts:(old.parts||[]).concat(t.a.parts), note:String(old.note||'').replace(/\s*⚠ต้องตรวจ:.*$/,'').slice(0,700) });
+          const merged = Object.assign({}, old, { parts:(old.parts||[]).concat(t.a.parts), note:stripMatFlag(old.note) });
           const newId = FBL.newId('daily_work_orders'); merged.__backendId = newId;
           const delOps = [{ action:'delete', table:'daily_work_orders', id:old.__backendId }]; (await buildSubsys3DeleteOps(old.__backendId, true)).forEach(o=>delOps.push(o));
           const prevRef = await previousRefs([old]);
@@ -712,5 +757,5 @@
   setInterval(updateBadge, 2000);
 
   function setEc1w(v){ S.ec1w = !!v; }
-  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, runCompare, togFuel };
+  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, runCompare, togFuel, addMissing };
 })();
