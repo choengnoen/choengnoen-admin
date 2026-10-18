@@ -19,7 +19,13 @@
   const num = x => { const v = parseFloat(String(x==null?'':x).replace(/,/g,'')); return isNaN(v)?0:v; };
   const r2 = x => Math.round((x+Number.EPSILON)*100)/100;
   const digits = s => String(s||'').replace(/\D/g,'');
-  const normText = s => String(s||'').replace(/\s+/g,'').toLowerCase();
+  /* ชื่อวัสดุเทียบกันได้แม้เขียนต่างกัน: ตัดช่องว่าง/เครื่องหมายนิ้ว/คำว่า ขนาด-นิ้ว, x=×, แก้ตัวอักษรไทยที่พิมพ์สลับลำดับ (น้ำ) */
+  const normText = s => String(s||'').toLowerCase()
+    .replace(/ํา/g,'ำ').replace(/ำ([่-๋])/g,'$1ำ')
+    .replace(/["'“”‘’″′]/g,'').replace(/ขนาด|นิ้ว/g,'').replace(/[×✕]/g,'x').replace(/\s+/g,'');
+  const ALIAS_KEY = 'dohMatAlias';
+  const aliasLoad = () => { try{ return JSON.parse(localStorage.getItem(ALIAS_KEY)||'{}')||{}; }catch(e){ return {}; } };
+  const aliasSave = o => { try{ localStorage.setItem(ALIAS_KEY, JSON.stringify(o)); }catch(e){} };
   const mkLabel = mk => { const p = String(mk).split('-').map(Number); return TH_MONTHS[p[1]-1]+' '+(p[0]+543); };
   const iso = d => { const p = String(d||'').trim().split('-'); return p.length===3 ? (+p[2]-543)+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0') : ''; };
   const dateTh = d => (typeof fmtDateShort==='function') ? fmtDateShort(d) : d;
@@ -88,9 +94,17 @@
   }
   function matchMaterial(name){
     const list = getMaterialsX(); const n = normText(name);
+    const code = aliasLoad()[n];                       /* ผู้ใช้เคยเลือกจับคู่เองไว้ */
+    if(code){ const a = list.find(m=>m.code===code); if(a) return { m:a, approx:false }; }
     let hit = list.find(m=>normText(m.name)===n);
     if(hit) return { m:hit, approx:false };
     if(n.length>=4){ hit = list.find(m=>{ const k = normText(m.name); return k.length>=4 && (k.indexOf(n)>=0 || n.indexOf(k)>=0); }); if(hit) return { m:hit, approx:true }; }
+    /* ชื่อกรมสั้นกว่า/คนละลำดับ: ทุกคำในชื่อกรมต้องอยู่ในชื่อทะเบียน และต้องเจอรายการเดียวเท่านั้น (ถ้าซ้ำหลายรายการ ไม่เดา) */
+    const toks = String(name||'').split(/[\s()（）,]+/).map(normText).filter(t=>t.length>=2);
+    if(toks.length>=2){
+      const c = list.filter(m=>{ const k = normText(m.name); return toks.every(t=>k.indexOf(t)>=0); });
+      if(c.length===1) return { m:c[0], approx:true };
+    }
     return null;
   }
   /* วัสดุในไฟล์กรมที่ยังไม่มีในทะเบียนพัสดุ (ไม่ซ้ำชื่อ) */
@@ -101,8 +115,35 @@
   }
   function missNote(){
     const ms = missingMats(); if(!ms.length) return '';
-    return '<div class="dohi-note warn"><b>วัสดุที่ยังไม่มีในทะเบียนพัสดุ ('+ms.length+')</b>: '+ms.map(m=>H(m.name)).join(', ')
-      + '<div style="margin-top:8px"><button class="btn btn-primary btn-sm" onclick="DohImp.addMissing()">➕ เพิ่มเข้าทะเบียน แล้วตัดคลังให้เลย</button></div></div>';
+    const opts = getMaterialsX().slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'th'))
+      .map(x=>'<option value="'+H(x.code)+'">'+H(x.name)+(x.unit?' ('+H(x.unit)+')':'')+'</option>').join('');
+    const rows = ms.map((m,i)=>'<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px"><span style="flex:1 1 100%">• <b>'+H(m.name)+'</b>'+(m.unit?' ('+H(m.unit)+')':'')+' ตรงกับรายการที่มีอยู่:</span>'
+      + '<select id="dohPick'+i+'" style="flex:1 1 220px;min-width:0;padding:6px"><option value="">— เลือกรายการในทะเบียน —</option>'+opts+'</select>'
+      + '<button class="btn btn-sm" onclick="DohImp.pickExisting('+i+')">ใช้รายการนี้</button></div>').join('');
+    return '<div class="dohi-note warn"><b>วัสดุที่ระบบยังจับคู่กับทะเบียนพัสดุไม่ได้ ('+ms.length+')</b>'
+      + '<div style="font-size:.85em;margin-top:4px">ถ้ามีในทะเบียนอยู่แล้ว ให้เลือก "ใช้รายการนี้" (ระบบจำการจับคู่ไว้ ครั้งหน้าไม่ถามอีก) — กดเพิ่มใหม่ต่อเมื่อไม่มีในทะเบียนจริง ๆ</div>'
+      + rows
+      + '<div style="margin-top:10px"><button class="btn btn-primary btn-sm" onclick="DohImp.addMissing()">➕ ไม่มีในทะเบียนจริง — เพิ่มรายการใหม่ แล้วตัดคลังให้เลย</button></div></div>';
+  }
+  /* หลังจับคู่/เพิ่มวัสดุ: สร้างแผนใหม่ แล้วเตรียมตัดคลังต่อ */
+  async function afterMatsChanged(pre){
+    await rebuild();
+    const parts = [];
+    S.cmp.forEach((c,i)=>c.actions.forEach(a=>{ if(a.type==='parts') parts.push(i+':parts'); }));
+    S.sel = {}; parts.forEach(k=>{ S.sel[k] = true; });
+    S.result = null; S.mode = 'compare';
+    if(parts.length){ await runCompare(true); S.cmpMsg = pre+' · '+S.cmpMsg; }
+    else { S.mode = S.cmp.some(c=>c.exN>0) ? 'compare' : 'import'; S.cmpMsg = pre+(S.mode==='import'?' — กดนำเข้าได้เลย ระบบจะตัดคลังตามใบ':''); }
+    render();
+  }
+  async function pickExisting(i){
+    if(S.busy) return;
+    const ms = missingMats(), m = ms[i]; if(!m) return;
+    const sel = document.getElementById('dohPick'+i); const code = sel && sel.value;
+    if(!code){ alert('กรุณาเลือกรายการในทะเบียนก่อน'); return; }
+    const mat = getMaterialsX().find(x=>x.code===code); if(!mat) return;
+    const al = aliasLoad(); al[normText(m.name)] = code; aliasSave(al);
+    await afterMatsChanged('จับคู่ "'+m.name+'" กับ "'+mat.name+'" แล้ว');
   }
   async function addMissing(){
     if(S.busy) return;
@@ -121,15 +162,7 @@
       }catch(e){ failed.push(m.name+' — '+(e&&e.message?e.message:e)); }
     }
     S.busy = false;
-    await rebuild();
-    const parts = [];
-    S.cmp.forEach((c,i)=>c.actions.forEach(a=>{ if(a.type==='parts') parts.push(i+':parts'); }));
-    S.sel = {}; parts.forEach(k=>{ S.sel[k] = true; });
-    S.result = null; S.mode = 'compare';
-    const pre = 'เพิ่มวัสดุเข้าทะเบียน '+added+' รายการ'+(failed.length?' (ไม่สำเร็จ '+failed.length+': '+failed.join(' ; ')+')':'');
-    if(parts.length){ await runCompare(true); S.cmpMsg = pre+' · '+S.cmpMsg; }
-    else { S.mode = S.cmp.some(c=>c.exN>0) ? 'compare' : 'import'; S.cmpMsg = pre+(S.mode==='import'?' — กดนำเข้าได้เลย ระบบจะตัดคลังตามใบ':''); }
-    render();
+    await afterMatsChanged('เพิ่มวัสดุเข้าทะเบียน '+added+' รายการ'+(failed.length?' (ไม่สำเร็จ '+failed.length+': '+failed.join(' ; ')+')':''));
   }
   /* เอาเฉพาะข้อความเตือนเรื่องวัสดุไม่พบออกจากหมายเหตุ เก็บเตือนเรื่องอื่นไว้ */
   function stripMatFlag(note){
@@ -760,5 +793,5 @@
   setInterval(updateBadge, 2000);
 
   function setEc1w(v){ S.ec1w = !!v; }
-  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, runCompare, togFuel, addMissing };
+  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, runCompare, togFuel, addMissing, pickExisting };
 })();
