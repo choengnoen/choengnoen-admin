@@ -2463,11 +2463,17 @@ function vehicleFromApi(row){
     fuelRateUnit: row.fuelRateUnit||undefined, note:row.operatorName||'',
     monthlyRent: row.monthlyRent!==''&&row.monthlyRent!=null ? Number(row.monthlyRent) : undefined,
     maxKmPerDay: row.mileageThresholdOverride!==''&&row.mileageThresholdOverride!=null ? Number(row.mileageThresholdOverride) : undefined,
-    plate: row.plate||'', status: row.status||'ใช้งาน' };
+    plate: row.plate||'', status: row.status||'ใช้งาน', fuelMode: row.fuelMode||'' };
 }
 function vehicleToApi(v){
   return { id:v.id, label:v.label, fuelType:v.fuelType||'', fuelRate:v.fuelRate, fuelRateUnit:v.fuelRateUnit,
-    operatorName:v.note||'', monthlyRent:v.monthlyRent, mileageThresholdOverride:v.maxKmPerDay, status:v.status||'ใช้งาน', plate:v.plate||'' };
+    operatorName:v.note||'', monthlyRent:v.monthlyRent, mileageThresholdOverride:v.maxKmPerDay, status:v.status||'ใช้งาน', plate:v.plate||'', fuelMode:v.fuelMode||'' };
+}
+/* รูปแบบการเบิกน้ำมัน: 'issue' = เบิกเป็นครั้ง (รถยนต์/เครื่องจักรดีเซล ตรวจข้ามรอบ) · 'daily' = เบิกสม่ำเสมอ (เครื่องตัดหญ้า/เครื่องมือเบนซิน)
+   ถ้าไม่ได้กำหนดในทะเบียน: ดีเซล → เบิกเป็นครั้ง, อื่นๆ → สม่ำเสมอ */
+function vehicleFuelMode(v){
+  if(v && (v.fuelMode==='issue' || v.fuelMode==='daily')) return v.fuelMode;
+  return (v && v.fuelType==='ดีเซล') ? 'issue' : 'daily';
 }
 /* ข้อมูลทะเบียนเครื่องจักร/รถจริงย้ายไปอยู่ที่ Google Sheets แท็บ "machinery" แล้ว
    หน้านี้โหลดจาก API ตอนเปิดหน้าเสมอ ดูฟังก์ชัน loadVehiclesFromApi() ด้านล่าง */
@@ -2654,6 +2660,13 @@ function openVehicleModal(id){
       <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">หน่วย</label>
         <input class="edit-input" id="vm-fuelrateunit" value="${esc(v?(v.fuelRateUnit||'ลิตร/ชม.'):'ลิตร/ชม.')}" placeholder="ลิตร/ชม. หรือ กม./ลิตร"></div>
     </div>
+    <div style="margin-bottom:12px;"><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">รูปแบบการเบิกน้ำมัน — เบิกเป็นครั้ง (รถยนต์ เบิกสัปดาห์ละ 1-2 ครั้ง ตรวจข้ามรอบ) / เบิกสม่ำเสมอ (เครื่องตัดหญ้า ตรวจรายวัน)</label>
+      <div class="seg-toggle" id="vm-fuelmode-toggle">
+        <button type="button" class="seg-btn${vehicleFuelMode(v||{fuelType:'ดีเซล'})==='issue'?' active':''}" data-fm="issue" onclick="onVmFuelModeBtn(this)">เบิกเป็นครั้ง</button>
+        <button type="button" class="seg-btn${vehicleFuelMode(v||{fuelType:'ดีเซล'})==='daily'?' active':''}" data-fm="daily" onclick="onVmFuelModeBtn(this)">เบิกสม่ำเสมอ</button>
+      </div>
+      <input type="hidden" id="vm-fuelmode" value="${vehicleFuelMode(v||{fuelType:'ดีเซล'})}">
+    </div>
     <div style="margin-bottom:6px;"><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">ค่าเช่า/บำรุงรักษา ต่อเดือน (บาท) — รับข้อมูลจากแขวง (งานปรับซ่อม) ทุกเดือน</label>
       <input type="number" step="0.01" min="0" class="edit-input" id="vm-rent" value="${v&&v.monthlyRent!=null?v.monthlyRent:''}" placeholder="0.00"></div>
     <div style="margin-bottom:6px;"><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">เกณฑ์เลขไมล์เพิ่มขึ้นสูงสุดต่อวัน (กม.) — เว้นว่างใช้ค่ามาตรฐาน 300 กม./วัน (ปรับสูงขึ้นสำหรับรถที่ใช้งานหนัก/ตรวจการณ์นอกเวลา)</label>
@@ -2668,6 +2681,11 @@ function onVmFuelBtn(btn){
   document.querySelectorAll('#vm-fueltype-toggle .seg-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('vm-fueltype').value = btn.dataset.fv;
+}
+function onVmFuelModeBtn(btn){
+  document.querySelectorAll('#vm-fuelmode-toggle .seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('vm-fuelmode').value = btn.dataset.fm;
 }
 function closeVehicleModal(){ document.getElementById('veh-modal-overlay').classList.add('hidden'); }
 async function saveVehicleModal(){
@@ -2685,6 +2703,7 @@ async function saveVehicleModal(){
   const monthlyRent = rentRaw!=='' ? parseFloat(rentRaw) : undefined;
   const maxKmRaw = document.getElementById('vm-maxkm').value;
   const maxKmPerDay = maxKmRaw!=='' ? parseFloat(maxKmRaw) : undefined;
+  const fuelMode = document.getElementById('vm-fuelmode').value||'';
   if(!typeName){ showAlertModal('กรุณากรอกชื่อ/ประเภทเครื่องจักร-รถ'); return; }
   if(!code){ showAlertModal('กรุณากรอกรหัส/เลขทะเบียน'); return; }
   const newLabel = operator ? `${typeName} (${code}) — ${operator}` : `${typeName} (${code})`;
@@ -2697,12 +2716,12 @@ async function saveVehicleModal(){
       if(v){
         const oldLabel = v.label;
         v.label = newLabel; v.note = operator; v.fuelType = fuelType; v.plate = plate;
-        v.fuelRate = fuelRate; v.fuelRateUnit = fuelRateUnit; v.monthlyRent = monthlyRent; v.maxKmPerDay = maxKmPerDay;
+        v.fuelRate = fuelRate; v.fuelRateUnit = fuelRateUnit; v.monthlyRent = monthlyRent; v.maxKmPerDay = maxKmPerDay; v.fuelMode = fuelMode;
         await apiPost('update', 'machinery', vehicleToApi(v));
         renameVehicleLabel(oldLabel, newLabel);
       }
     } else {
-      const v = {label:newLabel, fuelType, note:operator, plate, fuelRate, fuelRateUnit, monthlyRent, maxKmPerDay};
+      const v = {label:newLabel, fuelType, note:operator, plate, fuelRate, fuelRateUnit, monthlyRent, maxKmPerDay, fuelMode};
       const saved = await apiPost('add', 'machinery', vehicleToApi(v));
       vehicles.push(vehicleFromApi(saved));
     }
@@ -4221,6 +4240,24 @@ function mileagePrevBefore(label, date){
   });
   return best;
 }
+function mileageAtOrBefore(label, date){
+  const pre = label+'|'; let best = null;
+  Object.keys(vehicleMileage).forEach(k=>{
+    if(k.indexOf(pre)!==0) return;
+    const d = k.slice(pre.length);
+    if(d>date) return;
+    const n = mileageNumeric(vehicleMileage[k]);
+    if(n!=null && (!best || d>best.date)) best = {date:d, val:n};
+  });
+  return best;
+}
+/* ลิตรรวมรายวันของรถคันนี้ ในช่วง days วันก่อนวันที่ date (เฉพาะวันที่มีการเบิกจริง) */
+function fuelIssueHistory(ft, label, date, days){
+  const from = new Date(new Date(date).getTime() - days*86400000).toISOString().slice(0,10);
+  const by = {};
+  fuelTransactions.forEach(t=>{ if(t.vehicle===label && t.kind==='issue' && t.fuelType===ft && t.date<date && t.date>=from && t.liters>0) by[t.date] = (by[t.date]||0) + t.liters; });
+  return Object.values(by);
+}
 function fuelDayRows(date, fuelTypes, q, showAll){
   const rows = [];
   fuelTypes.forEach(ft=>{
@@ -4233,19 +4270,40 @@ function fuelDayRows(date, fuelTypes, q, showAll){
       const mNow = mileageNumeric(mRaw), mPrev = hasMile ? mileagePrevBefore(v.label, date) : null;
       const last = fuelLastIssueBefore(ft, v.label, date);
       const flags = [];
-      let dist = null;
+      let dist = null, kmpl = null;
+      const isIssue = vehicleFuelMode(v)==='issue';   // เบิกเป็นครั้ง: ตรวจข้ามรอบ (ไมล์จากครั้งก่อน ÷ ลิตรที่เติมครั้งก่อน)
       if(lit>0 && approvedLeaveOnDate(v.note, date)) flags.push({c:'w', t:'ผู้รับผิดชอบลาในวันนี้', s:'ลา'});
       if(lit>0 && hasMile && (mRaw==null || String(mRaw).trim()==='')) flags.push({c:'w', t:'ยังไม่กรอกเลขไมล์', s:'ไม่มีไมล์'});
-      if(hasMile && mNow!=null && mPrev){
-        dist = mNow - mPrev.val;
+      // จุดอ้างอิงไมล์: เบิกเป็นครั้ง = ไมล์ ณ วันที่เบิกครั้งก่อน, เบิกสม่ำเสมอ = ไมล์ล่าสุดก่อนวันนี้
+      const mBase = (isIssue && last) ? (mileageAtOrBefore(v.label, last.date) || mPrev) : mPrev;
+      if(hasMile && mNow!=null && mBase){
+        dist = mNow - mBase.val;
         const maxPerDay = (v.maxKmPerDay!=null && v.maxKmPerDay!=='') ? parseFloat(v.maxKmPerDay) : FUEL_CHECK_MAX_KM_PER_DAY;
-        const gap = Math.max(1, Math.round((new Date(date)-new Date(mPrev.date))/86400000));
+        const gap = Math.max(1, Math.round((new Date(date)-new Date(mBase.date))/86400000));
         const isPatrol = /^44-/.test(vehicleRegNo(v.label));   // รถลาดตะเวน (44-xxxx) ระยะทางขึ้นกับสายทางที่ได้รับมอบหมาย ไม่ตรวจเพดานกม./วัน
         if(dist<0) flags.push({c:'b', t:'เลขไมล์ลดลง '+fmtNum(-dist,0)+' กม.', s:'ไมล์ลดลง'});
         else if(!isPatrol && dist>maxPerDay*gap) flags.push({c:'w', t:'ไมล์เพิ่ม '+fmtNum(dist,0)+' กม. ผิดปกติ', s:'ไมล์ผิดปกติ'});
+        if(dist>0){
+          const litForRate = isIssue ? (last ? last.liters : 0) : lit;
+          if(litForRate>0) kmpl = dist/litForRate;
+          if(isIssue && kmpl!=null){
+            // เทียบกับอัตราสิ้นเปลืองมาตรฐานของรถ (ถ้าตั้งหน่วยเป็น กม./ลิตร) ไม่งั้นใช้ช่วงกว้างๆ ที่เป็นไปได้
+            const std = (v.fuelRate>0 && /กม/.test(v.fuelRateUnit||'')) ? v.fuelRate : null;
+            const bad = std ? (kmpl<std*0.6 || kmpl>std*1.6) : (kmpl<2 || kmpl>40);
+            if(bad) flags.push({c:'w', t:'อัตราสิ้นเปลืองผิดปกติ '+fmtNum(kmpl,1)+' กม./ล.'+(std?' (มาตรฐาน '+fmtNum(std,1)+')':''), s:'สิ้นเปลืองผิดปกติ'});
+          }
+        }
       }
-      if(lit>0 && last && last.liters>0 && (lit>last.liters*1.6 || lit<last.liters*0.5)) flags.push({c:'w', t:'ปริมาณต่างจากครั้งก่อนมาก', s:'ปริมาณต่างมาก'});
-      rows.push({v, ft, lit, last, hasMile, mRaw, mNow, mPrev, dist, kmpl:(dist>0 && lit>0) ? dist/lit : null, flags});
+      if(lit>0){
+        if(isIssue){
+          // เบิกถี่: ห่างจากครั้งก่อนไม่เกิน 2 วัน
+          if(last){ const gapD = Math.round((new Date(date)-new Date(last.date))/86400000); if(gapD<=2) flags.push({c:'w', t:'เบิกถี่ ห่างจากครั้งก่อนเพียง '+gapD+' วัน', s:'เบิกถี่'}); }
+          // ปริมาณต่างจากค่าเฉลี่ยของรถคันนี้ใน 90 วันที่ผ่านมา (ต้องมีประวัติอย่างน้อย 3 ครั้ง)
+          const hist = fuelIssueHistory(ft, v.label, date, 90);
+          if(hist.length>=3){ const avg = hist.reduce((s,x)=>s+x,0)/hist.length; if(lit>avg*2 || lit<avg*0.25) flags.push({c:'w', t:'ปริมาณต่างจากค่าเฉลี่ย 90 วัน ('+fmtNum(avg,1)+' ล.) มาก', s:'ปริมาณต่างมาก'}); }
+        } else if(last && last.liters>0 && (lit>last.liters*1.6 || lit<last.liters*0.5)) flags.push({c:'w', t:'ปริมาณต่างจากครั้งก่อนมาก', s:'ปริมาณต่างมาก'});
+      }
+      rows.push({v, ft, lit, last, hasMile, mRaw, mNow, mPrev:mBase, dist, kmpl, isIssue, flags});
     });
   });
   return rows;
@@ -4378,7 +4436,7 @@ function renderReportFuel(mk){
     const miCell = !r.hasMile ? '<span class="fd-mut">ไม่มีเลขไมล์</span>'
       : editable ? `<input type="text" class="fd-in fd-mi${badMi}" value="${r.mRaw!=null?esc(String(r.mRaw)):''}" placeholder="เลขไมล์" data-mi-vehicle="${esc(label)}" data-mi-date="${date}" oninput="onMileageInput(this)" onblur="fuelMileageBlur(this)">`
       : `<b>${r.mRaw!=null&&String(r.mRaw)!==''?esc(String(r.mRaw)):'—'}</b>`;
-    const distTxt = r.dist!=null ? `<b${r.dist<0?' class="fd-neg"':''}>${r.dist>=0?'+':''}${fmtNum(r.dist,0)} กม.</b>${r.kmpl?`<div class="fd-mut">${fmtNum(r.kmpl,1)} กม./ล.</div>`:''}` : '—';
+    const distTxt = r.dist!=null ? `<b${r.dist<0?' class="fd-neg"':''}>${r.dist>=0?'+':''}${fmtNum(r.dist,0)} กม.</b>${r.kmpl?`<div class="fd-mut" title="${r.isIssue?'ระยะทางตั้งแต่เบิกครั้งก่อน ÷ ลิตรที่เบิกครั้งก่อน':''}">${fmtNum(r.kmpl,1)} กม./ล.${r.isIssue?' (รอบก่อน)':''}</div>`:''}` : '—';
     body += `<tr class="${cls}" data-flabel="${esc(label)}">
       <td class="fd-c"><div class="fd-cb${on?' on':''}${canCk&&!confirmed&&r.lit>0?' can':''}"${r.lit>0?` data-fck="${esc(label)}"`:''} title="${r.lit>0?(canCk?'ติ๊กเมื่อตรวจแล้ว':'เฉพาะผู้มีสิทธิ์ตรวจ'):''}">✔</div></td>
       <td><b>${esc(r.v.note||'—')}</b><div class="fd-mut">${fuelShortDate(date)}</div></td>

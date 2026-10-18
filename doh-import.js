@@ -175,7 +175,10 @@
       });
       const qtyArr = splitEven(a.qty, days), laborArr = splitEven(a.sum['ค่าแรงงาน']||0, days);
       const rentArr = splitEven(a.sum['ค่าเช่าเครื่องจักร']||0, days), fuelArr = splitEven(a.sum['ค่าน้ำมันเชื้อเพลิง']||0, days);
-      const litersArr = vehBase.map(x=>splitEven(x.liters, days));
+      /* รถที่เบิกเป็นครั้ง (ค่าเริ่มต้น = ดีเซล): ไม่แบ่งลิตรเท่ากันทุกวัน (จะเป็นตัวเลขเฉลี่ยที่ไม่ตรงการเบิกจริง) — ลงวันแรกวันเดียว
+         แล้วให้ผู้ตรวจย้าย/แก้เป็นวันที่เบิกจริงที่หน้า พ.1-03 · เครื่องที่เบิกสม่ำเสมอ (เบนซิน/เครื่องตัดหญ้า) ยังแบ่งเท่ากันเหมือนเดิม */
+      const isIssueMode = v=>{ const m = v && v.fuelMode; return (m==='issue'||m==='daily') ? m==='issue' : (v && v.fuelType==='ดีเซล'); };
+      const litersArr = vehBase.map(x=> isIssueMode(x.v) ? splitEven(x.liters, 1).concat(new Array(Math.max(0,days-1)).fill(0)) : splitEven(x.liters, days));
       dates.forEach((date, i)=>{
         const mk = date.slice(0,7);
         const token = '[กรม:'+mk+':'+a.plan+']';
