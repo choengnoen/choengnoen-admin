@@ -466,11 +466,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 
       <div class="sec-tabs no-print" id="sec-tabs">
         <div class="sec-tab active" data-sec="overview">ภาพรวม</div>
-        <div class="sec-tab" data-sec="alerts">แจ้งเตือน / ติดตามงาน<span class="tab-badge hidden" id="alerts-tab-badge">0</span></div>
-        <div class="sec-tab" data-sec="reports">รายงานสรุป</div>
-        <div class="sec-tab" data-sec="users" id="tab-users">ผู้ใช้งานและสิทธิ์</div>
+        <div class="sec-tab" data-sec="alerts">แจ้งเตือน<span class="tab-badge hidden" id="alerts-tab-badge">0</span></div>
+        <div class="sec-tab" data-sec="users" id="tab-users">ตั้งค่า</div>
         <div class="sec-tab" data-sec="trash" id="tab-trash" style="display:none;">🗑 ถังขยะ<span class="tab-badge hidden" id="trash-tab-badge" style="background:var(--ink-400);">0</span></div>
-        <div class="sec-tab" data-sec="log" id="tab-log" style="display:none;">ประวัติการใช้งาน</div>
         <div class="sec-tab" data-sec="backup" id="tab-backup" style="display:none;">สำรองข้อมูล</div>
       </div>
 
@@ -562,10 +560,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <!-- ============ รายงานสรุป ============ -->
       <div class="panel" id="panel-reports">
         <div class="section">
-          <div class="section-head">
-            <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg></span>
-              รายงานสรุปรวมประจำเดือน
-            </h2>
+          <div class="section-head" style="justify-content:flex-end;">
             <div class="toolbar">
               <select id="report-fy" onchange="renderSummaryReport()"></select>
               <select id="report-month" onchange="renderSummaryReport()"></select>
@@ -619,7 +614,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <div class="panel" id="panel-trash">
         <div class="section">
           <div class="section-head">
-            <h2>🗑 ถังขยะ — รายการที่ถูกลบ<span class="muted small" id="trash-count" style="margin-left:8px;font-weight:400;"></span></h2>
+            <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></span>
+              ถังขยะ — รายการที่ถูกลบ<span class="muted small" id="trash-count" style="margin-left:8px;font-weight:400;"></span></h2>
             <div class="toolbar">
               <button class="btn btn-ghost" id="btn-purge-old" style="display:none" onclick="purgeOld(30)">ลบถาวรที่เก่ากว่า 30 วัน</button>
               <button class="btn btn-danger" id="btn-purge-all" style="display:none" onclick="purgeAll()">ล้างถังขยะทั้งหมด</button>
@@ -637,8 +633,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <!-- ============ ประวัติการใช้งาน ============ -->
       <div class="panel" id="panel-log">
         <div class="section">
-          <div class="section-head">
-            <h2>ประวัติการใช้งาน (200 รายการล่าสุด)</h2>
+          <div class="section-head" style="justify-content:flex-end;">
             <div class="toolbar"><button class="btn btn-ghost" onclick="exportLogExcel()">📊 ส่งออก Excel</button></div>
           </div>
           <div class="toolbar-row">
@@ -660,7 +655,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <!-- ============ สำรองข้อมูล ============ -->
       <div class="panel" id="panel-backup">
         <div class="section">
-          <div class="section-head"><h2>ส่งออก / สำรองข้อมูลทั้งระบบ</h2></div>
+          <div class="section-head"><h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 20h16"/></svg></span>
+              ส่งออก / สำรองข้อมูลทั้งระบบ
+            </h2></div>
           <div style="padding:18px 20px;display:flex;gap:10px;flex-wrap:wrap;">
             <button class="btn btn-ghost" id="btn-export-xlsx" onclick="exportAllExcel()">📊 ส่งออก Excel (ทุกตาราง แยกชีต)</button>
             <button class="btn btn-ghost" id="btn-export-json" onclick="exportAllJson()">💾 ส่งออกไฟล์สำรอง (JSON)</button>
@@ -668,7 +665,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div class="foot-note">ไฟล์ Excel ที่ส่งออกใช้ชื่อชีตเป็นชื่อตาราง นำกลับเข้าระบบได้ด้วยปุ่ม "นำเข้าจาก Excel" ด้านล่าง (เจ้าของระบบ)</div>
         </div>
         <div class="section" id="import-section" style="display:none;">
-          <div class="section-head"><h2>นำเข้าจาก Excel (เจ้าของระบบ)</h2></div>
+          <div class="section-head"><h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M4 20h16"/></svg></span>
+              นำเข้าจาก Excel (เจ้าของระบบ)
+            </h2></div>
           <div style="padding:18px 20px;">
             <div class="hint-box">ใช้ได้กับ (1) ไฟล์ Excel ที่ส่งออกจากปุ่มด้านบน หรือ (2) ไฟล์ Google Sheet เดิม "DB-บริหารหมวด" (ไฟล์ → ดาวน์โหลด → Microsoft Excel) — ระบบอ่านเฉพาะชีตที่ชื่อตรงกับชื่อตาราง ข้ามชีต users/activity_log · รายการรหัสเดียวกันจะถูกเขียนทับ (นำเข้าซ้ำได้ ไม่เกิดข้อมูลซ้ำ)</div>
             <input type="file" id="import-file" accept=".xlsx,.xls">
@@ -677,7 +676,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           </div>
         </div>
         <div class="section" id="staffpriv-section" style="display:none;">
-          <div class="section-head"><h2>ข้อมูลส่วนตัวบุคลากร (PDPA) — เจ้าของระบบ</h2></div>
+          <div class="section-head"><h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></span>
+              ข้อมูลส่วนตัวบุคลากร (PDPA) — เจ้าของระบบ
+            </h2></div>
           <div style="padding:18px 20px;">
             <div class="hint-box">แยก เบอร์โทร ที่อยู่ วันเกิด ผู้ติดต่อฉุกเฉิน กรุ๊ปเลือด โรค วุฒิ ไปเก็บในตารางแยกที่อ่านได้เฉพาะเจ้าของ/หมวด/ผู้ช่วยหมวด/ผู้มีสิทธิ์ระบบ 1 (แก้ไข-ดู) ทำตามลำดับ: <b>① ตรวจสถานะ → ② ย้ายข้อมูล → (ทดสอบให้แน่ใจ) → ③ ลบข้อมูลเดิม</b> ปุ่ม ①② รันซ้ำได้ปลอดภัย ไม่ลบอะไร · ปุ่ม ③ ลบฟิลด์ส่วนตัวออกจากตารางเดิมถาวร (ควรส่งออกไฟล์สำรองก่อน) และจะไม่ลบถ้ายังย้ายไม่ครบ</div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -689,7 +690,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           </div>
         </div>
         <div class="section">
-          <div class="section-head"><h2>ทางลัด</h2></div>
+          <div class="section-head"><h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></span>
+              ทางลัด
+            </h2></div>
           <div style="padding:18px 20px;display:flex;gap:10px;flex-wrap:wrap;">
             <a class="btn btn-ghost" href="https://console.firebase.google.com/" target="_blank" rel="noopener">🔥 Firebase Console</a>
             <a class="btn btn-ghost" href="https://choengnoen.github.io/choengnoen-accident/" target="_blank" rel="noopener">🚧 ระบบงานอุบัติเหตุ</a>
@@ -802,7 +805,7 @@ document.querySelectorAll('.sec-tab').forEach(t=>t.addEventListener('click',()=>
 function applyTabVisibility(){
   const can = f=>FBL.can(f);
   document.getElementById('tab-trash').style.display = (can('restore')||can('purge')||can('viewLog')||can('delete')) ? '' : 'none';
-  document.getElementById('tab-log').style.display = can('viewLog') ? '' : 'none';
+  const tabLog = document.getElementById('tab-log'); if(tabLog) tabLog.style.display = can('viewLog') ? '' : 'none';
   document.getElementById('tab-backup').style.display = (can('export')||FBL.isOwner()) ? '' : 'none';
   document.getElementById('btn-add-user').style.display = FBL.isOwner() ? '' : 'none';
   document.getElementById('import-section').style.display = FBL.isOwner() ? '' : 'none';
