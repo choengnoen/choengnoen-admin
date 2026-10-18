@@ -181,6 +181,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   td.veh-code{color:var(--ink-400);font-size:12px;font-weight:600;white-space:nowrap;}
   /* บอร์ดสถานะเครื่องจักร/ยานพาหนะ */
   .vb-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:16px 20px 20px;align-items:start;}
+  .vb-tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:14px 20px 0;}
+  .vb-tools .search-box{min-width:0;width:100%;max-width:none;flex:none;margin:0;}
+  .vb-grp{grid-column:1/-1;background:var(--paper-100);color:var(--navy-900);font-weight:700;font-size:13.5px;padding:8px 14px;border-radius:8px;}
+  .vb-grp:not(:first-child){margin-top:8px;}
   .vb-card{--c:var(--success);margin-bottom:0;} .vb-card.s-due{--c:var(--danger);} .vb-card.s-svc{--c:#d97706;}
   .vb-col{background:var(--paper-100);border-radius:14px;padding:12px;--c:var(--success);}
   .vb-col.s-due{--c:var(--danger);} .vb-col.s-svc{--c:#d97706;}
@@ -642,6 +646,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="dsel.js"></script>
 <script src="firebase-layer.js" data-page="s3"></script>
 <script src="emoji-img.js" defer></script>
+<script src="modal-standard.js" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
 .route-header .topbar-right{flex-direction:column;align-items:flex-end;gap:6px}
@@ -910,9 +915,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="tab" data-vehtype="due" onclick="setVehTypeTab(this)">ใกล้ถึงกำหนดตรวจ (<span id="veh-count-due">0</span>)</div>
               <div class="tab" data-vehtype="svc" onclick="setVehTypeTab(this)">อยู่ระหว่างซ่อม (<span id="veh-count-svc">0</span>)</div>
             </div>
-            <div class="search-box" id="veh-search-box" style="min-width:220px;flex:none;margin-left:auto;">🔍 <input id="veh-search" oninput="renderVehicles()" placeholder="ค้นหาชื่อ/รหัส/ผู้รับผิดชอบ/ทะเบียน"></div>
-            <button class="btn btn-primary" onclick="openVehicleModal(null)">+ เพิ่มเครื่องจักร/รถ</button>
+            <button class="btn btn-primary" style="margin-left:auto;" onclick="openVehicleModal(null)">+ เพิ่มเครื่องจักร/รถ</button>
           </div>
+          <div class="vb-tools"><div class="search-box" id="veh-search-box">🔍 <input id="veh-search" oninput="renderVehicles()" placeholder="ค้นหา..."></div></div>
           <div class="vb-board" id="veh-board"></div>
           <div class="legend-block" id="veh-foot-block">
             <button type="button" class="legend-dot-btn no-print" id="veh-foot-toggle" onclick="__toggleNote('veh-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
@@ -2371,7 +2376,13 @@ function vehicleCardHtml(v){
     <div class="vb-acts"><button class="btn btn-ghost btn-sm" onclick="openVehDetail(${v.id})">รายละเอียด</button>${isAdmin()?`<button class="btn btn-ghost btn-sm" style="flex:none;" onclick="openVehStatus(${v.id})">เปลี่ยนสถานะ ›</button>`:''}</div></div>`;
 }
 function vehicleBoardHtml(list, key){
-  return list.length ? list.map(vehicleCardHtml).join('') : `<div class="vb-empty" style="grid-column:1/-1;">ไม่มีรายการในสถานะ "${VEH_STATUS[key].label}"</div>`;
+  if(!list.length) return `<div class="vb-empty" style="grid-column:1/-1;">ไม่มีรายการในสถานะ "${VEH_STATUS[key].label}"</div>`;
+  const groups = [
+    ['⛽ น้ำมันดีเซล', list.filter(v=>v.fuelType==='ดีเซล')],
+    ['⛽ น้ำมันเบนซิน', list.filter(v=>v.fuelType==='เบนซิน')],
+    ['อื่น ๆ / ไม่ใช้เชื้อเพลิง', list.filter(v=>v.fuelType!=='ดีเซล' && v.fuelType!=='เบนซิน')]
+  ];
+  return groups.filter(g=>g[1].length).map(g=>`<div class="vb-grp">${g[0]} (${g[1].length})</div>${g[1].map(vehicleCardHtml).join('')}`).join('');
 }
 function openVehDetail(id){
   const v = vehicles.find(x=>x.id===id); if(!v) return;
