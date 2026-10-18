@@ -756,6 +756,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="dsel.js"></script>
 <script src="firebase-layer.js" data-page="s2"></script>
 <script src="emoji-img.js" defer></script>
+<script src="modal-standard.js" defer></script>
 <script src="doh-import.js" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
@@ -1561,8 +1562,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </div>
             <div class="modal-plain-footer">
               <button class="btn btn-ghost hidden" id="uc-form-delete-btn" style="color:var(--danger);" onclick="deleteUcEntry(__ucEditingNo)">ลบรายการนี้</button>
-              <button class="btn btn-primary" id="uc-form-save-btn" onclick="saveUcEntry()">บันทึก</button>
               <button class="btn btn-ghost" id="uc-form-cancel-btn" onclick="closeUcForm()">ยกเลิก</button>
+              <button class="btn btn-primary" id="uc-form-save-btn" onclick="saveUcEntry()">บันทึก</button>
             </div>
           </div>
         </div>
@@ -5239,7 +5240,7 @@ function renderDwView(){
         <div class="dwv-bx"><h4>💰 ค่าใช้จ่าย</h4><div class="dwv-rec">${recLine('ค่าวัสดุ',d.material||0)}${recLine('ค่าแรงงาน',d.labor||0)}${recLine('ค่าเช่าเครื่องจักร',d.rent||0)}${recLine('ค่าน้ำมันเชื้อเพลิง',d.fuel||0)}<div class="dwv-ln" style="padding-top:8px"><span><b>รวมทั้งสิ้น</b></span><i></i><span class="dwv-grand">${fmtNum(dwTotal(d),2)}</span></div></div></div>
       </div>
     </div>
-    ${canEdit ? `<div class="dwv-foot"><button type="button" class="btn btn-danger" ${info.locked?'disabled':''} onclick="closeDwView();deleteDailyEntry(${d.no})">ลบ</button><button type="button" class="btn btn-primary" ${info.locked?'disabled':''} onclick="closeDwView();editDailyEntry(${d.no})">แก้ไข</button></div>` : '<div style="height:8px"></div>'}`;
+    ${canEdit ? `<div class="dwv-foot"><button type="button" class="btn btn-danger" ${info.locked?'disabled':''} onclick="closeDwView();deleteDailyEntry(${d.no})">ลบ</button><button type="button" class="btn btn-ghost" onclick="closeDwView()">ปิด</button><button type="button" class="btn btn-primary" ${info.locked?'disabled':''} onclick="closeDwView();editDailyEntry(${d.no})">แก้ไข</button></div>` : '<div style="height:8px"></div>'}`;
 }/* ลบใบสั่งการรายวัน — ต้องลบธุรกรรมน้ำมัน/วัสดุที่เชื่อมโยงไว้ในระบบรองที่ 3 (พ.1-02/พ.1-03) ด้วยเสมอ ไม่เช่นนั้นตัวเลขจะยังค้างอยู่ในรายงานแม้ลบใบสั่งการนี้ไปแล้ว */
 /* สถานะล็อกเดือนของบัญชี พ.1-02/พ.1-03 (2569-09-19) — ใบสั่งการตัดสต็อกวัสดุ/น้ำมันเข้าบัญชีเหล่านั้นอัตโนมัติ
    จึงต้องกันไม่ให้บันทึก/แก้/ลบใบสั่งการของเดือนที่ถูกล็อกแล้ว (ล็อก/ปลดล็อกทำที่หน้ารายงาน พ.1-02/03 ของระบบ 3) */
@@ -5407,10 +5408,11 @@ async function openDwTxAudit(){
     ov = document.createElement('div');
     ov.id = 'dw-audit-overlay';
     ov.className = 'modal-overlay no-print';
-    ov.innerHTML = '<div class="modal-box" style="max-width:980px;width:96%;max-height:88vh;overflow:auto;">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><h3 style="margin:0;">🔎 ตรวจยอดคลังน้ำมัน/วัสดุที่อาจซ้ำหรือค้าง</h3>'
+    ov.innerHTML = '<div class="modal-box" style="max-width:980px;width:96%;">'
+      + '<div class="modal-head"><h3>🔎 ตรวจยอดคลังน้ำมัน/วัสดุที่อาจซ้ำหรือค้าง</h3>'
       + '<button class="modal-close" onclick="document.getElementById(\'dw-audit-overlay\').classList.add(\'hidden\')">✕</button></div>'
-      + '<div id="dw-audit-body">กำลังตรวจ...</div></div>';
+      + '<div class="modal-body"><div id="dw-audit-body">กำลังตรวจ...</div></div>'
+      + '<div class="modal-foot"><button type="button" class="btn btn-ghost" onclick="document.getElementById(\'dw-audit-overlay\').classList.add(\'hidden\')">ปิด</button></div></div>';
     document.body.appendChild(ov);
   }
   ov.classList.remove('hidden');
