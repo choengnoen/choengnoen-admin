@@ -427,27 +427,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .mc-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
   #panel-inbound .mc-actions{flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:6px;}
   #panel-inbound .mc-actions .btn{padding:7px 16px;font-size:13px;white-space:nowrap;justify-content:center;text-align:center;}
-  /* เลขที่ใบเบิก/ใบสั่งจ่ายน้ำมัน */
-  #docno-overlay .modal-box{max-width:960px;}
-  .dn-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
-  .dn-bar select{font-family:'Sarabun';font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;}
-  .dn-tabs{display:flex;gap:6px;margin-bottom:10px;}
-  .dn-tabs button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 14px;font-family:'Sarabun';font-size:14px;cursor:pointer;}
-  .dn-tabs button.on{background:var(--navy-800);color:#fff;border-color:var(--navy-800);}
-  .dn-kpi{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
-  .dn-kpi div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:12.5px;color:var(--ink-600);}
-  .dn-kpi b{display:block;font-size:19px;color:var(--ink-900);}
-  .dn-note{background:var(--paper-50);border:1px solid var(--line);border-radius:10px;padding:9px 13px;font-size:13px;color:var(--ink-600);line-height:1.65;margin-bottom:10px;}
-  .dn-note.bad{background:var(--danger-bg);color:var(--danger);border-color:#f0b9b0;}
-  .dn-note.warn{background:#fdf1d9;color:#7a5000;border-color:#f2d28c;}
-  .dn-wrap{overflow:auto;max-height:52vh;border:1px solid var(--line);border-radius:10px;}
-  .dn-wrap table{width:100%;border-collapse:collapse;font-size:13.5px;}
-  .dn-wrap th,.dn-wrap td{padding:5px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;}
-  .dn-wrap th{background:var(--paper-50);color:var(--ink-600);font-size:12.5px;position:sticky;top:0;}
-  .dn-wrap td.n{text-align:right;}
-  .dn-in{font-family:'Sarabun';font-size:13.5px;width:100%;min-width:230px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;}
-  .dn-in.dup{border-color:var(--danger);background:var(--danger-bg);}
-  .dn-sug{border:1px dashed var(--line);background:#fff;border-radius:7px;padding:3px 8px;font-size:12px;color:var(--ink-600);cursor:pointer;margin-left:4px;}
   .mc-usagebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 20px 0;}
   .mc-usagebar.hidden{display:none;}
   .mu-chip{border:1px solid var(--line);background:#fff;color:var(--ink-600);border-radius:99px;padding:6px 14px;font-family:'Sarabun';font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
@@ -990,7 +969,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 <option value="7" selected>ก.ค.</option><option value="8">ส.ค.</option><option value="9">ก.ย.</option>
               </select>
               <span class="rep-lock-ctl" style="display:flex;align-items:center;gap:6px;flex:none;"></span>
-              <button class="btn btn-ghost btn-sm" style="flex:none;white-space:nowrap;" onclick="openDocNo('mat')" title="บันทึกเลขที่ใบเบิก-จ่ายพัสดุที่หมวดจ่ายออก และตรวจเลขที่ขาด/ซ้ำ">🔢 เลขที่ใบเบิกจ่าย</button>
             </div>
           </div>
           <div class="toolbar" style="padding:14px 20px 0;">
@@ -1039,17 +1017,16 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 <option value="4">เม.ย.</option><option value="5">พ.ค.</option><option value="6">มิ.ย.</option>
                 <option value="7" selected>ก.ค.</option><option value="8">ส.ค.</option><option value="9">ก.ย.</option>
               </select>
-              <button class="btn btn-ghost btn-sm" style="flex:none;white-space:nowrap;" onclick="openDocNo('fuel')" title="บันทึกเลขที่ใบสั่งจ่ายน้ำมันที่หมวดจ่ายออก และตรวจเลขที่ขาด/ซ้ำ">🔢 เลขที่ใบสั่งจ่าย</button>
             </div>
           </div>
-          <div class="draft-chip hidden" id="draft-fuel-chip">
+          <div id="rep-fuel-grid-wrap" class="grid-wrap"></div>
+          <div class="draft-chip hidden" id="draft-fuel-chip" style="margin:12px 20px;">
             <span class="dc-dot"></span>
             <span id="draft-fuel-count-text"></span>
             <span style="flex:1;"></span>
             <button class="dc-btn dc-clear" onclick="discardDraftReport('fuel')">ล้างการแก้ไข</button>
             <button class="dc-btn dc-save" onclick="reviewDraftReport('fuel')">💾 บันทึก</button>
           </div>
-          <div id="rep-fuel-grid-wrap" class="grid-wrap"></div>
         </div>
       </div>
 
@@ -1153,18 +1130,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
     </div>
     <div class="modal-body" id="ib-edit-body"></div>
     <div class="modal-foot" id="ib-edit-foot"></div>
-  </div>
-</div>
-
-<!-- ============ เลขที่ใบเบิก-จ่ายพัสดุ (พ.1-02) / ใบสั่งจ่ายน้ำมัน (พ.1-03) — บันทึกเลขที่ใบต่อรายการ + ตรวจเลขขาด/ซ้ำ ============ -->
-<div class="modal-overlay hidden no-print" id="docno-overlay">
-  <div class="modal-box">
-    <div class="modal-head">
-      <div class="modal-head-icon" style="font-size:19px;">🔢</div>
-      <h3>เลขที่ใบเบิก-จ่าย / ใบสั่งจ่ายน้ำมัน (ที่หมวดจ่ายออก)</h3>
-      <button type="button" class="modal-close" onclick="closeDocNo()">✕</button>
-    </div>
-    <div class="modal-body" id="docno-body"></div>
   </div>
 </div>
 
@@ -5455,130 +5420,6 @@ function runConfirmModal(){
   document.getElementById('confirm-modal-overlay').classList.add('hidden');
   __confirmModalCallback = null;
   if(cb) cb();
-}
-
-/* ============================================================
-   เลขที่ใบเบิก/ใบสั่งจ่ายน้ำมัน — เก็บที่ช่อง refNo (วัสดุ) / ref (น้ำมัน) ของรายการเบิกจ่ายแต่ละรายการ (ไม่มีตารางใหม่)
-   - 1 รายการน้ำมัน = เครื่องจักร 1 เครื่อง/วัน ตรงกับใบสั่งจ่ายน้ำมัน 1 ใบ; รายการวัสดุหลายรายการในวันเดียวอาจใช้เลขที่ใบเดียวกันได้
-   - ตรวจ: รายการที่ยังไม่มีเลขที่, เลขที่ขาดในช่วงเรียง (แยกชนิดใบ), เลขที่ซ้ำข้ามวัน/ข้ามเครื่อง
-   ============================================================ */
-const DocNo = { mk:'', type:'fuel', onlyEmpty:false, rows:[] };
-function docNoParse(ref){
-  const m = String(ref||'').trim().match(/^(.*?)(\d+)\s*$/);
-  return m ? { prefix:m[1], n:parseInt(m[2],10), width:m[2].length } : null;
-}
-function docNoBuildRows(){
-  const mk = DocNo.mk;
-  if(DocNo.type==='fuel'){
-    return fuelTransactions.filter(t=>t.kind==='issue' && !isAdjustmentTx(t) && monthKeyOf(t.date)===mk)
-      .map(t=>({ id:t.id, tbl:'fuel_transactions', field:'ref', date:t.date, ref:t.ref||'', ref0:t.ref||'', tx:t,
-        label: vehicleShortName(t.vehicle)+' ('+vehicleRegNo(t.vehicle)+') · '+(t.fuelType||''), qty:fmtNum(t.liters,1)+' ลิตร', grp:t.vehicle+'|'+t.date }))
-      .sort((a,b)=>a.date.localeCompare(b.date) || a.label.localeCompare(b.label));
-  }
-  const byCode = {}; materials.forEach(m=>{ byCode[m.code]=m; });
-  return materialTransactions.filter(t=>t.kind==='issue' && !isAdjustmentTx(t) && monthKeyOf(t.date)===mk)
-    .map(t=>{ const m = byCode[t.itemCode]; return { id:t.id, tbl:'material_transactions', field:'refNo', date:t.date, ref:t.ref||'', ref0:t.ref||'', tx:t,
-      label: m ? m.name : String(t.itemCode||''), qty:fmtNum(t.qty,1)+' '+(m?m.unit:''), grp:t.date }; })
-    .sort((a,b)=>a.date.localeCompare(b.date) || a.label.localeCompare(b.label));
-}
-function docNoAnalyze(rows){
-  const filled = rows.filter(r=>String(r.ref).trim());
-  const parsed = filled.map(r=>({ r, p:docNoParse(r.ref) })).filter(x=>x.p);
-  // ชุดเลขที่หลัก = คำนำหน้าที่พบบ่อยที่สุด
-  const pc = {}; parsed.forEach(x=>{ pc[x.p.prefix] = (pc[x.p.prefix]||0)+1; });
-  const main = Object.keys(pc).sort((a,b)=>pc[b]-pc[a])[0];
-  const nums = new Set(parsed.filter(x=>x.p.prefix===main).map(x=>x.p.n));
-  let missing = [];
-  if(nums.size>1){
-    const arr = Array.from(nums).sort((a,b)=>a-b);
-    for(let n=arr[0]; n<=arr[arr.length-1]; n++){ if(!nums.has(n)) missing.push(n); }
-  }
-  // ซ้ำ: เลขที่เดียวกันถูกใช้คนละกลุ่ม (น้ำมัน = คนละเครื่อง/วัน, วัสดุ = คนละวัน)
-  const groupsByRef = {}; filled.forEach(r=>{ const k = String(r.ref).trim(); (groupsByRef[k] = groupsByRef[k] || new Set()).add(r.grp); });
-  const dups = Object.keys(groupsByRef).filter(k=>groupsByRef[k].size>1);
-  return { main:main||'', missing, dups, otherPrefix: Object.keys(pc).filter(k=>k!==main) , filled:filled.length, total:rows.length };
-}
-function openDocNo(type){
-  // เปิดจากแท็บ พ.1-02 / พ.1-03: ใช้ชนิดใบและเดือนที่เลือกอยู่ในแท็บนั้น
-  if(type==='mat' || type==='fuel'){
-    DocNo.type = type;
-    DocNo.mk = type==='fuel' ? ledgerMonthKey('rep-fuel-ledger-fy','rep-fuel-ledger-month') : ledgerMonthKey('rep-ledger-fy','rep-ledger-month');
-  }
-  if(!DocNo.mk) DocNo.mk = masterMk();
-  document.getElementById('docno-overlay').classList.remove('hidden');
-  renderDocNo();
-}
-function closeDocNo(){ document.getElementById('docno-overlay').classList.add('hidden'); }
-function docNoSetMonth(v){ DocNo.mk = v; renderDocNo(); }
-function docNoSetType(t){ DocNo.type = t; renderDocNo(); }
-function docNoToggleOnly(v){ DocNo.onlyEmpty = !!v; renderDocNoTable(); }
-function renderDocNo(){
-  const body = document.getElementById('docno-body'); if(!body) return;
-  const keys = []; let k = currentMonthKey();
-  for(let i=0;i<14;i++){ keys.push(k); k = prevMonthKey(k); }
-  if(keys.indexOf(DocNo.mk)<0) keys.unshift(DocNo.mk);
-  const sel = keys.map(o=>{ const p = o.split('-').map(Number); return `<option value="${o}" ${o===DocNo.mk?'selected':''}>${monthNamesTh[p[1]-1]} ${p[0]+543}</option>`; }).join('');
-  body.innerHTML = `<div class="dn-note">กรอกเลขที่ใบตามกระดาษของแต่ละรายการ (เช่น <b>สทล.14 ขท.ระยอง 3/4/1896</b>) — ระบบตรวจเลขที่ที่<b>ขาดในช่วงเรียง</b>และ<b>ซ้ำ</b>ให้ แยกตามชนิดใบ (พ.1-03 น้ำมัน / พ.1-02 วัสดุ) กด Enter เพื่อบันทึกและไปแถวถัดไป หรือกดปุ่ม "＋1" เพื่อใช้เลขถัดจากแถวก่อนหน้า</div>
-    <div class="dn-bar"><span>เดือน <select onchange="docNoSetMonth(this.value)">${sel}</select></span>
-      <label style="display:inline-flex;gap:6px;align-items:center;font-size:13.5px;"><input type="checkbox" ${DocNo.onlyEmpty?'checked':''} onchange="docNoToggleOnly(this.checked)"> แสดงเฉพาะที่ยังไม่มีเลขที่ใบ</label></div>
-    <div class="dn-tabs"><button class="${DocNo.type==='fuel'?'on':''}" onclick="docNoSetType('fuel')">⛽ ใบสั่งจ่ายน้ำมัน (พ.1-03)</button><button class="${DocNo.type==='mat'?'on':''}" onclick="docNoSetType('mat')">📦 ใบเบิก-จ่ายพัสดุ (พ.1-02)</button></div>
-    <div id="docno-sum"></div><div id="docno-tbl"></div>`;
-  DocNo.rows = docNoBuildRows();
-  renderDocNoSummary(); renderDocNoTable();
-}
-function renderDocNoSummary(){
-  const el = document.getElementById('docno-sum'); if(!el) return;
-  const a = docNoAnalyze(DocNo.rows);
-  const fmtList = (arr, n)=> arr.slice(0,n).join(', ') + (arr.length>n ? ' … (อีก '+(arr.length-n)+')' : '');
-  const miss = a.missing.map(n=>a.main+String(n));
-  el.innerHTML = `<div class="dn-kpi"><div><b>${a.total}</b>รายการเบิกจ่าย</div><div><b>${a.filled}</b>มีเลขที่ใบแล้ว</div><div><b style="color:${a.total-a.filled?'var(--danger)':'inherit'}">${a.total-a.filled}</b>ยังไม่มีเลขที่ใบ</div>
-      <div><b style="color:${a.missing.length?'var(--danger)':'inherit'}">${a.missing.length}</b>เลขที่ขาดในช่วง</div><div><b style="color:${a.dups.length?'var(--danger)':'inherit'}">${a.dups.length}</b>เลขที่ซ้ำ</div></div>`
-    + (a.missing.length ? `<div class="dn-note bad"><b>เลขที่ที่ขาดในช่วงเรียง:</b> ${esc(fmtList(miss, 30))}<br><span style="font-size:12px;">อาจเป็นใบหาย ใบยกเลิก หรือยังไม่ได้คีย์ — ตรวจกับตัวเล่มกระดาษ</span></div>` : '')
-    + (a.dups.length ? `<div class="dn-note bad"><b>เลขที่ที่ถูกใช้ซ้ำ (คนละ${DocNo.type==='fuel'?'เครื่อง/วัน':'วัน'}):</b> ${esc(fmtList(a.dups, 20))}</div>` : '')
-    + (a.otherPrefix.length ? `<div class="dn-note warn">พบเลขที่ที่รูปแบบ/คำนำหน้าไม่ตรงกับชุดหลัก (${esc(a.main)}…): ${esc(fmtList(a.otherPrefix, 5))} — ไม่นำมาตรวจเลขขาด</div>` : '');
-}
-function renderDocNoTable(){
-  const el = document.getElementById('docno-tbl'); if(!el) return;
-  const admin = isAdmin();
-  const dupSet = new Set(docNoAnalyze(DocNo.rows).dups);
-  // เลขถัดไปที่แนะนำ = เลขของแถวก่อนหน้า (ที่มีเลขที่) + 1
-  let last = null; const sug = {};
-  DocNo.rows.forEach((r,i)=>{
-    const p = docNoParse(r.ref);
-    if(p) last = p; else if(last) sug[i] = last.prefix + String(last.n+1).padStart(last.width,'0');
-  });
-  DocNo.sug = sug;
-  const list = DocNo.rows.map((r,i)=>({r,i})).filter(x=>!DocNo.onlyEmpty || !String(x.r.ref).trim());
-  el.innerHTML = list.length ? `<div class="dn-wrap"><table><thead><tr><th>วันที่</th><th>${DocNo.type==='fuel'?'เครื่องจักร / ชนิดน้ำมัน':'รายการวัสดุ'}</th><th class="n">จำนวน</th><th>เลขที่ใบ</th></tr></thead><tbody>`
-    + list.map(({r,i})=>`<tr><td>${esc(fmtDate(r.date))}</td><td>${esc(r.label)}</td><td class="n">${esc(r.qty)}</td>
-        <td><input class="dn-in ${dupSet.has(String(r.ref).trim())?'dup':''}" id="dn-in-${i}" value="${esc(r.ref)}" placeholder="เลขที่ใบ" ${admin?'':'disabled'}
-          onkeydown="if(event.key==='Enter'){event.preventDefault();docNoCommit(${i},true);}" onchange="docNoCommit(${i},false)">${(admin && !String(r.ref).trim() && sug[i]) ? `<button type="button" class="dn-sug" title="ใช้เลขที่ถัดจากแถวก่อนหน้า" onclick="docNoUseSug(${i})">＋1 ${esc(sug[i].slice(-6))}</button>` : ''}</td></tr>`).join('')
-    + '</tbody></table></div>' : `<div class="dn-note">${DocNo.onlyEmpty?'ทุกรายการมีเลขที่ใบแล้ว 🎉':'เดือนนี้ไม่มีรายการเบิกจ่าย'}</div>`;
-}
-async function docNoCommit(i, goNext){
-  const r = DocNo.rows[i]; const inp = document.getElementById('dn-in-'+i); if(!r || !inp) return;
-  const v = inp.value.trim();
-  if(v !== String(r.ref0).trim()){
-    try{
-      const d = { id:r.id }; d[r.field] = v;
-      await apiPost('update', r.tbl, d);
-      r.ref = v; r.ref0 = v; r.tx.ref = v || undefined;
-    }catch(err){
-      showAlertModal('บันทึกเลขที่ใบไม่สำเร็จ: '+err.message);
-      inp.value = r.ref0; return;
-    }
-  }
-  r.ref = v;
-  renderDocNoSummary();
-  if(goNext){
-    renderDocNoTable();
-    let j = i+1; while(j<DocNo.rows.length && DocNo.onlyEmpty && String(DocNo.rows[j].ref).trim()) j++;
-    const nx = document.getElementById('dn-in-'+j); if(nx){ nx.focus(); nx.select(); nx.scrollIntoView({block:'nearest'}); }
-  }   /* กด Tab/คลิกออก: ไม่วาดตารางใหม่ เพื่อให้เคอร์เซอร์อยู่ที่ช่องถัดไป */
-}
-function docNoUseSug(i){
-  const inp = document.getElementById('dn-in-'+i); const val = DocNo.sug && DocNo.sug[i]; if(!inp || !val) return;
-  inp.value = val; docNoCommit(i, true);
 }
 
 /* โมดัลแจ้งเตือนแบบทั่วไป (แทน alert()) — showAlertModal(msg, title) ปุ่มเดียว "ตกลง" */
