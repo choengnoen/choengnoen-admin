@@ -317,7 +317,7 @@
   }
   async function rebuild(){
     render(null, 'กำลังอ่านข้อมูลอ้างอิงและจับคู่...');
-    try{ S.plan = await buildPlan(); S.cmp = buildCompare(); }catch(e){ S.plan = null; S.cmp = []; render('จับคู่ข้อมูลไม่สำเร็จ: '+(e&&e.message?e.message:e)); return; }
+    try{ S.plan = await buildPlan(); S.cmp = buildCompare(); S.fuel = buildFuelCompare(); }catch(e){ S.plan = null; S.cmp = []; S.fuel = []; render('จับคู่ข้อมูลไม่สำเร็จ: '+(e&&e.message?e.message:e)); return; }
     S.sel = {};
     S.cmp.forEach((c,i)=>c.actions.forEach(a=>{ S.sel[i+':'+a.type] = true; }));
     render();
@@ -338,7 +338,7 @@
       if(!job){ c.skip = 'ไม่พบรหัสงาน '+a.jobCode+' ในข้อมูลอ้างอิง'; return c; }
       const route = findRouteDoh(a.route, a.control), rv = route ? route.routeNo : '__other__';
       const mks = new Set(dates.map(d=>d.slice(0,7)));
-      const ex = dailyWorkOrders.filter(d=>d.code===a.jobCode && mks.has(String(d.date).slice(0,7)) && (String(d.route||'')===String(rv) || String(d.loc||'').indexOf(a.route)>=0)).sort((x,y)=>x.date<y.date?-1:1);
+      const ex = dailyWorkOrders.filter(d=>d.code===a.jobCode && mks.has(String(d.date).slice(0,7)) && (String(d.route||'')===String(rv) || new RegExp('ทล\\.\\s*'+a.route+'(?!\\d)').test(String(d.loc||'')))).sort((x,y)=>x.date<y.date?-1:1);
       c.exN = ex.length; c.ex = ex;
       const cmpNum = (name, sys, dept, tol)=>{ if(Math.abs(sys-dept) > (tol||0.01)) c.diffs.push(name+': ระบบ '+r2(sys)+' / กรม '+r2(dept)); else c.oks.push(name); };
       const exDates = Array.from(new Set(ex.map(d=>d.date)));
@@ -365,14 +365,8 @@
           else cmpNum('วัสดุ '+m.name, sq, m.qty, 0.001);
         });
         if(newParts.length) c.actions.push({ type:'parts', text:'เติมวัสดุที่ไม่มีในใบ '+newParts.length+' รายการ ลงใบวันแรก ('+dateTh(ex[0].date)+') และตัดคลังตาม', parts:newParts, target:ex[0] });
-        // เครื่องจักร (ลิตรน้ำมัน)
-        a.machines.forEach(m=>{
-          const v = matchVehicle(m.no);
-          if(!v){ c.diffs.push('เครื่องจักร '+m.no+' ไม่พบในทะเบียน'); return; }
-          const rows = ex.reduce((arr,d)=>arr.concat((d.vehicles||[]).filter(x=>x.label===v.label)),[]);
-          if(!rows.length){ c.diffs.push('กรมลงเครื่อง '+v.label+' แต่ใบของระบบไม่มีเครื่องนี้'); return; }
-          cmpNum('น้ำมัน '+v.label+' (ลิตร)', rows.reduce((s,x)=>s+(x.liters||0),0), m.liters, 0.05);
-        });
+        // เครื่องจักร/น้ำมัน: เทียบรวมต่อเครื่องทั้งเดือนที่ส่วนบนของหน้า (กรมแบ่งน้ำมันไปลงทีละแผน เทียบทีละแผนไม่ได้)
+        a.machines.forEach(m=>{ if(!matchVehicle(m.no)) c.diffs.push('เครื่องจักร '+m.no+' ไม่พบในทะเบียน'); });
         // คนทำงาน
         const sysStaff = Array.from(new Set(ex.reduce((arr,d)=>arr.concat(d.staff||[]),[])));
         const lackStaff = a.labor.filter(n=>!sysStaff.some(s=>normPerson(s)===normPerson(n)));
@@ -385,12 +379,41 @@
       return c;
     });
   }
+  /* น้ำมันรวมต่อเครื่อง ทั้งเดือน (ทุกแผน/ทุกรหัสงาน) — เทียบกับยอดที่ใบสั่งการของระบบเบิกไว้ (ซึ่งตรงกับใบเบิกที่ลงนาม) */
+  function buildFuelCompare(){
+    const months = new Set(); const dept = {}, sys = {}, unk = [];
+    S.parsed.forEach(a=>{
+      const dates = Array.from(new Set(a.dates.map(iso).filter(Boolean)));
+      dates.forEach(d=>months.add(d.slice(0,7)));
+      a.machines.forEach(m=>{
+        const v = matchVehicle(m.no);
+        if(!v){ if(unk.indexOf(m.no)<0) unk.push(m.no); return; }
+        dept[v.label] = r2((dept[v.label]||0) + m.liters);
+      });
+    });
+    dailyWorkOrders.filter(d=>months.has(String(d.date).slice(0,7))).forEach(d=>{
+      (d.vehicles||[]).forEach(x=>{ sys[x.label] = r2((sys[x.label]||0) + (x.liters||0)); });
+    });
+    const labels = Array.from(new Set(Object.keys(dept).concat(Object.keys(sys)))).sort();
+    return { rows: labels.map(l=>({ label:l, sys:sys[l]||0, dept:dept[l]||0, diff:r2((sys[l]||0)-(dept[l]||0)) })), unk };
+  }
+  function renderFuel(){
+    const f = S.fuel; if(!f || !f.rows) return '';
+    const bad = f.rows.filter(r=>Math.abs(r.diff)>0.05).length;
+    return '<div class="dohi-note" style="background:#fff"><b>น้ำมันรวมต่อเครื่อง ทั้งเดือน (ทุกแผน)</b> — '
+      + (bad ? '<span style="color:#c1402f">ต่างกัน '+bad+' เครื่อง</span>' : '<span style="color:#1c8a53">✓ ตรงกันทุกเครื่อง</span>')
+      + '<div style="overflow:auto"><table class="dohi-table"><thead><tr><th>เครื่องจักร</th><th style="text-align:right">ระบบเรา (ลิตร)</th><th style="text-align:right">กรม (ลิตร)</th><th style="text-align:right">ต่าง</th></tr></thead><tbody>'
+      + f.rows.map(r=>{ const b = Math.abs(r.diff)>0.05; return '<tr'+(b?' style="background:#fdf1d9"':'')+'><td>'+H(r.label)+'</td><td style="text-align:right">'+r.sys+'</td><td style="text-align:right">'+r.dept+'</td><td style="text-align:right;'+(b?'color:#c1402f;font-weight:700':'')+'">'+(r.diff>0?'+':'')+r.diff+'</td></tr>'; }).join('')
+      + '</tbody></table></div>'
+      + (f.unk.length?'<div style="margin-top:6px">เครื่องจักรที่ไม่พบในทะเบียน: '+H(f.unk.join(', '))+'</div>':'')
+      + '</div>';
+  }
   function renderCompare(){
     if(!S.cmp.length) return '';
     const bad = S.cmp.filter(c=>c.diffs.length||c.skip).length;
     const head = '<div class="dohi-kpi"><div><b>'+S.cmp.length+'</b>แผนในไฟล์กรม</div><div><b style="color:#1c8a53">'+(S.cmp.length-bad)+'</b>ตรงกับระบบ</div><div><b style="color:#c1402f">'+bad+'</b>มีจุดต่าง</div></div>'
       + '<div class="dohi-note">โหมดนี้ <b>ไม่ลบ ไม่แทนที่ ไม่แก้ใบเดิม</b> — แสดงความต่างให้ตรวจ จะมีการเปลี่ยนแปลงก็ต่อเมื่อติ๊กรายการด้านล่างแล้วกด "ดำเนินการที่เลือก" เท่านั้น (ตัวเลขที่ต่างให้ไปแก้ในใบเอง)</div>';
-    return head + S.cmp.map((c,i)=>{
+    return head + renderFuel() + S.cmp.map((c,i)=>{
       const state = c.skip ? '<span style="color:#7a5000">ข้าม</span>' : (!c.exN && c.actions.length ? '<span style="color:#c1402f">ระบบยังไม่มีใบ</span>' : (c.diffs.length ? '<span style="color:#c1402f">มีจุดต่าง '+c.diffs.length+'</span>' : '<span style="color:#1c8a53">✓ ตรงกัน</span>'));
       return '<div class="dohi-note" style="background:#fff"><b>'+H(c.label)+'</b> — '+state+' <small>(ใบในระบบ '+c.exN+' ใบ)</small>'
         + (c.skip?'<div>'+H(c.skip)+'</div>':'')
@@ -402,6 +425,11 @@
   function compareText(){
     const lines = ['ผลเทียบข้อมูลใบสั่งการ ระบบเรา กับไฟล์กรม (rmms) ประจำ'+mkLabel(S.importMk),''];
     let n = 0;
+    if(S.fuel && S.fuel.rows && S.fuel.rows.length){
+      lines.push('น้ำมันรวมต่อเครื่อง ทั้งเดือน (ลิตร) ระบบเรา / กรม:');
+      S.fuel.rows.forEach(r=>lines.push('   - '+r.label+': '+r.sys+' / '+r.dept+(Math.abs(r.diff)>0.05?'  ← ต่าง '+(r.diff>0?'+':'')+r.diff:'')));
+      lines.push('');
+    }
     S.cmp.forEach(c=>{
       if(!c.diffs.length && !c.skip) return;
       n++; lines.push(n+'. '+c.label+(c.skip?' — ข้าม: '+c.skip:''));
