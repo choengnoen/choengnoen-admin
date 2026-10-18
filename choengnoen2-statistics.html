@@ -844,7 +844,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div data-view="routine2">3 · แผน - ผลงาน</div>
             <div data-view="settings">4 · ตั้งค่า</div>
           </div>
-          <div class="mn-sub" id="nav-sub"></div>
         </div>
         <span class="sp1"></span>
         <!-- ปุ่มหลักของหน้า (แบบ ค: อยู่แถวบนขวา) — ปุ่มของแต่ละหน้าย้ายมารวมที่นี่ แสดงทีละหน้าด้วย showView() -->
@@ -2726,8 +2725,6 @@ function showView(view){
   document.getElementById('nav-add-btn')?.classList.toggle('hidden', view!=='routine');
   /* ปุ่มหลักของแต่ละหน้า (แถวบนขวาของการ์ด) + คำอธิบายใต้ชื่อหน้า */
   [['rollup-commit-btn','rollup'],['nav-act-bmm','routine2'],['nav-act-crews','crews']].forEach(([id,v])=> document.getElementById(id)?.classList.toggle('hidden', view!==v));
-  const NAV_SUB = {routine:'เลือกวันจากแถบสัปดาห์เพื่อดูหรือบันทึกใบสั่งการ', rollup:'ผลงานรวมทุกงานของเดือนที่เลือก และปิดยอดประจำเดือน', routine2:'แผนงานและผลงาน งานบำรุงปกติ ของปีงบประมาณที่เลือก', settings:'ชุดปฏิบัติงาน ข้อมูลอ้างอิงงาน และทางหลวงควบคุม'};
-  const sub = document.getElementById('nav-sub'); if(sub) sub.textContent = NAV_SUB[menuView] || '';
   const showFilter = (view==='rollup' || view==='routine2');
   document.getElementById('g-filter')?.classList.toggle('hidden', !showFilter);
   document.getElementById('g-kind-wrap')?.classList.toggle('hidden', view!=='routine2');
