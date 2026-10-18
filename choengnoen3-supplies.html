@@ -506,6 +506,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ib-x{border:none;background:transparent;color:var(--ink-400);font-size:15px;cursor:pointer;padding:8px 6px;border-radius:6px;}
   .ib-x:hover{background:#fdeceb;color:#c0392b;}
   .ib-add{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 8px;}
+  #ib-edit-foot{padding:14px 22px;border-top:1px solid #e3e6ea;background:#fff;}
   .ib-add select{font-family:'Sarabun';font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;min-width:220px;max-width:100%;}
   @media(max-width:600px){.ib-hd{grid-template-columns:1fr;}.ib-ln{grid-template-columns:1fr 1fr;}.ib-ln-nm{grid-column:1/-1;padding-bottom:0;}.ib-x{justify-self:end;}.ib-kpi>div{min-width:calc(50% - 5px);}}
   .mc-watch{display:inline-block;margin-top:4px;background:#fdeede;color:#a3350f;border-radius:99px;padding:1px 8px;font-size:11px;font-weight:600;}
@@ -925,10 +926,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="tab" data-ibkind="fuel" onclick="setIbKind(this)">น้ำมันเชื้อเพลิง</div>
             </div>
             <span class="mc-sp"></span>
-            <label class="rep-toggle"><input type="checkbox" id="ib-only-warn" onchange="renderInbound()"> เฉพาะใบที่ต้องแก้ไข</label>
             <div class="search-box mc-search">🔍 <input id="ib-search" oninput="renderInbound()" placeholder="ค้นหาเลขที่/รายการ (ทุกเดือน)"></div>
           </div>
-          <div class="ib-kpi" id="ib-kpi"></div>
           <div class="ib-list" id="ib-list"></div>
           <div class="legend-block" id="ib-foot-block">
             <button type="button" class="legend-dot-btn no-print" id="ib-foot-toggle" onclick="__toggleNote('ib-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
@@ -1928,16 +1927,8 @@ function renderInbound(){
   if(sub) sub.textContent = all.length ? '📌 ใบเบิกล่าสุดที่รับเข้า '+fmtDate(all[0].date) : 'ยังไม่มีใบเบิกรับเข้า';
 
   const q = (document.getElementById('ib-search')?.value||'').trim().toLowerCase();
-  const onlyWarn = !!document.getElementById('ib-only-warn')?.checked;
+  const onlyWarn = false;
   const monthRows = all.filter(s=> mk==='all' || monthKeyOf(s.date)===mk);
-  // KPI นับตามเดือนที่เลือก (ไม่ขึ้นกับตัวกรองชนิด/คำค้น)
-  const fuelSum = ft => monthRows.reduce((a,s)=>a+s.lines.filter(l=>l.fuelType===ft).reduce((b,l)=>b+l.qty,0),0);
-  const nMat = monthRows.reduce((a,s)=>a+s.lines.filter(l=>l.kind==='mat').length,0);
-  const warnN = monthRows.filter(s=>ibWarns(s).length).length;
-  document.getElementById('ib-kpi').innerHTML =
-    `<div><b>${monthRows.length}</b>ใบเบิก</div><div><b>${nMat}</b>รายการพัสดุ</div>` +
-    `<div><b>${fmtNum(fuelSum('ดีเซล'),1)}</b>ดีเซล (ลิตร)</div><div><b>${fmtNum(fuelSum('เบนซิน'),1)}</b>เบนซิน (ลิตร)</div>` +
-    `<div class="${warnN?'warn':''}"><b>${warnN}</b>ใบที่ต้องแก้ไข</div>`;
 
   let rows = q ? all : monthRows; // ค้นหา = ค้นทุกเดือน
   rows = rows.filter(s=> ibKind==='all' || (ibKind==='mat' ? s.hasMat : s.hasFuel));
