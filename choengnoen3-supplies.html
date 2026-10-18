@@ -187,7 +187,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .vb-pair .btn{flex:none;}
   .vb-grp{grid-column:1/-1;background:var(--paper-100);color:var(--navy-900);font-weight:700;font-size:13.5px;padding:8px 14px;border-radius:8px;}
   .vb-grp:not(:first-child){margin-top:8px;}
-  .vb-fuelbar{grid-column:1/-1;display:flex;justify-content:flex-end;}
+  .vb-brk{grid-column:1/-1;height:0;}
+  .vb-fuelbar{grid-column:1/-1;display:flex;justify-content:flex-start;}
   .vb-seg{display:inline-flex;background:var(--paper-100);border-radius:10px;padding:3px;gap:2px;max-width:100%;overflow-x:auto;}
   .vb-seg button{border:0;background:none;padding:6px 14px;border-radius:8px;font:600 13px 'Sarabun',sans-serif;color:var(--ink-600);cursor:pointer;white-space:nowrap;}
   .vb-seg button.on{background:#fff;color:var(--navy-900);box-shadow:0 1px 3px rgba(0,0,0,.15);}
@@ -2394,7 +2395,7 @@ function vehicleBoardHtml(list, key){
     ['อื่น ๆ / ไม่ใช้เชื้อเพลิง', list.filter(v=>v.fuelType!=='ดีเซล' && v.fuelType!=='เบนซิน'), 'all']
   ].filter(g=>g[1].length && (fuelSel==='all' || fuelSel===g[2]));
   const body = groups.length
-    ? groups.map(g=>`<div class="vb-grp">${g[0]} (${g[1].length})</div>${g[1].map(vehicleCardHtml).join('')}`).join('')
+    ? groups.map(g=>g[1].map(vehicleCardHtml).join('')).join('<div class="vb-brk"></div>')   // คนละชนิดน้ำมัน → ขึ้นแถวใหม่ (ไม่มีหัวกลุ่ม)
     : `<div class="vb-empty" style="grid-column:1/-1;">ไม่มีรายการน้ำมัน${fuelSel} ในสถานะ "${VEH_STATUS[key].label}"</div>`;
   return bar + body;
 }
