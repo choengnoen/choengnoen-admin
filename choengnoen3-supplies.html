@@ -2059,7 +2059,7 @@ function renderIbEdit(){
       <td class="c"><button type="button" class="ib-x" title="เอารายการนี้ออกจากใบ" onclick="ibRemoveLine(${i})">✕</button></td>
     </tr>`).join('');
   const lineHtml = live.length ? `<div class="ib-tbw"><table class="ib-tb"><thead><tr><th style="width:34px">#</th><th>รายการวัสดุ</th><th style="width:128px">จำนวน</th><th style="width:120px">ราคา/หน่วย</th><th class="r" style="width:100px">รวม (บาท)</th><th style="width:34px"></th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`
-    : `<div class="foot-note">${E.key===null ? 'ยังไม่มีรายการ — พิมพ์ชื่อวัสดุในช่องด้านล่าง หรือกดปุ่ม ดีเซล/เบนซิน เพื่อเพิ่มรายการ' : 'ไม่เหลือรายการในใบนี้ — กด "ลบทั้งใบ" ถ้าต้องการลบใบเบิกนี้'}</div>`;
+    : (E.key===null ? '' : `<div class="foot-note">ไม่เหลือรายการในใบนี้ — กด "ลบทั้งใบ" ถ้าต้องการลบใบเบิกนี้</div>`);
   const hasFt = ft => live.some(x=>x.l.fuelType===ft);
   const nf = E.nf;
   const addHtml = nf ? `<div class="ib-newcard"><h4>✨ วัสดุใหม่ที่ยังไม่มีในทะเบียน</h4>
