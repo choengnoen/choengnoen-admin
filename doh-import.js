@@ -13,7 +13,7 @@
   'use strict';
   const TH_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
   const TOKEN_RE = /\[กรม:/;
-  const S = { parsed:[], skipped:[], plan:null, importMk:'', mixed:false, busy:false, result:null, ec1w:true, mode:'import', cmp:[], sel:{}, cmpMsg:'' };
+  const S = { parsed:[], skipped:[], plan:null, importMk:'', mixed:false, busy:false, result:null, ec1w:true, mode:'import', cmp:[], sel:{}, cmpMsg:'', opt:{ mats:true, fuel:true } };
 
   const H = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const num = x => { const v = parseFloat(String(x==null?'':x).replace(/,/g,'')); return isNaN(v)?0:v; };
@@ -110,6 +110,7 @@
   }
   /* วัสดุในไฟล์กรมที่ยังไม่มีในทะเบียนพัสดุ (ไม่ซ้ำชื่อ) */
   function missingMats(){
+    if(!S.opt.mats) return [];
     const seen = {}, out = [];
     S.parsed.forEach(a=>a.mats.forEach(m=>{ const k = normText(m.name); if(!k || seen[k] || matchMaterial(m.name)) return; seen[k] = 1; out.push({ name:String(m.name).trim(), unit:m.unit, price:m.price }); }));
     return out;
@@ -252,7 +253,7 @@
       const missVeh = [], missMat = [], approx = [];
       const vehBase = a.machines.map(m=>{ const v = matchVehicle(m.no); if(!v){ missVeh.push(m.no); return null; } return { v, liters:m.liters }; }).filter(Boolean);
       const partsAll = [];
-      a.mats.forEach(m=>{
+      (S.opt.mats ? a.mats : []).forEach(m=>{
         const hit = matchMaterial(m.name);
         if(!hit){ missMat.push(m.name); return; }
         if(hit.approx) approx.push(m.name+' ≈ '+hit.m.name);
@@ -264,7 +265,7 @@
       /* รถที่เบิกเป็นครั้ง (ค่าเริ่มต้น = ดีเซล): ไม่แบ่งลิตรเท่ากันทุกวัน (จะเป็นตัวเลขเฉลี่ยที่ไม่ตรงการเบิกจริง) — ลงวันแรกวันเดียว
          แล้วให้ผู้ตรวจย้าย/แก้เป็นวันที่เบิกจริงที่หน้า พ.1-03 · เครื่องที่เบิกสม่ำเสมอ (เบนซิน/เครื่องตัดหญ้า) ยังแบ่งเท่ากันเหมือนเดิม */
       const isIssueMode = v=>{ const m = v && v.fuelMode; return (m==='issue'||m==='daily') ? m==='issue' : (v && v.fuelType==='ดีเซล'); };
-      const litersArr = vehBase.map(x=> isIssueMode(x.v) ? splitEven(x.liters, 1).concat(new Array(Math.max(0,days-1)).fill(0)) : splitEven(x.liters, days));
+      const litersArr = vehBase.map(x=> !S.opt.fuel ? new Array(days).fill(0) : isIssueMode(x.v) ? splitEven(x.liters, 1).concat(new Array(Math.max(0,days-1)).fill(0)) : splitEven(x.liters, days));
       dates.forEach((date, i)=>{
         const mk = date.slice(0,7);
         const token = '[กรม:'+mk+':'+a.plan+']';
@@ -419,7 +420,7 @@
       const nAct = Object.keys(S.sel).filter(k=>S.sel[k]).length;
       body.innerHTML = (S.cmpMsg?'<div class="dohi-note ok">'+H(S.cmpMsg)+'</div>':'')
         + (S.skipped.length?'<div class="dohi-note warn">ข้าม '+S.skipped.length+' ไฟล์ที่ไม่ใช่ผลงานรายกิจกรรม: '+H(S.skipped.join(', '))+'</div>':'')
-        + modeBar + toolBar
+        + modeBar + toolBar + optBar(false)
         + missNote() + renderCompare();
       setFoot('<button class="btn btn-ghost" onclick="DohImp.close()">ปิด</button><button class="btn btn-ghost" onclick="DohImp.copyCompare()">📋 คัดลอกผลเทียบ</button><button class="btn btn-primary" '+(nAct?'':'disabled')+' onclick="DohImp.runCompare()">ดำเนินการที่เลือก ('+nAct+')</button>');
       return;
@@ -436,9 +437,30 @@
       + (S.mixed?'<div class="dohi-note warn">ไฟล์มีวันที่ปฏิบัติงานหลายเดือนปนกัน — ควรเลือกไฟล์ทีละเดือน</div>':'')
       + modeBar + toolBar
       + kpi + missNote() + skipBlocks
-      + (p ? '<div class="dohi-bar"><label style="display:inline-flex;gap:6px;align-items:center;font-size:13.5px;"><input type="checkbox" '+(S.ec1w?'checked':'')+' onchange="DohImp.setEc1w(this.checked)"> บันทึกชั่วโมงเครื่องจักรลง EC 1-W ด้วย ('+buildEc1w().length+' แถว เครื่อง×วัน — ลงช่อง W ชั่วโมงปฏิบัติงาน; ทับเฉพาะช่อง W เดิมของแถวนั้น)</label></div>' : '')
+      + (p ? optBar(true) : '')
       ;
     setFoot('<button class="btn btn-ghost" onclick="DohImp.close()">ยกเลิก</button><button class="btn btn-primary" '+(p&&p.items.length?'':'disabled')+' onclick="DohImp.run()">นำเข้า '+(p?p.items.length:0)+' ใบสั่งการ</button>');
+  }
+  /* เลือกว่าจะนำเข้าส่วนไหนบ้าง: วัสดุ→ตัดคลัง พ.1-02 · น้ำมัน→ตัดคลัง พ.1-03 · ชั่วโมงเครื่องจักร EC 1-W · "ทั้งหมด" ติ๊ก/เอาออกทีเดียว
+     (ใบสั่งการสร้างเสมอ — ส่วนที่ไม่ติ๊กจะไม่ถูกสร้าง/ตัดคลัง) */
+  function optBar(withEc){
+    const lb = 'display:inline-flex;gap:6px;align-items:center;font-size:13.5px;';
+    const all = S.opt.mats && S.opt.fuel && (!withEc || S.ec1w);
+    const ck = (v, k, txt) => '<label style="'+lb+'"><input type="checkbox" '+(v?'checked':'')+' onchange="DohImp.setOpt(\''+k+'\',this.checked)"> '+txt+'</label>';
+    return '<div class="dohi-bar" style="gap:6px 18px"><b style="font-size:13.5px">นำเข้าส่วนที่เลือก:</b>'
+      + '<label style="'+lb+'"><input type="checkbox" '+(all?'checked':'')+' onchange="DohImp.setOpt(\'all\',this.checked)"> <b>ทั้งหมด</b></label>'
+      + ck(S.opt.mats, 'mats', 'วัสดุ → ตัดคลัง พ.1-02')
+      + ck(S.opt.fuel, 'fuel', 'น้ำมัน → ตัดคลัง พ.1-03')
+      + (withEc ? ck(S.ec1w, 'ec1w', 'ชั่วโมงเครื่องจักร EC 1-W ('+buildEc1w().length+' แถว ลงช่อง W)') : '')
+      + '</div>';
+  }
+  async function setOpt(k, v){
+    v = !!v;
+    if(k==='all'){ S.opt.mats = v; S.opt.fuel = v; S.ec1w = v; }
+    else if(k==='ec1w'){ S.ec1w = v; render(); return; }
+    else S.opt[k] = v;
+    if(S.busy) return;
+    await rebuild();
   }
   function renderResult(){
     const r = S.result;
@@ -522,7 +544,7 @@
         cmpNum('ค่าวัสดุ', sum('material'), a.sum['ค่าวัสดุ']||0);
         // วัสดุ
         const newParts = [];
-        a.mats.forEach(m=>{
+        (S.opt.mats ? a.mats : []).forEach(m=>{
           const hit = matchMaterial(m.name);
           if(!hit){ c.diffs.push('วัสดุ "'+m.name+'" ไม่อยู่ในทะเบียนพัสดุ — ให้เพิ่มเข้าทะเบียนก่อน'); return; }
           const sq = ex.reduce((s,d)=>s+(d.parts||[]).filter(p=>p.code===hit.m.code).reduce((t,p)=>t+(p.qty||0),0),0);
@@ -891,5 +913,5 @@
   setInterval(updateBadge, 2000);
 
   function setEc1w(v){ S.ec1w = !!v; }
-  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, runCompare, togFuel, addMissing, pickExisting, pickInput, pickKey, pickChoose, pickClose };
+  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, setOpt, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, runCompare, togFuel, addMissing, pickExisting, pickInput, pickKey, pickChoose, pickClose };
 })();
