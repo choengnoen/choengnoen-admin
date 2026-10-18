@@ -187,6 +187,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .vb-pair .btn{flex:none;}
   .vb-grp{grid-column:1/-1;background:var(--paper-100);color:var(--navy-900);font-weight:700;font-size:13.5px;padding:8px 14px;border-radius:8px;}
   .vb-grp:not(:first-child){margin-top:8px;}
+  .vb-fuelbar{grid-column:1/-1;display:flex;justify-content:flex-end;}
+  .vb-seg{display:inline-flex;background:var(--paper-100);border-radius:10px;padding:3px;gap:2px;max-width:100%;overflow-x:auto;}
+  .vb-seg button{border:0;background:none;padding:6px 14px;border-radius:8px;font:600 13px 'Sarabun',sans-serif;color:var(--ink-600);cursor:pointer;white-space:nowrap;}
+  .vb-seg button.on{background:#fff;color:var(--navy-900);box-shadow:0 1px 3px rgba(0,0,0,.15);}
   .vb-card{--c:var(--success);margin-bottom:0;} .vb-card.s-due{--c:var(--danger);} .vb-card.s-svc{--c:#d97706;}
   .vb-col{background:var(--paper-100);border-radius:14px;padding:12px;--c:var(--success);}
   .vb-col.s-due{--c:var(--danger);} .vb-col.s-svc{--c:#d97706;}
@@ -2375,14 +2379,24 @@ function vehicleCardHtml(v){
     <div class="vb-r2"><span>${v.monthlyRent!=null ? fmtNum(v.monthlyRent,0)+' บาท/เดือน' : ''}</span>${vehFuelPill(v)}</div>
     <div class="vb-acts"><button class="btn btn-ghost btn-sm" onclick="openVehDetail(${v.id})">รายละเอียด</button>${isAdmin()?`<button class="btn btn-ghost btn-sm" style="flex:none;" onclick="openVehStatus(${v.id})">เปลี่ยนสถานะ ›</button>`:''}</div></div>`;
 }
+let vehFuelTab = 'all';
+function setVehFuel(f){ vehFuelTab = f; renderVehicles(); }
 function vehicleBoardHtml(list, key){
   if(!list.length) return `<div class="vb-empty" style="grid-column:1/-1;">ไม่มีรายการในสถานะ "${VEH_STATUS[key].label}"</div>`;
+  const showFuelTabs = key==='ok';   // ตัวกรองชนิดน้ำมันมีเฉพาะแท็บ "ใช้งานปกติ" (แท็บอื่นมีรถไม่กี่คัน)
+  const fuelSel = showFuelTabs ? vehFuelTab : 'all';
+  const nD = list.filter(v=>v.fuelType==='ดีเซล').length, nG = list.filter(v=>v.fuelType==='เบนซิน').length;
+  const fuelTabs = [['all','ทั้งหมด',list.length],['ดีเซล','น้ำมันดีเซล',nD],['เบนซิน','น้ำมันเบนซิน',nG]];
+  const bar = !showFuelTabs ? '' : `<div class="vb-fuelbar"><div class="vb-seg">${fuelTabs.map(t=>`<button type="button" class="${vehFuelTab===t[0]?'on':''}" onclick="setVehFuel('${t[0]}')">${t[1]} (${t[2]})</button>`).join('')}</div></div>`;
   const groups = [
-    ['⛽ น้ำมันดีเซล', list.filter(v=>v.fuelType==='ดีเซล')],
-    ['⛽ น้ำมันเบนซิน', list.filter(v=>v.fuelType==='เบนซิน')],
-    ['อื่น ๆ / ไม่ใช้เชื้อเพลิง', list.filter(v=>v.fuelType!=='ดีเซล' && v.fuelType!=='เบนซิน')]
-  ];
-  return groups.filter(g=>g[1].length).map(g=>`<div class="vb-grp">${g[0]} (${g[1].length})</div>${g[1].map(vehicleCardHtml).join('')}`).join('');
+    ['⛽ น้ำมันดีเซล', list.filter(v=>v.fuelType==='ดีเซล'), 'ดีเซล'],
+    ['⛽ น้ำมันเบนซิน', list.filter(v=>v.fuelType==='เบนซิน'), 'เบนซิน'],
+    ['อื่น ๆ / ไม่ใช้เชื้อเพลิง', list.filter(v=>v.fuelType!=='ดีเซล' && v.fuelType!=='เบนซิน'), 'all']
+  ].filter(g=>g[1].length && (fuelSel==='all' || fuelSel===g[2]));
+  const body = groups.length
+    ? groups.map(g=>`<div class="vb-grp">${g[0]} (${g[1].length})</div>${g[1].map(vehicleCardHtml).join('')}`).join('')
+    : `<div class="vb-empty" style="grid-column:1/-1;">ไม่มีรายการน้ำมัน${fuelSel} ในสถานะ "${VEH_STATUS[key].label}"</div>`;
+  return bar + body;
 }
 function openVehDetail(id){
   const v = vehicles.find(x=>x.id===id); if(!v) return;
