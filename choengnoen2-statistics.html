@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy-950:#071b30; --navy-900:#0a2540; --navy-800:#123a5e; --navy-700:#1c4b73;
+    --modal-head-bg:radial-gradient(1100px 420px at 15% -30%,#4b5563 0%,#111827 70%); /* หัวโมดัล = โทนเดียวกับหน้าล็อกอิน/หัวเว็บ (เทา-ดำ) — แก้สีที่นี่ที่เดียว */ --navy-950:#071b30; --navy-900:#0a2540; --navy-800:#123a5e; --navy-700:#1c4b73;
     --orange-600:#e0620f; --orange-500:#f07a1f; --amber-400:#f2a930;
     --paper-50:#f5f6f4; --paper-100:#eceee9; --line:#dfe2dd;
     --ink-900:#182430; --ink-600:#4d5a66; --ink-400:#8792a0;
@@ -209,7 +209,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .crew-member-chip button{background:none;border:none;color:var(--ink-400);cursor:pointer;font-size:13px;line-height:1;padding:2px 5px;border-radius:50%;}
   .crew-member-chip button:hover{background:var(--danger-bg);color:var(--danger);}
   #crew-modal-overlay .modal-box{max-width:480px;border-radius:20px;overflow:hidden;padding:0;}
-  .crew-modal-head{background:linear-gradient(135deg,var(--navy-900),var(--navy-800) 75%);border-bottom:none;padding:18px 20px;border-radius:0;display:flex;align-items:center;gap:12px;}
+  .crew-modal-head{background:var(--modal-head-bg);border-bottom:none;padding:18px 20px;border-radius:0;display:flex;align-items:center;gap:12px;}
   .crew-modal-head h3{color:#fff;font-family:'Kanit';font-size:15.5px;margin:0;}
   .crew-modal-head-icon{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .crew-modal-head-icon svg{width:19px;height:19px;}
@@ -285,7 +285,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 
   #route-form-overlay{align-items:center;}
   #route-form-overlay .route-modal-box{max-width:640px;border-radius:20px;overflow:hidden;padding:0;}
-  .route-modal-head{background:linear-gradient(135deg,var(--navy-900),var(--navy-800) 75%);border-bottom:none;padding:18px 20px;border-radius:0;display:flex;align-items:center;gap:12px;}
+  .route-modal-head{background:var(--modal-head-bg);border-bottom:none;padding:18px 20px;border-radius:0;display:flex;align-items:center;gap:12px;}
   .route-modal-head h3{color:#fff;font-family:'Kanit';font-size:15.5px;margin:0;}
   .route-modal-head-icon{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .route-modal-head-icon svg{width:19px;height:19px;}
@@ -297,7 +297,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 
   /* งานบำรุงปกติ (2): บันทึกแผน/ผลรายเดือน — floating modal */
   #bmm-form-overlay .bmm-modal-box{max-width:760px;border-radius:20px;overflow:hidden;padding:0;}
-  .bmm-modal-head{background:linear-gradient(135deg,var(--navy-900),var(--navy-800) 75%);border-bottom:none;padding:18px 20px;border-radius:0;display:flex;align-items:center;gap:12px;}
+  .bmm-modal-head{background:var(--modal-head-bg);border-bottom:none;padding:18px 20px;border-radius:0;display:flex;align-items:center;gap:12px;}
   .bmm-modal-head h3{color:#fff;font-family:'Kanit';font-size:15.5px;margin:0;}
   .bmm-modal-head-icon{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .bmm-modal-head-icon svg{width:19px;height:19px;}
@@ -310,7 +310,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 
   /* งานบำรุงปกติ (2): รายละเอียดรหัสงาน — floating modal ปรับให้เข้าชุดเดียวกับโมดัลอื่นๆ */
   #jc-form-overlay .jc-modal-box{max-width:660px;border-radius:20px;overflow:hidden;padding:0;}
-  .jc-modal-head{background:linear-gradient(135deg,var(--navy-900),var(--navy-800) 75%);border-bottom:none;padding:18px 20px;border-radius:0;display:flex;align-items:center;gap:12px;}
+  .jc-modal-head{background:var(--modal-head-bg);border-bottom:none;padding:18px 20px;border-radius:0;display:flex;align-items:center;gap:12px;}
   .jc-modal-head h3{color:#fff;font-family:'Kanit';font-size:15.5px;margin:0;}
   .jc-modal-head-icon{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .jc-modal-head-icon svg{width:19px;height:19px;}
@@ -322,7 +322,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 
   /* หัวโมดัลไล่สีกรมท่าแบบใช้ร่วมกัน — สำหรับฟอร์มบันทึกคำขอ/รายงานต่างๆ (คำขออนุญาต, รุกล้ำ, อุบัติเหตุ, โจรกรรม, เหตุฉุกเฉิน) */
   .gmodal-box{max-width:640px;border-radius:20px;overflow:hidden;padding:0;}
-  .gmodal-head{background:linear-gradient(135deg,var(--navy-900),var(--navy-800) 75%);border-bottom:none;padding:18px 20px;border-radius:0;display:flex;align-items:center;gap:12px;}
+  .gmodal-head{background:var(--modal-head-bg);border-bottom:none;padding:18px 20px;border-radius:0;display:flex;align-items:center;gap:12px;}
   .gmodal-head h3{color:#fff;font-family:'Kanit';font-size:15.5px;margin:0;}
   .gmodal-head-icon{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .gmodal-head-icon svg{width:19px;height:19px;}
@@ -491,7 +491,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   @keyframes modalFadeIn{from{opacity:0;}to{opacity:1;}}
   @keyframes modalPopIn{from{opacity:0;transform:translateY(10px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
   .modal-box{background:#fff;border-radius:20px;width:100%;max-width:720px;box-shadow:0 28px 64px -14px rgba(7,27,48,.45),0 10px 26px -10px rgba(7,27,48,.22);overflow:hidden;animation:modalPopIn .18s cubic-bezier(.22,.9,.32,1.2);}
-  .modal-head{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:none;background:linear-gradient(135deg,var(--navy-900),var(--navy-800) 75%);z-index:2;}
+  .modal-head{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:none;background:var(--modal-head-bg);z-index:2;}
   .modal-head h3{margin:0;font-size:15.5px;font-family:'Kanit';font-weight:600;color:#fff;}
   .modal-head-icon{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .modal-head-icon svg{width:19px;height:19px;}
@@ -685,7 +685,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .dwt-empty .big{font-size:32px;}
   /* ===== หน้าต่างรายละเอียดใบสั่งการ ===== */
   #dw-view-overlay .dwv-box{max-width:1000px;border-radius:20px;overflow:hidden;padding:0;background:var(--paper-50);display:flex;flex-direction:column;max-height:calc(100vh - 56px);}
-  .dwv-hd{color:#fff;background:radial-gradient(1000px 400px at 15% -30%,var(--navy-800),var(--navy-950) 70%);padding:16px 22px 12px;flex:none;}
+  .dwv-hd{color:#fff;background:var(--modal-head-bg);padding:16px 22px 12px;flex:none;}
   .dwv-r{display:flex;align-items:center;gap:12px;}
   .dwv-ty{flex:1;font:700 26px 'Kanit';line-height:1.25;}
   .dwv-x{width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,.16);color:#fff;font-size:17px;cursor:pointer;flex:none;}

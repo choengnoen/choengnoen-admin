@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy-950:#071b30; --navy-900:#0a2540; --navy-800:#123a5e; --navy-700:#1c4b73;
+    --modal-head-bg:radial-gradient(1100px 420px at 15% -30%,#4b5563 0%,#111827 70%); /* หัวโมดัล = โทนเดียวกับหน้าล็อกอิน/หัวเว็บ (เทา-ดำ) — แก้สีที่นี่ที่เดียว */ --navy-950:#071b30; --navy-900:#0a2540; --navy-800:#123a5e; --navy-700:#1c4b73;
     --orange-600:#e0620f; --orange-500:#f07a1f; --amber-400:#f2a930;
     --paper-50:#f5f6f4; --paper-100:#eceee9; --line:#dfe2dd;
     --ink-900:#182430; --ink-600:#4d5a66; --ink-400:#8792a0;
@@ -553,7 +553,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   @keyframes modalPopIn{from{opacity:0;transform:translateY(10px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
   /* max-height + overflow อยู่ที่ modal-body ไม่ใช่ modal-box ทั้งกล่อง เพื่อให้แถบเลื่อนขึ้นลงอยู่ใต้หัวโมดัลลอย (modal-head) เท่านั้น ไม่ทับหัวโมดัล */
   .modal-box{background:#fff;border-radius:20px;width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 28px 64px -14px rgba(7,27,48,.45),0 10px 26px -10px rgba(7,27,48,.22);animation:modalPopIn .18s cubic-bezier(.22,.9,.32,1.2);}
-  .modal-head{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:none;position:sticky;top:0;background:linear-gradient(135deg,var(--navy-900),var(--navy-800) 75%);z-index:2;}
+  .modal-head{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:none;position:sticky;top:0;background:var(--modal-head-bg);z-index:2;}
   .modal-head h3{margin:0;font-size:15.5px;font-family:'Kanit';font-weight:600;color:#fff;}
   .modal-head-icon{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .modal-head-icon svg{width:19px;height:19px;}
