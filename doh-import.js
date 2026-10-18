@@ -450,15 +450,20 @@
   function compareText(){
     const lines = ['ผลเทียบข้อมูลใบสั่งการ ระบบเรา กับไฟล์กรม (rmms) ประจำ'+mkLabel(S.importMk),''];
     let n = 0;
-    if(S.fuel && S.fuel.rows && S.fuel.rows.length){
-      lines.push('น้ำมันรวมต่อเครื่อง ทั้งเดือน (ลิตร) ระบบเรา / กรม:');
-      S.fuel.rows.forEach(r=>lines.push('   - '+r.label+': '+r.sys+' / '+r.dept+(Math.abs(r.diff)>0.05?'  ← ต่าง '+(r.diff>0?'+':'')+r.diff:'')));
-      lines.push('');
+    /* คัดลอกเฉพาะเรื่องที่เจ้าหน้าที่ต้องตรวจกับเอกสาร — ไม่รวมตัวเลขที่กรมแบ่งตามแผน (ปริมาณงาน/ค่าแรง/ค่าเช่า/น้ำมัน/ค่าวัสดุ)
+       และวัสดุที่ไม่อยู่ในทะเบียนพัสดุ (เป็นงานของคนดูแลทะเบียน) */
+    const skipRe = /^(ปริมาณงาน|ค่าแรงงาน|ค่าเช่าเครื่องจักร|ค่าน้ำมัน|ค่าวัสดุ)|ไม่อยู่ในทะเบียนพัสดุ/;
+    const badFuel = (S.fuel && S.fuel.rows) ? S.fuel.rows.filter(r=>Math.abs(r.diff)>0.05) : [];
+    if(badFuel.length){
+      lines.push('น้ำมันรวมต่อเครื่อง ทั้งเดือน ที่ไม่ตรงกัน (ลิตร) ระบบเรา / กรม:');
+      badFuel.forEach(r=>lines.push('   - '+r.label+': '+r.sys+' / '+r.dept+'  ← ต่าง '+(r.diff>0?'+':'')+r.diff));
+      lines.push(''); n++;
     }
     S.cmp.forEach(c=>{
-      if(!c.diffs.length && !c.skip) return;
-      n++; lines.push(n+'. '+c.label+(c.skip?' — ข้าม: '+c.skip:''));
-      c.diffs.forEach(x=>lines.push('   - '+x));
+      const ds = c.diffs.filter(x=>!skipRe.test(x));
+      if(!ds.length && !c.skip) return;
+      n++; lines.push(c.label+(c.skip?' — ข้าม: '+c.skip:''));
+      ds.forEach(x=>lines.push('   - '+x));
     });
     if(!n) lines.push('ตรงกันทุกแผน ไม่มีจุดที่ต้องตรวจ'); else lines.push('','กรุณาตรวจเทียบกับเอกสารจริง แล้วแจ้งผลกลับ');
     return lines.join('\n');
