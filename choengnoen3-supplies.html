@@ -425,6 +425,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .mc-menu button{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 12px;border-radius:7px;font-family:'Sarabun';font-size:13.5px;cursor:pointer;color:var(--ink-900);}
   .mc-menu button:hover{background:var(--paper-100);}
   .mc-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+  #panel-inbound .mc-actions{flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:6px;}
+  #panel-inbound .mc-actions .btn{padding:7px 16px;font-size:13px;white-space:nowrap;justify-content:center;text-align:center;}
   /* เลขที่ใบเบิก/ใบสั่งจ่ายน้ำมัน */
   #docno-overlay .modal-box{max-width:960px;}
   .dn-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
@@ -948,7 +950,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="mc-upd" id="ib-sub"></div>
             </div>
             <div class="mc-actions">
-              <button class="btn btn-primary" id="ib-add-btn" onclick="openIbCreate()" title="บันทึกของที่หมวดรับจากแขวงตามใบเบิก (พัสดุหรือน้ำมัน)">+ รับเข้าคลัง</button>
+              <button class="btn btn-primary" id="ib-add-btn" onclick="openIbCreate()" title="บันทึกของที่หมวดรับจากแขวงตามใบเบิก (พัสดุหรือน้ำมัน)">+ รับของในบัญชี</button>
               <button class="btn btn-ghost" id="ib-add-off-btn" onclick="openIbCreate('off')" title="บันทึกพัสดุนอกบัญชีที่หมวดได้รับอนุเคราะห์หรือจัดหาเอง (ไม่ได้มาจากใบเบิกแขวง)">+ รับของนอกบัญชี</button>
             </div>
           </div>
@@ -1960,7 +1962,7 @@ function renderInbound(){
   if(q) rows = rows.filter(s=> (s.ref||'').toLowerCase().includes(q) || s.lines.some(l=>l.name.toLowerCase().includes(q)));
   if(onlyWarn) rows = rows.filter(s=>ibWarns(s).length);
   if(!rows.length){
-    listEl.innerHTML = `<div class="ib-empty">${q ? 'ไม่พบใบเบิกที่ตรงกับคำค้น' : onlyWarn ? 'ไม่มีใบเบิกที่ต้องแก้ไข 👍' : 'ยังไม่มีใบเบิกรับเข้าในปีงบประมาณนี้'}${admin && !q && !onlyWarn ? '<br><small>เมื่อได้รับของจากแขวง กดปุ่ม <b>+ รับเข้าคลัง</b> ด้านบนเพื่อบันทึกใบเบิก</small>' : ''}</div>`;
+    listEl.innerHTML = `<div class="ib-empty">${q ? 'ไม่พบใบเบิกที่ตรงกับคำค้น' : onlyWarn ? 'ไม่มีใบเบิกที่ต้องแก้ไข 👍' : 'ยังไม่มีใบเบิกรับเข้าในปีงบประมาณนี้'}${admin && !q && !onlyWarn ? '<br><small>เมื่อได้รับของจากแขวง กดปุ่ม <b>+ รับของในบัญชี</b> ด้านบนเพื่อบันทึกใบเบิก</small>' : ''}</div>`;
     return;
   }
   const trs = rows.map(s=>{
