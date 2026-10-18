@@ -181,8 +181,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   td.veh-code{color:var(--ink-400);font-size:12px;font-weight:600;white-space:nowrap;}
   /* บอร์ดสถานะเครื่องจักร/ยานพาหนะ */
   .vb-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:16px 20px 20px;align-items:start;}
-  .vb-tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:14px 20px 0;}
-  .vb-tools .search-box{min-width:0;width:100%;max-width:none;flex:none;margin:0;}
+  /* ช่องค้นหา + ปุ่มเพิ่ม อยู่คู่กันชิดขวา กว้างรวมไม่เกินการ์ด 1 ใบ (ความกว้างตั้งจาก JS ตามคอลัมน์ของบอร์ด) */
+  .vb-pair{display:flex;gap:10px;align-items:center;margin-left:auto;min-width:0;max-width:100%;}
+  .vb-pair .search-box{flex:1 1 0;min-width:0;max-width:none;margin:0;}
+  .vb-pair .btn{flex:none;}
   .vb-grp{grid-column:1/-1;background:var(--paper-100);color:var(--navy-900);font-weight:700;font-size:13.5px;padding:8px 14px;border-radius:8px;}
   .vb-grp:not(:first-child){margin-top:8px;}
   .vb-card{--c:var(--success);margin-bottom:0;} .vb-card.s-due{--c:var(--danger);} .vb-card.s-svc{--c:#d97706;}
@@ -915,14 +917,12 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="tab" data-vehtype="due" onclick="setVehTypeTab(this)">ใกล้ถึงกำหนดตรวจ (<span id="veh-count-due">0</span>)</div>
               <div class="tab" data-vehtype="svc" onclick="setVehTypeTab(this)">อยู่ระหว่างซ่อม (<span id="veh-count-svc">0</span>)</div>
             </div>
-            <button class="btn btn-primary" style="margin-left:auto;" onclick="openVehicleModal(null)">+ เพิ่มเครื่องจักร/รถ</button>
+            <div class="vb-pair" id="veh-pair">
+              <div class="search-box" id="veh-search-box">🔍 <input id="veh-search" oninput="renderVehicles()" placeholder="ค้นหา..."></div>
+              <button class="btn btn-primary" onclick="openVehicleModal(null)">+ เพิ่มเครื่องจักร/รถ</button>
+            </div>
           </div>
-          <div class="vb-tools"><div class="search-box" id="veh-search-box">🔍 <input id="veh-search" oninput="renderVehicles()" placeholder="ค้นหา..."></div></div>
           <div class="vb-board" id="veh-board"></div>
-          <div class="legend-block" id="veh-foot-block">
-            <button type="button" class="legend-dot-btn no-print" id="veh-foot-toggle" onclick="__toggleNote('veh-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="veh-foot" style="display:none;background:transparent;border-top:none;">ใช้เป็นรายการให้เลือกในใบสั่งการรายวัน (ระบบรองที่ 2 งานสถิติและบริการประชาชน) เพื่อผูกการเบิกน้ำมัน/พัสดุกับเครื่องจักรหรือรถแต่ละคัน — อัตราค่าเช่าได้รับจากแขวงทางหลวง (งานปรับซ่อม) เป็นรายเดือน ใช้คำนวณค่าใช้จ่ายในงานบำรุงปกติ</div>
-          </div>
         </div>
       </div>
     </div>
@@ -2440,6 +2440,14 @@ function setVehTypeTab(el){
   vehTypeTab = el.dataset.vehtype;
   renderVehicles();
 }
+/* ให้กล่องค้นหา+ปุ่มเพิ่ม กว้างเท่าการ์ด 1 ใบพอดี (อ่านความกว้างคอลัมน์จริงของบอร์ด) */
+function fitVehPair(){
+  const board = document.getElementById('veh-board'), pair = document.getElementById('veh-pair');
+  if(!board || !pair || !board.offsetWidth) return;
+  const col = parseFloat(getComputedStyle(board).gridTemplateColumns.split(' ')[0]);
+  pair.style.width = col>0 ? Math.min(col, board.clientWidth) + 'px' : '';
+}
+window.addEventListener('resize', fitVehPair);
 function renderVehicles(){
   const body = document.getElementById('veh-board');
   if(!body) return;
@@ -2451,6 +2459,7 @@ function renderVehicles(){
   });
   const shown = filtered.filter(v=>vehStatusKey(v)===vehTypeTab);
   body.innerHTML = vehicleBoardHtml(shown, vehTypeTab);
+  fitVehPair();
 }
 function renameVehicleLabel(oldLabel, newLabel){
   if(oldLabel===newLabel) return;
