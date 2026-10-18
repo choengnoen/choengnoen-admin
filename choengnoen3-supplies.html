@@ -861,9 +861,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="mc-month"><select id="mc-month" onchange="onMasterMonthChange(this.value)" aria-label="เลือกเดือน"></select><span class="mc-car">▾</span></div>
               <div class="mc-upd" id="mc-upd"></div>
             </div>
-            <div class="mc-actions">
-              <button class="btn btn-primary" id="mat-add-btn" onclick="goInbound()" title="บันทึก/แก้ไข/ตรวจใบเบิกที่รับเข้าหมวดจากแขวง (พัสดุและน้ำมัน) — ที่เดียว">📥 ใบเบิกรับเข้า</button>
-            </div>
           </div>
           <div class="mc-tabrow">
             <div class="tabs" id="master-tabs" style="padding:0;border:none;background:transparent;flex:none;">
@@ -1113,10 +1110,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <div class="modal-head-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div>
       <h3 id="item-modal-title">รับพัสดุ/น้ำมันเข้าคลัง</h3>
       <button type="button" class="modal-close" onclick="closeItemModal()">✕</button>
-    </div>
-    <div class="modal-tabs">
-      <div class="modal-tab active" data-modaltab="receive" onclick="setItemModalTab(this,'receive')">📥 บันทึกใบเบิกรับเข้า</div>
-      <div class="modal-tab" data-modaltab="new" onclick="setItemModalTab(this,'new')">＋ เพิ่มรายการวัสดุใหม่</div>
     </div>
     <div class="modal-body" id="item-modal-body"></div>
   </div>
@@ -2285,45 +2278,59 @@ function renderItemHistoryModal(){
    1) รับพัสดุ/น้ำมันเข้าคลัง (บันทึกใบเบิก -> materialTransactions/fuelTransactions kind:'receive')
    2) เพิ่มรายการวัสดุใหม่ในทะเบียน (แทนที่ addMaterial() แบบ prompt เดิม)
    ============================================================ */
-let itemModalTab = 'receive';       // 'receive' | 'new'
 let itemModalRecvType = 'material'; // 'material' | 'fuel'
 
 function openItemModal(kind){
   if(!isAdmin()) return;
-  itemModalTab = 'receive';
   itemModalRecvType = (kind==='fuel' || kind==='material') ? kind : (currentMasterTab()==='fuel' ? 'fuel' : 'material');
-  document.querySelectorAll('#item-modal-overlay .modal-tab').forEach(t=>t.classList.toggle('active', t.dataset.modaltab==='receive'));
   document.getElementById('item-modal-overlay').classList.remove('hidden');
   renderItemModalBody();
 }
 function closeItemModal(){
   document.getElementById('item-modal-overlay').classList.add('hidden');
 }
-function setItemModalTab(el, tab){
-  itemModalTab = tab;
-  document.querySelectorAll('#item-modal-overlay .modal-tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  renderItemModalBody();
-}
 function renderItemModalBody(){
   const body = document.getElementById('item-modal-body');
   const title = document.getElementById('item-modal-title');
   if(!body || !title) return;
-  if(itemModalTab==='receive'){
-    title.textContent = 'บันทึกใบเบิกรับเข้า (จากแขวง)';
-    body.innerHTML = receiveFormHtml();
-    resetRecvItemField();
-  } else {
-    title.textContent = 'เพิ่มรายการวัสดุใหม่ในทะเบียน';
-    body.innerHTML = newMaterialFormHtml();
-  }
+  title.textContent = 'บันทึกใบเบิกรับเข้า (จากแขวง)';
+  body.innerHTML = receiveFormHtml();
+  resetRecvItemField();
 }
-let recvMatRows = [];       // [{rid}] — one entry per รายการที่เบิก (วัสดุ) row in the current form
+let recvMatRows = [];       // [{rid, isNew}] — one entry per รายการที่เบิก (วัสดุ) row; isNew = วัสดุที่ยังไม่มีในทะเบียน (สร้างพร้อมบันทึกรับเข้า)
 let __recvMatRowSeq = 0;
 let __recvItemHighlight = {}; // keyed by rid
 
 function newRecvMatRow(){
-  return { rid: ++__recvMatRowSeq };
+  return { rid: ++__recvMatRowSeq, isNew: false };
+}
+/* แถวที่เป็นวัสดุใหม่: ช่องชื่อ/หน่วยพิมพ์เองได้ + เลือกประเภทบัญชี/จุดสั่งซื้อ (สร้างในทะเบียนตอนกดบันทึกรับเข้า) */
+function recvNewItemFieldHtml(rid, name){
+  return `<div class="f-row" style="margin-bottom:0;"><label>ชื่อรายการวัสดุใหม่ <a href="javascript:void(0)" style="font-weight:400;font-size:12px;margin-left:6px;" onclick="cancelRecvNewMat(${rid})">เลือกจากทะเบียนแทน</a></label>
+      <input type="text" id="recv-item-search-${rid}" value="${esc(name||'')}" placeholder="เช่น ยางมะตอย CRS-2" autocomplete="off">
+      <input type="hidden" id="recv-item-code-${rid}"></div>`;
+}
+function startRecvNewMat(rid, name){
+  const row = recvMatRows.find(r=>r.rid===rid); if(!row) return;
+  row.isNew = true;
+  rerenderRecvMatRow(rid, name);
+  const el = document.getElementById('recv-item-search-'+rid);
+  if(el){ el.focus(); const n=el.value.length; try{ el.setSelectionRange(n,n); }catch(e){} }
+}
+function cancelRecvNewMat(rid){
+  const row = recvMatRows.find(r=>r.rid===rid); if(!row) return;
+  row.isNew = false;
+  rerenderRecvMatRow(rid, '');
+}
+function rerenderRecvMatRow(rid, name){
+  const row = recvMatRows.find(r=>r.rid===rid), el = document.querySelector('.mat-recv-row[data-rid="'+rid+'"]');
+  if(!row || !el) return;
+  const qty = document.getElementById('recv-qty-'+rid)?.value || '', price = document.getElementById('recv-price-'+rid)?.value || '';
+  const idx = Array.prototype.indexOf.call(document.querySelectorAll('#recv-mat-rows .mat-recv-row'), el);
+  el.outerHTML = matRecvRowHtml(row, idx, name);
+  const q = document.getElementById('recv-qty-'+rid), p = document.getElementById('recv-price-'+rid);
+  if(q) q.value = qty; if(p) p.value = price;
+  onRecvCalc(rid);
 }
 function recvItemFieldHtml(rid){
   return materials.length
@@ -2363,18 +2370,22 @@ function fuelRecvFieldsHtml(){
       ${fuelRecvRowHtml('g','เบนซิน','⛽')}
     </div>`;
 }
-function matRecvRowHtml(row, idx){
+function matRecvRowHtml(row, idx, newName){
   const rid = row.rid;
   const removable = recvMatRows.length > 1;
   return `
     <div class="mat-recv-row" data-rid="${rid}">
       <div class="mrv-head">
-        <div class="mrv-label">รายการที่ ${idx+1}</div>
+        <div class="mrv-label">รายการที่ ${idx+1}${row.isNew?' · วัสดุใหม่':''}</div>
         <button type="button" class="mrv-remove" style="${removable?'':'display:none;'}" onclick="removeRecvMatRow(${rid})" title="ลบรายการนี้">✕</button>
       </div>
-      <div class="f-row">${recvItemFieldHtml(rid)}</div>
+      <div class="f-row">${row.isNew ? recvNewItemFieldHtml(rid, newName) : recvItemFieldHtml(rid)}</div>
+      ${row.isNew ? `<div class="two-col">
+        <div class="f-row"><label>ประเภทพัสดุ</label><select id="recv-acct-${rid}"><option value="ในบัญชี">ในบัญชี (เบิกจากแขวง)</option><option value="นอกบัญชี">นอกบัญชี (ได้รับอนุเคราะห์)</option></select></div>
+        <div class="f-row"><label>ยอดที่ควรจัดซื้อ (จุดสั่งซื้อ)</label><input type="number" min="0" step="0.01" id="recv-reorder-${rid}" value="0"></div>
+      </div>` : ''}
       <div class="two-col">
-        <div class="f-row"><label>หน่วยนับ</label><input type="text" id="recv-unit-${rid}" readonly></div>
+        <div class="f-row"><label>หน่วยนับ</label><input type="text" id="recv-unit-${rid}" ${row.isNew?'placeholder="เช่น ถัง, กก., ชิ้น"':'readonly'}></div>
         <div class="f-row"><label>ปริมาณที่รับ</label><input type="number" min="0" step="0.01" class="no-spin" id="recv-qty-${rid}" oninput="onRecvCalc(${rid})"></div>
       </div>
       <div class="two-col">
@@ -2497,6 +2508,9 @@ function renderRecvItemList(rid, matches){
     <div class="combo-item${i===hl?' hl':''}" data-code="${esc(m.code)}" onmousedown="pickRecvItem(${rid},'${jsArg(m.code)}')">
       <span class="nm">${esc(m.name)}</span><span class="un">${esc(m.unit)} · คงเหลือ ${fmtNum(currentStock(m),1)}</span>
     </div>`).join('') : `<div class="combo-empty">ไม่พบวัสดุที่ตรงกับคำค้นหา</div>`;
+  const q = (document.getElementById('recv-item-search-'+rid)?.value||'').trim();
+  listEl.insertAdjacentHTML('beforeend', `<div class="combo-item combo-new${matches.length===0&&hl===0?' hl':''}" data-new="1" style="position:sticky;bottom:0;background:var(--orange-50,#fff7ed);border-top:1px solid var(--line);color:var(--orange-600);font-weight:600;" onmousedown="startRecvNewMat(${rid},'${jsArg(q)}')">
+      <span class="nm">＋ ไม่มีในทะเบียน? เพิ่มเป็นวัสดุใหม่${q?' “'+esc(q)+'”':''}</span></div>`);
 }
 function onRecvItemInput(rid){
   const searchEl = document.getElementById('recv-item-search-'+rid);
@@ -2510,7 +2524,7 @@ function onRecvItemInput(rid){
     if(!cur || cur.name!==q){ codeEl.value=''; if(unitEl) unitEl.value=''; }
   }
   const matches = recvItemMatches(q).slice(0,40);
-  __recvItemHighlight[rid] = matches.length ? 0 : -1;
+  __recvItemHighlight[rid] = 0;
   renderRecvItemList(rid, matches);
   listEl.classList.remove('hidden');
   onRecvCalc(rid);
@@ -2547,8 +2561,9 @@ function onRecvItemKeydown(e, rid){
     items[hl].scrollIntoView({block:'nearest'});
   } else if(e.key==='Enter'){
     e.preventDefault();
-    const code = items[hl] && items[hl].dataset.code;
-    if(code) pickRecvItem(rid, code);
+    const it = items[hl];
+    if(it && it.dataset.new) startRecvNewMat(rid, (document.getElementById('recv-item-search-'+rid)?.value||'').trim());
+    else if(it && it.dataset.code) pickRecvItem(rid, it.dataset.code);
   } else if(e.key==='Escape'){
     listEl.classList.add('hidden');
     e.stopPropagation(); // กัน Esc นี้ไปปิด modal ทั้งใบทับซ้อน (ต้องการแค่ปิด dropdown)
@@ -2633,15 +2648,34 @@ async function submitReceiveForm(){
 
   // รับวัสดุเข้าคลัง: อนุญาตให้กรอกหลายรายการวัสดุพร้อมกันในใบเบิกเดียวกัน
   const entries = [];
+  const newNames = [];
   for(const r of recvMatRows){
     const code = document.getElementById('recv-item-code-'+r.rid)?.value || '';
     const qtyRaw = document.getElementById('recv-qty-'+r.rid)?.value;
     const hasQty = qtyRaw !== undefined && qtyRaw !== '';
+    const price = parseFloat(document.getElementById('recv-price-'+r.rid)?.value) || 0;
+    if(r.isNew){
+      // วัสดุใหม่ที่ยังไม่มีในทะเบียน — สร้างให้ตอนบันทึก
+      const name = (document.getElementById('recv-item-search-'+r.rid)?.value||'').trim();
+      if(!name && !hasQty) continue;
+      if(!name){ showAlertModal('กรุณากรอกชื่อรายการวัสดุใหม่ให้ครบทุกแถว'); return; }
+      const qty = parseFloat(qtyRaw);
+      if(isNaN(qty) || qty<=0){ showAlertModal('กรุณากรอกปริมาณที่รับให้ถูกต้องในทุกแถว'); return; }
+      const dup = materials.find(m=>m.name.trim()===name) || newNames.includes(name);
+      if(dup){ showAlertModal('มีวัสดุชื่อ "'+name+'" อยู่แล้ว กรุณากด "เลือกจากทะเบียนแทน" แล้วเลือกรายการเดิม'); return; }
+      newNames.push(name);
+      entries.push({newMat:{
+        name,
+        unit:(document.getElementById('recv-unit-'+r.rid)?.value||'').trim() || 'หน่วย',
+        accountType:document.getElementById('recv-acct-'+r.rid)?.value==='นอกบัญชี' ? 'นอกบัญชี' : 'ในบัญชี',
+        reorder:parseFloat(document.getElementById('recv-reorder-'+r.rid)?.value)||0
+      }, qty, price, total: qty*price});
+      continue;
+    }
     if(!code && !hasQty) continue; // แถวว่างทั้งหมด ข้ามไป
     if(!code){ showAlertModal('กรุณาเลือกรายการวัสดุให้ครบทุกแถวที่กรอกปริมาณ'); return; }
     const qty = parseFloat(qtyRaw);
     if(isNaN(qty) || qty<=0){ showAlertModal('กรุณากรอกปริมาณที่รับให้ถูกต้องในทุกแถว'); return; }
-    const price = parseFloat(document.getElementById('recv-price-'+r.rid)?.value) || 0;
     entries.push({code, qty, price, total: qty*price});
   }
   if(!entries.length){ showAlertModal('กรุณาเพิ่มรายการวัสดุอย่างน้อย 1 รายการ'); return; }
@@ -2651,6 +2685,14 @@ async function submitReceiveForm(){
   if(recvCancelBtn) recvCancelBtn.disabled = true;
   try{
     for(const en of entries){
+      if(en.newMat){
+        // สร้างรายการวัสดุใหม่ในทะเบียนก่อน แล้วค่อยบันทึกรับเข้า (push ทันทีเพื่อให้รหัสถัดไปไม่ซ้ำ)
+        const nm = en.newMat;
+        const m = {code:computeNextMaterialCode(nm.accountType), name:nm.name, unit:nm.unit, accountType:nm.accountType, stock:0, reorder:nm.reorder};
+        await apiPost('add', 'materials', materialToApi(m));
+        materials.push(m);
+        en.code = m.code;
+      }
       const noteParts = [];
       if(ref) noteParts.push('เลขที่ใบรับ '+ref);
       if(supplier) noteParts.push('ผู้ขาย/ผู้ส่ง: '+supplier);
@@ -2682,67 +2724,6 @@ function computeNextMaterialCode(accountType){
   while(used.has(n)) n++;
   return prefix + String(n).padStart(2,'0');
 }
-function onNmAccttypeBtn(el){
-  const toggle = document.getElementById('nm-accttype-toggle');
-  if(toggle) toggle.querySelectorAll('.seg-btn').forEach(b=>b.classList.toggle('active', b===el));
-  const val = el.dataset.val;
-  const accttypeEl = document.getElementById('nm-accttype');
-  if(accttypeEl) accttypeEl.value = val;
-  const hintEl = document.getElementById('nm-accttype-hint');
-  if(hintEl) hintEl.textContent = val==='นอกบัญชี' ? 'ได้รับอนุเคราะห์ ตรวจสอบภายในหมวด' : 'เบิกจากแขวง มีการตรวจสอบ';
-  const codeEl = document.getElementById('nm-code');
-  if(codeEl) codeEl.value = computeNextMaterialCode(val);
-}
-function newMaterialFormHtml(){
-  const initCode = computeNextMaterialCode('ในบัญชี');
-  return `
-    <div class="f-row">
-      <label>ประเภทพัสดุ</label>
-      <div class="seg-toggle" id="nm-accttype-toggle">
-        <button type="button" class="seg-btn active" data-val="ในบัญชี" onclick="onNmAccttypeBtn(this)">ในบัญชี</button>
-        <button type="button" class="seg-btn" data-val="นอกบัญชี" onclick="onNmAccttypeBtn(this)">นอกบัญชี</button>
-      </div>
-      <div class="seg-hint" id="nm-accttype-hint">เบิกจากแขวง มีการตรวจสอบ</div>
-      <input type="hidden" id="nm-accttype" value="ในบัญชี">
-      <input type="hidden" id="nm-code" value="${esc(initCode)}">
-    </div>
-    <div class="f-row"><label>ชื่อรายการวัสดุ</label><input type="text" id="nm-name" placeholder="เช่น ยางมะตอย CRS-2"></div>
-    <div class="two-col">
-      <div class="f-row"><label>หน่วยนับ</label><input type="text" id="nm-unit" placeholder="เช่น ถัง, กก., ชิ้น"></div>
-      <div class="f-row"><label>ยอดที่ควรจัดซื้อ (จุดสั่งซื้อ)</label><input type="number" min="0" step="0.01" id="nm-reorder" value="0"></div>
-    </div>
-    <div class="toolbar" style="justify-content:flex-end;margin-top:6px;">
-      <button class="btn btn-ghost" id="nm-cancel-btn" onclick="closeItemModal()">ยกเลิก</button>
-      <button class="btn btn-primary" id="nm-save-btn" onclick="submitNewMaterialForm()">💾 เพิ่มรายการ</button>
-    </div>`;
-}
-async function submitNewMaterialForm(){
-  if(!isAdmin()) return;
-  const code = (document.getElementById('nm-code')?.value||'').trim();
-  const name = (document.getElementById('nm-name')?.value||'').trim();
-  const unit = (document.getElementById('nm-unit')?.value||'').trim() || 'หน่วย';
-  const accountType = document.getElementById('nm-accttype')?.value==='นอกบัญชี' ? 'นอกบัญชี' : 'ในบัญชี';
-  const reorder = parseFloat(document.getElementById('nm-reorder')?.value)||0;
-  if(!code || materials.some(m=>m.code===code)){ showAlertModal('เกิดข้อผิดพลาดภายในระบบ กรุณาปิดหน้าต่างนี้แล้วลองใหม่อีกครั้ง'); return; }
-  if(!name){ showAlertModal('กรุณากรอกชื่อรายการวัสดุ'); return; }
-  const m = {code, name, unit, accountType, stock:0, reorder};
-  const nmSaveBtn = document.getElementById('nm-save-btn'), nmCancelBtn = document.getElementById('nm-cancel-btn');
-  const nmSaveLabel = nmSaveBtn ? nmSaveBtn.textContent : '';
-  if(nmSaveBtn){ nmSaveBtn.disabled = true; nmSaveBtn.textContent = 'กำลังบันทึก...'; }
-  if(nmCancelBtn) nmCancelBtn.disabled = true;
-  try{
-    await apiPost('add', 'materials', materialToApi(m));
-  }catch(err){
-    showAlertModal('เพิ่มรายการพัสดุไปยังฐานข้อมูลกลางไม่สำเร็จ: ' + err.message + '\nกรุณาตรวจสอบในตารางพัสดุคงคลังก่อนว่าบันทึกไปแล้วหรือยัง ก่อนลองบันทึกซ้ำ');
-    if(nmSaveBtn){ nmSaveBtn.disabled = false; nmSaveBtn.textContent = nmSaveLabel; }
-    if(nmCancelBtn) nmCancelBtn.disabled = false;
-    return;
-  }
-  materials.push(m);
-  closeItemModal();
-  renderAll();
-}
-
 /* ============================================================
    เครื่องจักร/รถ (ทะเบียน) — ใช้ผูกกับใบสั่งการรายวัน (ระบบรองที่ 2) และบัญชีน้ำมัน
    ============================================================ */
