@@ -500,15 +500,41 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ib-empty{text-align:center;color:var(--ink-400);padding:38px 0;font-size:14px;line-height:1.8;}
   .ib-hd{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .ib-sec-t{font-weight:600;font-size:13px;color:var(--ink-600);margin:6px 0 8px;}
-  .ib-ln{display:grid;grid-template-columns:minmax(0,1.5fr) 118px 130px 34px;gap:10px;align-items:end;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;}
-  .ib-ln .f-row{margin:0;}
-  .ib-ln-nm{font-weight:600;font-size:14px;padding-bottom:8px;}
+  .ib-tbw{overflow-x:auto;margin-bottom:6px;}
+  .ib-tb{width:100%;min-width:560px;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:14px;}
+  .ib-tb th{background:var(--paper-50);font-size:12.5px;font-weight:600;color:var(--ink-600);text-align:left;padding:8px 10px;white-space:nowrap;}
+  .ib-tb td{padding:7px 10px;border-top:1px solid var(--line);vertical-align:middle;}
+  .ib-tb tbody tr:nth-child(even) td{background:#fafbfc;}
+  .ib-tb .c{text-align:center;color:var(--ink-400);}
+  .ib-tb .r{text-align:right;white-space:nowrap;font-weight:600;}
+  .ib-tb th.r{text-align:right;}
+  .ib-tb .ib-nm{font-weight:600;}
+  .ib-tb .ib-nm-in{width:100%;font-family:'Sarabun';font-size:14px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;margin-bottom:4px;}
+  .ib-sfx{position:relative;}
+  .ib-sfx input{width:100%;box-sizing:border-box;font-family:'Sarabun';font-size:14px;padding:6px 48px 6px 9px;border:1px solid var(--line);border-radius:8px;text-align:right;}
+  .ib-sfx span{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--ink-400);pointer-events:none;max-width:40px;overflow:hidden;white-space:nowrap;}
+  .ib-sfx.pre input{padding:6px 9px 6px 26px;}
+  .ib-sfx.pre span{left:9px;right:auto;}
+  .ib-combo-list{border:1px solid var(--line);border-radius:10px;max-height:220px;overflow:auto;margin-top:6px;background:#fff;}
+  .ib-opt{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;cursor:pointer;border-bottom:1px solid #f1f2f5;font-size:14px;}
+  .ib-opt:hover,.ib-opt.hi{background:#fff4ea;}
+  .ib-opt small{color:var(--ink-400);white-space:nowrap;}
+  .ib-opt.mk{color:var(--success);font-weight:700;background:#f3fbf5;position:sticky;bottom:0;border-bottom:0;border-top:1px solid #cfe9d8;}
+  .ib-newcard{border:1px dashed #86d1a1;background:#f3fbf5;border-radius:12px;padding:12px;margin:6px 0 8px;width:100%;box-sizing:border-box;}
+  .ib-newcard h4{margin:0 0 8px;font-size:13.5px;}
+  .ib-newgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-bottom:8px;}
+  .ib-newgrid .full{grid-column:1/-1;}
+  .ib-newgrid input,.ib-newgrid select{width:100%;box-sizing:border-box;font-family:'Sarabun';font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;}
+  .ib-newgrid label{display:block;font-size:12.5px;color:var(--ink-600);margin-bottom:3px;}
+  .ib-combo{flex:1;min-width:260px;}
+  .ib-combo input{width:100%;box-sizing:border-box;font-family:'Sarabun';font-size:14px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;}
+  .ib-gt{display:inline-block;background:#fff4ea;border:1px solid #f9c79c;border-radius:10px;padding:7px 14px;font-weight:600;}
+  .ib-gt b{color:#d95f08;font-size:17px;}
   .ib-x{border:none;background:transparent;color:var(--ink-400);font-size:15px;cursor:pointer;padding:8px 6px;border-radius:6px;}
   .ib-x:hover{background:#fdeceb;color:#c0392b;}
   .ib-add{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 8px;}
   #ib-edit-foot{padding:14px 22px;border-top:1px solid #e3e6ea;background:#fff;}
-  .ib-add select{font-family:'Sarabun';font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;min-width:220px;max-width:100%;}
-  @media(max-width:600px){.ib-hd{grid-template-columns:1fr;}.ib-ln{grid-template-columns:1fr 1fr;}.ib-ln-nm{grid-column:1/-1;padding-bottom:0;}.ib-x{justify-self:end;}.ib-kpi>div{min-width:calc(50% - 5px);}}
+  @media(max-width:600px){.ib-hd{grid-template-columns:1fr;}.ib-newgrid{grid-template-columns:1fr;}.ib-kpi>div{min-width:calc(50% - 5px);}}
   .mc-watch{display:inline-block;margin-top:4px;background:#fdeede;color:#a3350f;border-radius:99px;padding:1px 8px;font-size:11px;font-weight:600;}
   .mc-empty{text-align:center;color:var(--ink-400);padding:18px;font-size:13px;}
   @media(max-width:900px){.mc-cols{grid-template-columns:1fr;}.mc-search{min-width:0;flex:1;}}
@@ -1995,9 +2021,11 @@ function ibCalc(){
     if(l.del) return;
     const q = parseFloat(document.getElementById('ib-e-q'+i)?.value)||0, p = parseFloat(document.getElementById('ib-e-p'+i)?.value)||0;
     sum += q*p;
+    const t = document.getElementById('ib-e-t'+i);
+    if(t) t.textContent = q*p ? fmtNum(q*p,2) : '–';
   });
   const el = document.getElementById('ib-e-total');
-  if(el) el.textContent = sum ? 'รวมทั้งใบ (ที่มีราคา): '+fmtNum(sum,2)+' บาท' : '';
+  if(el) el.innerHTML = sum ? '<span class="ib-gt">รวมทั้งใบ (ที่มีราคา): <b>'+fmtNum(sum,2)+'</b> บาท</span>' : '';
 }
 function ibCheckRef(){
   const inp = document.getElementById('ib-e-ref'), err = document.getElementById('ib-e-err'), btn = document.getElementById('ib-e-save');
@@ -2013,16 +2041,30 @@ function renderIbEdit(){
   const E = IbEdit; if(!E) return;
   document.getElementById('ib-edit-title').textContent = E.title;
   const live = E.lines.map((l,i)=>({l,i})).filter(x=>!x.l.del);
-  const lineHtml = live.map(({l,i})=>`<div class="ib-ln">
-      <div class="ib-ln-nm">${l.kind==='fuel'?'⛽':'📦'} ${esc(l.name)}${l.tx?'':' <span class="ib-tag ok">ใหม่</span>'}</div>
-      <div class="f-row"><label>จำนวน (${esc(l.unit)})</label><input type="number" min="0" step="0.01" class="no-spin" id="ib-e-q${i}" value="${l.qty||''}" oninput="ibCalc()"></div>
-      <div class="f-row"><label>ราคา/หน่วย (บาท)</label><input type="number" min="0" step="0.01" id="ib-e-p${i}" value="${l.unitPrice||''}" oninput="ibCalc()"></div>
-      <button type="button" class="ib-x" title="เอารายการนี้ออกจากใบ" onclick="ibRemoveLine(${i})">✕</button>
-    </div>`).join('') || '<div class="foot-note">ไม่เหลือรายการในใบนี้ — กด "ลบทั้งใบ" ถ้าต้องการลบใบเบิกนี้</div>';
-  const used = new Set(live.filter(x=>x.l.kind==='mat').map(x=>x.l.code));
-  const matOpts = materials.slice().sort((a,b)=>a.name.localeCompare(b.name,'th')).filter(m=>!used.has(m.code))
-    .map(m=>`<option value="${esc(m.code)}">${esc(m.name)} (${esc(m.unit)})</option>`).join('');
+  const rowsHtml = live.map(({l,i},n)=>`<tr>
+      <td class="c">${n+1}</td>
+      <td class="ib-nm">${l.kind==='fuel'?'⛽':'📦'} ${esc(l.name)}${l.newMat?' <span class="ib-tag ok">วัสดุใหม่ในทะเบียน</span>':(l.tx?'':' <span class="ib-tag ok">ใหม่</span>')}</td>
+      <td><div class="ib-sfx"><input type="number" min="0" step="0.01" class="no-spin" id="ib-e-q${i}" value="${l.qty||''}" placeholder="0" oninput="ibCalc()"><span>${esc(l.unit)}</span></div></td>
+      <td><div class="ib-sfx pre"><span>฿</span><input type="number" min="0" step="0.01" id="ib-e-p${i}" value="${l.unitPrice||''}" placeholder="0" oninput="ibCalc()"></div></td>
+      <td class="r" id="ib-e-t${i}">–</td>
+      <td class="c"><button type="button" class="ib-x" title="เอารายการนี้ออกจากใบ" onclick="ibRemoveLine(${i})">✕</button></td>
+    </tr>`).join('');
+  const lineHtml = live.length ? `<div class="ib-tbw"><table class="ib-tb"><thead><tr><th style="width:34px">#</th><th>รายการวัสดุ</th><th style="width:128px">จำนวน</th><th style="width:120px">ราคา/หน่วย</th><th class="r" style="width:100px">รวม (บาท)</th><th style="width:34px"></th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`
+    : '<div class="foot-note">ไม่เหลือรายการในใบนี้ — กด "ลบทั้งใบ" ถ้าต้องการลบใบเบิกนี้</div>';
   const hasFt = ft => live.some(x=>x.l.fuelType===ft);
+  const nf = E.nf;
+  const addHtml = nf ? `<div class="ib-newcard"><h4>✨ วัสดุใหม่ที่ยังไม่มีในทะเบียน</h4>
+      <div class="ib-newgrid">
+        <div class="full"><label>ชื่อวัสดุ</label><input type="text" id="ib-nf-name" value="${esc(nf.name)}" placeholder="เช่น ยางมะตอย CRS-2" autocomplete="off"></div>
+        <div><label>หน่วยนับ</label><input type="text" id="ib-nf-unit" value="${esc(nf.unit)}" placeholder="เช่น ถัง, กก., ชิ้น"></div>
+        <div><label>ประเภทบัญชี</label><select id="ib-nf-acct"><option${nf.acct!=='นอกบัญชี'?' selected':''}>ในบัญชี</option><option${nf.acct==='นอกบัญชี'?' selected':''}>นอกบัญชี</option></select></div>
+        <div><label>จำนวน</label><input type="number" min="0" step="0.01" id="ib-nf-qty" value="${esc(nf.qty)}"></div>
+        <div><label>ราคา/หน่วย (บาท)</label><input type="number" min="0" step="0.01" id="ib-nf-price" value="${esc(nf.price)}"></div>
+      </div>
+      <button type="button" class="btn btn-primary btn-sm" onclick="ibSubmitNewMat()">＋ เพิ่มเข้าใบ</button>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="ibCancelNewMat()">ยกเลิก</button>
+      <div class="foot-note" style="margin-top:6px;">ระบบจะสร้างวัสดุนี้ในทะเบียนให้พร้อมกันตอนกด "บันทึก"</div></div>`
+    : `<div class="ib-combo"><input type="text" id="ib-add-q" placeholder="＋ พิมพ์ชื่อวัสดุเพื่อค้นหา หรือสร้างวัสดุใหม่" autocomplete="off" value="${esc(E.q||'')}" oninput="ibListInput()" onfocus="ibListInput()" onkeydown="ibListKey(event)" onblur="setTimeout(ibListClose,180)"><div class="ib-combo-list hidden" id="ib-add-list"></div></div>`;
   document.getElementById('ib-edit-body').innerHTML = `
     <div class="ib-hd">
       <div class="f-row"><label>เลขที่ใบเบิก</label><input type="text" id="ib-e-ref" value="${esc(E.ref || FUEL_REF_PREFIX)}" oninput="ibCheckRef()"><div class="fh-err" id="ib-e-err"></div></div>
@@ -2031,8 +2073,7 @@ function renderIbEdit(){
     <div class="ib-sec-t">รายการในใบ</div>
     ${lineHtml}
     <div class="ib-add">
-      <select id="ib-add-sel"><option value="">＋ เพิ่มรายการวัสดุ…</option>${matOpts}</select>
-      <button type="button" class="btn btn-ghost btn-sm" onclick="ibAddMat()">เพิ่ม</button>
+      ${addHtml}
       ${hasFt('ดีเซล') ? '' : `<button type="button" class="btn btn-ghost btn-sm" onclick="ibAddFuel('ดีเซล')">＋ ดีเซล</button>`}
       ${hasFt('เบนซิน') ? '' : `<button type="button" class="btn btn-ghost btn-sm" onclick="ibAddFuel('เบนซิน')">＋ เบนซิน</button>`}
     </div>
@@ -2044,12 +2085,61 @@ function renderIbEdit(){
   ibCalc(); ibCheckRef();
 }
 function ibRemoveLine(i){ ibSync(); const l = IbEdit.lines[i]; if(!l) return; if(l.tx) l.del = true; else IbEdit.lines.splice(i,1); renderIbEdit(); }
-function ibAddMat(){
+/* ช่องค้นหาวัสดุ (แบบ A): พิมพ์กรองจากทะเบียน หรือกด "สร้างวัสดุใหม่" ถ้าไม่เคยมีชื่อ */
+let IbHi = 0;
+function ibMatResults(){
+  const q = (IbEdit && IbEdit.q || '').trim().toLowerCase();
+  const used = new Set(IbEdit.lines.filter(l=>!l.del && l.kind==='mat' && l.code).map(l=>l.code));
+  return materials.filter(m=>!used.has(m.code) && (!q || m.name.toLowerCase().includes(q)))
+    .sort((a,b)=>a.name.localeCompare(b.name,'th')).slice(0,60);
+}
+function ibListRender(){
+  const box = document.getElementById('ib-add-list'); if(!box || !IbEdit) return;
+  const r = ibMatResults(), q = (IbEdit.q||'').trim();
+  if(IbHi >= r.length) IbHi = Math.max(0, r.length-1);
+  box.innerHTML = (r.length ? r.map((m,i)=>`<div class="ib-opt${i===IbHi?' hi':''}" onmousedown="ibPickMat('${esc(m.code)}')"><span>${esc(m.name)}</span><small>${esc(m.unit)}</small></div>`).join('')
+    : '<div class="ib-opt" style="cursor:default;color:var(--ink-400);">ไม่พบในทะเบียน</div>')
+    + `<div class="ib-opt mk" onmousedown="ibStartNewMat()">＋ สร้างวัสดุใหม่${q?' “'+esc(q)+'”':' (ที่ไม่เคยมีในทะเบียน)'}</div>`;
+  box.classList.remove('hidden');
+}
+function ibListInput(){ if(!IbEdit) return; IbEdit.q = document.getElementById('ib-add-q').value; IbHi = 0; ibListRender(); }
+function ibListClose(){ const b = document.getElementById('ib-add-list'); if(b) b.classList.add('hidden'); }
+function ibListKey(e){
+  if(!IbEdit) return;
+  const r = ibMatResults();
+  if(e.key==='ArrowDown'){ IbHi = Math.min(r.length-1, IbHi+1); ibListRender(); e.preventDefault(); }
+  else if(e.key==='ArrowUp'){ IbHi = Math.max(0, IbHi-1); ibListRender(); e.preventDefault(); }
+  else if(e.key==='Enter'){ if(r[IbHi]) ibPickMat(r[IbHi].code); else ibStartNewMat(); e.preventDefault(); }
+  else if(e.key==='Escape'){ ibListClose(); }
+}
+function ibPickMat(code){
   ibSync();
-  const code = document.getElementById('ib-add-sel')?.value;
-  if(!code) return;
   const m = materials.find(x=>x.code===code); if(!m) return;
   IbEdit.lines.push({tbl:'material_transactions', kind:'mat', tx:null, code:m.code, name:m.name, unit:m.unit, qty:0, unitPrice:m.unitPrice||0, del:false});
+  IbEdit.q = '';
+  renderIbEdit();
+  setTimeout(()=>{ const i = IbEdit && IbEdit.lines.length-1; const el = document.getElementById('ib-e-q'+i); if(el) el.focus(); }, 0);
+}
+function ibStartNewMat(){
+  ibSync();
+  IbEdit.nf = {name:(IbEdit.q||'').trim(), unit:'', acct:'ในบัญชี', qty:'', price:''};
+  IbEdit.q = '';
+  renderIbEdit();
+  setTimeout(()=>{ const el = document.getElementById('ib-nf-name'); if(el) el.focus(); }, 0);
+}
+function ibCancelNewMat(){ ibSync(); IbEdit.nf = null; renderIbEdit(); }
+function ibSubmitNewMat(){
+  ibSync();
+  const name = (document.getElementById('ib-nf-name').value||'').trim();
+  const unit = (document.getElementById('ib-nf-unit').value||'').trim() || 'หน่วย';
+  const acct = document.getElementById('ib-nf-acct').value==='นอกบัญชี' ? 'นอกบัญชี' : 'ในบัญชี';
+  const qty = parseFloat(document.getElementById('ib-nf-qty').value)||0;
+  const price = parseFloat(document.getElementById('ib-nf-price').value)||0;
+  if(!name){ showAlertModal('กรุณากรอกชื่อวัสดุใหม่'); return; }
+  const dup = materials.find(m=>m.name.trim()===name) || IbEdit.lines.some(l=>!l.del && l.newMat && l.newMat.name===name);
+  if(dup){ showAlertModal('มีวัสดุชื่อ "'+name+'" อยู่แล้ว กรุณาพิมพ์ค้นหาแล้วเลือกรายการเดิมจากทะเบียน'); return; }
+  IbEdit.lines.push({tbl:'material_transactions', kind:'mat', tx:null, code:null, newMat:{name, unit, accountType:acct}, name, unit, qty, unitPrice:price, del:false});
+  IbEdit.nf = null;
   renderIbEdit();
 }
 function ibAddFuel(ft){
@@ -2096,6 +2186,14 @@ async function ibSave(){
           const saved = await apiPost('add', 'fuel_transactions', fuelTxToApi(rec));
           fuelTransactions.push(fuelTxFromApi(saved));
         } else {
+          if(l.newMat){
+            // วัสดุใหม่ที่ยังไม่มีในทะเบียน — สร้างก่อน แล้วค่อยบันทึกรับเข้า
+            const nm = l.newMat;
+            const mNew = {code:computeNextMaterialCode(nm.accountType), name:nm.name, unit:nm.unit, accountType:nm.accountType, stock:0, reorder:0};
+            await apiPost('add', 'materials', materialToApi(mNew));
+            materials.push(mNew);
+            l.code = mNew.code; l.newMat = null;
+          }
           rec.itemCode = l.code; rec.qty = l.qty;
           const saved = await apiPost('add', 'material_transactions', matTxToApi(rec));
           materialTransactions.push(matTxFromApi(saved));
