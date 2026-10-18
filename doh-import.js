@@ -174,7 +174,27 @@
     if(document.getElementById('doh-imp-css')) return;
     const st = document.createElement('style'); st.id = 'doh-imp-css';
     st.textContent = `
-      .dohi-box{max-width:980px;width:96%;max-height:90vh;overflow:auto;}
+      .dohi-box{width:96%;padding:0;}
+      .dohi-head{background:var(--modal-head-bg,radial-gradient(1100px 420px at 15% -30%,#4b5563 0%,#111827 70%));border-bottom:none;padding:18px 20px;border-radius:0;display:flex;align-items:center;gap:12px;}
+      .dohi-head h3{color:#fff;font-family:'Kanit',sans-serif;font-size:15.5px;margin:0;}
+      .dohi-head-icon{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+      .dohi-head-icon svg{width:19px;height:19px;}
+      .dohi-sub{color:#a9bbcc;font-size:11.5px;margin-top:2px;}
+      .dohi-head .modal-close{color:#a9bbcc;margin-left:auto;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:none;border:none;cursor:pointer;}
+      .dohi-head .modal-close:hover{background:rgba(255,255,255,.14);color:#fff;}
+      .dohi-box .modal-body{padding:20px 22px 8px;}
+      .dohi-foot{display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:14px 22px;border-top:1px solid #e3e6ea;background:#fff;}
+      .dohi-foot:empty{display:none;}
+      .dohi-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 16px;}
+      .dohi-steps>div{border:1px solid #dfe2dd;border-radius:12px;padding:12px 14px;background:#fff;}
+      .dohi-steps i{display:inline-flex;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#f07a1f,#e0620f);color:#fff;font-style:normal;font-size:12px;font-weight:700;align-items:center;justify-content:center;margin-right:8px;}
+      .dohi-steps b{font-family:'Kanit',sans-serif;font-size:14px;color:#0a2540;}
+      .dohi-steps span{display:block;margin-top:6px;font-size:12.5px;line-height:1.55;color:#4d5a66;}
+      .dohi-rules{margin:0 0 16px;padding:12px 16px 12px 32px;background:#f5f6f4;border-radius:12px;font-size:12.5px;line-height:1.7;color:#4d5a66;}
+      .dohi-rules b{color:#182430;}
+      .dohi-pick{border:2px dashed #dfe2dd;border-radius:14px;padding:22px;text-align:center;margin:0 0 12px;}
+      .dohi-pick small{display:block;margin-top:8px;color:#8792a0;font-size:12px;}
+      @media(max-width:700px){.dohi-steps{grid-template-columns:1fr;}}
       .dohi-note{background:#f5f6f4;border:1px solid #dfe2dd;border-radius:10px;padding:10px 14px;font-size:13px;color:#4d5a66;line-height:1.65;margin:0 0 12px;}
       .dohi-note.warn{background:#fdf1d9;color:#7a5000;border-color:#f2d28c;}
       .dohi-note.bad{background:#fbeae7;color:#c1402f;border-color:#f0b9b0;}
@@ -195,8 +215,11 @@
     let ov = document.getElementById('doh-imp-overlay');
     if(!ov){
       ov = document.createElement('div'); ov.id = 'doh-imp-overlay'; ov.className = 'modal-overlay no-print hidden';
-      ov.innerHTML = '<div class="modal-box dohi-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><h3 style="margin:0;">📥 นำเข้าข้อมูลจากกรม (rmms) เป็นใบสั่งการรายวัน</h3>'
-        + '<button class="modal-close" onclick="DohImp.close()">✕</button></div><div id="doh-imp-body"></div></div>';
+      ov.innerHTML = '<div class="modal-box modal-l dohi-box"><div class="modal-head dohi-head">'
+        + '<div class="dohi-head-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></div>'
+        + '<div><h3>นำเข้าข้อมูลจากกรม (rmms)</h3><div class="dohi-sub">สร้างเป็นใบสั่งการรายวัน พร้อมตัดคลังน้ำมัน/วัสดุให้อัตโนมัติ</div></div>'
+        + '<button class="modal-close" onclick="DohImp.close()" aria-label="ปิด">✕</button></div>'
+        + '<div class="modal-body" id="doh-imp-body"></div><div class="modal-foot dohi-foot" id="doh-imp-foot"></div></div>';
       document.body.appendChild(ov);
     }
     return ov;
@@ -218,12 +241,20 @@
   }
   function render(msg, progress){
     const body = document.getElementById('doh-imp-body'); if(!body) return;
-    if(progress){ body.innerHTML = '<div class="dohi-note">'+H(progress)+'</div>'; return; }
-    if(S.result){ body.innerHTML = renderResult(); return; }
-    const intro = '<div class="dohi-note"><b>วิธีใช้:</b> เลือกไฟล์ <b>Export_CSV ทุกไฟล์ของเดือนเดียวกัน</b> จากระบบกรม (เลือกพร้อมกันหลายไฟล์) ระบบอ่านในเครื่องคุณเท่านั้น แล้วสร้างเป็น<b>รายการใบสั่งการรายวัน</b>ในหน้านี้ พร้อมตัดคลังน้ำมัน/วัสดุให้อัตโนมัติ — จากนั้นเปิดแต่ละใบเทียบกับกระดาษและแก้ในฟอร์มเดิมได้<br>'
-      + '<b>กติกา:</b> ยอดรวมทั้งช่วงของกรมแบ่งเท่ากันทุกวันที่ปฏิบัติงาน (วัสดุลงวันแรก) · ใบที่คีย์เองไว้แล้ว (วัน/รหัสงาน/สายทางเดียวกัน) จะถูก<b>แทนที่</b> · นำเข้าไฟล์เดิมซ้ำได้ ระบบข้ามใบที่เคยนำเข้าแล้ว</div>';
+    const foot = document.getElementById('doh-imp-foot');
+    const setFoot = h => { if(foot) foot.innerHTML = h || ''; };
+    if(progress){ body.innerHTML = '<div class="dohi-note">'+H(progress)+'</div>'; setFoot(''); return; }
+    if(S.result){ body.innerHTML = renderResult(); setFoot('<button class="btn btn-ghost" onclick="DohImp.again()">นำเข้าไฟล์เพิ่ม</button><button class="btn btn-primary" onclick="DohImp.close()">ปิด</button>'); return; }
+    const intro = '<div class="dohi-steps">'
+      + '<div><i>1</i><b>เลือกไฟล์</b><span>Export_CSV <b>ทุกไฟล์ของเดือนเดียวกัน</b> จากระบบกรม เลือกพร้อมกันหลายไฟล์ได้</span></div>'
+      + '<div><i>2</i><b>ตรวจสรุป</b><span>ระบบอ่านไฟล์ในเครื่องคุณเท่านั้น แล้วแสดงจำนวนใบที่จะสร้างให้ตรวจก่อน</span></div>'
+      + '<div><i>3</i><b>นำเข้า</b><span>สร้างเป็นใบสั่งการรายวัน เปิดเทียบกับกระดาษและแก้ในฟอร์มเดิมได้</span></div></div>'
+      + '<ul class="dohi-rules"><li>ยอดรวมทั้งช่วงของกรมแบ่งเท่ากันทุกวันที่ปฏิบัติงาน (วัสดุลงวันแรก)</li>'
+      + '<li>ใบที่คีย์เองไว้แล้ว (วัน/รหัสงาน/สายทางเดียวกัน) จะถูก<b>แทนที่</b></li>'
+      + '<li>นำเข้าไฟล์เดิมซ้ำได้ ระบบข้ามใบที่เคยนำเข้าแล้ว</li></ul>';
     if(!S.parsed.length){
-      body.innerHTML = intro + (msg?'<div class="dohi-note bad">'+H(msg)+'</div>':'') + '<div class="dohi-bar">'+pickHtml()+'</div>'; return;
+      body.innerHTML = (msg?'<div class="dohi-note bad">'+H(msg)+'</div>':'') + intro + '<div class="dohi-pick">'+pickHtml()+'<small>รองรับไฟล์ .csv</small></div>';
+      setFoot('<button class="btn btn-ghost" onclick="DohImp.close()">ปิด</button>'); return;
     }
     const p = S.plan;
     const kpi = p ? '<div class="dohi-kpi"><div><b>'+S.parsed.length+'</b>ไฟล์กิจกรรมที่อ่าน</div><div><b>'+p.items.length+'</b>ใบสั่งการที่จะสร้าง</div>'
@@ -232,15 +263,14 @@
       + '<div><b>'+p.skipDone+'</b>ข้าม (เคยนำเข้าแล้ว)</div></div>' : '';
     const skipBlocks = p ? [['ข้าม: ไฟล์กรมไม่ระบุวันที่ปฏิบัติงาน (ต้องคีย์เอง)', p.skipNoDate],['ข้าม: ไม่พบรหัสงานในข้อมูลอ้างอิง', p.skipNoJob],['ข้าม: เดือนถูกล็อกบัญชีพัสดุแล้ว', p.skipLocked]]
       .filter(x=>x[1].length).map(x=>'<div class="dohi-note warn"><b>'+x[0]+' ('+x[1].length+')</b><ul class="dohi-list">'+x[1].slice(0,12).map(s=>'<li>'+H(s)+'</li>').join('')+(x[1].length>12?'<li>… อีก '+(x[1].length-12)+'</li>':'')+'</ul></div>').join('') : '';
-    body.innerHTML = intro
-      + (msg?'<div class="dohi-note bad">'+H(msg)+'</div>':'')
+    body.innerHTML = (msg?'<div class="dohi-note bad">'+H(msg)+'</div>':'')
       + (S.skipped.length?'<div class="dohi-note warn">ข้าม '+S.skipped.length+' ไฟล์ที่ไม่ใช่ผลงานรายกิจกรรม: '+H(S.skipped.join(', '))+'</div>':'')
       + (S.mixed?'<div class="dohi-note warn">ไฟล์มีวันที่ปฏิบัติงานหลายเดือนปนกัน — ควรเลือกไฟล์ทีละเดือน</div>':'')
       + '<div class="dohi-bar">'+pickHtml()+'<span>เดือนของไฟล์ <select onchange="DohImp.setMonth(this.value)">'+monthOptions(S.importMk)+'</select></span></div>'
       + kpi + skipBlocks
       + (p ? '<div class="dohi-bar"><label style="display:inline-flex;gap:6px;align-items:center;font-size:13.5px;"><input type="checkbox" '+(S.ec1w?'checked':'')+' onchange="DohImp.setEc1w(this.checked)"> บันทึกชั่วโมงเครื่องจักรลง EC 1-W ด้วย ('+buildEc1w().length+' แถว เครื่อง×วัน — ลงช่อง W ชั่วโมงปฏิบัติงาน; ทับเฉพาะช่อง W เดิมของแถวนั้น)</label></div>' : '')
-      + '<div class="dohi-bar"><button class="btn btn-primary" '+(p&&p.items.length?'':'disabled')+' onclick="DohImp.run()">นำเข้า '+(p?p.items.length:0)+' ใบสั่งการ</button>'
-      + '<button class="btn btn-ghost" onclick="DohImp.close()">ยกเลิก</button></div>';
+      ;
+    setFoot('<button class="btn btn-ghost" onclick="DohImp.close()">ยกเลิก</button><button class="btn btn-primary" '+(p&&p.items.length?'':'disabled')+' onclick="DohImp.run()">นำเข้า '+(p?p.items.length:0)+' ใบสั่งการ</button>');
   }
   function renderResult(){
     const r = S.result;
@@ -249,10 +279,9 @@
       + r.attn.map(a=>'<tr><td>'+H(dateTh(a.date))+'</td><td>'+H(a.code)+'</td><td>'+a.msgs.map(m=>H(m)).join('<br>')+'</td><td><button class="btn btn-ghost btn-sm" onclick="DohImp.editOrder(\''+H(a.id)+'\')">✎ แก้ไข</button></td></tr>').join('')
       + '</tbody></table></div></div>' : '';
     const fail = r.failed.length ? '<div class="dohi-note bad"><b>นำเข้าไม่สำเร็จ ('+r.failed.length+' ใบ — ไม่มีข้อมูลของใบเหล่านี้ถูกบันทึก)</b><ul class="dohi-list">'+r.failed.slice(0,15).map(f=>'<li>'+H(f)+'</li>').join('')+'</ul>นำเข้าไฟล์เดิมซ้ำเพื่อลองใหม่ได้ ระบบข้ามใบที่สำเร็จแล้ว</div>' : '';
-    return '<div class="dohi-note ok"><b>นำเข้าเสร็จแล้ว:</b> สร้างใบสั่งการ '+r.created+' ใบ'+(r.replaced?' · แทนที่ใบเดิม '+r.replaced+' ใบ':'')+' (ตัดคลังน้ำมัน/วัสดุตามใบแล้ว) — เปิดดูได้ที่รายการใบสั่งการรายวัน ค้นหาด้วยคำว่า "นำเข้าจากกรม"</div>'
+    return '<div class="dohi-note ok"><b>นำเข้าเสร็จแล้ว:</b> สร้างใบสั่งการ '+r.created+' ใบ'+(r.replaced?' · แทนที่ใบเดิม '+r.replaced+' ใบ':'')+' (ตัดคลังน้ำมัน/วัสดุตามใบแล้ว) — เปิดดูได้ที่รายการใบสั่งการรายวัน (หมายเหตุของใบจะขึ้นว่า "นำเข้าจากกรม")</div>'
       + (r.ec1w ? '<div class="dohi-note '+(r.ec1w.note?'warn':'ok')+'"><b>EC 1-W:</b> บันทึกชั่วโมงเครื่องจักร (ช่อง W) '+r.ec1w.n+' แถว'+(r.ec1w.note?'<br>'+H(r.ec1w.note):'')+'</div>' : '')
-      + fail + attn
-      + '<div class="dohi-bar"><button class="btn btn-primary" onclick="DohImp.close()">ปิด</button><button class="btn btn-ghost" onclick="DohImp.again()">นำเข้าไฟล์เพิ่ม</button></div>';
+      + fail + attn;
   }
   async function onFiles(input){
     const files = Array.from(input.files||[]); if(!files.length || S.busy) return;
