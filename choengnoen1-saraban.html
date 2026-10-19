@@ -475,6 +475,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="f-row" style="align-self:end;font-size:12px;color:var(--ink-400);padding-bottom:8px;">* ใช้คำนวณสิทธิ์การลาของตำแหน่ง "คนงาน" (ไม่มีสิทธิ์ลาภายใน 6 เดือนแรก)</div>
             </div>
             <div class="two-col">
+              <div class="f-row"><label>วันลาพักผ่อนสะสมยกมา (วันทำการ)</label><input type="number" min="0" step="0.5" class="edit-input" id="as-vaccarry" placeholder="เว้นว่าง = ยังไม่ระบุ"></div>
+              <div class="f-row"><label>ยกมาเมื่อต้นปีงบประมาณ (พ.ศ.)</label><input type="number" class="edit-input" id="as-vaccarryfy" placeholder="เช่น 2569"></div>
+            </div>
+            <div class="two-col">
               <div class="f-row"><label>อัตราค่าจ้าง/วัน (บาท)</label><input type="number" class="edit-input" id="as-rate" placeholder="0.00"></div>
               <div class="f-row"><label>ไซส์เสื้อ</label><input class="edit-input" id="as-shirt" placeholder="เช่น L, XL"></div>
             </div>
@@ -1375,7 +1379,7 @@ function renderComplaints(){
     const i = complaints.indexOf(c);
     const days = complaintDaysElapsed(c.date);
     const daysDisp = days===null ? '—' : (c.status==='ดำเนินการแล้วเสร็จ' ? `${days} วัน` : (days>=7 ? `<span class="hazard-soft">${days} วัน</span>` : `${days} วัน`));
-    return `<tr style="cursor:pointer;" onclick="openComplaintDetail(${i})" title="กดเพื่อดูรายละเอียด">
+    return `<tr style="cursor:pointer;" ondblclick="openComplaintDetail(${i})" title="ดับเบิลคลิกเพื่อดูรายละเอียด">
       <td>${idx+1}</td>
       <td>${c.date?fmtDate(c.date):'—'}</td>
       <td>${esc(c.receiveNo||'—')}</td>
@@ -1733,6 +1737,10 @@ function renderStaffDetailModal(){
         <div class="f-row" style="align-self:end;font-size:12px;color:var(--ink-400);padding-bottom:8px;">* ใช้คำนวณสิทธิ์การลาของตำแหน่ง "คนงาน" (ไม่มีสิทธิ์ลาภายใน 6 เดือนแรก)</div>
       </div>
       <div class="two-col">
+        <div class="f-row"><label>วันลาพักผ่อนสะสมยกมา (วันทำการ)</label><input type="number" min="0" step="0.5" class="edit-input" id="sd-vaccarry" value="${esc(s.vacCarry??'')}" placeholder="เว้นว่าง = ยังไม่ระบุ"></div>
+        <div class="f-row"><label>ยกมาเมื่อต้นปีงบประมาณ (พ.ศ.)</label><input type="number" class="edit-input" id="sd-vaccarryfy" value="${esc(s.vacCarryFy??'')}" placeholder="เช่น 2569"></div>
+      </div>
+      <div class="two-col">
         <div class="f-row"><label>อัตราค่าจ้าง/วัน (บาท)</label><input type="number" class="edit-input" id="sd-rate" value="${esc(s.rate??'')}"></div>
         <div class="f-row"><label>ไซส์เสื้อ</label><input class="edit-input" id="sd-shirt" value="${esc(s.shirt||'')}"></div>
       </div>
@@ -1763,6 +1771,7 @@ function renderStaffDetailModal(){
         <div><div class="d-label">ชื่อเล่น</div><div class="d-val">${esc(s.nickname||'—')}</div></div>
         <div><div class="d-label">ตำแหน่งทางราชการ</div><div class="d-val">${esc(s.role||'—')}${s.duty?` <span class="pill pill-warn">ปฏิบัติหน้าที่${esc(s.duty)}</span>`:''}${(()=>{const ri=__retirementInfo(s); if(!ri || s.status!=='ok') return ''; return ri.status==='overdue' ? ` <span class="pill pill-danger" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ (${fmtDate(ri.date)})</span>` : ` <span class="pill pill-warn" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ (${fmtDate(ri.date)})</span>`;})()}</div></div>
         <div><div class="d-label">ประเภทบุคลากร</div><div class="d-val">${esc(s.ptype)}</div></div>
+        <div><div class="d-label">วันลาพักผ่อนสะสมยกมา</div><div class="d-val">${s.vacCarry!=null&&s.vacCarry!==''?esc(s.vacCarry)+' วันทำการ'+(s.vacCarryFy?' (ปีงบ '+esc(s.vacCarryFy)+')':''):'ยังไม่ระบุ'}</div></div>
         <div><div class="d-label">สถานะ</div><div class="d-val">${s.status==='resigned'?'<span class="pill pill-danger">● ลาออก</span>':'<span class="pill pill-ok">● ปฏิบัติงาน</span>'}</div></div>
         <div><div class="d-label">วันเกิด / อายุ</div><div class="d-val">${s.birth?fmtDateFull(s.birth)+' ('+age+' ปี)':'—'}</div></div>
         <div><div class="d-label">วันที่เริ่มงาน</div><div class="d-val">${s.startDate?fmtDate(s.startDate):'—'}${(()=>{const el=__leaveEligibleDate(s); if(!el) return ''; const restricted = TODAY.toISOString().slice(0,10) < el; return restricted ? ` <span class="pill pill-warn">ยังไม่มีสิทธิ์ลา (ถึง ${fmtDate(el)})</span>` : ` <span class="pill pill-ok">มีสิทธิ์ลาแล้ว</span>`;})()}</div></div>
@@ -1821,6 +1830,9 @@ async function saveStaffDetail(){
   s.status = document.getElementById('sd-status').value;
   s.birth = document.getElementById('sd-birth').value || null;
   s.startDate = document.getElementById('sd-startdate').value || null;
+  const vcVal = document.getElementById('sd-vaccarry').value, vcFy = document.getElementById('sd-vaccarryfy').value;
+  s.vacCarry = vcVal!=='' ? Number(vcVal) : null;
+  s.vacCarryFy = vcVal!=='' && vcFy ? Number(vcFy) : null;
   const rateVal = document.getElementById('sd-rate').value;
   s.rate = rateVal ? Number(rateVal) : null;
   s.shirt = document.getElementById('sd-shirt').value.trim() || null;
@@ -1852,7 +1864,7 @@ async function saveStaffDetail(){
 /* ---------- Add staff modal ---------- */
 function openAddStaff(){
   if(!isAdmin()){ alert('ต้องเข้าสู่ระบบด้วยสิทธิ์แก้ไข (หัวหน้าหมวด/ผู้ช่วยหัวหน้าหมวด) จึงจะเพิ่มข้อมูลได้'); return; }
-  ['as-name','as-nickname','as-role','as-duty','as-rate','as-shirt','as-med','as-birth','as-startdate','as-blood','as-phone','as-education','as-address','as-emergency-contact','as-emergency-phone'].forEach(id=>{ document.getElementById(id).value=''; });
+  ['as-name','as-nickname','as-role','as-duty','as-rate','as-shirt','as-med','as-birth','as-startdate','as-vaccarry','as-vaccarryfy','as-blood','as-phone','as-education','as-address','as-emergency-contact','as-emergency-phone'].forEach(id=>{ document.getElementById(id).value=''; });
   document.getElementById('as-ptype').value = 'ลูกจ้างชั่วคราว';
   document.getElementById('as-status').value = 'ok';
   const saveBtn = document.getElementById('as-save-btn');
@@ -1883,7 +1895,9 @@ async function submitAddStaff(){
     emergencyContact: document.getElementById('as-emergency-contact').value.trim() || null,
     emergencyPhone: document.getElementById('as-emergency-phone').value.trim() || null,
     status: document.getElementById('as-status').value,
-    startDate: document.getElementById('as-startdate').value || null
+    startDate: document.getElementById('as-startdate').value || null,
+    vacCarry: document.getElementById('as-vaccarry').value!=='' ? Number(document.getElementById('as-vaccarry').value) : null,
+    vacCarryFy: document.getElementById('as-vaccarry').value!=='' && document.getElementById('as-vaccarryfy').value ? Number(document.getElementById('as-vaccarryfy').value) : null
   };
   const saveBtn = document.getElementById('as-save-btn'), cancelBtn = document.getElementById('as-cancel-btn');
   saveBtn.disabled = true; cancelBtn.disabled = true;
@@ -2552,7 +2566,9 @@ const LV_CHIEF = 'นายอิศรินทร์ อรุณสวัส�
 function buildForm306(name, s, from, to, days, cover, contact, stats, fy){
   const td = TODAY;
   const isTemp = s.ptype==='ลูกจ้างชั่วคราว';
-  const carried = (s.vacCarry!=null && s.vacCarry!=='') ? Number(s.vacCarry) : (isTemp ? 0 : null); // ไม่มีข้อมูลสะสมในระบบ → เว้นว่างให้เขียนเอง
+  /* วันลาพักผ่อนสะสมยกมา: ใช้ค่าที่บันทึกในทะเบียนบุคลากร (vacCarry) เฉพาะเมื่อเป็นของปีงบประมาณเดียวกับใบลา
+     ลูกจ้างชั่วคราวไม่มีสะสม = ๐ ; นอกนั้นยังไม่ระบุ → เว้นว่างให้เขียนเอง */
+  const carried = (s.vacCarry!=null && s.vacCarry!=='' && (s.vacCarryFy==null || Number(s.vacCarryFy)===fy)) ? Number(s.vacCarry) : (isTemp ? 0 : null);
   const rightYear = carried==null ? '' : lvTh(carried+10);
   const cv = lvSplitName(cover);
   const cvRole = cover ? ((staff.find(x=>x.name===cover)||{}).role||'') : '';

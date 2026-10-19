@@ -5106,7 +5106,7 @@ function dwQtyHtml(d){
 function dwTimelineHtml(list){
   return '<div class="dwt-list">'+list.map(d=>{
     const job = findJob(d.code), crews = dwCrewNames(d), n = dwStaffNames(d).length;
-    return `<div class="dwt-item ${d.qtyPending?'pend':''}"><div class="dwt-card" onclick="openDwView(${d.no})">
+    return `<div class="dwt-item ${d.qtyPending?'pend':''}"><div class="dwt-card" ondblclick="if(!event.target.closest('button,a,input,select,textarea'))openDwView(${d.no})">
       <div class="dwt-h"><span class="dwt-code">${esc(d.code)}</span><div class="dwt-name">${esc(job?job.name:'')}</div><div class="dwt-amt">${fmtMoney(dwTotal(d))}</div></div>
       <div class="dwt-meta"><span>📍 ${esc(dwPlaceText(d))}</span><span>${dwQtyHtml(d)}</span><span>👥 ${crews.length ? esc(crews.join(', '))+' · ' : ''}${n} คน</span></div>
     </div></div>`;
