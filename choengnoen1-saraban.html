@@ -334,6 +334,18 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .official-form .two-box>div{padding:10px 14px;}
   .official-form .two-box>div:first-child{border-right:1px solid #333;}
   .official-form .cmd-box{border-top:1px solid #333;padding-top:10px;margin-top:10px;}
+  /* แบบใบลา จ.๓-๐๖ / จ.3-05 วางพิกัดตามไฟล์ PDF ของหมวด (A4) */
+  @page lvpage{size:A4;margin:0;}
+  .lv-page{page:lvpage;position:relative;width:595.3pt;height:841pt;overflow:hidden;margin:0 auto;background:#fff;color:#000;font-family:'TH Sarabun New','THSarabunNew','THSarabun','TH SarabunPSK','THSarabunPSK','Sarabun',sans-serif;font-size:16pt;line-height:16pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .lv-page.lv-sar{font-size:13.6pt;}
+  .lv-t{position:absolute;white-space:pre;line-height:16pt;}
+  .lv-fl{display:flex;height:16pt;}
+  .lv-s{flex:none;white-space:pre;}
+  .lv-d{display:block;height:16pt;background:radial-gradient(circle at 50% 12.3pt,#000 .5pt,transparent .65pt) 0 0/2.55pt 16pt repeat-x;}
+  .lv-dash{height:.5pt;background:repeating-linear-gradient(90deg,#000 0 1.5pt,transparent 1.5pt 3pt);}
+  .lv-ln{background:#000;}
+  .lv-box{width:11.3pt;height:11.3pt;border:.75pt solid #000;box-sizing:border-box;}
+  .lv-box svg{display:block;width:100%;height:100%;}
   @media print{
     .print-only{display:none;}
     .print-only.show-print{display:block;}
@@ -1985,12 +1997,28 @@ function updateLrStats(){
   }
   document.getElementById('lr-stats').innerHTML = html;
 }
+/* หาคำขอลาเดิมของคนเดียวกันที่ช่วงวันทับกับช่วงที่กำลังจะบันทึก (ไม่นับที่ยกเลิกแล้ว; excludeId = ข้ามรายการที่กำลังแก้ไข) */
+function __findLeaveOverlap(name, from, to, excludeId){
+  if(!name || !from) return null;
+  const end = (to && to>=from) ? to : from;
+  const nm = String(name).trim();
+  return leaveRequests.find(x=> x.status!=='cancelled' && x.from && String(x.name||'').trim()===nm
+    && (excludeId==null || x.id!==excludeId) && x.from<=end && (x.to||x.from)>=from) || null;
+}
+function __leaveOverlapMsg(o){
+  return `ลาซ้ำกับรายการเดิม: ${o.type} ${fmtDate(o.from)} – ${fmtDate(o.to)}`;
+}
 function checkLrWarning(){
   const name = document.getElementById('lr-name').value;
   const type = document.getElementById('lr-type').value;
   const from = document.getElementById('lr-from').value;
   const daysVal = parseInt(document.getElementById('lr-days').value,10) || 0;
   const box = document.getElementById('lr-warning');
+  const ov = __findLeaveOverlap(name, from, document.getElementById('lr-to').value);
+  if(ov){
+    box.innerHTML = `<div class="alert-notice"><span class="ic">⛔</span><span>${esc(__leaveOverlapMsg(ov))} — บันทึกไม่ได้</span></div>`;
+    return;
+  }
   if(type==='ขาดงาน'){
     box.innerHTML = '<span class="pill pill-neutral">บันทึกเป็นวันขาดงาน (ไม่ได้รับค่าจ้าง)</span>';
     return;
@@ -1998,7 +2026,7 @@ function checkLrWarning(){
   if(type!=='ไปราชการ'){
     const restr = __leaveRestrictionInfo(name, from || TODAY.toISOString().slice(0,10));
     if(restr){
-      box.innerHTML = `<div class="alert-notice"><span class="ic">⚠️</span><span>พนักงานอยู่ระหว่าง 6 เดือนแรกของการเริ่มงาน ยังไม่มีสิทธิ์ลา (จะเริ่มใช้สิทธิ์ได้ตั้งแต่ ${fmtDate(restr.eligibleDate)}) — หากจำเป็นต้องหยุดงาน กรุณาเลือกประเภทเป็น "ขาดงาน" แทน</span></div>`;
+      box.innerHTML = `<div class="alert-notice"><span class="ic">⚠️</span><span>ยังไม่มีสิทธิ์ลา (ใช้ได้ตั้งแต่ ${fmtDate(restr.eligibleDate)}) — เลือก "ขาดงาน" แทน</span></div>`;
       return;
     }
   }
@@ -2007,7 +2035,7 @@ function checkLrWarning(){
     const used = __workerLeaveUsed(name,type,fy);
     const quota = LEAVE_QUOTA_WORKER[type];
     if(used + daysVal > quota){
-      box.innerHTML = `<div class="alert-notice"><span class="ic">⚠️</span><span>สิทธิลา${type}เกินกำหนด (ใช้ไปแล้ว ${used}/${quota} วัน) กรุณาเลือกประเภทเป็น "ขาดงาน" แทน (ไม่ได้รับค่าจ้าง)</span></div>`;
+      box.innerHTML = `<div class="alert-notice"><span class="ic">⚠️</span><span>สิทธิลา${type}เกิน (ใช้แล้ว ${used}/${quota} วัน) — เลือก "ขาดงาน" แทน</span></div>`;
       return;
     }
   }
@@ -2092,9 +2120,9 @@ function renderHolidayModalBody(){
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px;">
       <button id="hd-add-btn" class="btn btn-primary btn-sm" onclick="addHoliday()">+ เพิ่มวันหยุด</button>
-      <button id="hd-seed-btn" class="btn btn-ghost btn-sm" onclick="seedFixedHolidaysForFY(fiscalYearOf(TODAY.toISOString().slice(0,10)))">📅 เพิ่มวันหยุดราชการมาตรฐานของปีงบประมาณนี้</button>
+      <button id="hd-seed-btn" class="btn btn-ghost btn-sm" onclick="seedFixedHolidaysForFY(fiscalYearOf(TODAY.toISOString().slice(0,10)))">📅 เพิ่มวันหยุดฯ ปีงบปัจจุบัน</button>
     </div>
-    <div class="foot-note" style="margin:0 0 10px;">ปุ่มด้านบนเพิ่มเฉพาะวันหยุดราชการที่วันที่ตายตัวทุกปี — วันหยุดทางศาสนาที่เลื่อนตามปฏิทินจันทรคติ (มาฆบูชา วิสาขบูชา อาสาฬหบูชา วันเข้าพรรษา) และวันหยุดตามมติ ครม. เพิ่มเติม ต้องเพิ่มเองด้วยฟอร์มด้านบน</div>` : ''}
+    <div class="foot-note" style="margin:0 0 10px;">ปุ่มด้านบนเพิ่มเฉพาะวันหยุดที่วันที่ตายตัว — วันหยุดทางศาสนา (มาฆบูชา วิสาขบูชา อาสาฬหบูชา เข้าพรรษา) และวันหยุดตามมติ ครม. ให้เพิ่มเองด้วยฟอร์มด้านบน</div>` : ''}
     <div class="table-wrap table-wrap-scroll" style="max-height:44vh;"><table style="table-layout:fixed;">
       <colgroup><col style="width:30%"><col style="width:55%"><col style="width:15%"></colgroup>
       <thead><tr><th>วันที่</th><th>ชื่อวันหยุด</th><th></th></tr></thead>
@@ -2189,6 +2217,8 @@ async function submitLeaveRequest(){
   const type = document.getElementById('lr-type').value;
   const from = document.getElementById('lr-from').value, to = document.getElementById('lr-to').value;
   if(!from||!to){ alert('กรุณาระบุวันที่ลา'); return; }
+  const ovDup = __findLeaveOverlap(name, from, to);
+  if(ovDup){ alert('บันทึกไม่ได้ — ' + __leaveOverlapMsg(ovDup)); checkLrWarning(); return; }
   if(!['ไปราชการ','ขาดงาน'].includes(type)){
     const restr = __leaveRestrictionInfo(name, from);
     if(restr){
@@ -2369,6 +2399,8 @@ async function saveEditLeave(){
   const newFrom = document.getElementById('el-from').value;
   const newTo = document.getElementById('el-to').value;
   if(!newFrom || !newTo){ alert('กรุณาระบุวันที่ลา'); return; }
+  const ovDup = __findLeaveOverlap(r.name, newFrom, newTo, r.id);
+  if(ovDup){ alert('บันทึกไม่ได้ — ' + __leaveOverlapMsg(ovDup)); return; }
   if(!['ไปราชการ','ขาดงาน'].includes(newType)){
     const restr = __leaveRestrictionInfo(r.name, newFrom);
     if(restr){
@@ -2426,9 +2458,8 @@ window.addEventListener('afterprint', ()=>{ document.querySelectorAll('.print-on
 
 function leaveStatsRows(name, fy, uptoDate){
   const recs = computeLeaveHistory().filter(r=>r.name===name && r.fy===fy && r.from<uptoDate);
-  const sick = recs.filter(r=>r.type==='ป่วย').reduce((a,r)=>a+daysBetween(r.from,r.to),0);
-  const vac = recs.filter(r=>r.type==='พักผ่อน').reduce((a,r)=>a+daysBetween(r.from,r.to),0);
-  return {sick, vac};
+  const sum = t => recs.filter(r=>r.type===t).reduce((a,r)=>a+daysBetween(r.from,r.to),0);
+  return {sick: sum('ป่วย'), vac: sum('พักผ่อน'), biz: sum('กิจ'), mat: sum('คลอดบุตร')};
 }
 
 function printLeaveForm(i){
@@ -2457,109 +2488,203 @@ function printLeaveForm(i){
 
 function checkbox(label, checked){ return `${checked?'☑':'☐'} ${label}`; }
 
+/* ============================================================
+   แบบใบลา จ.๓-๐๖ (พักผ่อน) และ จ.3-05 (ป่วย/กิจส่วนตัว/คลอดบุตร)
+   วางตำแหน่งตามไฟล์ PDF ต้นฉบับของหมวด (A4 หน่วย pt) — ตัวอักษรคงที่ + เส้นประ + ช่องกรอกข้อมูลผู้ลา
+   พิกัดทุกจุด (x, y) ถอดจากไฟล์ ลาพักผ่อน.pdf / ลาป่วย.pdf โดยตรง y = เส้นฐานตัวอักษรนับจากขอบบนกระดาษ
+   ============================================================ */
+const LV_TH_DIGITS = '๐๑๒๓๔๕๖๗๘๙';
+function lvTh(v){ return String(v==null?'':v).replace(/\d/g,d=>LV_TH_DIGITS[d]); }
+function lvDateTh(iso){
+  if(!iso) return '';
+  const d = new Date(iso+'T00:00:00');
+  return lvTh(d.getDate())+' '+THAI_MONTH_FULL[d.getMonth()]+' '+lvTh(d.getFullYear()+543);
+}
+function lvSplitName(full){
+  const n = String(full||'').replace(/\s+/g,' ').trim();
+  const m = n.match(/^(นางสาว|นาง|นาย)\s*(.*)$/);
+  return m ? {pre:m[1], rest:m[2]} : {pre:'', rest:n};
+}
+/* เครื่องมือวาง element แบบพิกัดสัมบูรณ์ (pt) */
+function lvT(x,y,s,o){   // ข้อความคงที่ ชิดซ้ายที่ x เส้นฐาน y
+  o=o||{};
+  const st = `left:${x}pt;top:${y-12.5}pt;`+(o.size?`font-size:${o.size}pt;line-height:${o.size}pt;`:'')+(o.bold?'font-weight:700;':'');
+  return `<div class="lv-t" style="${st}">${s}</div>`;
+}
+function lvLine(x,y,w,s){ // ข้อความที่มีเส้นจุดไข่ปลาต่อท้าย/แทรก — จุดยืดเต็มความกว้าง w
+  const toks = String(s).match(/\.+|[^.]+/g)||[];
+  const inner = toks.map(t=> t[0]==='.' ? `<span class="lv-d" style="flex:${t.length} 1 0"></span>` : `<span class="lv-s">${t}</span>`).join('');
+  return `<div class="lv-t lv-fl" style="left:${x}pt;top:${y-12.5}pt;width:${w}pt">${inner}</div>`;
+}
+function lvDots(x,y,w){ return lvLine(x,y,w,'.'); }
+function lvDash(x0,x1,y){ // เส้นประของแบบ จ.3-05 (ขีดสั้น 1.5pt ทุก 3pt)
+  return `<div class="lv-t lv-dash" style="left:${x0}pt;top:${y-0.1}pt;width:${x1-x0}pt"></div>`;
+}
+function lvHL(x0,x1,y){ return `<div class="lv-t lv-ln" style="left:${x0}pt;top:${y}pt;width:${x1-x0}pt;height:.5pt"></div>`; }
+function lvVL(x,y0,y1){ return `<div class="lv-t lv-ln" style="left:${x}pt;top:${y0}pt;width:.5pt;height:${y1-y0}pt"></div>`; }
+function lvBox(x,y,checked){ // ช่องสี่เหลี่ยม 11.3pt (x,y = มุมซ้ายบน)
+  return `<div class="lv-t lv-box" style="left:${x}pt;top:${y}pt">${checked?'<svg viewBox="0 0 10 10"><path d="M1.6 5.4 4 8 8.6 1.6" fill="none" stroke="#000" stroke-width="1.5"/></svg>':''}</div>`;
+}
+function lvV(x0,x1,y,s,o){ // ค่าที่กรอก จัดกึ่งกลางช่อง x0..x1 เส้นฐาน y (ย่อขนาดอัตโนมัติถ้ายาวเกินช่อง)
+  o=o||{};
+  const txt = String(s==null?'':s);
+  if(!txt.trim()) return '';
+  const w = x1-x0;
+  const est = txt.replace(/[ัิ-ฺ็-๎]/g,'').length*4.9;
+  const size = est>w ? Math.max(11, Math.floor(16*w/est*10)/10) : 16;
+  const al = o.left ? 'left' : 'center';
+  return `<div class="lv-t" style="left:${x0}pt;top:${y-12.5+(16-size)*0.35}pt;width:${w}pt;text-align:${al};${size<16?`font-size:${size}pt;`:''}${o.left?'padding-left:4pt;box-sizing:border-box;':''}">${esc(txt)}</div>`;
+}
+function lvHasThFont(){
+  try{
+    const c = document.createElement('canvas').getContext('2d'); const t='ขอลาพักผ่อนสะสมวันทำการ';
+    c.font='40px serif'; const a=c.measureText(t).width;
+    c.font='40px "TH Sarabun New","THSarabunNew","THSarabun","TH SarabunPSK","THSarabunPSK",serif';
+    return c.measureText(t).width!==a;
+  }catch(e){ return false; }
+}
+function lvWrap(inner){
+  /* ถ้าเครื่องไม่มีฟอนต์ TH Sarabun ใช้ Sarabun แทนและลดขนาดลงให้ความกว้างใกล้เคียง */
+  return `<div class="lv-page${lvHasThFont()?'':' lv-sar'}">${inner}</div>`;
+}
+const LV_CHIEF = 'นายอิศรินทร์ อรุณสวัสดิ์';
+
 function buildForm306(name, s, from, to, days, cover, contact, stats, fy){
-  const carried = 0; // วันลาพักผ่อนสะสมยกมา — ยังไม่มีข้อมูลสะสมในระบบ กรอกเพิ่มเติมได้ตอนพิมพ์
-  const rightYear = carried + 10;
-  const td = todayFullParts();
-  document.getElementById('print-leave-form').innerHTML = `
-  <div class="official-form">
-    <div class="form-header">
-      <div class="form-org-block">กรมทางหลวง<br>จ.๓-๐๖</div>
-      <div class="form-title">แบบใบลาพักผ่อน</div>
-    </div>
-    <div class="writeline">(เขียนที่) หมวดทางหลวงเชิงเนิน<br>วันที่ ${td.day} เดือน ${td.monthFull} พ.ศ. ${td.yearBE}</div>
-    <p>เรื่อง &nbsp;ขอลาพักผ่อน</p>
-    <p>เรียน &nbsp;ผอ.ขท.ระยอง</p>
-    <p>ข้าพเจ้า <span class="dotted">${esc(name)}</span> ตำแหน่ง <span class="dotted">${s.role?esc(s.role):'&nbsp;'}</span></p>
-    <p>สังกัด <span class="dotted">แขวงทางหลวงระยอง หมวดทางหลวงเชิงเนิน</span></p>
-    <p>มีวันลาพักผ่อนสะสม <span class="dotted">${carried}</span> วันทำการ มีสิทธิลาพักผ่อนประจำปีนี้อีก ๑๐ วันทำการ รวมเป็น <span class="dotted">${rightYear}</span> วันทำการ</p>
-    <p>ขอลาพักผ่อนตั้งแต่วันที่ <span class="dotted">${fmtDate(from)}</span> ถึงวันที่ <span class="dotted">${fmtDate(to)}</span> มีกำหนด <span class="dotted">${days}</span> วันทำการ</p>
-    <p>ในระหว่างลาขออนุมัติและสั่งการให้&nbsp; นาย&nbsp; นาง&nbsp; นางสาว <span class="dotted">${cover?esc(cover):'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
-    <p>ตำแหน่ง <span class="dotted">${cover?esc(staff.find(x=>x.name===cover)?.role||''):''}</span> เป็นผู้ &nbsp;${checkbox('รักษาราชการแทน', !!cover)} &nbsp;☐ รักษาการในตำแหน่ง</p>
-    <p>ติดต่อข้าพเจ้าได้ที่ <span class="dotted">${contact?esc(contact):'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
-    <div class="sig-block">ขอแสดงความนับถือ<br><br><br>(ลงชื่อ) .......................................................<br>( ${esc(name)} )</div>
-    <div class="two-box">
-      <div>
-        <b>สถิติการลาในปีงบประมาณ</b>
-        <table class="of-table">
-          <tr><th>ลามาแล้ว<br>(วันทำการ)</th><th>ลาครั้งนี้<br>(วันทำการ)</th><th>รวมเป็น<br>(วันทำการ)</th></tr>
-          <tr><td>${stats.vac}</td><td>${days}</td><td>${stats.vac+parseInt(days||0)}</td></tr>
-        </table>
-        <br>
-        (ลงชื่อ)....................................................ผู้ตรวจสอบ<br>
-        (ตำแหน่ง)..............................................<br>
-        วันที่ ........./........./.........
-      </div>
-      <div>
-        <b>ความเห็นผู้บังคับบัญชา</b><br><br><br>
-        ......................................................................<br>
-        (ลงชื่อ)......................................................<br>
-        ( นายอิศรินทร์&nbsp;อรุณสวัสดิ์ )&nbsp;&nbsp;ตำแหน่ง หัวหน้าหมวดทางหลวงเชิงเนิน<br>
-        วันที่ ........./........./.........
-      </div>
-    </div>
-    <div class="cmd-box">
-      คำสั่ง &nbsp;☐ อนุญาต &nbsp;☐ ไม่อนุญาต<br><br>
-      (ลงชื่อ)....................................................<br>
-      ( &nbsp; )&nbsp;&nbsp;ตำแหน่ง..............................................<br>
-      วันที่ ........./........./.........
-    </div>
-  </div>`;
+  const td = TODAY;
+  const isTemp = s.ptype==='ลูกจ้างชั่วคราว';
+  const carried = (s.vacCarry!=null && s.vacCarry!=='') ? Number(s.vacCarry) : (isTemp ? 0 : null); // ไม่มีข้อมูลสะสมในระบบ → เว้นว่างให้เขียนเอง
+  const rightYear = carried==null ? '' : lvTh(carried+10);
+  const cv = lvSplitName(cover);
+  const cvRole = cover ? ((staff.find(x=>x.name===cover)||{}).role||'') : '';
+  const nm = String(name).replace(/\s+/g,' ').trim();
+  const dnum = parseInt(days||0);
+  let h = '';
+  /* ส่วนหัว */
+  h += lvT(269,44,'แบบใบลาพักผ่อน',{bold:1,size:18});
+  h += lvT(496,69,'กรมทางหลวง') + lvT(491,88,'จ.๓-๐๖');
+  h += lvT(344,114,'(เขียนที่)') + lvDots(386,114,155);
+  h += lvT(325,135,'วันที่') + lvDots(344,135,26) + lvT(374,135,'เดือน') + lvDots(396,135,77) + lvT(477,135,'พ.ศ.') + lvDots(496,135,46);
+  h += lvV(385.7,540.7,114,'หมวดทางหลวงเชิงเนิน');
+  h += lvV(344.2,370.6,135,lvTh(td.getDate())) + lvV(396.5,476,135,THAI_MONTH_FULL[td.getMonth()]) + lvV(495.3,543.8,135,lvTh(td.getFullYear()+543));
+  h += lvT(71,174,'เรื่อง') + lvT(104,174,'ขอลาพักผ่อน');
+  h += lvT(71,201,'เรียน') + lvDots(106,201,57) + lvV(105.3,191.7,201,'ผอ.ขท.ระยอง');
+  h += lvT(128,228,'ข้าพเจ้า') + lvDots(167,228,156) + lvT(326,228,'ตำแหน่ง') + lvDots(362,228,193);
+  h += lvV(168.5,322.1,228,nm) + lvV(363.4,556.1,228,s.role||'');
+  h += lvT(71,250,'สังกัด') + lvDots(98,250,459) + lvV(97.6,557,250,'แขวงทางหลวงระยอง หมวดทางหลวงเชิงเนิน',{left:1});
+  h += lvT(71,271,'มีวันลาพักผ่อนสะสม') + lvDots(157,271,46) + lvT(203,271,'วันทำการ มีสิทธิลาพักผ่อนประจำปีนี้อีก ๑๐ วันทำการ') + lvT(441,271,'รวมเป็น') + lvDots(471,271,38) + lvT(509,271,'วันทำการ');
+  h += lvV(157.7,199.4,271,carried==null?'':lvTh(carried)) + lvV(476.9,508.7,271,rightYear);
+  h += lvT(71,293,'ขอลาพักผ่อน') + lvT(126,293,'ตั้งแต่วันที่') + lvDots(170,293,132) + lvT(303,293,'ถึงวันที่') + lvDots(333,293,116) + lvT(449,293,'มีกำหนด') + lvDots(490,293,23) + lvT(513,293,'วันทำการ');
+  h += lvV(169.9,301.5,293,lvDateTh(from)) + lvV(334.3,447.4,293,lvDateTh(to)) + lvV(487,513,293,lvTh(dnum));
+  h += lvT(71,315,'ในระหว่างลาขออนุมัติและสั่งการให้');
+  h += lvBox(228,303.5,cv.pre==='นาย') + lvT(245,315,'นาย') + lvBox(272,303.5,cv.pre==='นาง') + lvT(290,315,'นาง') + lvBox(315,303.5,cv.pre==='นางสาว') + lvT(332,315,'นางสาว') + lvDots(365,315,172);
+  h += lvV(368,556.6,315,cv.rest);
+  h += lvT(71,336,'ตำแหน่ง') + lvDots(106,336,172) + lvV(108.3,275.8,336,cvRole) + lvT(278,336,'เป็นผู้');
+  h += lvBox(317,324.5,!!cover) + lvT(338,336,'รักษาราชการแทน');
+  h += lvBox(313,346.5,false) + lvT(334,358,'รักษาการในตำแหน่ง');
+  h += lvT(71,380,'ติดต่อข้าพเจ้าได้ที่') + lvDots(151,380,157) + lvV(145.1,308.6,380,lvTh(contact));
+  h += lvT(330,398,'ขอแสดงความนับถือ');
+  h += lvT(294,434,'(ลงชื่อ)') + lvDots(327,434,140);
+  h += lvT(329,452,'(') + lvDots(333,452,126) + lvT(459,452,')') + lvV(332,457.3,452,nm);
+  /* สถิติการลา (ซ้าย) + ความเห็นผู้บังคับบัญชา (ขวา) */
+  h += lvT(71,497,'สถิติการลาในปีงบประมาณ',{bold:1}) + lvT(287,497,'ความเห็นผู้บังคับบัญชา',{bold:1});
+  h += lvT(73,516,'ลามาแล้ว') + lvT(72,534,'(วันทำการ)') + lvT(139,516,'ลาครั้งนี้') + lvT(133,534,'(วันทำการ)') + lvT(203,516,'รวมเป็น') + lvT(197,534,'(วันทำการ)');
+  h += lvHL(62.2,252.4,501.8) + lvHL(62.2,252.4,538.9) + lvHL(62.2,252.4,559.7);
+  h += lvVL(62.2,501.8,559.7) + lvVL(124.2,501.8,559.7) + lvVL(188.1,501.8,559.7) + lvVL(251.9,501.8,559.7);
+  h += lvV(62.7,124.2,553,lvTh(stats.vac)) + lvV(124.7,188.1,553,lvTh(dnum)) + lvV(188.6,251.9,553,lvTh(stats.vac+dnum));
+  h += lvLine(328,513,186,'.') + lvLine(290,534,46,'.') + lvLine(336,534,179,'.');
+  h += lvT(304,574,'(ลงชื่อ)') + lvDots(337,574,170);
+  h += lvT(354,594,'(') + lvDots(358,594,125) + lvT(483,594,')');
+  h += lvV(358.6,483.9,594,LV_CHIEF);
+  h += lvT(301,619,'ตำแหน่ง') + lvDots(338,619,189) + lvV(352.2,489.7,619,'หัวหน้าหมวดทางหลวงเชิงเนิน');
+  h += lvT(329,640,'วันที่') + lvLine(348,640,179,'................./.................................../................');
+  /* ลายเซ็นผู้ตรวจสอบ (ซ้ายล่าง) */
+  h += lvT(53,610,'ลงชื่อ') + lvDots(77,610,135) + lvT(212,610,'ผู้ตรวจสอบ');
+  h += lvT(81,631,'(') + lvDots(84,631,121) + lvT(205,631,')');
+  h += lvT(53,652,'(ตำแหน่ง)') + lvDots(98,652,160);
+  h += lvT(53,673,'วันที่') + lvLine(73,673,215,'................../.................................../...........................');
+  /* คำสั่ง (ขวาล่าง) */
+  h += lvT(301,661,'คำสั่ง',{bold:1});
+  h += lvBox(375,669.5,false) + lvT(398,681,'อนุญาต') + lvBox(460,669.5,false) + lvT(482,681,'ไม่อนุญาต');
+  h += lvDots(351,700,174) + lvDots(323,718,208);
+  h += lvT(323,755,'(ลงชื่อ)') + lvDots(355,755,169);
+  h += lvT(287,791,'ตำแหน่ง') + lvDots(324,791,201);
+  h += lvT(287,809,'วันที่') + lvLine(307,809,220,'.................../..................................../.........................');
+  document.getElementById('print-leave-form').innerHTML = lvWrap(h);
 }
 
 function buildForm305(name, s, type, from, to, days, reason, cover, contact, stats, fy){
+  const td = TODAY;
   const typeLabel = type==='คลอดบุตร'?'คลอดบุตร':type==='กิจ'?'กิจส่วนตัว':'ป่วย';
-  const td = todayFullParts();
-  document.getElementById('print-leave-form').innerHTML = `
-  <div class="official-form">
-    <div class="form-header">
-      <div class="form-org-block">กรมทางหลวง<br>จ.3-05</div>
-      <div class="form-title">แบบใบลาป่วย ลาคลอดบุตร ลากิจส่วนตัว</div>
-    </div>
-    <div class="writeline">(เขียนที่) หมวดทางหลวงเชิงเนิน<br>วันที่ ${td.day} เดือน ${td.monthFull} พ.ศ. ${td.yearBE}</div>
-    <p>เรื่อง &nbsp;ขอลา${typeLabel}</p>
-    <p>เรียน &nbsp;ผอ.ขท.ระยอง</p>
-    <p>ข้าพเจ้า <span class="dotted">${esc(name)}</span> ตำแหน่ง <span class="dotted">${s.role?esc(s.role):'&nbsp;'}</span></p>
-    <p>สังกัด <span class="dotted">แขวงทางหลวงระยอง หมวดทางหลวงเชิงเนิน</span></p>
-    <p>ขอลา &nbsp;${checkbox('ป่วย',type==='ป่วย')}</p>
-    <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${checkbox('กิจส่วนตัว',type==='กิจ')} &nbsp;เนื่องจาก <span class="dotted">${reason?esc(reason):'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
-    <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${checkbox('คลอดบุตร',type==='คลอดบุตร')}</p>
-    <p>ตั้งแต่วันที่ <span class="dotted">${fmtDate(from)}</span> ถึงวันที่ <span class="dotted">${fmtDate(to)}</span> มีกำหนด <span class="dotted">${days}</span> วัน</p>
-    <p>ข้าพเจ้าได้ลา ${checkbox('ป่วย',false)} ${checkbox('กิจส่วนตัว',false)} ${checkbox('คลอดบุตร',false)} ครั้งสุดท้ายตั้งแต่วันที่ <span class="dotted">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> ถึงวันที่ <span class="dotted">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> มีกำหนด <span class="dotted">&nbsp;&nbsp;&nbsp;</span> วัน ในระหว่างลาขออนุมัติและสั่งการให้</p>
-    <p>&nbsp;นาย&nbsp; นาง&nbsp; นางสาว <span class="dotted">${cover?esc(cover):'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
-    <p>ตำแหน่ง <span class="dotted">${cover?esc(staff.find(x=>x.name===cover)?.role||''):''}</span> เป็นผู้ &nbsp;${checkbox('รักษาราชการแทน', !!cover)}</p>
-    <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;☐ รักษาการในตำแหน่ง</p>
-    <p>และติดต่อข้าพเจ้าได้ที่ <span class="dotted">${contact?esc(contact):'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
-    <div class="sig-block">ขอแสดงความนับถือ<br><br><br>(ลงชื่อ) .......................................................<br>( ${esc(name)} )</div>
-    <div class="two-box">
-      <div>
-        <b>สถิติการลาในปีงบประมาณนี้</b>
-        <table class="of-table">
-          <tr><th>ประเภทลา</th><th>ลามาแล้ว<br>(วันทำการ)</th><th>ลาครั้งนี้<br>(วันทำการ)</th><th>รวมเป็น<br>(วันทำการ)</th></tr>
-          <tr><td>ป่วย</td><td>${stats.sick}</td><td>${type==='ป่วย'?days:'-'}</td><td>${type==='ป่วย'?stats.sick+parseInt(days||0):stats.sick}</td></tr>
-          <tr><td>กิจส่วนตัว</td><td>-</td><td>${type==='กิจ'?days:'-'}</td><td>${type==='กิจ'?days:'-'}</td></tr>
-          <tr><td>คลอดบุตร</td><td>-</td><td>${type==='คลอดบุตร'?days:'-'}</td><td>${type==='คลอดบุตร'?days:'-'}</td></tr>
-        </table>
-        <br>
-        (ลงชื่อ)....................................................ผู้ตรวจสอบ<br>
-        (ตำแหน่ง)..............................................<br>
-        วันที่ ........./........./.........
-      </div>
-      <div>
-        <b>ความเห็นผู้บังคับบัญชา</b><br><br><br>
-        ......................................................................<br>
-        (ลงชื่อ)......................................................<br>
-        ( นายอิศรินทร์&nbsp;อรุณสวัสดิ์ )&nbsp;&nbsp;ตำแหน่ง ชม.ขท.เชิงเนิน<br>
-        วันที่ ........./........./.........
-      </div>
-    </div>
-    <div class="cmd-box">
-      คำสั่ง &nbsp;☐ อนุญาต &nbsp;☐ ไม่อนุญาต<br><br>
-      (ลงชื่อ)....................................................<br>
-      ( &nbsp; )&nbsp;&nbsp;ตำแหน่ง..............................................<br>
-      วันที่ ........./........./.........
-    </div>
-  </div>`;
+  const nm = String(name).replace(/\s+/g,' ').trim();
+  const dnum = parseInt(days||0);
+  const cv = lvSplitName(cover);
+  const cvRole = cover ? ((staff.find(x=>x.name===cover)||{}).role||'') : '';
+  /* ลาครั้งสุดท้าย (ป่วย/กิจ/คลอดบุตร) ก่อนใบนี้ */
+  const prev = computeLeaveHistory()
+    .filter(h=>h.name===name && ['ป่วย','กิจ','คลอดบุตร'].includes(h.type) && h.from<from)
+    .sort((a,b)=>b.from.localeCompare(a.from))[0];
+  const prevDays = prev ? daysBetween(prev.from, prev.to) : 0;
+  const cur = {sick: type==='ป่วย'?dnum:0, biz: type==='กิจ'?dnum:0, mat: type==='คลอดบุตร'?dnum:0};
+  const cell = (v)=> v ? lvTh(v) : '';
+  let h = '';
+  h += lvT(170,55,'แบบใบลาป่วย',{bold:1,size:20}) + lvT(252,55,'ลาคลอดบุตร',{bold:1,size:20}) + lvT(324,55,'ลากิจส่วนตัว',{bold:1,size:20});
+  h += lvT(496,55,'กรมทางหลวง') + lvT(498,77,'จ.3 - 05');
+  h += lvT(369,98,'(เขียนที่)') + lvDash(405.1,547.5,98.8) + lvV(407.5,548.2,98,'หมวดทางหลวงเชิงเนิน');
+  h += lvT(311,119,'วันที่') + lvT(374,119,'เดือน') + lvT(480,119,'พ.ศ.');
+  h += lvDash(333.5,367.5,120.4) + lvDash(399.7,475.5,120.4) + lvDash(501.2,547.5,120.4);
+  h += lvV(332.1,372.8,119,lvTh(td.getDate())) + lvV(401.1,477.8,119,THAI_MONTH_FULL[td.getMonth()]) + lvV(500.8,548.7,119,lvTh(td.getFullYear()+543));
+  h += lvT(54,141,'เรื่อง') + lvDash(75,232.5,142) + lvV(78,235.1,141,'ลา'+typeLabel);
+  h += lvT(54,162,'เรียน') + lvDash(78,232.5,163.6) + lvV(77.5,232.2,162,'ผอ.ขท.ระยอง');
+  h += lvT(126,184,'ข้าพเจ้า') + lvDash(159.9,324.5,185.3) + lvV(159.4,325.1,184,nm);
+  h += lvT(327,184,'ตำแหน่ง') + lvDash(372,520.5,185.3) + lvV(371.3,520.9,184,s.role||'');
+  h += lvT(54,206,'สังกัด') + lvDash(81.5,520.5,206.9) + lvV(80.6,521.3,206,'แขวงทางหลวงระยอง หมวดทางหลวงเชิงเนิน',{left:1});
+  h += lvBox(143.6,216.9,type==='ป่วย') + lvT(162,227,'ป่วย');
+  h += lvT(83,249,'ขอลา') + lvBox(143.6,240.1,type==='กิจ') + lvT(162,249,'กิจส่วนตัว') + lvT(214,249,'เนื่องจาก') + lvDash(255,448.5,250.1) + lvV(254.2,449.5,249,reason||'');
+  h += lvBox(144.2,260.3,type==='คลอดบุตร') + lvT(162,270,'คลอดบุตร');
+  h += lvT(54,292,'ตั้งแต่วันที่') + lvDash(99,232.5,293.3) + lvV(98.6,232.9,292,lvDateTh(from));
+  h += lvT(237,292,'ถึงวันที่') + lvDash(270.8,418.5,293.3) + lvV(270.1,419.7,292,lvDateTh(to));
+  h += lvT(427,292,'มีกำหนด') + lvDash(468.7,520.5,293.3) + lvV(469,521.1,292,lvTh(dnum)) + lvT(525,292,'วัน');
+  h += lvT(54,314,'ข้าพเจ้าได้ลา') + lvBox(132.6,304.1,!!prev&&prev.type==='ป่วย') + lvT(148,314,'ป่วย') + lvBox(189,304.6,!!prev&&prev.type==='กิจ') + lvT(209,314,'กิจส่วนตัว') + lvBox(270,304.9,!!prev&&prev.type==='คลอดบุตร') + lvT(286,314,'คลอดบุตร') + lvT(333,314,'ครั้งสุดท้ายตั้งแต่วันที่');
+  h += lvDash(427.3,520.5,314.9) + lvV(425.3,521.1,314,prev?lvDateTh(prev.from):'');
+  h += lvT(54,335,'ถึงวันที่') + lvDash(90,232.5,336.5) + lvV(88.1,238.1,335,prev?lvDateTh(prev.to):'');
+  h += lvT(239,335,'มีกำหนด') + lvDash(282,340.5,336.5) + lvV(281.3,341.1,335,prev?lvTh(prevDays):'') + lvT(345,335,'วัน') + lvT(360,335,'ในระหว่างลาขออนุมัติและสั่งการให้');
+  h += lvBox(54,346.3,cv.pre==='นาย') + lvT(67,357,'นาย') + lvBox(89.7,347,cv.pre==='นาง') + lvT(103,357,'นาง') + lvBox(124.7,347.4,cv.pre==='นางสาว') + lvT(139,357,'นางสาว');
+  h += lvDash(175.4,304.5,358.1) + lvV(175.1,305.2,357,cv.rest);
+  h += lvT(309,357,'ตำแหน่ง') + lvDash(348.2,412.5,358.1) + lvV(346.7,417.4,357,cvRole) + lvT(419,357,'เป็นผู้');
+  h += lvBox(446.6,347.4,!!cover) + lvT(459,357,'รักษาราชการแทน');
+  h += lvBox(446.3,367.9,false) + lvT(459,379,'รักษาการในตำแหน่ง');
+  h += lvT(57,400,'และติดต่อข้าพเจ้าได้ที่') + lvDash(159,520.5,401.4) + lvV(158.9,521.1,400,lvTh(contact));
+  h += lvT(337,433,'ขอแสดงความนับถือ');
+  h += lvT(278,454,'(') + lvT(281,454,'ลงชื่อ') + lvT(306,454,')') + lvDash(312,484.5,455.4);
+  h += lvT(307,476,'(') + lvDash(307,484.5,477.1) + lvT(486,476,')') + lvV(310.6,486.5,476,nm);
+  h += lvT(119,498,'สถิติการลาในปีงบประมาณนี้',{bold:1}) + lvT(340,498,'ความเห็นผู้บังคับบัญชา',{bold:1});
+  /* ตารางสถิติ (ซ้าย) */
+  const cx = [48.4,117,189,252,315.3], ty = [516,537.5,559.5,581.5,625.5,647.5];
+  h += ty.map((y,k)=>lvHL(cx[k===1?1:0],315.3,y)).join('');
+  h += cx.map(x=>lvVL(x,516,647.5)).join('');
+  h += lvT(60,531,'ประเภทลา') + lvT(133,531,'ลามาแล้ว') + lvT(203,531,'ลาครั้งนี้') + lvT(266,531,'รวมเป็น');
+  h += lvT(129,553,'(วันทำการ)') + lvT(196,553,'(วันทำการ)') + lvT(259,553,'(วันทำการ)');
+  h += lvT(74,575,'ป่วย') + lvT(61,598,'กิจส่วนตัว') + lvT(129,598,'(วันทำการ)') + lvT(196,598,'(วันทำการ)') + lvT(259,598,'(วันทำการ)') + lvT(61,641,'คลอดบุตร');
+  const rowsY = [[575,stats.sick,cur.sick],[619,stats.biz,cur.biz],[641,stats.mat,cur.mat]];
+  h += rowsY.map(([y,used,now])=> (used||now) ? (lvV(117.5,188.5,y,cell(used)) + lvV(189.5,251.5,y,cell(now)) + lvV(252.5,315,y,cell(used+now))) : '').join('');
+  /* ความเห็นผู้บังคับบัญชา (ขวา) */
+  h += lvDash(372,540.2,523.1) + lvDash(324.2,540.2,545.8);
+  h += lvT(324,568,'(') + lvT(328,568,'ลงชื่อ') + lvT(355,568,')') + lvDash(363,540.2,569.2);
+  h += lvT(363,590,'(') + lvT(540,590,')') + lvDash(360.2,540.2,591.7);
+  h += lvT(343,612,'ตำแหน่ง') + lvDash(387.5,540.2,613.3);
+  h += lvT(359,634,'วันที่') + lvT(413,634,'/') + lvT(468,634,'/') + lvDash(378.8,540.2,634.9);
+  /* ผู้ตรวจสอบ (ซ้ายล่าง) + คำสั่ง (ขวาล่าง) */
+  h += lvT(54,678,'(') + lvT(58,678,'ลงชื่อ') + lvT(82,678,')') + lvDash(87.8,232.5,679) + lvT(237,678,'ผู้ตรวจสอบ');
+  h += lvT(54,700,'(') + lvT(58,700,'ตำแหน่ง') + lvT(94,700,')') + lvDash(108.5,232.5,700.8);
+  h += lvT(54,721,'วันที่') + lvT(126,721,'/') + lvT(198,721,'/') + lvDash(78,232.5,722.5);
+  h += lvT(330,656,'คำสั่ง',{bold:1});
+  h += lvBox(342.3,666.2,false) + lvT(358,678,'อนุญาต',{bold:1}) + lvBox(416.1,666.2,false) + lvT(430,678,'ไม่อนุญาต',{bold:1});
+  h += lvDash(348.2,520.5,700.8) + lvDash(318,520.5,722.5);
+  h += lvT(309,743,'(') + lvT(312,743,'ลงชื่อ') + lvT(336,743,')') + lvDash(342.5,520.5,744.1);
+  h += lvT(342,764,'(') + lvDash(342,520.5,765.7) + lvT(522,764,')') + lvT(375,763,LV_CHIEF);
+  h += lvT(304,786,'ตำแหน่ง') + lvDash(345,520.5,787.3) + lvT(400,784,'ชม.ขท.เชิงเนิน');
+  h += lvT(320,808,'วันที่') + lvT(375,808,'/') + lvT(450,808,'/') + lvDash(340.4,520.5,808.9);
+  document.getElementById('print-leave-form').innerHTML = lvWrap(h);
 }
 
 function printCancelForm(i){
