@@ -830,6 +830,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="dsel.js"></script>
+<script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s3"></script>
 <script src="emoji-img.js" defer></script>
 <script src="modal-standard.js" defer></script>
@@ -944,7 +945,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           </div>
           <div class="mc-top">
             <div>
-              <div class="mc-month"><select id="ib-month" onchange="onIbMonthChange(this.value)" aria-label="เลือกเดือน"></select><span class="mc-car">▾</span></div>
+              <select id="ib-month" data-fy onchange="onIbMonthChange(this.value)" aria-label="เลือกปีงบประมาณ"></select>
               <div class="mc-upd" id="ib-sub"></div>
             </div>
             <div class="mc-actions">
@@ -973,7 +974,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               รายงานเบิก-จ่ายพัสดุ พ.1-02
             </h2>
             <div class="toolbar" style="flex-wrap:nowrap;overflow-x:auto;">
-              <select id="rep-ledger-fy" class="edit-input" style="width:175px;flex:none;" onchange="syncRepLedger('rep-ledger-fy','rep-ledger-month')"></select>
+              <select id="rep-ledger-fy" data-fy class="edit-input" style="width:175px;flex:none;" onchange="syncRepLedger('rep-ledger-fy','rep-ledger-month')"></select>
               <select id="rep-ledger-month" class="edit-input" style="width:80px;flex:none;" onchange="syncRepLedger('rep-ledger-fy','rep-ledger-month')">
                 <option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option>
                 <option value="1">ม.ค.</option><option value="2">ก.พ.</option><option value="3">มี.ค.</option>
@@ -1009,7 +1010,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               รายงานสั่งจ่ายน้ำมัน พ.1-03
             </h2>
             <div class="toolbar" style="flex-wrap:nowrap;overflow-x:auto;">
-              <select id="rep-fuel-ledger-fy" class="edit-input" style="width:175px;flex:none;" onchange="syncRepLedger('rep-fuel-ledger-fy','rep-fuel-ledger-month')"></select>
+              <select id="rep-fuel-ledger-fy" data-fy class="edit-input" style="width:175px;flex:none;" onchange="syncRepLedger('rep-fuel-ledger-fy','rep-fuel-ledger-month')"></select>
               <select id="rep-fuel-ledger-month" class="edit-input" style="width:80px;flex:none;" onchange="syncRepLedger('rep-fuel-ledger-fy','rep-fuel-ledger-month')">
                 <option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option>
                 <option value="1">ม.ค.</option><option value="2">ก.พ.</option><option value="3">มี.ค.</option>
@@ -1179,7 +1180,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
     </div>
     <div style="padding:14px 20px 0;display:flex;align-items:center;gap:10px;">
       <label style="font-size:12.5px;color:var(--ink-600);">ปีงบประมาณ</label>
-      <select class="edit-input" id="item-hist-fy" style="width:170px;" onchange="onItemHistFyChange()"></select>
+      <select class="edit-input" id="item-hist-fy" data-fy="nolabel" style="width:170px;" onchange="onItemHistFyChange()"></select>
     </div>
     <div class="modal-body" id="item-hist-body"></div>
   </div>
@@ -1936,7 +1937,7 @@ function renderInbound(){
   if(mk!=='all') fySet.add(mk);
   const sel = document.getElementById('ib-month');
   if(sel){
-    sel.innerHTML = `<option value="all" ${mk==='all'?'selected':''}>ทุกปีงบประมาณ</option>` +
+    sel.innerHTML = `<option value="all" ${mk==='all'?'selected':''}>ทุกปี</option>` +
       Array.from(fySet).sort((a,b)=>b-a).map(f=>
         `<option value="${f}" ${f===mk?'selected':''}>ปีงบประมาณ ${f+543}${f===curFy?' (ปีนี้)':''}</option>`
       ).join('');
@@ -2322,7 +2323,7 @@ function itemHistName(){
 }
 function itemHistFyOptionsHtml(selected){
   const years = new Set([2569,2570, TODAY.getFullYear()+543].filter(y=>y>=2569));
-  return Array.from(years).sort().map(y=>`<option value="${y}" ${+selected===y?'selected':''}>ปีงบประมาณ ${y}</option>`).join('');
+  return Array.from(years).sort((a,b)=>b-a).map(y=>`<option value="${y}" ${+selected===y?'selected':''}>ปีงบประมาณ ${y}</option>`).join('');
 }
 function openItemHistoryModal(kind, code){
   __histKind = kind;
@@ -3738,7 +3739,7 @@ function latestActivityMonthKey(){
 }
 function populateLedgerFySelects(){
   const years = new Set([2569,2570, TODAY.getFullYear()+543].filter(y=>y>=2569));
-  const opts = Array.from(years).sort().map(y=>`<option value="${y}">ปีงบประมาณ ${y}</option>`).join('');
+  const opts = Array.from(years).sort((a,b)=>b-a).map(y=>`<option value="${y}">ปีงบประมาณ ${y}</option>`).join('');
   const latestFyMonth = fyMonthOf(latestActivityMonthKey());
   ['fuel-ledger-fy','rep-ledger-fy','rep-fuel-ledger-fy'].forEach(id=>{
     const el = document.getElementById(id);

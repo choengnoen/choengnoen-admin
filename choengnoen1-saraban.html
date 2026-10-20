@@ -349,6 +349,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   @media print{
     .print-only{display:none;}
     .print-only.show-print{display:block;}
+    .app{display:none !important;} /* ตัวหน้าเว็บมี min-height:100vh ทำให้เกิดหน้ากระดาษเปล่านำหน้า/ตามหลังใบที่พิมพ์ — ตอนพิมพ์ให้ซ่อนทั้งหมด เหลือเฉพาะฟอร์ม .print-only */
     .route-header,.sidebar,.topbar,.sec-tabs,.no-print,.page-head .toolbar{display:none !important;}
     .content{padding:0;max-width:none;}
     .section{border:none;box-shadow:none;}
@@ -374,6 +375,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="dsel.js"></script>
+<script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s1"></script>
 <script src="emoji-img.js" defer></script>
 <script src="modal-standard.js" defer></script>
@@ -511,7 +513,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               ติดตามคำร้องทุกข์
             </h2>
             <div class="toolbar">
-              <select id="complaint-route-filter" class="edit-input" style="width:130px;" onchange="renderComplaints()">
+              <select id="complaint-fy" data-fy onchange="renderComplaints()"></select>
+<select id="complaint-route-filter" class="edit-input" style="width:130px;" onchange="renderComplaints()">
                 <option value="all">ทุกสายทาง</option>
               </select>
               <button class="btn btn-primary" onclick="openAddComplaint()">+ เพิ่มคำร้องทุกข์</button>
@@ -588,7 +591,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <h3 style="font-size:14px;color:var(--navy-900);margin:0;">รายการลา</h3>
               <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <span id="lr-last-updated" class="pill pill-neutral" style="font-size:11px;font-weight:500;"></span>
-                <select id="lr-approved-fy" onchange="renderLeaveRequestList()"></select>
+                <select id="lr-approved-fy" data-fy onchange="renderLeaveRequestList()"></select>
                 <div class="search-box" style="min-width:170px;">🔍 <input id="lr-approved-search" placeholder="ค้นหาชื่อผู้ลา" oninput="renderLeaveRequestList()"></div>
               </div>
             </div>
@@ -772,7 +775,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </div>
             <div class="f-row" style="flex:0 0 168px;">
               <label>ปีงบประมาณ</label>
-              <select id="reg-fy" onchange="renderRegistry()"></select>
+              <select id="reg-fy" data-fy="nolabel" onchange="renderRegistry()"></select>
             </div>
             <div class="reg-actions">
               <button class="btn btn-ghost" onclick="openLeaveRangeModal()">🔍 ค้นหาช่วงวันที่</button>
@@ -1371,7 +1374,14 @@ function complaintDaysElapsed(dateISO){
 function renderComplaints(){
   populateComplaintRouteFilter();
   const routeFilter = document.getElementById('complaint-route-filter')?.value || 'all';
+  /* ตัวกรองปีงบประมาณ (ปุ่มมาตรฐาน fy-picker.js) — ค่าเริ่มต้น "ทุกปี" เพราะเรื่องค้างข้ามปียังต้องติดตามต่อ */
+  const fySel = document.getElementById('complaint-fy');
+  const fyKeep = fySel.dataset.ready ? fySel.value : '';
+  const fyYears = Array.from(new Set(complaints.map(c=>FYPicker.fiscalYearOf(c.date)).filter(Boolean))).sort((a,b)=>b-a);
+  FYPicker.fill(fySel, fyYears, {all:'ทุกปี', value:fyKeep});
+  fySel.dataset.ready = '1';
   let list = complaints;
+  if(fySel.value) list = list.filter(c=>String(FYPicker.fiscalYearOf(c.date))===fySel.value);
   if(routeFilter!=='all'){
     list = list.filter(c=>c.route===routeFilter);
   }
@@ -2015,8 +2025,9 @@ function updateLrStats(){
 function __findLeaveOverlap(name, from, to, excludeId){
   if(!name || !from) return null;
   const end = (to && to>=from) ? to : from;
-  const nm = String(name).trim();
-  return leaveRequests.find(x=> x.status!=='cancelled' && x.from && String(x.name||'').trim()===nm
+  const norm = s=>String(s||'').replace(/\s+/g,' ').trim(); /* ชื่อในฐานข้อมูลบางรายการมีเว้นวรรคซ้อนกลาง */
+  const nm = norm(name);
+  return leaveRequests.find(x=> x.status!=='cancelled' && x.from && norm(x.name)===nm
     && (excludeId==null || x.id!==excludeId) && x.from<=end && (x.to||x.from)>=from) || null;
 }
 function __leaveOverlapMsg(o){

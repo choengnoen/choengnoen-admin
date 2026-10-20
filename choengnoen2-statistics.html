@@ -777,6 +777,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="dsel.js"></script>
+<script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s2"></script>
 <script src="emoji-img.js" defer></script>
 <script src="modal-standard.js" defer></script>
@@ -861,7 +862,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         <!-- ตัวกรองปี/เดือนชุดเดียว ใช้ร่วมสรุปรายเดือน/แผน-ผลงาน (ใบสั่งการใช้แถบสัปดาห์แทน) -->
         <div class="g-filter no-print hidden" id="g-filter">
           <span class="g-filter-label">แสดงข้อมูลของ</span>
-          <select id="g-fy" class="edit-input" onchange="applyGlobalFilter()"></select>
+          <select id="g-fy" data-fy class="edit-input" onchange="applyGlobalFilter()"></select>
           <select id="g-month" class="edit-input" onchange="applyGlobalFilter()"></select>
         </div>
         <div class="g-filter no-print hidden" id="g-kind-wrap">
@@ -959,7 +960,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               การรุกล้ำเขตทางหลวง
             </h2>
             <div class="toolbar">
-              <div class="search-box">🔍 <input id="enc-search" placeholder="ค้นหาชื่อผู้รุกล้ำ / กม."></div>
+              <select id="enc-fy" data-fy onchange="renderEnc()"></select>
+<div class="search-box">🔍 <input id="enc-search" placeholder="ค้นหาชื่อผู้รุกล้ำ / กม."></div>
               <button class="btn btn-primary" onclick="toggleEncForm()">+ บันทึกรายใหม่</button>
             </div>
           </div>
@@ -1031,7 +1033,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               งานสัญญา (ก่อสร้าง / บำรุงทางในพื้นที่)
             </h2>
             <div class="toolbar">
-              <div class="search-box">🔍 <input id="ct-search" placeholder="ค้นหาเลขที่สัญญา / โครงการ / ผู้รับจ้าง"></div>
+              <select id="ct-fy" data-fy onchange="renderContracts()"></select>
+<div class="search-box">🔍 <input id="ct-search" placeholder="ค้นหาเลขที่สัญญา / โครงการ / ผู้รับจ้าง"></div>
               <button class="btn btn-ghost" onclick="exportContractsCsv()">ส่งออก CSV (ให้เครื่องมือแผนที่)</button>
               <button class="btn btn-primary" onclick="openContractForm(null)">+ เพิ่มสัญญา</button>
             </div>
@@ -1605,7 +1608,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               รายงานเหตุฉุกเฉิน (ชุมนุม/น้ำท่วม/อุบัติภัย)
             </h2>
             <div class="toolbar">
-              <div class="search-box">🔍 <input id="em-search" placeholder="ค้นหาตำแหน่ง / ประเภทเหตุ"></div>
+              <select id="em-fy" data-fy onchange="renderEm()"></select>
+<div class="search-box">🔍 <input id="em-search" placeholder="ค้นหาตำแหน่ง / ประเภทเหตุ"></div>
               <button class="btn btn-primary" onclick="toggleEmForm()">+ แจ้งเหตุฉุกเฉิน</button>
             </div>
           </div>
@@ -2762,10 +2766,23 @@ async function applyGlobalFilter(){
 /* ============================================================
    ENCROACHMENT
    ============================================================ */
+/* ตัวกรองปีงบประมาณของรายการ (ปุ่มมาตรฐาน fy-picker.js) — ค่าเริ่มต้น "ทุกปี" กันเรื่องค้างข้ามปีหายจากหน้าจอ
+   คืนค่าปีที่เลือก (ข้อความ) หรือ '' = ทุกปี */
+function fyKey(v){ if(!v) return null; if(v instanceof Date) v = v.toISOString(); return FYPicker.fiscalYearOf(String(v).slice(0,10)); }
+function statFyFilter(id, keys){
+  const sel = document.getElementById(id); if(!sel) return '';
+  const keep = sel.dataset.ready ? sel.value : '';
+  FYPicker.fill(sel, Array.from(new Set(keys.filter(Boolean))).sort((a,b)=>b-a), {all:'ทุกปี', value:keep});
+  sel.dataset.ready = '1';
+  return sel.value;
+}
 function renderEnc(filter){
   filter = filter || document.querySelector('[data-enctab].active')?.dataset.enctab || 'all';
+  const encKey = e=> fyKey(e.cleared ? (e.clearedDate||e.stageDate) : e.stageDate); // ปีของการดำเนินการล่าสุด
+  const encFy = statFyFilter('enc-fy', encroachments.map(encKey));
   const q = (document.getElementById('enc-search')?.value || '').toLowerCase();
   let rows = encroachments.filter(e=>{
+    if(encFy && String(encKey(e))!==encFy) return false;
     if(filter==='ongoing') return e.stage<4 && !e.cleared;
     if(filter==='legal') return e.stage===4 && !e.cleared;
     if(filter==='cleared') return !!e.cleared;
@@ -2937,7 +2954,10 @@ function renderContracts(){
     kpi('ในระยะค้ำประกัน', warranty.length+' สัญญา', 'พ้นสัญญาแล้ว ยังอยู่ในค้ำประกัน') + '<div class="routine-kpi-div"></div>' +
     kpi('สิ้นสุดสัญญาภายใน 60 วัน', endSoon.length+' สัญญา', endSoon.length?esc(endSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี') + '<div class="routine-kpi-div"></div>' +
     kpi('ค้ำประกันหมดภายใน 60 วัน', warrSoon.length+' สัญญา', warrSoon.length?esc(warrSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี');
+  const ctKey = c=> Number(c.fiscalYear) || fyKey(c.startDate);
+  const ctFy = statFyFilter('ct-fy', contractsList.map(ctKey));
   let rows = withSt.filter(x=>{
+    if(ctFy && String(ctKey(x.c))!==ctFy) return false;
     if(filter==='running') return x.st.key==='running';
     if(filter==='warranty') return x.st.key==='warranty';
     if(filter==='done') return x.st.key==='done' || x.st.key==='cancel';
@@ -5783,7 +5803,8 @@ let __emUpdating = new Set();
 function renderEm(filter){
   filter = filter || document.querySelector('[data-emtab].active')?.dataset.emtab || 'ongoing';
   const q = (document.getElementById('em-search')?.value || '').toLowerCase();
-  let rows = emergencies.filter(e=> filter==='all' || e.status===filter);
+  const emFy = statFyFilter('em-fy', emergencies.map(e=>fyKey(e.start)));
+  let rows = emergencies.filter(e=> (filter==='all' || e.status===filter) && (!emFy || String(fyKey(e.start))===emFy));
   if(q) rows = rows.filter(e=> e.loc.toLowerCase().includes(q) || e.type.toLowerCase().includes(q));
   document.getElementById('em-body').innerHTML = rows.map(e=>{
     const nd = emNextDue(e);

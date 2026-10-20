@@ -413,6 +413,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="dsel.js"></script>
+<script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="main"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="emoji-img.js" defer></script>
@@ -561,7 +562,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         <div class="section">
           <div class="section-head" style="justify-content:flex-end;">
             <div class="toolbar">
-              <select id="report-fy" onchange="renderSummaryReport()"></select>
+              <select id="report-fy" data-fy onchange="renderSummaryReport()"></select>
               <select id="report-month" onchange="renderSummaryReport()"></select>
               <button class="btn btn-primary" onclick="printExecReport()">🖶 พิมพ์รายงานภาพรวม</button>
             </div>

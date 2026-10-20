@@ -106,11 +106,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   @media(max-width:640px){ .ov-grid{grid-template-columns:1fr 1fr;} }
 
 
-  .fy-picker{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:6px 14px 6px 12px;box-shadow:0 1px 2px rgba(10,37,64,.05);}
-  .fy-picker-icon{font-size:13px;line-height:1;}
-  .fy-picker-label{font-family:'Kanit';font-size:12.5px;font-weight:600;color:var(--ink-600);}
-  .fy-picker select{font-family:'Sarabun';font-size:13px;font-weight:600;padding:4px 10px;border-radius:16px;border:1px solid var(--line);background:var(--paper-50);color:var(--navy-900);cursor:pointer;}
-  .fy-picker select:hover{border-color:var(--orange-500);}
   .section{background:var(--white);border:1px solid var(--line);border-radius:12px;margin-bottom:22px;overflow:hidden;}
   .section-head{padding:16px 20px;min-height:72px;box-sizing:border-box;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
   .section-head h2{font-size:16px;font-weight:600;margin:0;color:var(--navy-900);display:flex;align-items:center;gap:9px;}
@@ -318,6 +313,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="dsel.js"></script>
+<script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s4"></script>
 <script src="emoji-img.js" defer></script>
 <script src="modal-standard.js" defer></script>
@@ -382,7 +378,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               สรุปยอดจ่ายค่าแรงรายเดือน
             </h2>
             <div class="toolbar no-print">
-              <select id="labor-fy" onchange="onLaborFYChange()"></select>
+              <select id="labor-fy" data-fy onchange="onLaborFYChange()"></select>
             </div>
           </div>
           <div class="table-wrap">
@@ -441,7 +437,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
               การปฏิบัติงานนอกเวลาราชการ
             </h2>
-            <button class="btn btn-primary no-print" onclick="openOTModal()">➕ ยื่นขออนุมัติ</button>
+            <div class="toolbar no-print">
+              <select id="ot-fy" data-fy onchange="renderOT()"></select>
+              <button class="btn btn-primary no-print" onclick="openOTModal()">➕ ยื่นขออนุมัติ</button>
+            </div>
           </div>
           <div class="table-wrap"><table id="ot-table"></table></div>
           <div class="legend-block" id="ot-note-block">
@@ -524,11 +523,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               รายการสาธารณูปโภค
             </h2>
             <div class="toolbar no-print">
-              <div class="fy-picker">
-                <span class="fy-picker-icon">🗓️</span>
-                <span class="fy-picker-label">ปีงบประมาณ</span>
-                <select id="util-fy-select" onchange="onUtilFyChange(this.value)"></select>
-              </div>
+              <select id="util-fy-select" data-fy onchange="onUtilFyChange(this.value)"></select>
               <button class="btn btn-primary" onclick="toggleUtilForm(true)">➕ บันทึกบิลใหม่</button>
             </div>
           </div>
@@ -1379,7 +1374,15 @@ function otSteps(o){
   }).join('')+'</div>';
 }
 function renderOT(){
+  /* ตัวกรองปีงบประมาณ (ปุ่มมาตรฐาน fy-picker.js) — ค่าเริ่มต้น "ทุกปี" */
+  const otFyOf = o=>FYPicker.fiscalYearOf(String(o.date||'').slice(0,10));
+  const otFySel = document.getElementById('ot-fy');
+  const otFyKeep = otFySel.dataset.ready ? otFySel.value : '';
+  FYPicker.fill(otFySel, Array.from(new Set(otRequests.map(otFyOf).filter(Boolean))).sort((a,b)=>b-a), {all:'ทุกปี', value:otFyKeep});
+  otFySel.dataset.ready = '1';
+  const otFy = otFySel.value;
   let rows = otRequests.map((o,i)=>{
+    if(otFy && String(otFyOf(o))!==otFy) return '';
     const overdue = o.status==='awaiting_report' && o.approvedOn && daysUntil(new Date(new Date(o.approvedOn).getTime()+5*86400000).toISOString().slice(0,10))<0;
     return `<tr>
       <td><b>${esc(o.no)}</b><div class="p-sub">${fmtDateTH(o.date)} · ${esc(o.time)}</div></td>
