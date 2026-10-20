@@ -651,13 +651,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div class="foot-note">เลือกชื่อทางซ้ายเพื่อดูสิทธิ์ทั้งหมดของคนนั้น · ดับเบิลคลิกชื่อเพื่อแก้ไข (เจ้าของระบบ) · สิทธิ์ถูกบังคับที่ฐานข้อมูล (ไม่ใช่แค่ซ่อนปุ่ม) · จัดการผู้ใช้งานได้เฉพาะเจ้าของระบบ</div>
         </div>
 
-        <div class="section">
-          <div class="section-head">
-            <h2>ใครทำอะไรได้บ้าง (สิทธิ์ตั้งต้นของแต่ละบทบาท)</h2>
-            <span class="muted small">เจ้าของระบบปรับสิทธิ์รายคนเพิ่ม/ลดจากนี้ได้</span>
-          </div>
-          <div class="table-wrap" id="role-matrix"></div>
-        </div>
+
       </div>
 
       <!-- ============ ถังขยะ ============ -->
@@ -1471,22 +1465,6 @@ function renderUsers(){
   if(seePresence){ chip.style.display=''; chip.textContent = 'ออนไลน์ตอนนี้ '+onlineCount+' คน'; chip.classList.toggle('none', onlineCount===0); }
 }
 function pickUser(uid){ SEL_UID = uid; renderUsers(); }
-function renderRoleMatrix(){
-  const roles = ['owner','chief','assistant','staff'];
-  const P = {}; roles.forEach(r=>{ P[r] = FBL.presetPerm(r, r==='staff' ? ['s1'] : []); });
-  const cell = v=> v===true ? '<span class="mk-yes">✓</span>' : v==='edit' ? '<span class="mk-yes">✎ แก้ไข</span>' : v==='view' ? '<span class="mk-view">👁 ดู</span>' : '<span class="mk-no">—</span>';
-  const staffCell = k=> k==='s1' ? '<span class="mk-yes">✎ แก้ไข</span><div class="small muted">(ส่วนงานของตน)</div>' : '<span class="mk-view">👁 ดู</span><div class="small muted">(ส่วนงานอื่น)</div>';
-  let rows = `<tr><td class="grp" colspan="5">การเข้าถึงระบบ</td></tr>`;
-  rows += `<tr><td>ระบบหลัก — ภาพรวม แจ้งเตือน รายงานสรุป</td>${roles.map(r=>`<td>${cell(P[r].main)}</td>`).join('')}</tr>`;
-  FBL.SUB_KEYS.forEach(k=>{ rows += `<tr><td>${k.slice(1)}. ${esc(FBL.SECTIONS[k].label)}</td>${roles.map(r=>`<td>${r==='staff'?staffCell(k):cell(P[r][k])}</td>`).join('')}</tr>`; });
-  rows += `<tr><td class="grp" colspan="5">สิทธิ์พิเศษ</td></tr>`;
-  FBL.FLAGS.forEach(f=>{ rows += `<tr><td>${esc(f.label)}<div class="small muted">${esc(f.desc)}</div></td>${roles.map(r=>`<td>${f.key==='delete'&&r==='staff'?'<span class="mk-yes">✓</span><div class="small muted">(ส่วนงานของตน)</div>':cell(P[r][f.key])}</td>`).join('')}</tr>`; });
-  rows += `<tr><td>จัดการผู้ใช้งาน (เพิ่ม/แก้สิทธิ์/ตั้งรหัสผ่าน/ระงับ/ลบ)</td><td>${cell(true)}</td><td>${cell(false)}</td><td>${cell(false)}</td><td>${cell(false)}</td></tr>`;
-  document.getElementById('role-matrix').innerHTML = `<table class="matrix">
-    <thead><tr><th>สิทธิ์</th>${roles.map(r=>`<th><span class="role-chip ${r}">${FBL.ROLES[r].icon} ${esc(FBL.ROLES[r].label)}</span><div class="small muted" style="font-weight:400;margin-top:4px;line-height:1.4">${esc(FBL.ROLES[r].desc)}</div></th>`).join('')}</tr></thead>
-    <tbody>${rows}</tbody></table>`;
-}
-
 /* ---------- หน้าต่างเพิ่ม/แก้ไขผู้ใช้ ---------- */
 let UM = null;   // { uid|null, role, sections, perm, photo }
 function openUserModal(uid){
@@ -1852,7 +1830,6 @@ function staffPrivCleanup(){
   await FBL.ready;
   renderUserBadge();
   applyTabVisibility();
-  renderRoleMatrix();
   renderSysLinks();
   FBL.watchTeam(list=>{
     const order = {owner:0, chief:1, assistant:2, staff:3};
