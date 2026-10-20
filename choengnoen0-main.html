@@ -201,6 +201,21 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .search-box{display:flex;align-items:center;gap:7px;background:var(--paper-50);border:1px solid var(--line);border-radius:7px;padding:6px 11px;font-size:13px;color:var(--ink-600);min-width:190px;}
   .search-box input,.search-box select{border:none;background:none;outline:none;font-family:'Sarabun';font-size:13px;color:var(--ink-900);width:100%;}
   select{font-family:'Sarabun';font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink-900);}
+  .bk-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;align-items:stretch;}
+  .bk-grid>.section{margin:0;}
+  .bk-card{display:flex;flex-direction:column;overflow:hidden;border-top:4px solid var(--orange-500);}
+  .bk-card-b{border-top-color:var(--navy-700);}
+  .bk-hd{display:flex;gap:14px;align-items:center;padding:20px 22px 6px;}
+  .bk-hd h3{margin:0;font-size:17px;font-weight:600;color:var(--navy-900);display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .bk-hd p{margin:2px 0 0;font-size:13px;color:var(--ink-600);}
+  .bk-ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:22px;flex:none;background:#fff1e4;}
+  .bk-ico-b{background:#e8eef7;}
+  .bk-pill{padding:2px 10px;border-radius:99px;font-size:11.5px;font-weight:700;background:#e8eef7;color:var(--navy-700);}
+  .bk-bd{padding:16px 22px 22px;margin-top:auto;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .bk-bd .btn{justify-content:center;width:100%;padding:11px 14px;}
+  .bk-file{display:flex;align-items:center;border:1px dashed var(--line);border-radius:9px;padding:8px 12px;background:var(--paper-50);font-size:12.5px;color:var(--ink-600);min-width:0;}
+  .bk-file input{width:100%;font:inherit;min-width:0;}
+  @media(max-width:760px){.bk-grid,.bk-bd{grid-template-columns:1fr;}}
   .foot-note{font-size:12px;color:var(--ink-400);padding:12px 20px;border-top:1px solid var(--paper-100);background:var(--paper-50);}
   .legend-block{position:relative;min-height:38px;background:var(--paper-50);border-top:1px solid var(--paper-100);}
   .legend-dot-btn{position:absolute;top:6px;right:10px;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink-600);cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;z-index:2;}
@@ -431,7 +446,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .role-card b{font-size:15.5px;}
   .role-card.active{border-width:2px;transform:translateY(-2px);box-shadow:0 8px 20px rgba(232,101,15,.2);}
   /* ส่วนหัวฟอร์ม: รูปซ้าย ชื่อ/ตำแหน่ง/รหัสผ่านขวา */
-  .um-top{display:grid;grid-template-columns:96px 1fr;gap:20px;align-items:start;margin-bottom:6px;}
+  .um-top{display:grid;grid-template-columns:1fr;gap:20px;align-items:start;margin-bottom:6px;}
   .um-top-fields .f-row{margin-bottom:12px;}
   .um-top-fields .two-col{gap:14px;margin-bottom:0;}
   .um-top-fields .two-col .f-row{margin-bottom:12px;}
@@ -670,49 +685,21 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 
       <!-- ============ สำรองข้อมูล ============ -->
       <div class="panel" id="panel-backup">
-        <div class="section">
-          <div class="section-head"><h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 20h16"/></svg></span>
-              ส่งออก / สำรองข้อมูลทั้งระบบ
-            </h2></div>
-          <div style="padding:18px 20px;display:flex;gap:10px;flex-wrap:wrap;">
-            <button class="btn btn-ghost" id="btn-export-xlsx" onclick="exportAllExcel()">📊 ส่งออก Excel (ทุกตาราง แยกชีต)</button>
-            <button class="btn btn-ghost" id="btn-export-json" onclick="exportAllJson()">💾 ส่งออกไฟล์สำรอง (JSON)</button>
-          </div>
-          <div class="foot-note">ไฟล์ Excel ที่ส่งออกใช้ชื่อชีตเป็นชื่อตาราง นำกลับเข้าระบบได้ด้วยปุ่ม "นำเข้าจาก Excel" ด้านล่าง (เจ้าของระบบ)</div>
-        </div>
-        <div class="section" id="import-section" style="display:none;">
-          <div class="section-head"><h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M4 20h16"/></svg></span>
-              นำเข้าจาก Excel (เจ้าของระบบ)
-            </h2></div>
-          <div style="padding:18px 20px;">
-            <div class="hint-box">ใช้ได้กับ (1) ไฟล์ Excel ที่ส่งออกจากปุ่มด้านบน หรือ (2) ไฟล์ Google Sheet เดิม "DB-บริหารหมวด" (ไฟล์ → ดาวน์โหลด → Microsoft Excel) — ระบบอ่านเฉพาะชีตที่ชื่อตรงกับชื่อตาราง ข้ามชีต users/activity_log · รายการรหัสเดียวกันจะถูกเขียนทับ (นำเข้าซ้ำได้ ไม่เกิดข้อมูลซ้ำ)</div>
-            <input type="file" id="import-file" accept=".xlsx,.xls">
-            <button class="btn btn-primary" id="btn-import" onclick="runImport()" style="margin-left:8px;">เริ่มนำเข้า</button>
-            <div id="import-progress" class="muted small" style="margin-top:10px;white-space:pre-line;"></div>
-          </div>
-        </div>
-        <div class="section" id="staffpriv-section" style="display:none;">
-          <div class="section-head"><h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></span>
-              ข้อมูลส่วนตัวบุคลากร (PDPA) — เจ้าของระบบ
-            </h2></div>
-          <div style="padding:18px 20px;">
-            <div class="hint-box">แยก เบอร์โทร ที่อยู่ วันเกิด ผู้ติดต่อฉุกเฉิน กรุ๊ปเลือด โรค วุฒิ ไปเก็บในตารางแยกที่อ่านได้เฉพาะเจ้าของ/หมวด/ผู้ช่วยหมวด/ผู้มีสิทธิ์ระบบ 1 (แก้ไข-ดู) ทำตามลำดับ: <b>① ตรวจสถานะ → ② ย้ายข้อมูล → (ทดสอบให้แน่ใจ) → ③ ลบข้อมูลเดิม</b> ปุ่ม ①② รันซ้ำได้ปลอดภัย ไม่ลบอะไร · ปุ่ม ③ ลบฟิลด์ส่วนตัวออกจากตารางเดิมถาวร (ควรส่งออกไฟล์สำรองก่อน) และจะไม่ลบถ้ายังย้ายไม่ครบ</div>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;">
-              <button class="btn btn-ghost" id="btn-sp-status" onclick="staffPrivStatus()">① ตรวจสถานะ</button>
-              <button class="btn btn-primary" id="btn-sp-migrate" onclick="staffPrivMigrate()">② ย้ายข้อมูลส่วนตัว</button>
-              <button class="btn btn-ghost" id="btn-sp-cleanup" onclick="staffPrivCleanup()" style="color:#b42318;">③ ลบข้อมูลส่วนตัวเดิมออกจากตารางบุคลากร</button>
+        <div class="bk-grid">
+          <div class="section bk-card">
+            <div class="bk-hd"><div class="bk-ico">📤</div><div><h3>ส่งออก / สำรอง</h3><p>ดาวน์โหลดข้อมูลทุกตารางเก็บไว้ในเครื่อง</p></div></div>
+            <div class="bk-bd">
+              <button class="btn btn-primary" id="btn-export-xlsx" onclick="exportAllExcel()">📊 Excel</button>
+              <button class="btn btn-ghost" id="btn-export-json" onclick="exportAllJson()">💾 JSON</button>
             </div>
-            <div id="staffpriv-result" class="muted small" style="margin-top:10px;white-space:pre-line;"></div>
           </div>
-        </div>
-        <div class="section">
-          <div class="section-head"><h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></span>
-              ทางลัด
-            </h2></div>
-          <div style="padding:18px 20px;display:flex;gap:10px;flex-wrap:wrap;">
-            <a class="btn btn-ghost" href="https://console.firebase.google.com/" target="_blank" rel="noopener">🔥 Firebase Console</a>
-            <a class="btn btn-ghost" href="https://choengnoen.github.io/choengnoen-accident/" target="_blank" rel="noopener">🚧 ระบบงานอุบัติเหตุ</a>
-            <a class="btn btn-ghost" href="https://choengnoen.github.io/choengnoen-theft/" target="_blank" rel="noopener">🚨 ระบบงานโจรกรรม</a>
+          <div class="section bk-card bk-card-b" id="import-section" style="display:none;">
+            <div class="bk-hd"><div class="bk-ico bk-ico-b">📥</div><div><h3>นำเข้าจาก Excel <span class="bk-pill">เจ้าของระบบ</span></h3><p>นำข้อมูลกลับเข้าระบบ รหัสซ้ำจะถูกเขียนทับ</p></div></div>
+            <div class="bk-bd">
+              <label class="bk-file"><input type="file" id="import-file" accept=".xlsx,.xls"></label>
+              <button class="btn btn-primary" id="btn-import" onclick="runImport()">เริ่มนำเข้า</button>
+            </div>
+            <div id="import-progress" class="muted small" style="padding:0 22px 16px;white-space:pre-line;"></div>
           </div>
         </div>
       </div>
@@ -824,7 +811,6 @@ function applyTabVisibility(){
   document.getElementById('tab-backup').style.display = (can('export')||FBL.isOwner()) ? '' : 'none';
   document.getElementById('btn-add-user').style.display = FBL.isOwner() ? '' : 'none';
   document.getElementById('import-section').style.display = FBL.isOwner() ? '' : 'none';
-  document.getElementById('staffpriv-section').style.display = FBL.isOwner() ? '' : 'none';
   document.getElementById('btn-export-xlsx').disabled = !can('export');
   document.getElementById('btn-export-json').disabled = !can('export');
 }
@@ -1691,32 +1677,6 @@ async function runImport(){
     prog.textContent = report.length ? ('นำเข้าสำเร็จ:\n• ' + report.join('\n• ')) : 'ไม่พบชีตที่ชื่อตรงกับตารางในระบบ (ตรวจสอบว่าเลือกไฟล์ถูกต้อง)';
     loadAll();
   });
-}
-
-/* ---------- ข้อมูลส่วนตัวบุคลากร (แผน 4) ---------- */
-function spStatusText(s){
-  return `บุคลากรทั้งหมด ${s.total} คน · มีข้อมูลส่วนตัวที่ตารางแยกแล้ว ${s.privateDocs} คน\nยังมีข้อมูลส่วนตัวค้างในตารางเดิม ${s.legacy} คน (ในนี้ยังย้ายไม่ครบ ${s.pending} คน)` + (s.pending===0 && s.legacy>0 ? '\n✅ ย้ายครบแล้ว — ทดสอบหน้าบุคลากรให้แน่ใจ แล้วกด ③ เพื่อลบของเดิมได้' : (s.legacy===0 ? '\n✅ ไม่มีข้อมูลส่วนตัวค้างในตารางเดิมแล้ว' : '\n➡ กด ② ย้ายข้อมูลส่วนตัว'));
-}
-async function staffPrivRun(btnId, fn){
-  const btn = document.getElementById(btnId), out = document.getElementById('staffpriv-result'); const orig = btn.textContent;
-  btn.disabled = true; btn.textContent = 'กำลังทำงาน...'; out.textContent = '';
-  try{ out.textContent = await fn(); }catch(e){ out.textContent = '⚠️ ' + e.message; }
-  btn.disabled = false; btn.textContent = orig;
-}
-function staffPrivStatus(){ staffPrivRun('btn-sp-status', async ()=> spStatusText(await FBL.staffPrivateStatus())); }
-function staffPrivMigrate(){
-  confirmBox('ย้ายข้อมูลส่วนตัวบุคลากร', 'คัดลอกข้อมูลส่วนตัวไปตารางแยก (ไม่ลบของเดิม ไม่ทับข้อมูลที่แก้ไว้ในตารางแยก)\nดำเนินการต่อหรือไม่?', 'ย้ายข้อมูล', ()=>
-    staffPrivRun('btn-sp-migrate', async ()=>{
-      const r = await FBL.migrateStaffPrivate();
-      return `ย้ายเสร็จ: สร้างใหม่ ${r.created} คน · เติมข้อมูลที่ขาด ${r.filled} คน · ไม่ต้องย้าย ${r.unchanged} คน\n\n` + spStatusText(await FBL.staffPrivateStatus());
-    }));
-}
-function staffPrivCleanup(){
-  confirmBox('ลบข้อมูลส่วนตัวเดิม', 'ลบเบอร์โทร ที่อยู่ วันเกิด ฯลฯ ออกจากตารางบุคลากรเดิมถาวร (ข้อมูลอยู่ที่ตารางแยกแล้ว)\nกู้คืนไม่ได้ — ได้ส่งออกไฟล์สำรองและทดสอบหน้าบุคลากรแล้วใช่หรือไม่?', 'ลบถาวร', ()=>
-    staffPrivRun('btn-sp-cleanup', async ()=>{
-      const r = await FBL.cleanupStaffLegacy();
-      return `ลบข้อมูลส่วนตัวเดิมออกจากตารางบุคลากรแล้ว ${r.cleaned} คน\n\n` + spStatusText(await FBL.staffPrivateStatus());
-    }));
 }
 
 /* ============================================================

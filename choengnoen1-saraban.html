@@ -349,7 +349,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   @media print{
     .print-only{display:none;}
     .print-only.show-print{display:block;}
-    .app{display:none !important;} /* ตัวหน้าเว็บมี min-height:100vh ทำให้เกิดหน้ากระดาษเปล่านำหน้า/ตามหลังใบที่พิมพ์ — ตอนพิมพ์ให้ซ่อนทั้งหมด เหลือเฉพาะฟอร์ม .print-only */
+    /* ตัวหน้าเว็บมี min-height:100vh และมีโมดัล/ส่วนอื่นอยู่ท้าย body ทำให้เกิดหน้ากระดาษเปล่านำหน้า/ตามหลังใบที่พิมพ์
+       ตอนพิมพ์ให้ซ่อนทุกอย่างที่อยู่ใน body ยกเว้นฟอร์มที่กำลังพิมพ์ (.show-print) */
+    body > *:not(.show-print){display:none !important;}
+    html,body{height:auto !important;min-height:0 !important;}
+    .lv-page{height:838pt;break-after:avoid;page-break-after:avoid;}
     .route-header,.sidebar,.topbar,.sec-tabs,.no-print,.page-head .toolbar{display:none !important;}
     .content{padding:0;max-width:none;}
     .section{border:none;box-shadow:none;}
