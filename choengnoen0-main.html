@@ -628,12 +628,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           </div>
           <div class="um-ms">
             <div class="um-list-wrap">
-              <div class="um-list-h"><input id="user-q" placeholder="🔍 ค้นหาชื่อ/ตำแหน่ง" oninput="USER_Q=this.value;renderUsers()"></div>
               <div id="user-list"><div class="empty" style="padding:20px">กำลังโหลด…</div></div>
             </div>
             <div class="um-detail" id="user-detail"></div>
           </div>
-          <div class="foot-note">เลือกชื่อทางซ้ายเพื่อดูสิทธิ์ทั้งหมดของคนนั้น · ดับเบิลคลิกชื่อเพื่อแก้ไข (เจ้าของระบบ) · สิทธิ์ถูกบังคับที่ฐานข้อมูล (ไม่ใช่แค่ซ่อนปุ่ม) · จัดการผู้ใช้งานได้เฉพาะเจ้าของระบบ</div>
         </div>
 
 
@@ -1360,10 +1358,7 @@ function renderUsers(){
   const r = FBL.ROLES[u.role] || FBL.ROLES.staff;
   const segSub = v => `<span class="um-seg"><span class="${v==='edit'?'a-edit':''}">✎ แก้ไข</span><span class="${v==='view'?'a-view':''}">👁 ดู</span><span class="${v!=='edit'&&v!=='view'?'a-none':''}">— ไม่เห็น</span></span>`;
   const segMain = on => `<span class="um-seg"><span class="${on?'a-edit':''}">เห็นระบบหลัก</span><span class="${on?'':'a-none'}">ไม่เห็น</span></span>`;
-  const acts = owner ? `<div class="acts">
-      <button class="btn btn-primary" onclick="openUserModal('${jsArg(u.uid)}')">แก้ไขสิทธิ์</button>
-      <button class="btn btn-ghost" onclick="resetPw('${jsArg(u.uid)}')">ตั้งรหัสผ่านใหม่</button>
-      ${u.role!=='owner' ? `<button class="btn btn-danger" onclick="removeUser('${jsArg(u.uid)}')">ลบ</button>` : ''}</div>` : '';
+  const acts = owner ? `<div class="acts"><button class="btn btn-primary" onclick="openUserModal('${jsArg(u.uid)}')">แก้ไข</button></div>` : '';
   const secNote = (u.role==='staff' && u.sections.length) ? `<div class="u-sub" style="margin-top:4px">ส่วนงานที่รับผิดชอบ: ${u.sections.map(k=>esc(k.slice(1))).join(', ')}</div>` : '';
   detEl.innerHTML = `
     <div class="um-dh">${avatarHtml(u,64)}<div class="sp"><h3>${esc(u.name)}</h3><div class="u-sub" style="font-size:13px">${u.position?esc(u.position):'—'}</div>
@@ -1373,7 +1368,7 @@ function renderUsers(){
       <div class="um-row"><div>• งานบริหารหมวด (ระบบหลัก)<div class="u-sub">ภาพรวม แจ้งเตือน รายงานสรุป</div></div>${segMain(!!u.perm.main)}</div>
       ${FBL.SUB_KEYS.map(k=>`<div class="um-row"><div>${k.slice(1)}. ${esc(FBL.SECTIONS[k].label)}</div>${segSub(u.perm[k])}</div>`).join('')}</div>
     <div class="umd-sec"><h4>สิทธิ์พิเศษ</h4>
-      ${FBL.FLAGS.map(f=>`<div class="um-row"><div><b style="font-weight:600">${esc(f.label)}</b><div class="u-sub">${esc(f.desc)}</div></div><span class="um-sw ${userCan(u,f.key)?'on':''}"></span></div>`).join('')}
+      ${FBL.FLAGS.map(f=>`<div class="um-row"><div><b style="font-weight:600">${esc(umFlagLabel(f))}</b><div class="u-sub">${esc(umFlagDesc(f))}</div></div><span class="um-sw ${userCan(u,f.key)?'on':''}"></span></div>`).join('')}
       <div class="um-row"><div><b style="font-weight:600">จัดการผู้ใช้งาน</b><div class="u-sub">เพิ่ม/แก้สิทธิ์/ตั้งรหัสผ่าน/ระงับ/ลบ — เจ้าของระบบคนเดียว</div></div><span class="um-sw ${u.role==='owner'?'on':''}"></span></div></div>`;
 
   const chip = document.getElementById('presence-chip');
@@ -1391,7 +1386,7 @@ const UM_FLAG_TXT = {
   viewLog:{label:'ดูประวัติการใช้งาน', desc:'ดูว่าใครทำอะไร เมื่อไร'},
   unlockLedger:{label:'ปลดล็อกบัญชีรายเดือน', desc:'ปลดล็อกเดือนที่ปิดบัญชี'},
   export:{label:'ส่งออก/สำรองข้อมูล', desc:'ดาวน์โหลดเป็น Excel / JSON'},
-  checkFuel:{label:'ตรวจรายวัน พ.1-02 / พ.1-03', desc:'ติ๊กตรวจแล้วและยืนยันปิดวัน'}
+  checkFuel:{label:'ตรวจรายวัน', desc:'ติ๊กตรวจแล้ว ยืนยันปิดวัน (พ.1-02 วัสดุ / พ.1-03 น้ำมัน)'}
 };
 const umFlagLabel = f => (UM_FLAG_TXT[f.key]||f).label;
 const umFlagDesc = f => (UM_FLAG_TXT[f.key]||f).desc;
@@ -1418,6 +1413,7 @@ function openUserModal(uid){
         </div>
         <div class="f-row um-pw-row">${u ? `<label>สถานะบัญชี</label><select id="um-active" ${isOwnerRec?'disabled':''}><option value="1" ${u.active?'selected':''}>ใช้งาน</option><option value="0" ${u.active?'':'selected'}>ระงับ (ล็อกอินไม่ได้)</option></select>`
           : `<label>รหัสผ่านเริ่มต้น <span class="um-opt">(8 ตัวขึ้นไป)</span></label><input id="um-password" type="text" autocomplete="off" placeholder="ตั้งรหัสผ่าน">`}</div>
+        ${u ? `<div class="f-row"><label>ตั้งรหัสผ่านใหม่ <span class="um-opt">(เว้นว่างถ้าไม่เปลี่ยน · 8 ตัวขึ้นไป)</span></label><input id="um-newpw" type="text" autocomplete="off"></div>` : ''}
       </div>
     </div>
     <div class="f-row" style="margin-bottom:0;">
@@ -1449,7 +1445,8 @@ function openUserModal(uid){
     <div class="flag-list">${FBL.FLAGS.map(f=>`<label class="flag-item"><input type="checkbox" class="um-flag" value="${f.key}"><span>${esc(umFlagLabel(f))}<small>${esc(umFlagDesc(f))}</small></span></label>`).join('')}</div>
     </div></details>
     `}`;
-  document.getElementById('um-foot').innerHTML = `<button class="btn btn-ghost" onclick="closeUserModal()">ยกเลิก</button><button class="btn btn-primary" id="um-save" onclick="saveUserModal()">บันทึก</button>`;
+  const delBtn = (u && !isOwnerRec) ? `<button class="btn btn-danger" style="margin-right:auto" onclick="umDelete()">ลบผู้ใช้งาน</button>` : '';
+  document.getElementById('um-foot').innerHTML = `${delBtn}<button class="btn btn-ghost" onclick="closeUserModal()">ยกเลิก</button><button class="btn btn-primary" id="um-save" onclick="saveUserModal()">บันทึก</button>`;
   if(!isOwnerRec) umFillPerm();
   document.getElementById('user-modal').classList.remove('hidden');
 }
@@ -1507,8 +1504,14 @@ async function saveUserModal(){
     if(UM.uid){
       const actEl = document.getElementById('um-active');
       if(actEl) payload.active = actEl.value==='1';
+      const newPw = (document.getElementById('um-newpw')||{value:''}).value;
+      if(newPw && newPw.length < 8){ throw new Error('รหัสผ่านใหม่ต้องยาวอย่างน้อย 8 ตัวอักษร'); }
       await FBL.updateMember(UM.uid, payload);
-      showToast('บันทึกข้อมูลผู้ใช้งานแล้ว');
+      if(newPw){
+        try{ await FBL.resetMemberPassword(UM.uid, newPw); }
+        catch(e2){ throw new Error('บันทึกข้อมูลแล้ว แต่ตั้งรหัสผ่านใหม่ไม่สำเร็จ: ' + e2.message); }
+      }
+      showToast(newPw ? 'บันทึกข้อมูลและตั้งรหัสผ่านใหม่แล้ว' : 'บันทึกข้อมูลผู้ใช้งานแล้ว');
     } else {
       payload.password = document.getElementById('um-password').value;
       if(String(payload.password).length < 8){ throw new Error('รหัสผ่านเริ่มต้นต้องยาวอย่างน้อย 8 ตัวอักษร'); }
@@ -1523,6 +1526,7 @@ async function saveUserModal(){
     btn.disabled = false; btn.textContent = 'บันทึก';
   }
 }
+function umDelete(){ const uid = UM && UM.uid; if(!uid) return; closeUserModal(); removeUser(uid); }
 function resetPw(uid){
   const u = TEAM.find(x=>x.uid===uid); if(!u) return;
   openGenModal('ตั้งรหัสผ่านใหม่ — '+u.name,
