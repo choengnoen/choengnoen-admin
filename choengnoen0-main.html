@@ -432,11 +432,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .role-card.active{border-width:2px;transform:translateY(-2px);box-shadow:0 8px 20px rgba(232,101,15,.2);}
   /* ส่วนหัวฟอร์ม: รูปซ้าย ชื่อ/ตำแหน่ง/รหัสผ่านขวา */
   .um-top{display:grid;grid-template-columns:96px 1fr;gap:20px;align-items:start;margin-bottom:6px;}
-  .um-photo-col{display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:2px;}
-  .um-photo-col .u-avatar{width:84px;height:84px;font-size:24px;cursor:pointer;border:3px solid #fff;box-shadow:0 0 0 1.5px var(--line);}
-  .um-photo-btn{font:inherit;font-size:12px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;color:var(--ink-600);}
-  .um-photo-btn:hover{border-color:var(--orange-600);color:var(--orange-600);}
-  .um-photo-del{border:0;background:none;color:var(--ink-400);text-decoration:underline;padding:0;}
   .um-top-fields .f-row{margin-bottom:12px;}
   .um-top-fields .two-col{gap:14px;margin-bottom:0;}
   .um-top-fields .two-col .f-row{margin-bottom:12px;}
@@ -802,8 +797,7 @@ function renderUserBadge(){
   badge.innerHTML = esc(u.name) + (u.position ? '<span class="um-position">ตำแหน่ง '+esc(u.position)+'</span>' : '') + FBL.permBadgeHtml();
   badge.className = 'pill pill-ok'; badge.style.display = 'block';
   const av = document.getElementById('user-avatar');
-  if(u.photo){ av.style.backgroundImage = `url('${u.photo}')`; av.style.backgroundSize='cover'; av.style.backgroundPosition='center'; av.textContent=''; }
-  else { av.style.backgroundImage='none'; av.textContent = initials(u.name); }
+  av.style.backgroundImage='none'; av.textContent = initials(u.name);
   av.title = u.name + ' — คลิกเพื่อดูข้อมูล/ออกจากระบบ';
 }
 
@@ -1334,9 +1328,12 @@ function renderUsers(){
   const seePresence = FBL.can('viewLog');
   if(!TEAM.length){ listEl.innerHTML = '<div class="empty" style="padding:20px">ยังไม่มีผู้ใช้งาน</div>'; detEl.innerHTML=''; return; }
   const prOf = u => seePresence ? presenceOf(u) : null;
-  const photoStyle = u => u.photo ? esc(`background-image:url('${u.photo}')`) : '';
-  const avatarHtml = (u,sz) => { const pr = prOf(u);
-    return `<div class="u-avatar" style="${photoStyle(u)}${sz?`;width:${sz}px;height:${sz}px;font-size:${Math.round(sz*.34)}px`:''}">${u.photo?'':esc(initials(u.name))}${pr?`<span class="dot ${pr.on?'on':''}"></span>`:''}</div>`; };
+  /* ล้างรูปโปรไฟล์เก่า (เลิกใช้ฟีเจอร์รูปแล้ว) — เจ้าของระบบเปิดหน้านี้ครั้งแรกจะลบให้ทีละคน */
+  if(owner && !window.__photoPurge){
+    const old = TEAM.filter(x=>x.photo);
+    if(old.length){ window.__photoPurge = true;
+      (async()=>{ try{ for(const x of old){ await FBL.updateMember(x.uid, { photo: null }); } }catch(e){ console.warn('ล้างรูปเก่าไม่สำเร็จ', e); window.__photoPurge = false; } })(); }
+  }
   const statusHtml = u => { const pr = prOf(u);
     return !u.active ? '<span class="role-chip off">ระงับการใช้งาน</span>'
       : (pr ? `<span class="small ${pr.on?'':'muted'}" style="${pr.on?'color:var(--success);font-weight:600':''}">${pr.on?'● ':''}${esc(pr.text)}</span>` : '<span class="small muted">ใช้งาน</span>'); };
@@ -1376,17 +1373,17 @@ function renderUsers(){
 }
 function pickUser(uid){ SEL_UID = uid; renderUsers(); }
 /* ---------- หน้าต่างเพิ่ม/แก้ไขผู้ใช้ ---------- */
-let UM = null;   // { uid|null, role, sections, perm, photo }
+let UM = null;   // { uid|null, role, sections, perm }
 // ข้อความย่อสำหรับหน้าต่างผู้ใช้ (ไม่แตะข้อความเต็มใน firebase-layer.js ที่หน้าอื่นใช้อยู่)
 const UM_ROLE_DESC = { chief:'หัวหน้าหมวด ดูได้ทุกระบบ ไม่แก้ข้อมูล', assistant:'แก้ไขได้ทุกระบบ ลบ/กู้คืนได้ ลบถาวรไม่ได้', staff:'แก้เฉพาะส่วนงานของตัวเอง ส่วนอื่นดูอย่างเดียว' };
 const UM_FLAG_TXT = {
-  delete:{label:'ลบรายการ', desc:'ลบข้อมูลที่แก้ได้ (เข้าถังขยะ)'},
-  restore:{label:'กู้คืนจากถังขยะ', desc:'ดูถังขยะและกู้คืนรายการ'},
-  purge:{label:'ลบถาวร', desc:'ลบทิ้งถาวร กู้คืนไม่ได้'},
-  viewLog:{label:'ดูประวัติการใช้งาน', desc:'ดูว่าใครทำอะไร เมื่อไร'},
-  unlockLedger:{label:'ปลดล็อกบัญชีรายเดือน', desc:'ปลดล็อกเดือนที่ปิดบัญชี'},
-  export:{label:'ส่งออก/สำรองข้อมูล', desc:'ดาวน์โหลดเป็น Excel / JSON'},
-  checkFuel:{label:'ตรวจรายวัน', desc:'ติ๊กตรวจแล้ว ยืนยันปิดวัน (พ.1-02 วัสดุ / พ.1-03 น้ำมัน)'}
+  delete:{label:'ลบรายการ', desc:'เข้าถังขยะ กู้คืนได้'},
+  restore:{label:'กู้คืนจากถังขยะ', desc:'ดูและกู้คืนรายการ'},
+  purge:{label:'ลบถาวร', desc:'กู้คืนไม่ได้'},
+  viewLog:{label:'ดูประวัติการใช้งาน', desc:'ใครทำอะไร เมื่อไร'},
+  unlockLedger:{label:'ปลดล็อกบัญชีรายเดือน', desc:'เดือนที่ปิดบัญชีแล้ว'},
+  export:{label:'ส่งออก/สำรองข้อมูล', desc:'Excel / JSON'},
+  checkFuel:{label:'ตรวจรายวัน', desc:'พ.1-02 วัสดุ / พ.1-03 น้ำมัน'}
 };
 const umFlagLabel = f => (UM_FLAG_TXT[f.key]||f).label;
 const umFlagDesc = f => (UM_FLAG_TXT[f.key]||f).desc;
@@ -1395,17 +1392,11 @@ function openUserModal(uid){
   if(!FBL.isOwner()){ alert('เฉพาะเจ้าของระบบเท่านั้น'); return; }
   const u = uid ? TEAM.find(x=>x.uid===uid) : null;
   const isOwnerRec = !!(u && u.role==='owner');
-  UM = { uid: u ? u.uid : null, role: u ? u.role : 'staff', sections: u ? u.sections.slice() : [], perm: u ? JSON.parse(JSON.stringify(u.perm)) : FBL.presetPerm('staff', []), photo: u ? u.photo : null, isOwnerRec };
+  UM = { uid: u ? u.uid : null, role: u ? u.role : 'staff', sections: u ? u.sections.slice() : [], perm: u ? JSON.parse(JSON.stringify(u.perm)) : FBL.presetPerm('staff', []), isOwnerRec };
   document.getElementById('um-title').textContent = u ? 'แก้ไขผู้ใช้งาน — '+u.name : 'เพิ่มผู้ใช้งาน';
   const roleCards = ['chief','assistant','staff'].map(r=>`<div class="role-card ${UM.role===r?'active':''}" data-role="${r}" onclick="umPickRole('${r}')"><span class="rc-e">${FBL.ROLES[r].icon}</span><b>${esc(FBL.ROLES[r].label)}</b>${esc(UM_ROLE_DESC[r]||FBL.ROLES[r].desc)}</div>`).join('');
   document.getElementById('um-body').innerHTML = `
     <div class="um-top">
-      <div class="um-photo-col">
-        <div id="um-photo-preview" class="u-avatar" title="เลือกรูปโปรไฟล์ (ไม่บังคับ)" onclick="document.getElementById('um-photo-input').click()" style="${UM.photo?esc(`background-image:url('${UM.photo}')`):''}">${UM.photo?'':'?'}</div>
-        <input type="file" id="um-photo-input" accept="image/*" onchange="handlePhotoPick(event)" hidden>
-        <button type="button" class="um-photo-btn" onclick="document.getElementById('um-photo-input').click()">📷 เลือกรูป</button>
-        ${UM.photo ? '<button type="button" class="um-photo-btn um-photo-del" onclick="clearPhoto()">ลบรูป</button>' : ''}
-      </div>
       <div class="um-top-fields">
         <div class="two-col">
           <div class="f-row"><label>ชื่อ-สกุล <span class="um-opt">(ชื่อที่เลือกตอนล็อกอิน)</span></label><input id="um-name" oninput="umRefreshSay()" value="${esc(u?u.name:'')}" placeholder="เช่น นางสาววันทนา มีมานะ"></div>
@@ -1416,16 +1407,6 @@ function openUserModal(uid){
         ${u ? `<div class="f-row"><label>ตั้งรหัสผ่านใหม่ <span class="um-opt">(เว้นว่างถ้าไม่เปลี่ยน · 8 ตัวขึ้นไป)</span></label><input id="um-newpw" type="text" autocomplete="off"></div>` : ''}
       </div>
     </div>
-    <div class="f-row" style="margin-bottom:0;">
-      <div id="crop-wrap" class="hidden" style="margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--paper-50);max-width:260px;">
-        <div id="crop-viewport" style="width:220px;height:220px;border-radius:50%;overflow:hidden;position:relative;background:#111;cursor:move;margin:0 auto;touch-action:none;">
-          <img id="crop-img" style="position:absolute;left:0;top:0;user-select:none;pointer-events:none;" draggable="false">
-        </div>
-        <div style="margin-top:10px;display:flex;align-items:center;gap:8px;"><span style="font-size:13px;">🔍</span><input type="range" id="crop-zoom" min="1" max="3" step="0.02" value="1" oninput="onCropZoom(this.value)" style="flex:1;"></div>
-        <div style="font-size:11.5px;color:var(--ink-400);margin:6px 0 10px;text-align:center;">ลากเพื่อเลื่อน · เลื่อนแถบเพื่อซูม</div>
-        <div style="display:flex;gap:8px;justify-content:center;"><button type="button" class="btn btn-primary btn-sm" onclick="confirmCrop()">✓ ใช้รูปนี้</button><button type="button" class="btn btn-ghost btn-sm" onclick="closeCrop()">ยกเลิก</button></div>
-      </div>
-    </div>
     ${isOwnerRec ? `<div class="hint-box">👑 <b>เจ้าของระบบ</b> — สิทธิ์เต็มเสมอ ปรับไม่ได้</div>` : `
     <div class="form-sub">บทบาท</div>
     <div class="role-cards" id="um-roles">${roleCards}</div>
@@ -1434,11 +1415,11 @@ function openUserModal(uid){
       <div class="sec-check">${FBL.SUB_KEYS.map(k=>`<label><input type="checkbox" class="um-sec" value="${k}" ${UM.sections.includes(k)?'checked':''} onchange="umSectionsChanged()"> ${k.slice(1)}. ${esc(umSecLabel(k))}</label>`).join('')}</div>
     </div>
     <div class="um-say"><h5>📋 สรุปสิทธิ์</h5><ul id="um-say"></ul></div>
-    <details class="um-adv"><summary>⚙️ ปรับสิทธิ์ละเอียด <span class="um-opt">(ไม่บังคับ)</span></summary><div class="um-adv-in" onchange="umRefreshSay()">
+    <details class="um-adv"><summary>⚙️ ปรับสิทธิ์ละเอียด</summary><div class="um-adv-in" onchange="umRefreshSay()">
     <div class="form-sub" style="display:flex;justify-content:space-between;align-items:center;">สิทธิ์รายระบบ <button type="button" class="btn btn-ghost btn-sm" onclick="umResetPreset()">↺ ค่าตั้งต้น</button></div>
     <table class="perm-table"><thead><tr><th>ระบบ</th><th>✎ แก้ไข</th><th>👁 ดู</th><th>— ซ่อน</th></tr></thead>
       <tbody>
-        <tr><td>• ระบบหลัก</td><td colspan="3"><label style="display:inline-flex;gap:6px;align-items:center;"><input type="checkbox" id="um-main"> เห็นภาพรวม แจ้งเตือน รายงาน</label></td></tr>
+        <tr><td>• ระบบหลัก</td><td colspan="3"><label style="display:inline-flex;gap:6px;align-items:center;"><input type="checkbox" id="um-main"> เห็นระบบหลัก</label></td></tr>
         ${FBL.SUB_KEYS.map(k=>`<tr><td>${k.slice(1)}. ${esc(umSecLabel(k))}</td>${['edit','view','none'].map(v=>`<td><input type="radio" name="um-${k}" value="${v}"></td>`).join('')}</tr>`).join('')}
       </tbody></table>
     <div class="form-sub">สิทธิ์พิเศษ</div>
@@ -1450,7 +1431,7 @@ function openUserModal(uid){
   if(!isOwnerRec) umFillPerm();
   document.getElementById('user-modal').classList.remove('hidden');
 }
-function closeUserModal(){ document.getElementById('user-modal').classList.add('hidden'); closeCrop(); UM = null; }
+function closeUserModal(){ document.getElementById('user-modal').classList.add('hidden'); UM = null; }
 function umFillPerm(){
   document.getElementById('um-main').checked = !!UM.perm.main;
   FBL.SUB_KEYS.forEach(k=>{ const el = document.querySelector(`input[name="um-${k}"][value="${UM.perm[k]}"]`); if(el) el.checked = true; });
@@ -1463,16 +1444,17 @@ function umRefreshSay(){
   const p = umReadPerm();
   const nm = (document.getElementById('um-name')||{}).value;
   const who = esc((nm||'').trim() || 'ผู้ใช้คนนี้');
-  const lab = k => k.slice(1)+' '+umSecLabel(k);
+  const lab = k => k.slice(1);
+  const grp = a => a.length===FBL.SUB_KEYS.length ? 'ทุกระบบ' : 'ระบบ '+a.join(', ');
   const ed = FBL.SUB_KEYS.filter(k=>p[k]==='edit').map(lab);
   const vw = FBL.SUB_KEYS.filter(k=>p[k]==='view').map(lab);
   const no = FBL.SUB_KEYS.filter(k=>p[k]==='none').map(lab);
   const fl = FBL.FLAGS.filter(f=>p[f.key]).map(umFlagLabel);
-  const L = [`<b>${who}</b> · ${esc(FBL.ROLES[UM.role].label)}`, p.main ? 'เห็นระบบหลัก' : 'ไม่เห็นระบบหลัก'];
-  if(ed.length) L.push('<b>แก้ไข:</b> '+ed.map(esc).join(', '));
-  if(vw.length) L.push('<b>ดูอย่างเดียว:</b> '+vw.map(esc).join(', '));
-  if(no.length) L.push('<b>ไม่เห็น:</b> '+no.map(esc).join(', '));
-  L.push(fl.length ? '<b>สิทธิ์พิเศษ:</b> '+fl.map(esc).join(', ') : 'ไม่มีสิทธิ์พิเศษ');
+  const L = [`<b>${who}</b> · ${esc(FBL.ROLES[UM.role].label)} · ${p.main ? 'เห็นระบบหลัก' : 'ไม่เห็นระบบหลัก'}`];
+  if(ed.length) L.push('<b>แก้ไข:</b> '+grp(ed));
+  if(vw.length) L.push('<b>ดูอย่างเดียว:</b> '+grp(vw));
+  if(no.length) L.push('<b>ไม่เห็น:</b> '+grp(no));
+  if(fl.length) L.push('<b>สิทธิ์พิเศษ:</b> '+fl.map(esc).join(', '));
   box.innerHTML = L.map(x=>'<li>'+x+'</li>').join('');
 }
 function umReadPerm(){
@@ -1497,7 +1479,7 @@ async function saveUserModal(){
   const name = document.getElementById('um-name').value.trim();
   const position = document.getElementById('um-position').value.trim();
   if(!name){ alert('กรุณากรอกชื่อ-สกุล'); return; }
-  const payload = { name, position, photo: UM.photo || null };
+  const payload = { name, position };
   if(!UM.isOwnerRec){ payload.role = UM.role; payload.sections = UM.role==='staff' ? UM.sections : []; payload.perm = umReadPerm(); }
   btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
   try{
@@ -1545,48 +1527,6 @@ function removeUser(uid){
     await FBL.removeMember(uid); showToast('ลบผู้ใช้งานแล้ว');
   }, true);
 }
-
-/* ---------- ครอปรูปโปรไฟล์ (ลากตำแหน่ง + ซูม) ---------- */
-let CROP = null, cropDrag = false, cropStart = {x:0,y:0}, cropOff = {x:0,y:0};
-function handlePhotoPick(e){
-  const file = e.target.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = ev=>{ const img = new Image(); img.onload = ()=>openCrop(img); img.src = ev.target.result; };
-  reader.readAsDataURL(file);
-}
-function openCrop(img){
-  const VS = 220, base = Math.max(VS/img.width, VS/img.height);
-  CROP = { img, w:img.width, h:img.height, base, zoom:1, offX:(VS-img.width*base)/2, offY:(VS-img.height*base)/2, VS };
-  document.getElementById('crop-img').src = img.src;
-  document.getElementById('crop-zoom').value = 1;
-  document.getElementById('crop-wrap').classList.remove('hidden');
-  renderCrop();
-}
-function cropDisp(){ return { w: CROP.w*CROP.base*CROP.zoom, h: CROP.h*CROP.base*CROP.zoom }; }
-function clampCrop(){ const {w,h} = cropDisp(); CROP.offX = Math.min(0, Math.max(CROP.VS-w, CROP.offX)); CROP.offY = Math.min(0, Math.max(CROP.VS-h, CROP.offY)); }
-function renderCrop(){ if(!CROP) return; const {w,h} = cropDisp(); const im = document.getElementById('crop-img'); im.style.width=w+'px'; im.style.height=h+'px'; im.style.left=CROP.offX+'px'; im.style.top=CROP.offY+'px'; }
-function onCropZoom(v){
-  if(!CROP) return;
-  const o = cropDisp(); const rx = (CROP.VS/2-CROP.offX)/o.w, ry = (CROP.VS/2-CROP.offY)/o.h;
-  CROP.zoom = parseFloat(v); const n = cropDisp();
-  CROP.offX = CROP.VS/2 - rx*n.w; CROP.offY = CROP.VS/2 - ry*n.h; clampCrop(); renderCrop();
-}
-document.addEventListener('mousedown', e=>{ if(e.target && e.target.id==='crop-viewport' && CROP){ cropDrag=true; cropStart={x:e.clientX,y:e.clientY}; cropOff={x:CROP.offX,y:CROP.offY}; } });
-document.addEventListener('touchstart', e=>{ if(e.target && e.target.id==='crop-viewport' && CROP){ const t=e.touches[0]; cropDrag=true; cropStart={x:t.clientX,y:t.clientY}; cropOff={x:CROP.offX,y:CROP.offY}; } }, {passive:true});
-function cropMove(e){ if(!cropDrag || !CROP) return; const pt = e.touches ? e.touches[0] : e; CROP.offX = cropOff.x + pt.clientX - cropStart.x; CROP.offY = cropOff.y + pt.clientY - cropStart.y; clampCrop(); renderCrop(); if(e.cancelable) e.preventDefault(); }
-document.addEventListener('mousemove', cropMove); document.addEventListener('touchmove', cropMove, {passive:false});
-document.addEventListener('mouseup', ()=>{ cropDrag=false; }); document.addEventListener('touchend', ()=>{ cropDrag=false; });
-function confirmCrop(){
-  if(!CROP) return;
-  const OUT = 200, c = document.createElement('canvas'); c.width = OUT; c.height = OUT;
-  const inv = 1/(CROP.base*CROP.zoom);
-  c.getContext('2d').drawImage(CROP.img, -CROP.offX*inv, -CROP.offY*inv, CROP.VS*inv, CROP.VS*inv, 0, 0, OUT, OUT);
-  UM.photo = c.toDataURL('image/jpeg', 0.82);
-  const prev = document.getElementById('um-photo-preview'); prev.style.backgroundImage = `url('${UM.photo}')`; prev.textContent = '';
-  closeCrop();
-}
-function closeCrop(){ const w = document.getElementById('crop-wrap'); if(w) w.classList.add('hidden'); const i = document.getElementById('um-photo-input'); if(i) i.value=''; CROP = null; }
-function clearPhoto(){ UM.photo = null; const prev = document.getElementById('um-photo-preview'); prev.style.backgroundImage='none'; prev.textContent='?'; }
 
 /* ============================================================
    ถังขยะ
