@@ -554,57 +554,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           </div>
         </div>
 
-        <div class="ov-two" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-          <div class="section">
-            <div class="section-head"><h2>งบประมาณคงเหลือรายหมวดหมู่</h2><span class="muted small" id="budget-fy-label"></span></div>
-            <div id="budget-mini"></div>
-          </div>
-          <div class="section">
-            <div class="section-head"><h2>สัดส่วนการเบิกจ่าย</h2></div>
-            <div id="chart-budget-donut" style="padding:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;justify-content:center;"></div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-head">
-            <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg></span>
-              พัสดุ — วัสดุคงเหลือ
-            </h2>
-          </div>
-          <div class="ov-two" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px 20px 4px;">
-            <div>
-              <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;">
-                <h3 style="font-family:'Kanit';font-size:14px;margin:0;">วัสดุในบัญชี</h3>
-                <span class="foot-note" id="material-nai-stat" style="border-top:none;padding:0;background:none;"></span>
-              </div>
-              <div class="tabs mat-filter-tabs" id="material-nai-tabs">
-                <div class="tab active" data-filter="all" onclick="setMaterialNaiFilter(this)">ทั้งหมด</div>
-                <div class="tab" data-filter="ok" onclick="setMaterialNaiFilter(this)">ปกติ</div>
-                <div class="tab" data-filter="low" onclick="setMaterialNaiFilter(this)">ต่ำกว่าจุดสั่งซื้อ</div>
-              </div>
-              <div class="table-wrap mat-scroll-wrap"><table>
-                <thead><tr><th>รหัส</th><th>รายการ</th><th>คงเหลือ</th><th>จุดสั่งซื้อ</th><th>สถานะ</th></tr></thead>
-                <tbody id="material-body-nai"></tbody>
-              </table></div>
-            </div>
-            <div>
-              <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;">
-                <h3 style="font-family:'Kanit';font-size:14px;margin:0;">วัสดุนอกบัญชี</h3>
-                <span class="foot-note" id="material-nok-stat" style="border-top:none;padding:0;background:none;"></span>
-              </div>
-              <div class="table-wrap mat-scroll-wrap"><table>
-                <thead><tr><th>รหัส</th><th>รายการ</th><th>คงเหลือ</th><th>จุดสั่งซื้อ</th><th>สถานะ</th></tr></thead>
-                <tbody id="material-body-nok"></tbody>
-              </table></div>
-            </div>
-          </div>
-          <div class="foot-note" id="material-foot" style="margin-top:10px;"></div>
-        </div>
-
-        <div class="section">
-          <div class="section-head"><h2>เข้าระบบงาน</h2><span class="muted small">สิทธิ์ของคุณในแต่ละระบบ</span></div>
-          <div class="sys-grid" id="sys-links"></div>
-        </div>
       </div>
 
       <!-- ============ แจ้งเตือน ============ -->
@@ -1043,76 +992,6 @@ function renderTodayLeave(){
     <div class="today-item"><span>${esc(r.name)}</span><span class="pill ${r.type==='ไปราชการ'?'pill-in':'pill-warn'}">${esc(r.type==='ไปราชการ'?'ไปราชการ':'ลา'+r.type)} · ${fmtDate(r.from)}${r.to&&r.to!==r.from?' – '+fmtDate(r.to):''}</span></div>`).join('')
     : '<div class="empty">วันนี้ไม่มีผู้ลาหรือไปราชการ — มาปฏิบัติงานครบ</div>';
 }
-function renderSysLinks(){
-  const cards = ['s1','s2','s3','s4'].map(k=>{
-    const s = FBL.SECTIONS[k];
-    const acc = FBL.isOwner() ? 'edit' : FBL.user.perm[k];
-    const pill = acc==='edit' ? '<span class="acc-pill acc-edit">✎ แก้ไขได้</span>' : acc==='view' ? '<span class="acc-pill acc-view">👁 ดูอย่างเดียว</span>' : '<span class="acc-pill acc-none">ไม่มีสิทธิ์</span>';
-    return `<a class="sys-card ${acc==='none'?'locked':''}" href="${s.file}"><div class="sc-top"><span class="sc-num">${s.no}</span><span class="sc-title">${esc(s.label)}</span></div>${pill}</a>`;
-  });
-  document.getElementById('sys-links').innerHTML = cards.join('');
-}
-
-function renderBudgetMini(){
-  const bv = budgetView();
-  document.getElementById('budget-fy-label').textContent = 'ปีงบประมาณ '+currentFiscalYear();
-  document.getElementById('budget-mini').innerHTML = bv.map(x=>{
-    const has = x.alloc>0;
-    const remainPct = has ? Math.min(100, Math.max(0, Math.round((x.alloc-x.spent)/x.alloc*100))) : 0;
-    const pct = has ? Math.min(100, Math.max(0, Math.round(x.spent/x.alloc*100))) : 0;
-    const cls = remainPct<20 ? 'danger' : (remainPct<35 ? 'warn' : '');
-    return `<div class="budget-row">
-      <div class="budget-top"><span class="name">${esc(x.cat)}</span><span class="nums">${fmtMoney(x.spent)} / ${fmtMoney(x.alloc)} บาท ${has?`(เหลือ ${remainPct}%)`:'(ยังไม่มีวงเงิน)'}</span></div>
-      <div class="budget-track"><div class="budget-fill ${has?cls:''}" style="width:${pct}%;"></div></div>
-    </div>`;
-  }).join('') + `<div class="foot-note">ยอดเบิกจ่ายคำนวณโดยระบบที่ 4 (อัปเดตเมื่อมีผู้เปิดระบบที่ 4) · หมวดที่เหลือน้อยกว่า 20% แสดงแถบสีแดง</div>`;
-}
-function renderBudgetDonut(){
-  const bv = budgetView();
-  const colors = ['#0a2540','#1c4b73','#f2a930','#e0620f','#6b7f94','#1c8a53'];
-  const totalAlloc = bv.reduce((s,x)=>s+x.alloc,0);
-  const spentTotal = bv.reduce((s,x)=>s+x.spent,0);
-  const has = totalAlloc>0;
-  const r=54, cx=64, cy=64, circ=2*Math.PI*r;
-  let offset=0, segs='';
-  if(has){
-    bv.forEach((x,i)=>{ const len = circ*Math.min(1, x.spent/totalAlloc); segs += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${colors[i%colors.length]}" stroke-width="20" stroke-dasharray="${len} ${circ-len}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`; offset += len; });
-  }
-  const base = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--paper-100)" stroke-width="20"/>`;
-  const centerPct = has ? Math.min(100, Math.round(spentTotal/totalAlloc*100)) : null;
-  const legend = bv.map((x,i)=>`<div style="display:flex;align-items:center;gap:7px;font-size:12.5px;margin-bottom:6px;"><span style="width:10px;height:10px;border-radius:3px;background:${colors[i%colors.length]};display:inline-block;"></span>${esc(x.cat)} — <b>${fmtMoney(x.spent)}</b> บาท</div>`).join('')
-    + `<div class="foot-note" style="border-top:none;padding:6px 0 0;background:none;">วงเงินรวม <b>${fmtMoney(totalAlloc)}</b> บาท</div>`;
-  document.getElementById('chart-budget-donut').innerHTML = `
-    <svg width="128" height="128" viewBox="0 0 128 128">${base}${segs}
-      <text x="64" y="60" text-anchor="middle" font-family="Kanit" font-size="15" font-weight="600" fill="var(--navy-900)">${centerPct===null?'—':centerPct+'%'}</text>
-      <text x="64" y="76" text-anchor="middle" font-family="Sarabun" font-size="10.5" fill="var(--ink-400)">${centerPct===null?'ยังไม่มีข้อมูล':'เบิกจ่ายแล้ว'}</text>
-    </svg><div>${legend}</div>`;
-}
-
-let materialNaiFilter = 'all';
-function setMaterialNaiFilter(el){
-  materialNaiFilter = el.dataset.filter;
-  document.querySelectorAll('#material-nai-tabs .tab').forEach(t=>t.classList.toggle('active', t===el));
-  renderMaterials();
-}
-function renderMaterials(){
-  const mats = materialsView();
-  const rowHtml = m=>{
-    const st = matStatus(m);
-    const pill = st==='low' ? '<span class="pill pill-danger">ต่ำกว่าจุดสั่งซื้อ</span>' : (st==='watch' ? '<span class="pill pill-warn">ใกล้ถึงจุดสั่งซื้อ</span>' : '<span class="pill pill-ok">ปกติ</span>');
-    return `<tr><td style="font-family:'Kanit';font-size:12px;color:var(--navy-900);">${esc(m.code)}</td><td>${esc(m.name)}</td><td>${m.stock.toLocaleString('th-TH')} ${esc(m.unit)}</td><td>${m.reorder.toLocaleString('th-TH')} ${esc(m.unit)}</td><td>${pill}</td></tr>`;
-  };
-  const emptyRow = '<tr><td colspan="5" style="text-align:center;color:var(--ink-400);padding:16px;">ไม่พบรายการ</td></tr>';
-  const nai = mats.filter(m=>m.accountType==='ในบัญชี'), nok = mats.filter(m=>m.accountType==='นอกบัญชี');
-  const naiShown = nai.filter(m=> materialNaiFilter==='low' ? matStatus(m)==='low' : materialNaiFilter==='ok' ? matStatus(m)!=='low' : true);
-  document.getElementById('material-body-nai').innerHTML = naiShown.map(rowHtml).join('') || emptyRow;
-  document.getElementById('material-body-nok').innerHTML = nok.map(rowHtml).join('') || emptyRow;
-  const lowNai = nai.filter(m=>matStatus(m)==='low').length;
-  document.getElementById('material-nai-stat').textContent = `ทั้งหมด ${nai.length} · ต่ำกว่าจุดสั่งซื้อ ${lowNai}`;
-  document.getElementById('material-nok-stat').textContent = `ทั้งหมด ${nok.length} รายการ`;
-  document.getElementById('material-foot').textContent = `ยอดคงเหลือตามบัญชี พ.1-02 ของระบบที่ 3 (อัปเดตเมื่อมีผู้เปิดระบบที่ 3) — ดู/แก้ไขรายละเอียดที่ระบบที่ 3`;
-}
-
 /* ============================================================
    แจ้งเตือน / ติดตามงาน (เช็คลิสต์ + ผู้รับผิดชอบ เก็บที่ app_state/main ใช้ร่วมกันทุกเครื่อง)
    ============================================================ */
@@ -1372,7 +1251,7 @@ function printExecReport(){
 
 function renderAll(){
   if(!__dataLoaded) return;
-  renderOverviewStats(); renderLeaveApprovals(); renderTodayLeave(); renderBudgetMini(); renderBudgetDonut(); renderMaterials(); renderAlerts();
+  renderOverviewStats(); renderLeaveApprovals(); renderTodayLeave(); renderAlerts();
   if(document.getElementById('panel-reports').classList.contains('active')) renderSummaryReport();
 }
 </script>
@@ -1869,7 +1748,6 @@ function staffPrivCleanup(){
   await FBL.ready;
   renderUserBadge();
   applyTabVisibility();
-  renderSysLinks();
   FBL.watchTeam(list=>{
     const order = {owner:0, chief:1, assistant:2, staff:3};
     TEAM = list.sort((a,b)=>(order[a.role]-order[b.role]) || String(a.name).localeCompare(String(b.name),'th'));
