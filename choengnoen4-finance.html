@@ -459,14 +459,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="dw-group">
                 <div class="dw-group-title"><span class="dot"></span>รายละเอียดการปฏิบัติงาน</div>
                 <div class="f-row">
-                  <label>ผู้ขอปฏิบัติงาน / ทีมงาน</label>
+                  <label>ผู้ขอปฏิบัติงาน / ทีมงาน <span class="req">*</span></label>
                   <select id="ot-name"></select>
                 </div>
                 <div class="two-col">
-                  <div class="f-row"><label>วันที่ปฏิบัติงาน</label><input type="date" id="ot-date"></div>
-                  <div class="f-row"><label>ช่วงเวลา</label><input type="text" id="ot-time" placeholder="เช่น 16.30 - 20.30 น."></div>
+                  <div class="f-row"><label>วันที่ปฏิบัติงาน <span class="req">*</span></label><input type="date" id="ot-date"></div>
+                  <div class="f-row"><label>ช่วงเวลา <span class="req">*</span></label><input type="text" id="ot-time" placeholder="เช่น 16.30 - 20.30 น."></div>
                 </div>
-                <div class="f-row"><label>ลักษณะงานที่ทำ</label><input type="text" id="ot-task" placeholder="เช่น งานซ่อมแซมไฟฟ้าแสงสว่างฉุกเฉิน"></div>
+                <div class="f-row"><label>ลักษณะงานที่ทำ <span class="req">*</span></label><input type="text" id="ot-task" placeholder="เช่น งานซ่อมแซมไฟฟ้าแสงสว่างฉุกเฉิน"></div>
                 <div class="f-row"><label>จำนวนเงินค่าตอบแทน (บาท)</label><input type="number" id="ot-amount" placeholder="0.00"></div>
               </div>
               <div class="stat-mini">สถานะจะขึ้นเป็น "รออนุมัติ" ให้หัวหน้าหมวดพิจารณาก่อน จากนั้นเมื่อปฏิบัติงานเสร็จสิ้น ระบบจะนับถอยหลัง 5 วัน ให้รายงานผลและแนบหลักฐานการจ่ายเงิน</div>
@@ -541,9 +541,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                     <div class="f-row"><label>ประเภทค่าใช้จ่าย</label>
                       <select id="util-type"><option>ค่าไฟฟ้า</option><option>ค่าน้ำประปา</option><option>ค่าอินเตอร์เน็ต</option><option>ค่าโทรศัพท์</option></select>
                     </div>
-                    <div class="f-row"><label>รอบบิลประจำเดือน</label><input type="month" id="util-cycle"></div>
-                    <div class="f-row"><label>จำนวนเงินที่เรียกเก็บ (บาท)</label><input type="number" id="util-amount"></div>
-                    <div class="f-row"><label>วันครบกำหนดชำระ</label><input type="date" id="util-due"></div>
+                    <div class="f-row"><label>รอบบิลประจำเดือน <span class="req">*</span></label><input type="month" id="util-cycle"></div>
+                    <div class="f-row"><label>จำนวนเงินที่เรียกเก็บ (บาท) <span class="req">*</span></label><input type="number" id="util-amount"></div>
+                    <div class="f-row"><label>วันครบกำหนดชำระ <span class="req">*</span></label><input type="date" id="util-due"></div>
                   </div>
                 </div>
               </div>
@@ -594,7 +594,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 <div class="dw-group">
                   <div class="dw-group-title"><span class="dot"></span>รอบบิล / มิเตอร์ สนง.</div>
                   <div class="three-col">
-                    <div class="f-row"><label>รอบบิลประจำเดือน</label><input type="month" id="water-cycle"></div>
+                    <div class="f-row"><label>รอบบิลประจำเดือน <span class="req">*</span></label><input type="month" id="water-cycle"></div>
                     <div class="f-row"><label>เลขมิเตอร์ สนง.</label><input type="number" step="any" id="water-main"></div>
                     <div class="f-row"><label>ยอดชำระตามบิล</label><input type="number" step="any" id="water-amount"></div>
                   </div>

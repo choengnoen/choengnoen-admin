@@ -619,7 +619,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div class="modal-body">
             <div class="two-col">
               <div class="f-row" style="position:relative;">
-                <label>ผู้ลา / ไปราชการ</label>
+                <label>ผู้ลา / ไปราชการ <span class="req">*</span></label>
                 <input id="lr-name" placeholder="พิมพ์เพื่อค้นหาชื่อ" autocomplete="off" oninput="__filterNameSuggest(); onLeaveNameChange();">
                 <div id="lr-name-suggest" class="ac-suggest hidden"></div>
                 <div class="lr-meta" id="lr-meta"></div>
@@ -637,8 +637,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               </div>
             </div>
             <div class="lr-compact-grid">
-              <div class="f-row"><label>ตั้งแต่วันที่</label><input type="date" id="lr-from" onchange="calcLrDays()"></div>
-              <div class="f-row"><label>ถึงวันที่</label><input type="date" id="lr-to" onchange="calcLrDays()"></div>
+              <div class="f-row"><label>ตั้งแต่วันที่ <span class="req">*</span></label><input type="date" id="lr-from" onchange="calcLrDays()"></div>
+              <div class="f-row"><label>ถึงวันที่ <span class="req">*</span></label><input type="date" id="lr-to" onchange="calcLrDays()"></div>
               <div class="f-row"><label style="white-space:nowrap;">กำหนด (วันทำการ)</label><input id="lr-days" disabled></div>
               <div class="f-row"><label>เหตุผลการลา</label><textarea id="lr-reason" placeholder="ระบุเหตุผลการลา" rows="1"></textarea></div>
             </div>
@@ -1566,7 +1566,7 @@ function renderComplaintModal(data){
         <div class="f-row"><label>สายทาง</label><input class="edit-input" id="cp-route" value="${esc(data.route||'')}" placeholder="เช่น ทล.3191"></div>
         <div class="f-row"><label>กม.</label><input class="edit-input" id="cp-km" value="${esc(data.km||'')}" placeholder="เช่น 14+200"></div>
       </div>
-      <div class="f-row"><label>เรื่อง</label><input class="edit-input" id="cp-subject" value="${esc(data.subject||'')}" placeholder="เช่น ถนนชำรุด เป็นหลุมบ่อ"></div>
+      <div class="f-row"><label>เรื่อง <span class="req">*</span></label><input class="edit-input" id="cp-subject" value="${esc(data.subject||'')}" placeholder="เช่น ถนนชำรุด เป็นหลุมบ่อ"></div>
       <div class="f-row"><label>หมายเหตุ</label><input class="edit-input" id="cp-remark" value="${esc(data.remark||'')}" placeholder="ไม่บังคับ"></div>
       ${complaintModalMode==='edit'?`
       <div class="f-row"><label>สถานะความคืบหน้า</label><select class="edit-input" id="cp-status">
@@ -1725,7 +1725,7 @@ function renderStaffDetailModal(){
   if(staffDetailEditing){
     body.innerHTML = `
       <div class="two-col">
-        <div class="f-row"><label>ชื่อ-สกุล</label><input class="edit-input" id="sd-name" value="${esc(s.name)}"></div>
+        <div class="f-row"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="edit-input" id="sd-name" value="${esc(s.name)}"></div>
         <div class="f-row"><label>ชื่อเล่น</label><input class="edit-input" id="sd-nickname" value="${esc(s.nickname||'')}"></div>
       </div>
       <div class="two-col">
@@ -2140,7 +2140,7 @@ function renderHolidayModalBody(){
   body.innerHTML = `
     ${isAdmin() ? `
     <div class="two-col">
-      <div class="f-row"><label>วันที่</label><input type="date" id="hd-date"></div>
+      <div class="f-row"><label>วันที่ <span class="req">*</span></label><input type="date" id="hd-date"></div>
       <div class="f-row"><label>ชื่อวันหยุด</label><input id="hd-name" placeholder="เช่น วันปิยมหาราช"></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px;">
@@ -2241,6 +2241,7 @@ async function submitLeaveRequest(){
   const name = document.getElementById('lr-name').value;
   const type = document.getElementById('lr-type').value;
   const from = document.getElementById('lr-from').value, to = document.getElementById('lr-to').value;
+  if(!String(name||'').trim()){ alert('กรุณาระบุชื่อผู้ลา'); return; }
   if(!from||!to){ alert('กรุณาระบุวันที่ลา'); return; }
   const ovDup = __findLeaveOverlap(name, from, to);
   if(ovDup){ alert('บันทึกไม่ได้ — ' + __leaveOverlapMsg(ovDup)); checkLrWarning(); return; }

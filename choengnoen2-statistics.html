@@ -980,7 +980,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                   <div class="dw-group-title"><span class="dot"></span>ตำแหน่งและผู้รุกล้ำ</div>
                   <div class="f-row"><label>สายทางที่ควบคุม</label><select id="ef-route" onchange="validateRouteKm('ef-route','ef-km','ef-km-msg')"></select></div>
                   <div class="two-col">
-                    <div class="f-row"><label>ชื่อผู้รุกล้ำ</label><input id="ef-name" placeholder="ชื่อ-สกุล"></div>
+                    <div class="f-row"><label>ชื่อผู้รุกล้ำ <span class="req">*</span></label><input id="ef-name" placeholder="ชื่อ-สกุล"></div>
                     <div class="f-row"><label>ตำแหน่ง กม. / ฝั่งทาง</label><input id="ef-km" placeholder="เช่น กม.5+200 ขวาทาง" oninput="validateRouteKm('ef-route','ef-km','ef-km-msg')">
                       <div id="ef-km-msg" style="margin-top:4px;"></div>
                     </div>
@@ -1140,7 +1140,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="crew-modal-section">
                 <div class="crew-modal-section-title"><span class="dot"></span>ข้อมูลชุดทำงาน</div>
                 <div class="crew-form-row">
-                  <label>ชื่อชุดทำงาน</label>
+                  <label>ชื่อชุดทำงาน <span class="req">*</span></label>
                   <input type="text" id="crew-modal-name" placeholder="เช่น ชุดซ่อมบำรุงไหล่ทาง">
                 </div>
                 <div class="crew-form-row" style="position:relative;margin-bottom:0;">
@@ -1430,7 +1430,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                           <div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
                         </div>
                       </div>
-                      <div class="f-row"><label>จำนวนเงินที่ได้รับเพิ่ม (บาท)</label><input type="number" id="bf-supp-amount" value="0"></div>
+                      <div class="f-row"><label>จำนวนเงินที่ได้รับเพิ่ม (บาท) <span class="req">*</span></label><input type="number" id="bf-supp-amount" value="0"></div>
                     </div>
                     <div class="f-row"><label>เลขที่หนังสือ/หมายเหตุอ้างอิง (ถ้ามี)</label><input id="bf-supp-ref" placeholder="เช่น ทล.๓๑๐๐/๑๒๓ ลว. ..."></div>
                     <div style="display:flex;justify-content:flex-end;">
@@ -1498,14 +1498,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="dw-group">
                 <div class="dw-group-title"><span class="dot"></span>รหัสและระดับ</div>
                 <div class="two-col">
-                  <div class="f-row"><label>รหัสงาน</label><input id="jc-f-code" placeholder="เช่น 21311"></div>
+                  <div class="f-row"><label>รหัสงาน <span class="req">*</span></label><input id="jc-f-code" placeholder="เช่น 21311"></div>
                   <div class="f-row"><label>ระดับ</label><select id="jc-f-level" onchange="onJcLevelChange()"><option value="main">หลัก</option><option value="sub">ย่อย</option></select></div>
                 </div>
                 <div class="f-row" id="jc-f-parent-row"><label>สังกัดใต้รหัสงานหลัก/กลุ่ม</label><select id="jc-f-parent"></select></div>
               </div>
               <div class="dw-group">
                 <div class="dw-group-title"><span class="dot"></span>ชื่องานและหน่วยนับ</div>
-                <div class="f-row"><label>ชื่องาน</label><input id="jc-f-name" placeholder="เช่น งานทางระบายน้ำ"></div>
+                <div class="f-row"><label>ชื่องาน <span class="req">*</span></label><input id="jc-f-name" placeholder="เช่น งานทางระบายน้ำ"></div>
                 <div class="two-col">
                   <div class="f-row"><label>หน่วยนับ</label><input id="jc-f-unit" placeholder="เช่น ม., ตร.ม. (คั่นด้วยจุลภาคถ้ามีหลายหน่วย)"></div>
                   <div class="f-row"><label>ผลผลิต</label><input id="jc-f-output" placeholder="เช่น แห่ง"></div>

@@ -1652,7 +1652,7 @@ function openMatAction(kind, code){
     body.innerHTML = matActBoxHtml(m, stock) +
       `<div class="ma-hint neg">ยอดติดลบมักเกิดจาก <b>เบิกก่อนบันทึกรับเข้า</b> หรือบันทึกจำนวนเบิกผิด/ซ้ำ ตรวจรายการล่าสุดด้านล่าง แล้วใส่ยอดที่นับได้จริง ระบบจะบันทึกเป็นรายการ [ปรับยอด] ในบัญชี พ.1-02 ของวันนี้</div>
        <div style="font-weight:600;font-size:12.5px;margin-bottom:8px;">รายการเคลื่อนไหวล่าสุด</div>${txHtml}` +
-      (admin ? `<div class="ma-two"><div class="f-row"><label>ยอดที่นับได้จริง (${esc(m.unit)})</label><input type="number" step="0.01" id="ma-count" placeholder="เช่น 0"></div>
+      (admin ? `<div class="ma-two"><div class="f-row"><label>ยอดที่นับได้จริง (${esc(m.unit)}) <span class="req">*</span></label><input type="number" step="0.01" id="ma-count" placeholder="เช่น 0"></div>
         <div class="f-row"><label>สาเหตุ</label><select id="ma-reason"><option>รับเข้าแล้วแต่ยังไม่ได้บันทึก</option><option>บันทึกจำนวนเบิกผิด</option><option>บันทึกซ้ำ</option><option>ตรวจนับสต็อกใหม่</option><option>อื่น ๆ</option></select></div></div>
         <div class="f-row"><label>หมายเหตุ (ถ้ามี)</label><input type="text" id="ma-note" placeholder="เช่น รับของจากพัสดุแขวง 10 ต.ค. ยังไม่ได้ลงระบบ"></div>`
         : '<div class="ma-hint low">การปรับยอดทำได้เฉพาะผู้ดูแลระบบ — แจ้งผู้ดูแลให้ตรวจสอบรายการนี้</div>');
@@ -2063,7 +2063,7 @@ function renderIbEdit(){
   const nf = E.nf;
   const addHtml = nf ? `<div class="ib-newcard"><h4>✨ วัสดุใหม่ที่ยังไม่มีในทะเบียน</h4>
       <div class="ib-newgrid">
-        <div class="full"><label>ชื่อวัสดุ</label><input type="text" id="ib-nf-name" value="${esc(nf.name)}" placeholder="เช่น ยางมะตอย CRS-2" autocomplete="off"></div>
+        <div class="full"><label>ชื่อวัสดุ <span class="req">*</span></label><input type="text" id="ib-nf-name" value="${esc(nf.name)}" placeholder="เช่น ยางมะตอย CRS-2" autocomplete="off"></div>
         <div><label>หน่วยนับ</label><input type="text" id="ib-nf-unit" value="${esc(nf.unit)}" placeholder="เช่น ถัง, กก., ชิ้น"></div>
         <div><label>ประเภทบัญชี</label><input type="text" id="ib-nf-acct" value="${E.off?'นอกบัญชี':'ในบัญชี'}" disabled></div>
         <div><label>ลักษณะการใช้งาน</label><select id="ib-nf-usage"><option value="งานบำรุง" ${nf.usage!=='สำนักงาน'?'selected':''}>งานบำรุง</option><option value="สำนักงาน" ${nf.usage==='สำนักงาน'?'selected':''}>สำนักงาน</option></select></div>
@@ -2077,7 +2077,7 @@ function renderIbEdit(){
   document.getElementById('ib-edit-body').innerHTML = `
     <div class="ib-hd">
       <div class="f-row"><label>${E.off ? 'เลขที่เอกสาร / แหล่งที่ได้รับ (ถ้ามี)' : 'เลขที่ใบเบิก'}</label><input type="text" id="ib-e-ref" value="${esc(E.off ? (E.ref||'') : (E.ref || FUEL_REF_PREFIX))}" ${E.off ? 'placeholder="เช่น ได้รับอนุเคราะห์จาก ... (เว้นว่างได้)" ' : ''}oninput="ibCheckRef()"><div class="fh-err" id="ib-e-err"></div></div>
-      <div class="f-row"><label>วันที่รับ</label><input type="date" id="ib-e-date" value="${esc(E.date)}"></div>
+      <div class="f-row"><label>วันที่รับ <span class="req">*</span></label><input type="date" id="ib-e-date" value="${esc(E.date)}"></div>
     </div>
     <div class="ib-sec-t">รายการในใบ</div>
     ${lineHtml}
@@ -2601,10 +2601,10 @@ function openVehicleModal(id){
   const operator = v ? (v.note||'') : '';
   document.getElementById('veh-modal-body').innerHTML = `
     <input type="hidden" id="vm-id" value="${v?v.id:''}">
-    <div style="margin-bottom:12px;"><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">ชื่อ/ประเภทเครื่องจักร-รถ</label>
+    <div style="margin-bottom:12px;"><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">ชื่อ/ประเภทเครื่องจักร-รถ <span class="req">*</span></label>
       <input class="edit-input" id="vm-typename" value="${esc(typeName)}" placeholder="เช่น รถขุดตัก"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-      <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">รหัส/เลขทะเบียน</label>
+      <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">รหัส/เลขทะเบียน <span class="req">*</span></label>
         <input class="edit-input" id="vm-code" value="${esc(code)}" placeholder="เช่น 82-6156-16-6"></div>
       <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">ผู้รับผิดชอบ</label>
         <input class="edit-input" id="vm-operator" value="${esc(operator)}" placeholder="ชื่อผู้รับผิดชอบ"></div>
@@ -2792,9 +2792,9 @@ function openVehReqModal(id){
     <input type="hidden" id="vr-id" value="${r?r.id:''}">
     <input type="hidden" id="vr-approver" value="${r?esc(r.approverName):''}">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-      <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">วันที่ขอใช้</label>
+      <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">วันที่ขอใช้ <span class="req">*</span></label>
         <input type="date" class="edit-input" id="vr-reqdate" value="${esc(r?r.requestDate:toLocalISODate(TODAY))}" onchange="onVehReqDateFromChange()"></div>
-      <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">รถ/เครื่องจักรที่ขอใช้</label>
+      <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">รถ/เครื่องจักรที่ขอใช้ <span class="req">*</span></label>
         <div class="combo" id="vr-vehicle-combo">
           <input type="text" id="vr-vehicle-search" class="edit-input" placeholder="พิมพ์ทะเบียนหรือชื่อเพื่อค้นหา" autocomplete="off"
             oninput="onVrVehicleInput()" onfocus="this.select(); onVrVehicleInput();" onkeydown="onVrVehicleKeydown(event)"
@@ -2804,7 +2804,7 @@ function openVehReqModal(id){
         <select id="vr-vehicle" style="display:none;">${vehOpts}</select></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-      <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">ผู้ขอใช้รถ (พนักงานขับรถ)</label>
+      <div><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">ผู้ขอใช้รถ (พนักงานขับรถ) <span class="req">*</span></label>
         <div class="combo" id="vr-requester-combo">
           <input class="edit-input" id="vr-requester" value="${r?esc(r.requesterName):''}" placeholder="ขึ้นอัตโนมัติเมื่อเลือกรถ" autocomplete="off"
             oninput="onVrRequesterInput()" onfocus="onVrRequesterInput()" onkeydown="onVrRequesterKeydown(event)"
@@ -5130,7 +5130,7 @@ function openMachineryLogModal(vehicle, date){
     <input type="hidden" id="em-vehicle" value="${esc(vehicle)}">
     <input type="hidden" id="em-date" value="${date}">
     <div class="foot-note" style="margin:0 0 12px;padding:0;border:none;">${esc(vehicleShortName(vehicle))} (${esc(vehicleRegNo(vehicle))})</div>
-    <div style="margin-bottom:12px;"><label ${lbl}>พนักงานขับ/ควบคุม (ตามที่รายงาน)</label>
+    <div style="margin-bottom:12px;"><label ${lbl}>พนักงานขับ/ควบคุม (ตามที่รายงาน) <span class="req">*</span></label>
       <input class="edit-input" id="em-driver" value="${esc(l?l.driver:(v&&v.note)||'')}" placeholder="ชื่อพนักงานขับรถ"></div>
     <div style="margin-bottom:4px;"><label ${lbl}>สถานที่ปฏิบัติงาน (สายทาง / กม.)</label></div>
     ${locFromDaily?`<div style="margin:0 0 8px;padding:6px 10px;background:var(--paper-100);border-radius:6px;font-size:11.5px;color:var(--ink-500);">🔗 ดึงมาจากใบสั่งการรายวันของระบบงานสถิติฯ อัตโนมัติ — ตรวจสอบและแก้ไขได้ตามจริง</div>`:''}
