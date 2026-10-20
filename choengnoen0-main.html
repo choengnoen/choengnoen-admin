@@ -424,6 +424,23 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .role-card{border:1.5px solid var(--line);border-radius:10px;padding:9px 10px;cursor:pointer;font-size:12px;color:var(--ink-600);line-height:1.45;}
   .role-card b{display:block;font-family:'Kanit';font-size:13.5px;color:var(--navy-900);margin-bottom:2px;}
   .role-card.active{border-color:var(--orange-600);background:#fff7f0;}
+  /* แบบ 5: การ์ดบทบาทใหญ่ + กล่องสรุปเป็นภาษาคน + ปรับแต่งละเอียดพับเก็บ */
+  .role-cards{gap:12px;margin-bottom:8px;}
+  .role-card{text-align:center;padding:16px 14px;border-radius:14px;font-size:12.5px;transition:transform .15s,box-shadow .15s;}
+  .role-card .rc-e{display:block;font-size:32px;line-height:1.2;margin-bottom:4px;}
+  .role-card b{font-size:15.5px;}
+  .role-card.active{border-width:2px;transform:translateY(-2px);box-shadow:0 8px 20px rgba(232,101,15,.2);}
+  .um-say{margin:14px 0 4px;background:linear-gradient(135deg,#fff4ec,#fff);border:1px solid #f3c6a4;border-radius:14px;padding:14px 18px;}
+  .um-say h5{margin:0 0 8px;font-family:'Kanit';font-size:13.5px;font-weight:600;color:var(--orange-600);}
+  .um-say ul{margin:0;padding:0;list-style:none;display:grid;gap:6px;font-size:13.5px;line-height:1.5;}
+  .um-say li{padding-left:26px;position:relative;}
+  .um-say li::before{content:"✓";position:absolute;left:0;top:1px;width:18px;height:18px;border-radius:50%;background:var(--orange-600);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;}
+  .um-adv{margin-top:14px;border:1px dashed #cfd2db;border-radius:12px;}
+  .um-adv>summary{cursor:pointer;padding:11px 16px;font-family:'Kanit';font-size:13.5px;font-weight:600;color:var(--ink-600);list-style:none;display:flex;justify-content:space-between;align-items:center;}
+  .um-adv>summary::-webkit-details-marker{display:none;}
+  .um-adv>summary::after{content:"▾";transition:transform .2s;}
+  .um-adv[open]>summary::after{transform:rotate(180deg);}
+  .um-adv .um-adv-in{padding:0 16px 14px;}
   @media(max-width:640px){ .role-cards,.flag-list{grid-template-columns:1fr;} }
 
   /* ถังขยะ */
@@ -466,7 +483,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="firebase-layer.js" data-page="main"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="emoji-img.js" defer></script>
-<script src="modal-standard.js" defer></script>
+<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
 .route-header .topbar-right{flex-direction:column;align-items:flex-end;gap:6px}
@@ -593,7 +610,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <!-- ============ แจ้งเตือน ============ -->
       <div class="panel" id="panel-alerts">
         <div class="al-wrap">
-          <div class="al-hero"><div class="big" id="al-hero-big"></div><div class="sub">เรียงตามเวลาที่ต้องจัดการ — ใกล้สุดอยู่บน</div></div>
+          <div class="al-hero"><div class="big" id="al-hero-big"></div></div>
           <div class="al-tl" id="alert-panel">
             <div class="al-stage s-red"><h3>เร่งด่วนตอนนี้ <small>เลยกำหนด / เหตุฉุกเฉิน</small></h3><div id="al-red"></div></div>
             <div class="al-stage s-leave" id="leave-approve-sec" style="display:none;"><h3>รอท่านอนุมัติ <small>ใบลา <span id="leave-approve-count"></span></small></h3><div id="leave-approve-list"></div></div>
@@ -1473,10 +1490,10 @@ function openUserModal(uid){
   const isOwnerRec = !!(u && u.role==='owner');
   UM = { uid: u ? u.uid : null, role: u ? u.role : 'staff', sections: u ? u.sections.slice() : [], perm: u ? JSON.parse(JSON.stringify(u.perm)) : FBL.presetPerm('staff', []), photo: u ? u.photo : null, isOwnerRec };
   document.getElementById('um-title').textContent = u ? 'แก้ไขผู้ใช้งาน — '+u.name : 'เพิ่มผู้ใช้งาน';
-  const roleCards = ['chief','assistant','staff'].map(r=>`<div class="role-card ${UM.role===r?'active':''}" data-role="${r}" onclick="umPickRole('${r}')"><b>${FBL.ROLES[r].icon} ${esc(FBL.ROLES[r].label)}</b>${esc(FBL.ROLES[r].desc)}</div>`).join('');
+  const roleCards = ['chief','assistant','staff'].map(r=>`<div class="role-card ${UM.role===r?'active':''}" data-role="${r}" onclick="umPickRole('${r}')"><span class="rc-e">${FBL.ROLES[r].icon}</span><b>${esc(FBL.ROLES[r].label)}</b>${esc(FBL.ROLES[r].desc)}</div>`).join('');
   document.getElementById('um-body').innerHTML = `
     <div class="two-col">
-      <div class="f-row"><label>ชื่อ-สกุล (ใช้เลือกตอนล็อกอิน)</label><input id="um-name" value="${esc(u?u.name:'')}" placeholder="เช่น นางสาววันทนา มีมานะ"></div>
+      <div class="f-row"><label>ชื่อ-สกุล (ใช้เลือกตอนล็อกอิน)</label><input id="um-name" oninput="umRefreshSay()" value="${esc(u?u.name:'')}" placeholder="เช่น นางสาววันทนา มีมานะ"></div>
       <div class="f-row"><label>ตำแหน่ง</label><input id="um-position" value="${esc(u?u.position:'')}" placeholder="เช่น นายช่างโยธา, ผช.ม.เชิงเนิน"></div>
     </div>
     <div class="two-col">
@@ -1500,12 +1517,14 @@ function openUserModal(uid){
       </div>
     </div>
     ${isOwnerRec ? `<div class="hint-box">👑 บัญชีนี้เป็น <b>เจ้าของระบบ</b> — มีสิทธิ์เต็มทุกอย่างเสมอ (ปรับสิทธิ์ไม่ได้)</div>` : `
-    <div class="form-sub">บทบาท</div>
+    <div class="form-sub">ผู้ใช้คนนี้คือใคร? (บทบาท)</div>
     <div class="role-cards" id="um-roles">${roleCards}</div>
     <div id="um-sections-wrap" style="${UM.role==='staff'?'':'display:none'}">
-      <div class="form-sub">ส่วนงานที่รับผิดชอบ (แก้ไขได้)</div>
+      <div class="form-sub">รับผิดชอบส่วนงานไหน? (แก้ไขได้เฉพาะส่วนที่ติ๊ก)</div>
       <div class="sec-check">${FBL.SUB_KEYS.map(k=>`<label><input type="checkbox" class="um-sec" value="${k}" ${UM.sections.includes(k)?'checked':''} onchange="umSectionsChanged()"> ${k.slice(1)}. ${esc(FBL.SECTIONS[k].label)}</label>`).join('')}</div>
     </div>
+    <div class="um-say"><h5>📋 สรุปสิ่งที่จะเกิดขึ้น</h5><ul id="um-say"></ul></div>
+    <details class="um-adv"><summary>⚙️ ปรับแต่งสิทธิ์ละเอียด (ไม่ต้องแก้ก็ได้ ถ้าค่าตั้งต้นของบทบาทเหมาะอยู่แล้ว)</summary><div class="um-adv-in" onchange="umRefreshSay()">
     <div class="form-sub" style="display:flex;justify-content:space-between;align-items:center;">สิทธิ์รายระบบ <button type="button" class="btn btn-ghost btn-sm" onclick="umResetPreset()">↺ ใช้ค่าตั้งต้นของบทบาท</button></div>
     <table class="perm-table"><thead><tr><th>ระบบ</th><th>✎ แก้ไข</th><th>👁 ดูอย่างเดียว</th><th>— ไม่เห็น</th></tr></thead>
       <tbody>
@@ -1514,6 +1533,7 @@ function openUserModal(uid){
       </tbody></table>
     <div class="form-sub">สิทธิ์พิเศษ</div>
     <div class="flag-list">${FBL.FLAGS.map(f=>`<label class="flag-item"><input type="checkbox" class="um-flag" value="${f.key}"><span>${esc(f.label)}<small>${esc(f.desc)}</small></span></label>`).join('')}</div>
+    </div></details>
     `}`;
   document.getElementById('um-foot').innerHTML = `<button class="btn btn-ghost" onclick="closeUserModal()">ยกเลิก</button><button class="btn btn-primary" id="um-save" onclick="saveUserModal()">บันทึก</button>`;
   if(!isOwnerRec) umFillPerm();
@@ -1524,6 +1544,25 @@ function umFillPerm(){
   document.getElementById('um-main').checked = !!UM.perm.main;
   FBL.SUB_KEYS.forEach(k=>{ const el = document.querySelector(`input[name="um-${k}"][value="${UM.perm[k]}"]`); if(el) el.checked = true; });
   document.querySelectorAll('.um-flag').forEach(el=>{ el.checked = !!UM.perm[el.value]; });
+  umRefreshSay();
+}
+// กล่องสรุปเป็นภาษาคน — อ่านจากช่องสิทธิ์ที่ติ๊กอยู่จริง
+function umRefreshSay(){
+  const box = document.getElementById('um-say'); if(!box || !UM) return;
+  const p = umReadPerm();
+  const nm = (document.getElementById('um-name')||{}).value;
+  const who = esc((nm||'').trim() || 'ผู้ใช้คนนี้');
+  const lab = k => FBL.SECTIONS[k].label;
+  const ed = FBL.SUB_KEYS.filter(k=>p[k]==='edit').map(lab);
+  const vw = FBL.SUB_KEYS.filter(k=>p[k]==='view').map(lab);
+  const no = FBL.SUB_KEYS.filter(k=>p[k]==='none').map(lab);
+  const fl = FBL.FLAGS.filter(f=>p[f.key]).map(f=>f.label);
+  const L = [`<b>${who}</b> เป็น <b>${esc(FBL.ROLES[UM.role].label)}</b>`, p.main ? 'เห็นระบบหลัก (ภาพรวม แจ้งเตือน รายงาน)' : 'ไม่เห็นระบบหลัก'];
+  if(ed.length) L.push('<b>แก้ไขได้:</b> '+ed.map(esc).join(', '));
+  if(vw.length) L.push('<b>ดูอย่างเดียว:</b> '+vw.map(esc).join(', '));
+  if(no.length) L.push('<b>มองไม่เห็น:</b> '+no.map(esc).join(', '));
+  L.push(fl.length ? '<b>สิทธิ์พิเศษ:</b> '+fl.map(esc).join(', ') : 'ไม่มีสิทธิ์พิเศษ');
+  box.innerHTML = L.map(x=>'<li>'+x+'</li>').join('');
 }
 function umReadPerm(){
   const p = { main: document.getElementById('um-main').checked };
