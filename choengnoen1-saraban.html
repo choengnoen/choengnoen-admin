@@ -341,7 +341,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .lv-t{position:absolute;white-space:pre;line-height:16pt;}
   .lv-fl{display:flex;height:16pt;}
   .lv-s{flex:none;white-space:pre;}
-  .lv-d{display:block;height:16pt;background:radial-gradient(circle at 50% 12.3pt,#000 .5pt,transparent .65pt) 0 0/2.55pt 16pt repeat-x;}
+  .lv-d{display:block;height:16pt;min-width:0;overflow:visible;}
   .lv-dash{height:.5pt;background:repeating-linear-gradient(90deg,#000 0 1.5pt,transparent 1.5pt 3pt);}
   .lv-ln{background:#000;}
   .lv-box{width:11.3pt;height:11.3pt;border:.75pt solid #000;box-sizing:border-box;}
@@ -353,7 +353,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
        ตอนพิมพ์ให้ซ่อนทุกอย่างที่อยู่ใน body ยกเว้นฟอร์มที่กำลังพิมพ์ (.show-print) */
     body > *:not(.show-print){display:none !important;}
     html,body{height:auto !important;min-height:0 !important;}
-    .lv-page{height:838pt;break-after:avoid;page-break-after:avoid;}
+    .lv-page{height:830pt;break-after:avoid;page-break-after:avoid;}
+    /* ใบลา (.lv-page) ต้องจบที่ 1 หน้า A4 เสมอ — ตัดส่วนที่ล้นทิ้ง ไม่ให้เกิดหน้าว่างตามหลัง (ไม่กระทบฟอร์มอื่นที่ต้องหลายหน้า) */
+    html:has(.show-print .lv-page), body:has(.show-print .lv-page){height:830pt !important;max-height:830pt !important;overflow:hidden !important;}
+    .show-print:has(.lv-page){height:830pt;overflow:hidden;}
     .route-header,.sidebar,.topbar,.sec-tabs,.no-print,.page-head .toolbar{display:none !important;}
     .content{padding:0;max-width:none;}
     .section{border:none;box-shadow:none;}
@@ -2543,12 +2546,14 @@ function lvT(x,y,s,o){   // ข้อความคงที่ ชิดซ้
 }
 function lvLine(x,y,w,s){ // ข้อความที่มีเส้นจุดไข่ปลาต่อท้าย/แทรก — จุดยืดเต็มความกว้าง w
   const toks = String(s).match(/\.+|[^.]+/g)||[];
-  const inner = toks.map(t=> t[0]==='.' ? `<span class="lv-d" style="flex:${t.length} 1 0"></span>` : `<span class="lv-s">${t}</span>`).join('');
+  /* เส้นจุดวาดเป็น SVG (เวกเตอร์) — ชัวร์ตอนพิมพ์ ไม่หายแบบพื้นหลังไล่สีบาง ๆ */
+  const dotSvg = '<svg class="lv-d"><line x1="1" y1="16.4" x2="100%" y2="16.4" stroke="#000" stroke-width="1.3" stroke-linecap="round" stroke-dasharray="0 3.4"/></svg>';
+  const inner = toks.map(t=> t[0]==='.' ? dotSvg.replace('class="lv-d"',`class="lv-d" style="flex:${t.length} 1 0"`) : `<span class="lv-s">${t}</span>`).join('');
   return `<div class="lv-t lv-fl" style="left:${x}pt;top:${y-12.5}pt;width:${w}pt">${inner}</div>`;
 }
 function lvDots(x,y,w){ return lvLine(x,y,w,'.'); }
 function lvDash(x0,x1,y){ // เส้นประของแบบ จ.3-05 (ขีดสั้น 1.5pt ทุก 3pt)
-  return `<div class="lv-t lv-dash" style="left:${x0}pt;top:${y-0.1}pt;width:${x1-x0}pt"></div>`;
+  return `<svg class="lv-t" style="left:${x0}pt;top:${y-1}pt;width:${x1-x0}pt;height:2pt;overflow:visible"><line x1="0" y1="1.33" x2="100%" y2="1.33" stroke="#000" stroke-width=".7" stroke-dasharray="2 2"/></svg>`;
 }
 function lvHL(x0,x1,y){ return `<div class="lv-t lv-ln" style="left:${x0}pt;top:${y}pt;width:${x1-x0}pt;height:.5pt"></div>`; }
 function lvVL(x,y0,y1){ return `<div class="lv-t lv-ln" style="left:${x}pt;top:${y0}pt;width:.5pt;height:${y1-y0}pt"></div>`; }
