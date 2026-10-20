@@ -563,9 +563,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <div class="sec-tabs no-print" id="sec-tabs">
         <div class="sec-tab active" data-sec="overview">ภาพรวม</div>
         <div class="sec-tab" data-sec="alerts">แจ้งเตือน<span class="tab-badge hidden" id="alerts-tab-badge">0</span></div>
-        <div class="sec-tab" data-sec="users" id="tab-users">ตั้งค่า</div>
         <div class="sec-tab" data-sec="trash" id="tab-trash" style="display:none;">🗑 ถังขยะ<span class="tab-badge hidden" id="trash-tab-badge" style="background:var(--ink-400);">0</span></div>
         <div class="sec-tab" data-sec="backup" id="tab-backup" style="display:none;">สำรองข้อมูล</div>
+        <div class="sec-tab" data-sec="users" id="tab-users">ตั้งค่า</div>
       </div>
 
       <!-- ============ ภาพรวม ============ -->
@@ -1548,7 +1548,62 @@ function trashGroups(){
     return { id: primary.groupId || primary.__id, items, primary, deletedAt: items.reduce((m,i)=> i.deletedAt>m ? i.deletedAt : m, '') };
   }).sort((a,b)=> String(b.deletedAt).localeCompare(String(a.deletedAt)));
 }
-function renderTrash(){
+// ชื่อรายการในถังขยะ: ใช้ข้อมูลที่คนอ่านรู้เรื่อง (ชื่อ/ประเภท/วันที่) แทนรหัสอัตโนมัติ เช่น LV-1792507041192
+// รหัสอ้างอิง (วัสดุ/รถ/รหัสงาน) แปลงเป็นชื่อจากตารางหลักแบบโหลดครั้งเดียวเมื่อมีรายการที่ต้องใช้
+const TRASH_LOOK = {};   // table -> {key: row} | 'loading'
+function trashLook(table, keyField, key){
+  if(!key) return null;
+  const c = TRASH_LOOK[table];
+  if(c && c!=='loading') return c[key] || null;
+  if(!c){
+    TRASH_LOOK[table] = 'loading';
+    Promise.resolve(FBL.apiGet(table)).then(rows=>{
+      const m = {}; (rows||[]).forEach(r=>{ m[r[keyField]] = r; });
+      TRASH_LOOK[table] = m; renderTrash();
+    }).catch(()=>{ TRASH_LOOK[table] = {}; });
+  }
+  return null;
+}
+function tvName(id){ const r = trashLook('machinery','id',id); return r ? (r.label || [r.vehicleType, r.plate||r.regNumber].filter(Boolean).join(' ') || id) : id; }
+function tmName(code){ const r = trashLook('materials','code',code); return r ? (r.itemName || code) : code; }
+function tjName(code){ const r = trashLook('job_code_reference','jobCode',code); return r ? ((code?code+' ':'')+(r.jobName||'')).trim() : code; }
+function trashTitle(p){
+  let d = {}; try{ d = JSON.parse(p.data||'{}'); }catch(e){}
+  const t = FBL.TABLES[p.table]; const tl = t ? t.label : p.table;
+  const rng = (a,b)=> a ? (b && b!==a ? fmtDate(a)+' – '+fmtDate(b) : fmtDate(a)) : '';
+  const dt = x=> x ? fmtDate(x) : '';
+  const n = (x,u)=> (x!==undefined && x!=='' && x!=null) ? Number(x).toLocaleString('th-TH')+(u?' '+u:'') : '';
+  const J = a=> a.filter(Boolean).join(' · ');
+  let s = '';
+  switch(p.table){
+    case 'staff': s = J([tl, d.name, d.role]); break;
+    case 'leave_requests': s = J(['ใบลา'+(d.type||''), d.name, rng(d.from,d.to), n(d.days,'วัน')]); break;
+    case 'public_holidays': s = J([tl, d.name, dt(d.date)]); break;
+    case 'complaints': s = J([tl, d.subject, d.receiveNo?'เลขรับ '+d.receiveNo:'', dt(d.date)]); break;
+    case 'controlled_routes': s = J([tl, d.highway, d.sectionName, d.controlNo?'ควบคุม '+d.controlNo:'']); break;
+    case 'field_crews': s = J([tl, d.name, d.leader?'หัวหน้า '+d.leader:'']); break;
+    case 'job_code_reference': s = J([tl, d.jobCode, d.jobName]); break;
+    case 'daily_work_orders': s = J(['ใบสั่งการ', dt(d.date), tjName(d.jobCode), d.routeLabel||d.routeValue, (d.kmStart!==undefined&&d.kmStart!=='')?'กม.'+d.kmStart+(d.kmEnd?'–'+d.kmEnd:''):'']); break;
+    case 'bmm_plan_actual': s = J([tl, d.name||tjName(d.jobCode), d.fiscalYear?'ปี '+d.fiscalYear:'', d.month?'เดือน '+d.month:'']); break;
+    case 'unit_cost_records': s = J([tl, d.jobName||tjName(d.jobCode), d.variantLabel, d.fiscalYear?'ปี '+d.fiscalYear:'']); break;
+    case 'permits': s = J([tl+(d.no?' ที่ '+d.no:''), d.name, d.type, d.km?'กม.'+d.km:'']); break;
+    case 'encroachments': s = J([tl, d.name, d.structure, d.km?'กม.'+d.km:'']); break;
+    case 'emergencies': s = J([tl+(d.no?' ที่ '+d.no:''), d.type, d.loc, dt(d.start)]); break;
+    case 'contracts': s = J([tl, d.name, d.contractNo, d.contractor]); break;
+    case 'materials': s = J([tl, d.itemName, d.code]); break;
+    case 'material_transactions': s = J([(d.type||'')+'วัสดุ', tmName(d.materialId), n(d.qty), dt(d.date), d.refNo?'เลขที่ '+d.refNo:'']); break;
+    case 'machinery': s = J([tl, d.label||[d.vehicleType, d.plate||d.regNumber].filter(Boolean).join(' '), d.operatorName]); break;
+    case 'fuel_transactions': s = J([(d.kind||'')+'น้ำมัน', tvName(d.vehicleId), d.fuelType, n(d.qty,'ลิตร'), dt(d.date), d.ref?'เลขที่ '+d.ref:'']); break;
+    case 'machinery_logs': s = J(['บันทึกใช้เครื่องจักร', tvName(d.vehicleId), dt(d.date), d.driver]); break;
+    case 'vehicle_requests': s = J([tl, d.requesterName, d.purpose, rng(d.dateFrom,d.dateTo), tvName(d.vehicleId)]); break;
+    case 'ot_requests': s = J([tl, d.staffName, d.reason, dt(d.workDate)]); break;
+    case 'budget_allocations': s = J([tl, d.category, d.fiscalYear?'ปี '+d.fiscalYear:'', n(d.allocatedAmount,'บาท')]); break;
+    case 'utility_bills': s = J([tl, d.billType, d.cycle, n(d.billAmount,'บาท')]); break;
+    case 'water_meter_log': s = J([tl, d.cycle, n(d.billAmount,'บาท')]); break;
+  }
+  if(!s) s = String(p.label || p.rowId || '').replace(/\s*\((?:[A-Z]{2,5}-\d{6,})\)/,'');
+  return s;
+}function renderTrash(){
   const groups = trashGroups();
   const badge = document.getElementById('trash-tab-badge');
   if(TRASH.length){ badge.textContent = TRASH.length; badge.classList.remove('hidden'); } else badge.classList.add('hidden');
@@ -1558,7 +1613,7 @@ function renderTrash(){
     const extra = g.items.length>1 ? `<div class="tg-extra">และรายการที่ลบพร้อมกันอีก ${g.items.length-1} รายการ (${Array.from(new Set(g.items.filter(i=>i!==p).map(i=>(FBL.TABLES[i.table]||{}).label||i.table))).join(', ')})</div>` : '';
     return `<div class="trash-group">
       <div style="min-width:0;flex:1">
-        <div class="tg-title">${esc(p.label || p.rowId)}</div>
+        <div class="tg-title">${esc(trashTitle(p))}</div>
         <div class="tg-meta"><span class="acc-pill acc-view">${s?esc(s.short+' · '+s.label):esc(p.section)}</span> · ลบโดย ${esc(p.deletedBy||'—')} · ${p.deletedAt?fmtDateTime(Date.parse(p.deletedAt)):'—'}</div>
         ${extra}
       </div>
@@ -1582,7 +1637,7 @@ function showTrashDetail(id){
 }
 function restoreGroup(id){
   const g = findGroup(id); if(!g) return;
-  confirmBox('กู้คืนรายการ', `กู้คืน "${g.primary.label||g.primary.rowId}"${g.items.length>1?` พร้อมรายการที่เกี่ยวข้องอีก ${g.items.length-1} รายการ`:''} กลับไปที่ระบบเดิม?\n\n(ถ้ามีรายการรหัสเดียวกันถูกสร้างใหม่ไปแล้ว ข้อมูลที่กู้คืนจะแทนที่รายการนั้น) — ผู้ที่เปิดหน้าระบบนั้นค้างไว้ต้องกดโหลดหน้าใหม่`, 'กู้คืน', async ()=>{
+  confirmBox('กู้คืนรายการ', `กู้คืน "${trashTitle(g.primary)}"${g.items.length>1?` พร้อมรายการที่เกี่ยวข้องอีก ${g.items.length-1} รายการ`:''} กลับไปที่ระบบเดิม?\n\n(ถ้ามีรายการรหัสเดียวกันถูกสร้างใหม่ไปแล้ว ข้อมูลที่กู้คืนจะแทนที่รายการนั้น) — ผู้ที่เปิดหน้าระบบนั้นค้างไว้ต้องกดโหลดหน้าใหม่`, 'กู้คืน', async ()=>{
     await FBL.restoreTrash(g.items); showToast('กู้คืนแล้ว');
   });
 }
