@@ -1350,7 +1350,7 @@ function renderUsers(){
   listEl.innerHTML = shown.map(u=>{
     const r = FBL.ROLES[u.role] || FBL.ROLES.staff;
     return `<div class="um-it ${u.uid===SEL_UID?'on':''} ${u.active?'':'inactive'}" onclick="pickUser('${jsArg(u.uid)}')" ${owner?`ondblclick="openUserModal('${jsArg(u.uid)}')"`:''}>
-      ${avatarHtml(u,38)}<div style="flex:1;min-width:0"><div class="u-name">${esc(u.name)}</div><div class="u-sub">${r.icon} ${esc(r.label)}</div></div></div>`;
+      <div style="flex:1;min-width:0"><div class="u-name">${prOf(u)&&prOf(u).on?'<span style="color:#22c55e;font-size:11px;margin-right:5px">●</span>':''}${esc(u.name)}</div><div class="u-sub">${r.icon} ${esc(r.label)}</div></div></div>`;
   }).join('') || '<div class="empty" style="padding:20px">ไม่พบ</div>';
 
   /* รายละเอียดขวา */
@@ -1361,7 +1361,7 @@ function renderUsers(){
   const acts = owner ? `<div class="acts"><button class="btn btn-primary" onclick="openUserModal('${jsArg(u.uid)}')">แก้ไข</button></div>` : '';
   const secNote = (u.role==='staff' && u.sections.length) ? `<div class="u-sub" style="margin-top:4px">ส่วนงานที่รับผิดชอบ: ${u.sections.map(k=>esc(k.slice(1))).join(', ')}</div>` : '';
   detEl.innerHTML = `
-    <div class="um-dh">${avatarHtml(u,64)}<div class="sp"><h3>${esc(u.name)}</h3><div class="u-sub" style="font-size:13px">${u.position?esc(u.position):'—'}</div>
+    <div class="um-dh"><div class="sp"><h3>${esc(u.name)}</h3><div class="u-sub" style="font-size:13px">${u.position?esc(u.position):'—'}</div>
       <div style="margin-top:6px"><span class="role-chip ${u.role}">${r.icon} ${esc(r.label)}</span> &nbsp;${statusHtml(u)}</div>${secNote}</div>${acts}</div>
     <div class="umd-sec"><div class="um-guide"><b>${r.icon} ${esc(r.label)}</b> — ${esc(r.desc)}</div></div>
     <div class="umd-sec"><h4>สิทธิ์รายระบบ</h4>
