@@ -597,10 +597,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           </div>
           <div class="lr-grid">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
-              <h3 style="font-size:14px;color:var(--navy-900);margin:0;">รายการลา</h3>
+              <select id="lr-approved-fy" data-fy onchange="renderLeaveRequestList()"></select>
               <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <span id="lr-last-updated" class="pill pill-neutral" style="font-size:11px;font-weight:500;"></span>
-                <select id="lr-approved-fy" data-fy onchange="renderLeaveRequestList()"></select>
                 <div class="search-box" style="min-width:170px;">🔍 <input id="lr-approved-search" placeholder="ค้นหาชื่อผู้ลา" oninput="renderLeaveRequestList()"></div>
               </div>
             </div>
@@ -2373,12 +2372,7 @@ function renderLeaveRequestList(){
 function __renderLrLastUpdated(){
   const el = document.getElementById('lr-last-updated');
   if(!el) return;
-  // นับเฉพาะรายการในปีงบประมาณที่เลือกอยู่ — ลบรายการล่าสุดแล้วจะถอยไปใช้วันที่ของรายการก่อนหน้าเอง
-  const fyEl = document.getElementById('lr-approved-fy');
-  const fyFilter = fyEl ? fyEl.value : '';
-  const dates = leaveRequests
-    .filter(r=>!fyFilter || String(fiscalYearOf(r.from))===fyFilter)
-    .map(r=>r.recordedDate).filter(Boolean);
+  const dates = leaveRequests.map(r=>r.recordedDate).filter(Boolean);
   if(!dates.length){
     el.textContent = 'ยังไม่มีการบันทึกข้อมูลการลา';
     return;
