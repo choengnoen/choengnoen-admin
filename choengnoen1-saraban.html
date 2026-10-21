@@ -2368,11 +2368,12 @@ function renderLeaveRequestList(){
     || `<tr><td colspan="5" style="text-align:center;color:var(--ink-400);padding:16px;">${q ? 'ไม่พบรายการที่ตรงกับคำค้นหา' : 'ยังไม่มีการบันทึกข้อมูลการลาในปีงบประมาณนี้'}</td></tr>`;
   __renderLrLastUpdated();
 }
-// แสดงสถานะว่ามีการบันทึก/อัปเดตข้อมูลการลาล่าสุดเมื่อวันที่เท่าไร (ดูจาก recordedDate ของทุกคำขอลา)
+// แสดงวันที่ลาล่าสุดในระบบ (ดูจากวันสิ้นสุดการลาของทุกคำขอลา)
 function __renderLrLastUpdated(){
   const el = document.getElementById('lr-last-updated');
   if(!el) return;
-  const dates = leaveRequests.map(r=>r.recordedDate).filter(Boolean);
+  // ใช้วันที่ลาล่าสุดของทุกรายการ (ไม่ผูกกับปีงบ) — ลบรายการล่าสุดแล้วจะถอยไปรายการก่อนหน้าเอง
+  const dates = leaveRequests.map(r=>r.to || r.from).filter(Boolean);
   if(!dates.length){
     el.textContent = 'ยังไม่มีการบันทึกข้อมูลการลา';
     return;
