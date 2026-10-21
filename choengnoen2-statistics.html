@@ -780,7 +780,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s2"></script>
 <script src="emoji-img.js" defer></script>
-<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script>
+<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js" defer></script>
 <script src="doh-import.js" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
@@ -849,13 +849,13 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         <span class="sp1"></span>
         <!-- ปุ่มหลักของหน้า (แบบ ค: อยู่แถวบนขวา) — ปุ่มของแต่ละหน้าย้ายมารวมที่นี่ แสดงทีละหน้าด้วย showView() -->
         <div class="nav-routine" id="nav-routine">
-          <button type="button" class="icb" id="doh-imp-btn" onclick="DohImp.openImport()" title="นำเข้าข้อมูลจากกรม — ไฟล์ CSV จากระบบ rmms สร้างเป็นรายการใบสั่งการรายวัน (ตัดคลังน้ำมัน/วัสดุให้อัตโนมัติ)" aria-label="นำเข้าข้อมูลจากกรม">📥</button>
-          <button type="button" class="icb" id="doh-ck-btn" style="position:relative;" onclick="DohImp.openCheck()" title="จุดที่ต้องตรวจสอบ — รายการใบที่นำเข้าจากกรมแล้วข้อมูลไม่ครบ คัดลอกส่งเจ้าหน้าที่ได้" aria-label="จุดที่ต้องตรวจสอบ">🔍</button>
+          <button type="button" class="icb" id="doh-imp-btn" onclick="DohImp.openImport()" title="นำเข้าข้อมูลจากกรม — ไฟล์ CSV จากระบบ rmms สร้างเป็นรายการใบสั่งการรายวัน (ตัดคลังน้ำมัน/วัสดุให้อัตโนมัติ)" aria-label="นำเข้าข้อมูลจากกรม" data-ic="down"></button>
+          <button type="button" class="icb" id="doh-ck-btn" style="position:relative;" onclick="DohImp.openCheck()" title="จุดที่ต้องตรวจสอบ — รายการใบที่นำเข้าจากกรมแล้วข้อมูลไม่ครบ คัดลอกส่งเจ้าหน้าที่ได้" aria-label="จุดที่ต้องตรวจสอบ" data-ic="search"></button>
         </div>
-        <button type="button" class="btn btn-primary" id="nav-add-btn" onclick="toggleDailyForm()">+ บันทึกใบสั่งการ</button>
+        <button type="button" class="btn btn-primary" id="nav-add-btn" data-ic="plus" onclick="toggleDailyForm()">บันทึกใบสั่งการ</button>
         <button class="btn btn-primary hidden" id="rollup-commit-btn" style="flex:none;white-space:nowrap;" onclick="commitRollupToActual()">ปิดยอดเดือนนี้</button>
-        <button type="button" class="btn btn-primary hidden" id="nav-act-bmm" onclick="openBmmForm()">+ บันทึกแผน/ผลรายเดือน</button>
-        <button type="button" class="btn btn-primary hidden" id="nav-act-crews" onclick="openCrewModal(null)">+ เพิ่มชุดทำงาน</button>
+        <button type="button" class="btn btn-primary hidden" id="nav-act-bmm" data-ic="plus" onclick="openBmmForm()">บันทึกแผน/ผลรายเดือน</button>
+        <button type="button" class="btn btn-primary hidden" id="nav-act-crews" data-ic="plus" onclick="openCrewModal(null)">เพิ่มชุดทำงาน</button>
       </div>
       <!-- ชั้นกลาง (เทาอ่อน): ตัวกรอง/แท็บของหน้านั้น — ใบสั่งการรายวันใช้แถบสัปดาห์ -->
       <div class="mn-strip no-print" id="mn-strip">
@@ -962,7 +962,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div class="toolbar">
               <select id="enc-fy" data-fy onchange="renderEnc()"></select>
 <div class="search-box">🔍 <input id="enc-search" placeholder="ค้นหาชื่อผู้รุกล้ำ / กม."></div>
-              <button class="btn btn-primary" onclick="toggleEncForm()">+ บันทึกรายใหม่</button>
+              <button class="btn btn-primary" data-ic="plus" onclick="toggleEncForm()">บันทึกรายใหม่</button>
             </div>
           </div>
           <div id="enc-form-overlay" class="modal-overlay hidden no-print">
@@ -1035,8 +1035,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div class="toolbar">
               <select id="ct-fy" data-fy onchange="renderContracts()"></select>
 <div class="search-box">🔍 <input id="ct-search" placeholder="ค้นหาเลขที่สัญญา / โครงการ / ผู้รับจ้าง"></div>
-              <button class="btn btn-ghost" onclick="exportContractsCsv()">ส่งออก CSV (ให้เครื่องมือแผนที่)</button>
-              <button class="btn btn-primary" onclick="openContractForm(null)">+ เพิ่มสัญญา</button>
+              <span class="tb-sep"></span><button class="btn btn-ghost btn-ic" data-ic="down" data-tip="ส่งออก CSV (ให้เครื่องมือแผนที่)" onclick="exportContractsCsv()"></button>
+              <button class="btn btn-primary" data-ic="plus" onclick="openContractForm(null)">เพิ่มสัญญา</button>
             </div>
           </div>
           <div id="ct-form-overlay" class="modal-overlay hidden no-print">
@@ -1266,7 +1266,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div class="dw-step-pane" data-step="3">
               <div class="dw-step-title">ขั้นที่ 3 · ใช้วัสดุและเครื่องจักรอะไร <span class="dw-hintopt">(ไม่ใช้ก็ข้ามได้)</span></div>
               <div id="dw-uc-suggest-row" class="dw-uc-suggest hidden">
-                <button type="button" class="btn btn-ghost btn-sm" onclick="suggestDwFromUnitCost()">💡 เติมวัสดุ/เครื่องจักรจากสูตรมาตรฐาน</button>
+                <button type="button" class="btn btn-ghost btn-sm" data-ic="wand" onclick="suggestDwFromUnitCost()">เติมจากสูตรมาตรฐาน</button>
                 <span id="dw-uc-suggest-note"></span>
               </div>
               <div class="dw-card" id="dw-acc-material">
@@ -1307,7 +1307,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div class="modal-plain-footer dw-wizard-footer">
               <button class="btn btn-ghost" id="daily-form-cancel-btn" onclick="toggleDailyForm()">ยกเลิก</button>
               <div class="dw-wiz-right">
-                <button type="button" class="btn btn-ghost" id="dw-prev-btn" onclick="dwStepPrev()">‹ ย้อนกลับ</button>
+                <button type="button" class="btn btn-ghost btn-ic" id="dw-prev-btn" data-ic="left" data-tip="ย้อนกลับ" onclick="dwStepPrev()"></button>
                 <button type="button" class="btn btn-primary" id="dw-next-btn" onclick="dwStepNext()">ถัดไป ›</button>
                 <button type="button" class="btn btn-primary hidden" id="daily-form-save-btn" onclick="saveDailyEntry()">บันทึกใบสั่งการ</button>
               </div>
@@ -1610,7 +1610,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div class="toolbar">
               <select id="em-fy" data-fy onchange="renderEm()"></select>
 <div class="search-box">🔍 <input id="em-search" placeholder="ค้นหาตำแหน่ง / ประเภทเหตุ"></div>
-              <button class="btn btn-primary" onclick="toggleEmForm()">+ แจ้งเหตุฉุกเฉิน</button>
+              <button class="btn btn-primary" data-ic="plus" onclick="toggleEmForm()">แจ้งเหตุฉุกเฉิน</button>
             </div>
           </div>
           <div id="em-form-overlay" class="modal-overlay hidden no-print">
@@ -2098,7 +2098,7 @@ function renderRefDetail(){
   const variants = unitCostRecords.filter(u=>u.code===rec.code);
   const info = jcDisplayInfo(rec);
   const ucHtml = variants.length
-    ? variants.map(r=>`<div class="uc-variant-card"><div class="uc-variant-title"><span>${esc(r.variantLabel ? r.variantLabel : 'อัตรามาตรฐาน')}</span><span><button class="btn btn-ghost btn-sm" onclick="openUcForm(${r.no})">แก้ไข</button> <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="deleteUcEntry(${r.no})">ลบ</button></span></div>${ucFormulaTableHtml(r)}</div>`).join('')
+    ? variants.map(r=>`<div class="uc-variant-card"><div class="uc-variant-title"><span>${esc(r.variantLabel ? r.variantLabel : 'อัตรามาตรฐาน')}</span><span><button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="openUcForm(${r.no})"></button> <button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบ" onclick="deleteUcEntry(${r.no})"></button></span></div>${ucFormulaTableHtml(r)}</div>`).join('')
     : `<div style="text-align:center;padding:30px 0;color:var(--ink-400);">
         <div style="font-size:13px;margin-bottom:14px;">ยังไม่มีข้อมูลค่างานต่อหน่วยของรหัสนี้</div>
         <button class="btn btn-primary" onclick="openUcForm(null,'${jsArg(rec.code)}')">+ เพิ่มค่างานต่อหน่วยใหม่</button>
@@ -2798,8 +2798,8 @@ function renderEnc(filter){
     let actionBtn = '';
     if(isAdmin() && !e.cleared){
       actionBtn = e.stage<4
-        ? `<button class="btn btn-ghost btn-sm" onclick="advanceEnc('${jsArg(e.code)}', event)">เลื่อนขั้นถัดไป</button>`
-        : `<button class="btn btn-ghost btn-sm" onclick="markEncCleared('${jsArg(e.code)}', event)">✓ รื้อถอนแล้ว</button>`;
+        ? `<button class="btn btn-ghost btn-ic btn-sm" data-ic="arrow" data-tip="เลื่อนขั้นถัดไป" onclick="advanceEnc('${jsArg(e.code)}', event)"></button>`
+        : `<button class="btn btn-ghost btn-ic btn-sm" data-ic="check" data-tip="รื้อถอนแล้ว" onclick="markEncCleared('${jsArg(e.code)}', event)"></button>`;
     }
     return `<tr>
       <td>${esc(e.code)}</td>
@@ -2979,7 +2979,7 @@ function renderContracts(){
       <td>${fmtDateShort(c.startDate)} – ${fmtDateShort(c.endDate)}${endHint}</td>
       <td>${fmtDateShort(c.warrantyEnd)}${wHint}</td>
       <td><span class="pill ${st.cls}">${st.label}</span></td>
-      <td style="white-space:nowrap;">${can?`<button class="btn btn-ghost btn-sm" onclick="openContractForm('${jsArg(c.id)}')">แก้ไข</button> <button class="btn btn-ghost btn-sm" onclick="deleteContract('${jsArg(c.id)}')">ลบ</button>`:''}</td>
+      <td style="white-space:nowrap;">${can?`<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="openContractForm('${jsArg(c.id)}')"></button> <button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบ" onclick="deleteContract('${jsArg(c.id)}')"></button>`:''}</td>
     </tr>`;
   }).join('') : `<tr><td colspan="9" style="text-align:center;color:var(--ink-400);padding:22px;">${contractsList.length?'ไม่พบรายการตามเงื่อนไข':'ยังไม่มีข้อมูลสัญญา'+(can?' — กด "+ เพิ่มสัญญา" เพื่อเริ่มบันทึก':'')}</td></tr>`;
   document.getElementById('ct-foot').textContent = `ทั้งหมด ${contractsList.length} สัญญา · สถานะคำนวณจากวันที่ (กำลังดำเนินการ = ยังไม่พ้นวันสิ้นสุดสัญญา, ในระยะค้ำประกัน = พ้นสัญญาแล้วแต่ยังไม่ถึงวันค้ำประกันถึง) · ใช้สิทธิ์ส่วนงานที่ 2 (ผู้มีสิทธิ์แก้ไขเท่านั้นที่เพิ่ม/แก้/ลบได้)`;
@@ -3251,7 +3251,7 @@ function bmmRowHtml(e, groupClass, showUnit){
       <td class="num">${fmtQtyShort(e.qty)}</td>
       <td class="num"><b>${fmtMoney(bmmBudget(e))}</b>${bmmSupplementTotal(e)>0 ? `<br><span style="font-size:10px;color:var(--orange-600);font-weight:600;white-space:nowrap;">+เพิ่มเติม ${fmtNum(bmmSupplementTotal(e),0)}</span>` : ''}</td>
       <td class="num">${fmtMoney(bmmUnitCost(e))}</td>
-      <td>${e.no!=null ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openBmmForm(${e.no})">แก้ไข</button>` : ''}</td>
+      <td>${e.no!=null ? `<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="event.stopPropagation();openBmmForm(${e.no})"></button>` : ''}</td>
     </tr>
     <tr class="cost-detail"><td colspan="6">${bmmCostChipsHtml(e.material||0, e.labor||0, e.rent||0, e.fuel||0, (e.service||0)+(e.contract||0))}</td></tr>
   `;

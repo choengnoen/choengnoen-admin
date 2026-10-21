@@ -512,7 +512,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="firebase-layer.js" data-page="main"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="emoji-img.js" defer></script>
-<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script>
+<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
 .route-header .topbar-right{flex-direction:column;align-items:flex-end;gap:6px}
@@ -578,7 +578,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div class="today-list" id="today-leave"></div>
           </div>
           <div class="section">
-            <div class="section-head"><h2>งานที่ต้องติดตาม</h2><button class="btn btn-ghost btn-sm" onclick="gotoTab('alerts')">ดูทั้งหมด →</button></div>
+            <div class="section-head"><h2>งานที่ต้องติดตาม</h2><button class="btn btn-ghost btn-ic" data-ic="arrow" data-tip="ดูทั้งหมด" onclick="gotoTab('alerts')"></button></div>
             <div class="today-list" id="ov-alerts"></div>
           </div>
         </div>
@@ -639,7 +639,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg></span>
               ระบบควบคุมการเข้าใช้งาน<span class="presence-chip" id="presence-chip" style="display:none"></span>
             </h2>
-            <div class="toolbar"><button class="btn btn-primary" id="btn-add-user" style="display:none" onclick="openUserModal(null)">+ เพิ่มผู้ใช้งาน</button></div>
+            <div class="toolbar"><button class="btn btn-primary" id="btn-add-user" data-ic="plus" style="display:none" onclick="openUserModal(null)">เพิ่มผู้ใช้งาน</button></div>
           </div>
           <div class="um-ms">
             <div class="um-list-wrap">
@@ -659,7 +659,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></span>
               ถังขยะ</h2>
             <div class="toolbar">
-              <button class="btn btn-danger" id="btn-purge-all" style="display:none" onclick="purgeAll()">ล้างถังขยะทั้งหมด</button>
+              <button class="btn btn-danger btn-ic" id="btn-purge-all" data-ic="trash" data-tip="ล้างถังขยะทั้งหมด" style="display:none" onclick="purgeAll()"></button>
             </div>
           </div>
           <div id="trash-list" style="padding:14px 20px 8px;"></div>
@@ -699,8 +699,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div class="section bk-card">
             <div class="bk-hd"><div class="bk-ico">📤</div><div><h3>ส่งออก / สำรอง</h3><p>ดาวน์โหลดข้อมูลทุกตารางเก็บไว้ในเครื่อง</p></div></div>
             <div class="bk-bd">
-              <button class="btn btn-primary" id="btn-export-xlsx" onclick="exportAllExcel()">📊 Excel</button>
-              <button class="btn btn-ghost" id="btn-export-json" onclick="exportAllJson()">💾 JSON</button>
+              <button class="btn btn-primary" id="btn-export-xlsx" onclick="exportAllExcel()">Excel</button>
+              <button class="btn btn-ghost" id="btn-export-json" onclick="exportAllJson()">JSON</button>
             </div>
           </div>
           <div class="section bk-card bk-card-b" id="import-section" style="display:none;">
@@ -881,7 +881,7 @@ function renderLeaveApprovals(){
         <div class="muted small">${fmtDate(r.from)}${r.to&&r.to!==r.from?' – '+fmtDate(r.to):''} · ${esc(r.days)} วัน${r.cover?' · ผู้ปฏิบัติงานแทน '+esc(r.cover):''}${r.reason?' · '+esc(r.reason):''}</div>
       </div>
       <div class="al-act">
-        <button type="button" class="btn btn-primary btn-sm" onclick="decideLeave(${i},'approved')">อนุมัติ</button>
+        <button type="button" class="btn btn-ok btn-sm" data-ic="check" onclick="decideLeave(${i},'approved')">อนุมัติ</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="decideLeave(${i},'rejected')">ไม่อนุมัติ</button>
       </div>
     </div>`).join('')
@@ -1353,7 +1353,7 @@ function renderUsers(){
   const r = FBL.ROLES[u.role] || FBL.ROLES.staff;
   const segSub = v => `<span class="um-seg"><span class="${v==='edit'?'a-edit':''}">✎ แก้ไข</span><span class="${v==='view'?'a-view':''}">👁 ดู</span><span class="${v!=='edit'&&v!=='view'?'a-none':''}">— ไม่เห็น</span></span>`;
   const segMain = on => `<span class="um-seg"><span class="${on?'a-edit':''}">เห็นระบบหลัก</span><span class="${on?'':'a-none'}">ไม่เห็น</span></span>`;
-  const acts = owner ? `<div class="acts"><button class="btn btn-primary" onclick="openUserModal('${jsArg(u.uid)}')">แก้ไข</button></div>` : '';
+  const acts = owner ? `<div class="acts"><button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="openUserModal('${jsArg(u.uid)}')"></button></div>` : '';
   const secNote = (u.role==='staff' && u.sections.length) ? `<div class="u-sub" style="margin-top:4px">ส่วนงานที่รับผิดชอบ: ${u.sections.map(k=>esc(k.slice(1))).join(', ')}</div>` : '';
   detEl.innerHTML = `
     <div class="um-dh"><div class="sp"><h3>${esc(u.name)}</h3><div class="u-sub" style="font-size:13px">${u.position?esc(u.position):'—'}</div>
@@ -1618,9 +1618,9 @@ function trashTitle(p){
         ${extra}
       </div>
       <div class="row-actions">
-        <button class="btn btn-ghost btn-sm" onclick="showTrashDetail('${jsArg(g.id)}')">ดูข้อมูล</button>
-        ${canR ? `<button class="btn btn-ok btn-sm" onclick="restoreGroup('${jsArg(g.id)}')">↺ กู้คืน</button>` : ''}
-        ${canP ? `<button class="btn btn-danger btn-sm" onclick="purgeGroup('${jsArg(g.id)}')">ลบถาวร</button>` : ''}
+        <button class="btn btn-ghost btn-ic btn-sm" data-ic="eye" data-tip="ดูข้อมูล" onclick="showTrashDetail('${jsArg(g.id)}')"></button>
+        ${canR ? `<button class="btn btn-ok btn-ic btn-sm" data-ic="undo" data-tip="กู้คืน" onclick="restoreGroup('${jsArg(g.id)}')"></button>` : ''}
+        ${canP ? `<button class="btn btn-danger btn-ic btn-sm" data-ic="trash" data-tip="ลบถาวร" onclick="purgeGroup('${jsArg(g.id)}')"></button>` : ''}
       </div>
     </div>`;
   }).join('') : '<div class="empty">ถังขยะว่างเปล่า</div>';

@@ -833,7 +833,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s3"></script>
 <script src="emoji-img.js" defer></script>
-<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script>
+<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
 .route-header .topbar-right{flex-direction:column;align-items:flex-end;gap:6px}
@@ -910,12 +910,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="tab" data-mastertab="nok" onclick="setMasterTab(this)">พัสดุนอกบัญชี</div>
             </div>
             <span class="mc-sp"></span>
-            <button class="btn btn-primary btn-sm hidden" id="mat-save-btn" onclick="saveMaterialEdits()">💾 บันทึก</button>
+            <button class="btn btn-ghost btn-sm hidden" id="mat-cancel-btn" onclick="toggleMaterialEdit()">ยกเลิก</button><button class="btn btn-primary btn-sm hidden" id="mat-save-btn" onclick="saveMaterialEdits()">บันทึก</button>
             <div class="search-box mc-search" id="mat-search-box">🔍 <input id="mat-search" oninput="renderMaterials()" placeholder="ค้นหาชื่อวัสดุ"></div>
-            <div class="mc-more" id="mat-edit-controls">
-              <button type="button" class="mc-more-btn" title="เมนูเพิ่มเติม" onclick="toggleMcMenu(event)">⋯</button>
-              <div class="mc-menu hidden" id="mc-menu"><button type="button" id="mat-edit-btn" onclick="toggleMcMenu();toggleMaterialEdit()">✎ แก้ไขรายการ</button></div>
-            </div>
+            <div class="mc-more" id="mat-edit-controls"><button type="button" class="btn btn-ghost btn-ic" id="mat-edit-btn" data-ic="pen" data-tip="แก้ไขรายการ" onclick="toggleMaterialEdit()"></button></div>
           </div>
           <div class="mc-usagebar hidden" id="mat-usage-bar"></div>
           <div class="mc-cols" id="mat-cols"></div>
@@ -928,7 +925,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div id="master-fuel-view" class="hidden" style="padding:14px 20px 20px;">
             <div class="fuel-summary-head">
               <div class="fuel-month-badge" id="fuel-month-label"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
-              <button type="button" class="btn btn-ghost btn-sm fuel-hist-btn-top" onclick="openFuelHistoryModal('ดีเซล')" title="ตารางสรุปยอดยกมา/รับเข้า/จ่าย/คงเหลือ น้ำมันแต่ละเดือน">🕘 สรุปยอดน้ำมันรายเดือน</button>
+              <button type="button" class="btn btn-ghost btn-ic fuel-hist-btn-top" data-ic="hist" onclick="openFuelHistoryModal('ดีเซล')" data-tip="สรุปยอดน้ำมันรายเดือน (ยกมา/รับเข้า/จ่าย/คงเหลือ)"></button>
             </div>
             <div class="fuel-cards" id="master-fuel-cards"></div>
           </div>
@@ -949,7 +946,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="mc-upd" id="ib-sub"></div>
             </div>
             <div class="mc-actions">
-              <button class="btn btn-primary" id="ib-add-btn" onclick="openIbCreate()" title="บันทึกของที่หมวดรับจากแขวงตามใบเบิก (พัสดุหรือน้ำมัน)">+ รับของในบัญชี</button>
+              <span class="btn-split" id="ib-split"><button class="btn btn-primary" id="ib-add-btn" data-ic="plus" onclick="openIbCreate()" title="บันทึกของที่หมวดรับจากแขวงตามใบเบิก (พัสดุหรือน้ำมัน)">รับของในบัญชี</button><button type="button" class="btn btn-primary bs-caret" data-ic="caret" data-tip="ตัวเลือกอื่น" onclick="BtnStd.toggleMenu(this)"></button><div class="bs-menu"><button type="button" id="ib-add-off-btn" onclick="BtnStd.closeMenus();openIbCreate('off')" title="บันทึกพัสดุนอกบัญชีที่หมวดได้รับอนุเคราะห์หรือจัดหาเอง (ไม่ได้มาจากใบเบิกแขวง)">รับของนอกบัญชี</button></div></span>
               <button class="btn btn-ghost" id="ib-add-off-btn" onclick="openIbCreate('off')" title="บันทึกพัสดุนอกบัญชีที่หมวดได้รับอนุเคราะห์หรือจัดหาเอง (ไม่ได้มาจากใบเบิกแขวง)">+ รับของนอกบัญชี</button>
             </div>
           </div>
@@ -973,7 +970,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span>
               รายงานเบิก-จ่ายพัสดุ พ.1-02
             </h2>
-            <div class="toolbar" style="flex-wrap:nowrap;overflow-x:auto;">
+            <div class="toolbar" style="flex-wrap:wrap;">
               <select id="rep-ledger-fy" data-fy class="edit-input" style="width:175px;flex:none;" onchange="syncRepLedger('rep-ledger-fy','rep-ledger-month')"></select>
               <select id="rep-ledger-month" class="edit-input" style="width:80px;flex:none;" onchange="syncRepLedger('rep-ledger-fy','rep-ledger-month')">
                 <option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option>
@@ -981,15 +978,15 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 <option value="4">เม.ย.</option><option value="5">พ.ค.</option><option value="6">มิ.ย.</option>
                 <option value="7" selected>ก.ค.</option><option value="8">ส.ค.</option><option value="9">ก.ย.</option>
               </select>
+            <div class="search-box" style="min-width:200px;flex:none;">🔍 <input id="rep-mat-search" oninput="renderReportMaterial(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'))" placeholder="ค้นหาชื่อพัสดุ"></div>
             </div>
           </div>
           <div class="toolbar day-mode" id="rep-mat-toolbar" style="padding:14px 20px 0;">
             <label class="rep-toggle" style="margin-left:auto;"><input type="checkbox" id="rep-mat-onlymoved" checked onchange="renderReportMaterial(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'))"> แสดงเฉพาะรายการที่มีปริมาณพัสดุ</label>
             <div class="toolbar" id="rep-mat-edit-grp" style="padding:0;flex:none;gap:8px;">
-              <button class="btn btn-ghost btn-sm" id="rep-mat-edit-btn" onclick="toggleMatOpeningEdit()" title="แก้ยอดรวมยกมา/รับเข้าของเดือน (สำหรับปรับยอดรวม) — การรับของจากแขวงให้บันทึกที่แท็บ ใบเบิกรับเข้า">✎ แก้ยอดยกมา/รับเข้า</button>
-              <button class="btn btn-primary btn-sm hidden" id="rep-mat-save-btn" onclick="saveMatOpeningEdits()">💾 บันทึก</button>
+              <button class="btn btn-ghost btn-ic" id="rep-mat-edit-btn" data-ic="pen" onclick="toggleMatOpeningEdit()" data-tip="แก้ยอดยกมา/รับเข้า — การรับของจากแขวงให้บันทึกที่แท็บ ใบเบิกรับเข้า"></button>
+              <button class="btn btn-ghost btn-sm hidden" id="rep-mat-cancel-btn" onclick="toggleMatOpeningEdit()">ยกเลิก</button><button class="btn btn-primary btn-sm hidden" id="rep-mat-save-btn" onclick="saveMatOpeningEdits()">บันทึก</button>
             </div>
-            <div class="search-box" style="min-width:220px;flex:none;margin-left:auto;">🔍 <input id="rep-mat-search" oninput="renderReportMaterial(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'))" placeholder="ค้นหาชื่อพัสดุ"></div>
           </div>
           <div id="rep-mat-grid-wrap" class="grid-wrap md-day"></div>
           <div class="draft-chip hidden" id="draft-mat-chip" style="margin:12px 20px;">
@@ -997,7 +994,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <span id="draft-mat-count-text"></span>
             <span style="flex:1;"></span>
             <button class="dc-btn dc-clear" onclick="discardDraftReport('mat')">ล้างการแก้ไข</button>
-            <button class="dc-btn dc-save" onclick="reviewDraftReport('mat')">💾 บันทึก</button>
+            <button class="dc-btn dc-save" onclick="reviewDraftReport('mat')">บันทึก</button>
           </div>
         </div>
       </div>
@@ -1025,7 +1022,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <span id="draft-fuel-count-text"></span>
             <span style="flex:1;"></span>
             <button class="dc-btn dc-clear" onclick="discardDraftReport('fuel')">ล้างการแก้ไข</button>
-            <button class="dc-btn dc-save" onclick="reviewDraftReport('fuel')">💾 บันทึก</button>
+            <button class="dc-btn dc-save" onclick="reviewDraftReport('fuel')">บันทึก</button>
           </div>
         </div>
       </div>
@@ -1039,7 +1036,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </h2>
             <div class="toolbar">
               <span id="ec1w-countdown" class="hazard-soft" title="รวบรวมข้อมูลการปฏิบัติงานจากพนักงานขับรถให้ครบก่อนถึงกำหนดส่ง"></span>
-              <button class="btn btn-ghost" onclick="printMachinery()">🖶 พิมพ์แบบฟอร์ม EC1-W</button>
+              <button class="btn btn-primary" data-ic="print" onclick="printMachinery()">พิมพ์แบบฟอร์ม EC1-W</button>
             </div>
           </div>
           <div class="toolbar" style="padding:14px 20px 0;flex-wrap:wrap;">
@@ -1058,8 +1055,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <input type="date" id="ec1w-week-date" class="edit-input" style="width:150px;" onchange="renderMachinery()">
             </div>
             <div style="display:flex;gap:6px;margin-left:auto;align-self:flex-end;">
-              <button class="btn btn-ghost btn-sm" onclick="shiftEc1wWeek(-1)">‹ สัปดาห์ก่อน</button>
-              <button class="btn btn-ghost btn-sm" onclick="shiftEc1wWeek(1)">สัปดาห์ถัดไป ›</button>
+              <button class="btn btn-ghost btn-ic" data-ic="left" data-tip="สัปดาห์ก่อน" onclick="shiftEc1wWeek(-1)"></button>
+              <button class="btn btn-ghost btn-ic" data-ic="right" data-tip="สัปดาห์ถัดไป" onclick="shiftEc1wWeek(1)"></button>
             </div>
           </div>
           <div id="ec1w-form-head" style="margin:14px 20px 0;font-size:12.5px;color:var(--ink-600);"></div>
@@ -1075,7 +1072,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               ใบขออนุญาตใช้รถส่วนกลาง (พ.4-08)
             </h2>
             <div class="toolbar">
-              <button class="btn btn-primary" onclick="openVehReqModal(null)">+ สร้างใบขอใช้รถ</button>
+              <button class="btn btn-primary" data-ic="plus" onclick="openVehReqModal(null)">สร้างใบขอใช้รถ</button>
             </div>
           </div>
           <div class="table-wrap"><table>
@@ -1096,16 +1093,13 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><circle cx="7" cy="17" r="2.3"/><circle cx="17" cy="17" r="2.3"/><path d="M5 17h-.5A2.5 2.5 0 0 1 2 14.5V13l3-5h9l3 4h2a2 2 0 0 1 2 2v3h-2"/></svg></span>
               ทะเบียนเครื่องจักร/ยานพาหนะ
             </h2>
+            <div class="toolbar"><div class="search-box" id="veh-search-box">🔍 <input id="veh-search" oninput="renderVehicles()" placeholder="ค้นหา..."></div><button class="btn btn-primary" data-ic="plus" onclick="openVehicleModal(null)">เพิ่มเครื่องจักร/รถ</button></div>
           </div>
           <div class="toolbar" style="padding:14px 20px 0;">
             <div class="tabs" id="veh-type-tabs" style="padding:0;border:none;background:transparent;flex:none;">
               <div class="tab active" data-vehtype="ok" onclick="setVehTypeTab(this)">ใช้งานปกติ (<span id="veh-count-ok">0</span>)</div>
               <div class="tab" data-vehtype="due" onclick="setVehTypeTab(this)">ใกล้ถึงกำหนดตรวจ (<span id="veh-count-due">0</span>)</div>
               <div class="tab" data-vehtype="svc" onclick="setVehTypeTab(this)">อยู่ระหว่างซ่อม (<span id="veh-count-svc">0</span>)</div>
-            </div>
-            <div class="vb-pair" id="veh-pair">
-              <div class="search-box" id="veh-search-box">🔍 <input id="veh-search" oninput="renderVehicles()" placeholder="ค้นหา..."></div>
-              <button class="btn btn-primary" onclick="openVehicleModal(null)">+ เพิ่มเครื่องจักร/รถ</button>
             </div>
           </div>
           <div class="vb-board" id="veh-board"></div>
@@ -2776,8 +2770,8 @@ function renderVehicleRequests(){
       <td class="num">${r.mileageStart!=null&&r.mileageStart!==''?fmtNum(r.mileageStart,0):'—'} – ${r.mileageEnd!=null&&r.mileageEnd!==''?fmtNum(r.mileageEnd,0):'—'}</td>
       <td class="num">${distance!=null?fmtNum(distance,0):'—'}</td>
       <td style="white-space:nowrap;">
-        ${isAdmin()?`<button class="btn btn-ghost btn-sm" onclick="openVehReqModal(${r.id})" title="แก้ไข">✎</button>`:''}
-        <button class="btn btn-ghost btn-sm" onclick="printVehReq(${r.id})" title="พิมพ์">🖶</button>
+        ${isAdmin()?`<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="openVehReqModal(${r.id})"></button>`:''}
+        <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์" onclick="printVehReq(${r.id})"></button>
       </td>
     </tr>`;
   }).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--ink-400);">ยังไม่มีใบขอใช้รถ</td></tr>`;
@@ -3844,7 +3838,7 @@ function toggleMaterialEdit(){
   matEditMode = !matEditMode;
   const eb=document.getElementById('mat-edit-btn'), sb=document.getElementById('mat-save-btn');
   if(eb) eb.classList.toggle('hidden', matEditMode);
-  if(sb) sb.classList.toggle('hidden', !matEditMode);
+  if(sb) sb.classList.toggle('hidden', !matEditMode); const cb=document.getElementById('mat-cancel-btn'); if(cb) cb.classList.toggle('hidden', !matEditMode);
   renderMaterials();
 }
 /* แท็กแยกรายการ "ปรับยอด" (แก้ไขจำนวนให้ตรงกับที่นับจริง) ออกจากรายการรับเข้า/เบิกจ่ายจริง (2569-09-18)
@@ -3898,7 +3892,7 @@ async function saveMaterialEdits(){
   }
   matEditMode = false;
   const eb=document.getElementById('mat-edit-btn'), sb=document.getElementById('mat-save-btn');
-  if(sb){ sb.disabled = false; sb.textContent = matSaveLabel0; }
+  if(sb){ sb.disabled = false; sb.textContent = matSaveLabel0; } const cb0=document.getElementById('mat-cancel-btn'); if(cb0) cb0.classList.add('hidden');
   if(eb) eb.classList.remove('hidden');
   if(sb) sb.classList.add('hidden');
   renderAll();
@@ -4018,7 +4012,7 @@ function toggleMatOpeningEdit(){
   repMatEditMode = !repMatEditMode;
   const eb=document.getElementById('rep-mat-edit-btn'), sb=document.getElementById('rep-mat-save-btn');
   if(eb) eb.classList.toggle('hidden', repMatEditMode);
-  if(sb) sb.classList.toggle('hidden', !repMatEditMode);
+  if(sb) sb.classList.toggle('hidden', !repMatEditMode); const rcb=document.getElementById('rep-mat-cancel-btn'); if(rcb) rcb.classList.toggle('hidden', !repMatEditMode);
   renderReportMaterial(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'));
 }
 async function saveMatOpeningEdits(){
@@ -4030,7 +4024,7 @@ async function saveMatOpeningEdits(){
     {sel:'data-recv-code', dataKey:'recvCode', kind:'matReceived', map:materialReceivedOverride, effective:c=>materialMonthSummary(c,mk).received}
   ], mk);
   repMatEditMode = false;
-  const eb=document.getElementById('rep-mat-edit-btn'), sb=document.getElementById('rep-mat-save-btn');
+  const eb=document.getElementById('rep-mat-edit-btn'), sb=document.getElementById('rep-mat-save-btn'); const rcb0=document.getElementById('rep-mat-cancel-btn'); if(rcb0) rcb0.classList.add('hidden');
   if(eb) eb.classList.remove('hidden');
   if(sb) sb.classList.add('hidden');
   renderAll();

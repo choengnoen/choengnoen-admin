@@ -259,7 +259,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .lr-tbl col.c-range{width:20%;}
   .lr-tbl col.c-status{width:14%;}
   .lr-tbl col.c-actions{width:32%;}
-  .lr-actions-cell{white-space:normal;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .lr-actions-cell{white-space:normal;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:flex-end;padding-right:20px;}
+  .lr-tbl th:last-child{padding-right:20px;}
   .lr-subtabs{display:flex;gap:4px;margin:0 0 10px;border-bottom:1px solid var(--line);}
   .lr-subtabs .tab{padding:7px 12px;}
   .form-card{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:#fcfcfb;}
@@ -387,7 +388,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s1"></script>
 <script src="emoji-img.js" defer></script>
-<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script>
+<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
 .route-header .topbar-right{flex-direction:column;align-items:flex-end;gap:6px}
@@ -526,7 +527,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <select id="complaint-route-filter" class="edit-input" style="width:130px;" onchange="renderComplaints()">
                 <option value="all">ทุกสายทาง</option>
               </select>
-              <button class="btn btn-primary" onclick="openAddComplaint()">+ เพิ่มคำร้องทุกข์</button>
+              <button class="btn btn-primary" data-ic="plus" onclick="openAddComplaint()">เพิ่มคำร้องทุกข์</button>
             </div>
           </div>
           <div class="table-wrap"><table>
@@ -562,7 +563,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </h2>
             <div class="toolbar">
               <div class="search-box">🔍 <input id="staff-search" placeholder="ค้นหาชื่อ / ชื่อเล่น"></div>
-              <button class="btn btn-primary" onclick="openAddStaff()">+ เพิ่มเจ้าหน้าที่</button>
+              <button class="btn btn-primary" data-ic="plus" onclick="openAddStaff()">เพิ่มเจ้าหน้าที่</button>
             </div>
           </div>
           <div class="tabs" id="staff-tabs">
@@ -588,22 +589,18 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         <div class="section">
           <div class="section-head">
             <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>
-              การลา และเดินทางไปราชการ
+              <span>การลา และเดินทางไปราชการ<small class="hd-sub" id="lr-last-updated"></small></span>
             </h2>
             <div class="toolbar">
-              <button class="btn btn-ghost" onclick="openHolidayModal()">🗓 วันหยุดนักขัตฤกษ์</button>
-              <button class="btn btn-primary" onclick="openLeaveModal()">+ บันทึกข้อมูลการลา</button>
+              <select id="lr-approved-fy" data-fy onchange="renderLeaveRequestList()"></select>
+              <div class="search-box">🔍 <input id="lr-approved-search" placeholder="ค้นหาชื่อผู้ลา" oninput="renderLeaveRequestList()"></div>
+              <span class="tb-sep"></span>
+              <button class="btn btn-ghost btn-ic" data-ic="cal" data-tip="วันหยุดนักขัตฤกษ์" onclick="openHolidayModal()"></button>
+              <button class="btn btn-primary" data-ic="plus" onclick="openLeaveModal()">บันทึกข้อมูลการลา</button>
             </div>
           </div>
           <div class="lr-grid">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
-              <select id="lr-approved-fy" data-fy onchange="renderLeaveRequestList()"></select>
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                <span id="lr-last-updated" class="pill pill-neutral" style="font-size:11px;font-weight:500;"></span>
-                <div class="search-box" style="min-width:170px;">🔍 <input id="lr-approved-search" placeholder="ค้นหาชื่อผู้ลา" oninput="renderLeaveRequestList()"></div>
-              </div>
-            </div>
-            <div class="table-wrap table-wrap-scroll" style="max-height:65vh;"><table class="lr-tbl">
+            <div class="table-wrap"><table class="lr-tbl">
               <colgroup><col class="c-name"><col class="c-type"><col class="c-range"><col class="c-status"><col class="c-actions"></colgroup>
               <thead><tr><th>ผู้ลา</th><th>ประเภท</th><th>ช่วงวันที่</th><th>สถานะ</th><th></th></tr></thead>
               <tbody id="lr-list-body"></tbody>
@@ -770,24 +767,16 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <!-- ============ LEAVE REGISTRY จ.3-03 ============ -->
       <div class="panel" id="panel-leave-registry">
         <div class="section">
-          <div class="section-head" style="border-bottom:none;">
+          <div class="section-head">
             <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h5M8 17h3"/></svg></span>
               ทะเบียนการลาและการขาดราชการ (จ.3-03)
             </h2>
-          </div>
-          <div class="reg-controlbar">
-            <div class="f-row" style="position:relative;flex:1 1 220px;min-width:200px;">
-              <label>ค้นหาพนักงาน</label>
-              <input id="reg-name" placeholder="พิมพ์เพื่อค้นหาชื่อ" autocomplete="off" oninput="__filterRegNameSuggest()" onchange="renderRegistry()" onfocus="this.select()" onclick="this.select()">
-              <div id="reg-name-suggest" class="ac-suggest hidden"></div>
-            </div>
-            <div class="f-row" style="flex:0 0 168px;">
-              <label>ปีงบประมาณ</label>
-              <select id="reg-fy" data-fy="nolabel" onchange="renderRegistry()"></select>
-            </div>
-            <div class="reg-actions">
-              <button class="btn btn-ghost" onclick="openLeaveRangeModal()">🔍 ค้นหาช่วงวันที่</button>
-              <button class="btn btn-primary" onclick="printRegistry()">🖶 พิมพ์ จ.3-03</button>
+            <div class="toolbar">
+              <select id="reg-fy" data-fy onchange="renderRegistry()"></select>
+              <div class="search-box" style="position:relative;min-width:210px;">🔍 <input id="reg-name" placeholder="ค้นหาพนักงาน" autocomplete="off" oninput="__filterRegNameSuggest()" onchange="renderRegistry()" onfocus="this.select()" onclick="this.select()"><div id="reg-name-suggest" class="ac-suggest hidden"></div></div>
+              <span class="tb-sep"></span>
+              <button class="btn btn-ghost btn-ic" data-ic="calq" data-tip="ค้นหาช่วงวันที่" onclick="openLeaveRangeModal()"></button>
+              <button class="btn btn-primary" data-ic="print" onclick="printRegistry()">พิมพ์ จ.3-03</button>
             </div>
           </div>
           <div id="registry-onscreen"></div>
@@ -2333,10 +2322,10 @@ function __leaveRowHTML(r,i){
       <td class="p-name">${esc(r.name)}</td><td>${esc(r.type)}</td><td>${fmtDate(r.from)} – ${fmtDate(r.to)}</td>
       <td>${r.status==='cancelled' ? '<span class="pill pill-neutral">ยกเลิกแล้ว</span>' : (r.approval==='pending' ? '<span class="pill pill-warn">รออนุมัติ</span>' : r.approval==='approved' ? `<span class="pill pill-ok" title="${esc(r.approvedBy||'')}">อนุมัติแล้ว</span>` : r.approval==='rejected' ? `<span class="pill pill-neutral" style="color:var(--danger);" title="${esc(r.approvalNote||'')}">ไม่อนุมัติ</span>` : '<span class="pill pill-ok">บันทึกแล้ว</span>')}</td>
       <td class="lr-actions-cell">
-        <button class="btn btn-ghost btn-sm" onclick="printLeaveForm(${i})">🖶 พิมพ์ใบลา</button>
-        ${__canCancelLeave(r) ? `<button class="btn btn-ghost btn-sm" onclick="printCancelForm(${i})">🖶 ใบขอยกเลิกวันลา</button>` : ''}
-        <button class="btn btn-ghost btn-sm" onclick="openEditLeave(${i})" title="แก้ไขคำขอลานี้">✏️ แก้ไข</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteLeaveRequest(${i})" title="ลบคำขอลานี้">🗑 ลบ</button>
+        <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์ใบลา" onclick="printLeaveForm(${i})"></button>
+        ${__canCancelLeave(r) ? `<button class="btn btn-ghost btn-ic btn-sm" data-ic="doc" data-tip="พิมพ์ใบขอยกเลิกวันลา" onclick="printCancelForm(${i})"></button>` : ''}
+        <button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไขคำขอลานี้" onclick="openEditLeave(${i})"></button>
+        <button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบคำขอลานี้" onclick="deleteLeaveRequest(${i})"></button>
       </td>
     </tr>`;
 }

@@ -316,7 +316,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s4"></script>
 <script src="emoji-img.js" defer></script>
-<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script>
+<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
 .route-header .topbar-right{flex-direction:column;align-items:flex-end;gap:6px}
@@ -392,7 +392,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </h2>
             <div class="toolbar no-print">
               <select id="labor-cycle" onchange="renderLabor()"></select>
-              <button class="btn btn-primary" onclick="printPaymentEvidence()">🖨️ พิมพ์หลักฐานการจ่ายเงิน</button>
+              <span class="tb-sep"></span><button class="btn btn-primary" data-ic="print" onclick="printPaymentEvidence()">พิมพ์หลักฐานการจ่ายเงิน</button>
             </div>
           </div>
           <div class="table-wrap" id="labor-table-wrap">
@@ -439,7 +439,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </h2>
             <div class="toolbar no-print">
               <select id="ot-fy" data-fy onchange="renderOT()"></select>
-              <button class="btn btn-primary no-print" onclick="openOTModal()">➕ ยื่นขออนุมัติ</button>
+              <span class="tb-sep"></span><button class="btn btn-primary no-print" data-ic="plus" onclick="openOTModal()">ยื่นขออนุมัติ</button>
             </div>
           </div>
           <div class="table-wrap"><table id="ot-table"></table></div>
@@ -489,8 +489,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               การควบคุมงบประมาณและค่าใช้จ่าย
             </h2>
             <div class="toolbar">
-              <button class="btn btn-ghost hidden" id="budget-edit-btn" onclick="openBudgetEditModal()">✎ แก้ไขวงเงินงบประมาณ</button>
               <select id="budget-cycle" onchange="renderBudget()"></select>
+              <button class="btn btn-ghost btn-ic hidden" id="budget-edit-btn" data-ic="pen" data-tip="แก้ไขวงเงินงบประมาณ" onclick="openBudgetEditModal()"></button>
             </div>
           </div>
           <div id="budget-detail"></div>
@@ -524,7 +524,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </h2>
             <div class="toolbar no-print">
               <select id="util-fy-select" data-fy onchange="onUtilFyChange(this.value)"></select>
-              <button class="btn btn-primary" onclick="toggleUtilForm(true)">➕ บันทึกบิลใหม่</button>
+              <span class="tb-sep"></span><button class="btn btn-primary" data-ic="plus" onclick="toggleUtilForm(true)">บันทึกบิลใหม่</button>
             </div>
           </div>
           <div id="util-form-overlay" class="modal-overlay hidden no-print">
@@ -579,7 +579,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               คำนวนค่าน้ำประปา
             </h2>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-              <button class="btn btn-primary no-print" onclick="toggleWaterForm(true)">➕ บันทึกข้อมูลประจำเดือน</button>
+              <button class="btn btn-primary no-print" data-ic="plus" onclick="toggleWaterForm(true)">บันทึกข้อมูลประจำเดือน</button>
             </div>
           </div>
           <div id="water-filter-tabs" class="tabs"></div>
@@ -1400,9 +1400,9 @@ function renderOT(){
 }
 function otActionButtons(o,i){
   if(!isAdmin()) return '';
-  if(o.status==='awaiting_work') return `<button class="btn btn-primary btn-sm" onclick="startAwaitOT(${i})">ปฏิบัติงานแล้ว</button> <button class="btn btn-ghost btn-sm" onclick="printOTApproval(${i})">🖨️ ใบขออนุมัติ</button>`;
-  if(o.status==='awaiting_report') return `<button class="btn btn-primary btn-sm" onclick="reportOT(${i})">บันทึกรายงานผล+จ่ายเงิน</button> <button class="btn btn-ghost btn-sm" onclick="printOTApproval(${i})">🖨️ ใบขออนุมัติ</button>`;
-  if(o.status==='reported') return `<button class="btn btn-ghost btn-sm" onclick="printOTReport(${i})">🖨️ รายงานผล+หลักฐานจ่ายเงิน</button>`;
+  if(o.status==='awaiting_work') return `<button class="btn btn-ghost btn-sm" data-ic="check" onclick="startAwaitOT(${i})">ปฏิบัติงานแล้ว</button> <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์ใบขออนุมัติ" onclick="printOTApproval(${i})"></button>`;
+  if(o.status==='awaiting_report') return `<button class="btn btn-ghost btn-sm" data-ic="check" onclick="reportOT(${i})">บันทึกรายงานผล+จ่ายเงิน</button> <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์ใบขออนุมัติ" onclick="printOTApproval(${i})"></button>`;
+  if(o.status==='reported') return `<button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์รายงานผล+หลักฐานจ่ายเงิน" onclick="printOTReport(${i})"></button>`;
   return '';
 }
 /* บันทึก OT ผ่าน backend เสมอ — ถ้าไม่สำเร็จให้คืนสถานะเดิม (optimistic update) เพื่อไม่ให้
@@ -2026,7 +2026,7 @@ function renderWaterTable(){
       <td class="wtr-b">${r.subBCost!=null?fmtMoney(r.subBCost):'—'}</td>
       <td class="wtr-b">${r.subBPaid?fmtDateShortTH(r.subBPaid):'—'}</td>
       <td>${esc(r.note||'')}${(r.subADuplicate||r.subBDuplicate)?' <span class="pill pill-danger" title="เลขมิเตอร์เท่ากับเดือนก่อนเป๊ะ น่าจะยังไม่ได้อัปเดตค่าที่อ่านจริงของเดือนนี้">⚠️ เลขซ้ำเดือนก่อน</span>':(r.anomaly?' <span class="pill pill-danger">ตรวจสอบเลขมิเตอร์</span>':'')}</td>
-      <td class="no-print">${isAdmin()?`<button class="btn btn-ghost btn-sm" onclick="editWater('${jsArg(r.cycle)}')">✏️ แก้ไข</button> <button class="btn btn-danger btn-sm" onclick="deleteWater('${jsArg(r.cycle)}')">🗑️ ลบ</button>`:''}</td>
+      <td class="no-print">${isAdmin()?`<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="editWater('${jsArg(r.cycle)}')"></button> <button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบ" onclick="deleteWater('${jsArg(r.cycle)}')"></button>`:''}</td>
     </tr>`).join('');
   const totalMainUsage = rows.reduce((s,r)=>s+(r.mainUsage||0),0);
   const totalSubAUsage = rows.reduce((s,r)=>s+(r.subAUsage||0),0);
