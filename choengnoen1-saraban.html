@@ -2373,7 +2373,12 @@ function renderLeaveRequestList(){
 function __renderLrLastUpdated(){
   const el = document.getElementById('lr-last-updated');
   if(!el) return;
-  const dates = leaveRequests.map(r=>r.recordedDate).filter(Boolean);
+  // นับเฉพาะรายการในปีงบประมาณที่เลือกอยู่ — ลบรายการล่าสุดแล้วจะถอยไปใช้วันที่ของรายการก่อนหน้าเอง
+  const fyEl = document.getElementById('lr-approved-fy');
+  const fyFilter = fyEl ? fyEl.value : '';
+  const dates = leaveRequests
+    .filter(r=>!fyFilter || String(fiscalYearOf(r.from))===fyFilter)
+    .map(r=>r.recordedDate).filter(Boolean);
   if(!dates.length){
     el.textContent = 'ยังไม่มีการบันทึกข้อมูลการลา';
     return;
