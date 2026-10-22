@@ -532,8 +532,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </h2>
             <div class="toolbar">
               <select id="complaint-fy" data-fy onchange="renderComplaints()"></select>
-<select id="complaint-route-filter" class="edit-input" style="width:130px;" onchange="renderComplaints()">
-                <option value="all">ทุกสายทาง</option>
+<select id="complaint-route-filter" data-fy data-fy-label="สายทาง" onchange="renderComplaints()">
+                <option value="all">ทุกสาย</option>
               </select>
               <button class="btn btn-primary" data-ic="plus" onclick="openAddComplaint()">เพิ่มคำร้องทุกข์</button>
             </div>
@@ -930,7 +930,7 @@ function populateComplaintRouteFilter(){
   const prev = el.value || 'all';
   const routes = getControlledRoutes();
   const usedRoutes = [...new Set(complaints.map(c=>c.route).filter(Boolean))];
-  let opts = '<option value="all">ทุกสายทาง</option>';
+  let opts = '<option value="all">ทุกสาย</option>';
   opts += usedRoutes.map(rt=>{
     const match = routes.find(r=>'ทล.'+r.routeNo===rt);
     return `<option value="${esc(rt)}">${esc(formatRouteDisplay(rt))}${match?' — '+esc(match.section):''}</option>`;

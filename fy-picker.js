@@ -7,6 +7,7 @@
         data-fy="nolabel"  = ไม่แสดงคำว่า “ปีงบประมาณ” ในปุ่ม (ใช้เมื่อมีป้ายกำกับอยู่ข้างนอกแล้ว)
    3) เติมตัวเลือกด้วย FYPicker.fill(sel, [2570,2569,2568], {all:'ทุกปี', value:2570})  หรือ innerHTML ตามเดิมก็ได้
 
+        data-fy-label="สายทาง" = ใช้ปุ่มแบบเดียวกันกับตัวเลือกอื่นที่ไม่ใช่ปี (ป้ายตั้งเองได้ ตัดข้อความหลัง " — " ในปุ่ม)
    - ตัว <select> เดิมยังอยู่ (ซ่อนไว้) โค้ดเดิมที่อ่าน/ตั้ง .value หรือฟัง change ทำงานเหมือนเดิมทุกอย่าง
    - เปลี่ยนตัวเลือก (innerHTML) หรือสั่ง .value = ... ปุ่มจะอัปเดตเอง ช่องที่สร้างทีหลังก็ได้แบบเดียวกันอัตโนมัติ
    - FYPicker.fiscalYearOf('2026-10-20') → 2570 (วันที่ ISO → ปีงบประมาณ พ.ศ.)
@@ -60,7 +61,9 @@
     if (!w) return;
     var o = sel.options[sel.selectedIndex];
     var txt = o ? shortText(o.text) : '—';
-    var lab = sel.getAttribute('data-fy') === 'nolabel' ? '' : '<span class="fyp-lab">ปีงบประมาณ</span> ';
+    var own = sel.getAttribute('data-fy-label');
+    if (own) txt = txt.split(' — ')[0];   // ตัวเลือกชื่อยาว (เช่น สายทาง — ตอน) ให้ปุ่มโชว์แค่ส่วนหน้า เมนูยังเห็นครบ
+    var lab = own ? '<span class="fyp-lab">' + esc(own) + '</span> ' : (sel.getAttribute('data-fy') === 'nolabel' ? '' : '<span class="fyp-lab">ปีงบประมาณ</span> ');
     w.btn.innerHTML = lab + esc(txt) + CARET;
     w.btn.disabled = !!sel.disabled || sel.options.length === 0;
     if (cur === sel && menu && menu.style.display !== 'none') build();
