@@ -507,7 +507,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <div id="staff-detail-modal" class="modal-overlay hidden no-print">
         <div class="modal-box" style="max-width:640px;">
           <div class="modal-head">
-            <div class="modal-head-icon">👤</div>
+            <div class="modal-head-icon" id="sd-icon">👤</div>
             <h3 id="sd-title">ข้อมูลเจ้าหน้าที่</h3>
             <button type="button" class="modal-close" onclick="closeStaffDetail()">✕</button>
           </div>
@@ -2049,7 +2049,9 @@ function renderStaffDetailModal(){
   const s = staff[i];
   const body = document.getElementById('sd-body');
   const foot = document.getElementById('sd-foot');
-  document.getElementById('sd-title').innerHTML = staffDetailEditing ? `✏️ แก้ไขข้อมูล — ${esc(s.name)}` : `👤 ${esc(s.name)}${__execRolePill(s)}`;
+  // ไอคอนอยู่ในกล่อง sd-icon แล้ว ไม่ใส่ซ้ำในชื่อหัวโมดัล
+  document.getElementById('sd-icon').textContent = staffDetailEditing ? '✏️' : '👤';
+  document.getElementById('sd-title').innerHTML = staffDetailEditing ? `แก้ไขข้อมูล — ${esc(s.name)}` : `${esc(s.name)}${__execRolePill(s)}`;
   if(staffDetailEditing){
     body.innerHTML = `
       <div class="two-col">
