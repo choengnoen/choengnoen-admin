@@ -50,7 +50,31 @@
   '.bs-menu.open{display:block}'+
   '.bs-menu button{display:flex;gap:8px;align-items:center;width:100%;text-align:left;background:none;border:none;border-radius:7px;padding:8px 10px;font:600 13px "Sarabun",sans-serif;color:var(--ink-900,#1d2433);cursor:pointer}'+
   '.bs-menu button:hover{background:var(--paper-100,#f4f4f2)}';
+  /* ช่องค้นหา (.search-box) แบบ 4: เป็นไอคอนแว่นขยายก่อน กดแล้วขยายเป็นช่องพิมพ์เอง มีข้อความค้างอยู่ก็คงขยายไว้ */
+  var SX_ON='.search-box:focus-within,.search-box:has(input:not(:placeholder-shown))';
+  css+=
+  '.search-box[data-sx]{box-sizing:border-box;position:relative;gap:6px;width:34px;height:34px;min-width:0!important;max-width:none!important;flex:none!important;padding:0 7px;overflow:hidden;cursor:pointer;background:transparent;border:1px solid transparent;border-bottom:2px solid transparent;border-radius:7px;color:var(--ink-600,#5b6475);transition:width .18s ease}'+
+  '.search-box[data-sx] svg.sx-i{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}'+
+  '.search-box[data-sx] input{width:0;min-width:0;opacity:0;padding:0}'+
+  '.search-box[data-sx]:hover{color:var(--orange-600,#e0620f)}'+
+  SX_ON.split(',').map(function(s){return s.replace('.search-box','.search-box[data-sx]');}).join(',')+'{width:230px;overflow:visible;cursor:text;color:var(--orange-600,#e0620f);border-radius:0;border-bottom-color:var(--orange-600,#e0620f)}'+
+  SX_ON.split(',').map(function(s){return s.replace('.search-box','.search-box[data-sx]')+' input';}).join(',')+'{width:100%;opacity:1}';
   var st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
+
+  var SX_SVG='<svg class="sx-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+  function sxFill(box){
+    if(box.hasAttribute('data-sx'))return;
+    var inp=box.querySelector('input');if(!inp)return;
+    [].slice.call(box.childNodes).forEach(function(n){
+      if(n===inp||n.contains&&n.contains(inp))return;
+      if(n.nodeType===3&&n.nodeValue.trim().replace('🔍','')==='')box.removeChild(n);
+      else if(n.nodeType===1&&n.classList.contains('emj')&&/🔍/.test(n.textContent+(n.querySelector('img')?n.querySelector('img').alt:'')))box.removeChild(n);
+    });
+    box.insertAdjacentHTML('afterbegin',SX_SVG);
+    box.setAttribute('data-sx','');
+    var t=inp.getAttribute('placeholder');if(t&&!inp.getAttribute('aria-label'))inp.setAttribute('aria-label',t);
+    box.addEventListener('click',function(e){if(e.target!==inp&&!e.target.closest('.ac-suggest'))inp.focus();});
+  }
 
   function svg(n){return '<svg class="bs-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(P[n]||'')+'</svg>';}
   function fill(el){
@@ -63,6 +87,8 @@
     if(!root||!root.querySelectorAll) return;
     if(root.matches&&root.matches('[data-ic],.btn-ic'))fill(root);
     root.querySelectorAll('[data-ic],.btn-ic').forEach(fill);
+    if(root.matches&&root.matches('.search-box'))sxFill(root);
+    root.querySelectorAll('.search-box').forEach(sxFill);
   }
   window.BtnStd={icon:svg,scan:scan,
     /* ปุ่มส้มแบบแยกเมนู: BtnStd.toggleMenu(this) บนปุ่ม ▾ */
