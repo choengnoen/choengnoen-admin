@@ -39,7 +39,7 @@
   '.icb svg.bs-i{width:17px;height:17px}'+
   '.btn svg.bs-i{width:1.15em;height:1.15em;flex:none}'+
   '.btn-ic svg.bs-i{width:17px;height:17px}.btn-ic.btn-sm svg.bs-i{width:15px;height:15px}'+
-  '[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#14263f;color:#fff;font:500 11.5px "Sarabun",sans-serif;padding:3px 8px;border-radius:6px;white-space:nowrap;z-index:60;pointer-events:none}'+
+  '.bs-tip{position:fixed;left:0;top:0;background:#14263f;color:#fff;font:500 11.5px "Sarabun",sans-serif;padding:3px 8px;border-radius:6px;white-space:nowrap;z-index:2147483000;pointer-events:none;display:none}'+
   '.tb-sep{width:1px;height:22px;background:var(--line,#e4e4e0);flex:none;align-self:center}'+
   '.hd-sub{display:block;font-family:"Sarabun",sans-serif;font-size:11.5px;font-weight:400;color:var(--ink-400,#8b93a1);margin-top:1px;line-height:1.3}'+
   '.btn-split{display:inline-flex;position:relative}'+
@@ -60,6 +60,25 @@
   SX_ON.split(',').map(function(s){return s.replace('.search-box','.search-box[data-sx]');}).join(',')+'{width:230px;overflow:visible;cursor:text;color:var(--orange-600,#e0620f);border-radius:0;border-bottom-color:var(--orange-600,#e0620f)}'+
   SX_ON.split(',').map(function(s){return s.replace('.search-box','.search-box[data-sx]')+' input';}).join(',')+'{width:100%;opacity:1}';
   var st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
+
+  /* ข้อความลอย (data-tip): วาดเป็นกล่อง position:fixed ตัวเดียวที่ท้ายหน้า ไม่ถูกตัดโดยตาราง/กล่องที่เลื่อนได้ (overflow) */
+  var tipEl=null,tipOn=null;
+  function tipHide(){tipOn=null;if(tipEl)tipEl.style.display='none';}
+  document.addEventListener('mouseover',function(e){
+    var t=e.target&&e.target.closest?e.target.closest('[data-tip]'):null;
+    if(!t){if(tipOn)tipHide();return;}
+    if(t===tipOn)return;
+    var txt=t.getAttribute('data-tip');if(!txt){tipHide();return;}
+    if(!tipEl){tipEl=document.createElement('div');tipEl.className='bs-tip';document.body.appendChild(tipEl);}
+    tipOn=t;tipEl.textContent=txt;tipEl.style.display='block';
+    var r=t.getBoundingClientRect(),w=tipEl.offsetWidth,h=tipEl.offsetHeight;
+    var x=Math.max(4,Math.min(window.innerWidth-w-4,r.left+r.width/2-w/2));
+    var y=r.top-h-6;if(y<4)y=r.bottom+6;
+    tipEl.style.left=x+'px';tipEl.style.top=y+'px';
+  });
+  document.addEventListener('mouseout',function(e){if(tipOn&&!tipOn.contains(e.relatedTarget))tipHide();});
+  window.addEventListener('scroll',tipHide,true);
+  document.addEventListener('mousedown',tipHide,true);
 
   var SX_SVG='<svg class="sx-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
   function sxFill(box){
