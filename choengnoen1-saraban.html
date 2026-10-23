@@ -260,12 +260,20 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .lr-count-line{font-size:12px;color:var(--ink-400);margin:0 0 10px;}
   .lr-tbl{table-layout:fixed;}
   .lr-tbl td,.lr-tbl th{overflow-wrap:break-word;word-break:break-word;}
-  .lr-tbl col.c-name{width:22%;}
-  .lr-tbl col.c-type{width:12%;}
-  .lr-tbl col.c-range{width:20%;}
-  .lr-tbl col.c-status{width:14%;}
-  .lr-tbl col.c-actions{width:32%;}
-  .lr-actions-cell{white-space:normal;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:flex-end;padding-right:20px;}
+  .lr-tbl col.c-name{width:19%;}
+  .lr-tbl col.c-role{width:19%;}
+  .lr-tbl col.c-type{width:10%;}
+  .lr-tbl col.c-range{width:17%;}
+  .lr-tbl col.c-days{width:8%;}
+  .lr-tbl col.c-status{width:12%;}
+  .lr-tbl col.c-actions{width:15%;}
+  .lr-filter{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 20px;border-bottom:1px solid var(--line);background:#fff;}
+  .lr-filter-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;border:1px solid var(--line);background:#fff;color:var(--ink-600);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;}
+  .lr-filter-btn:hover{background:var(--paper-100);}
+  .lr-filter-btn.active{background:var(--navy-800);border-color:var(--navy-800);color:#fff;}
+  .lr-filter-btn .n{font-size:11px;padding:0 7px;border-radius:10px;background:var(--paper-100);color:var(--ink-600);}
+  .lr-filter-btn.active .n{background:rgba(255,255,255,.2);color:#fff;}
+  .lr-actions-cell{white-space:normal;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end;padding-right:20px;}
   .lr-tbl th:last-child{padding-right:20px;}
   .lr-subtabs{display:flex;gap:4px;margin:0 0 10px;border-bottom:1px solid var(--line);}
   .lr-subtabs .tab{padding:7px 12px;}
@@ -607,10 +615,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <button class="btn btn-primary" data-ic="plus" onclick="openLeaveModal()">บันทึกข้อมูลการลา</button>
             </div>
           </div>
+          <div class="lr-filter no-print" id="lr-filter-bar"></div>
           <div class="lr-grid lr-flush">
             <div class="table-wrap table-wrap-scroll"><table class="lr-tbl">
-              <colgroup><col class="c-name"><col class="c-type"><col class="c-range"><col class="c-status"><col class="c-actions"></colgroup>
-              <thead><tr><th>ผู้ลา</th><th>ประเภท</th><th>ช่วงวันที่</th><th>สถานะ</th><th></th></tr></thead>
+              <colgroup><col class="c-name"><col class="c-role"><col class="c-type"><col class="c-range"><col class="c-days"><col class="c-status"><col class="c-actions"></colgroup>
+              <thead><tr><th>ผู้ลา</th><th>ตำแหน่ง</th><th>ประเภท</th><th>ช่วงวันที่</th><th>จำนวนวัน</th><th>สถานะ</th><th></th></tr></thead>
               <tbody id="lr-list-body"></tbody>
             </table></div>
             <div class="legend-block" id="leave-approved-foot-block">
@@ -2325,9 +2334,12 @@ function __canCancelLeave(r){
   return r.from > todayISO;
 }
 function __leaveRowHTML(r,i){
+  const role = (staff.find(x=>x.name===r.name)||{}).role || '';
+  const days = (r.days!=null && r.days!=='') ? r.days : daysBetween(r.from,r.to);
   return `
     <tr>
-      <td class="p-name">${esc(r.name)}</td><td>${esc(r.type)}</td><td>${fmtDate(r.from)} – ${fmtDate(r.to)}</td>
+      <td class="p-name">${esc(r.name)}</td><td>${role ? esc(role) : '<span style="color:var(--ink-400);">-</span>'}</td><td>${esc(r.type)}</td><td>${fmtDate(r.from)} – ${fmtDate(r.to)}</td>
+      <td>${esc(String(days))} วัน</td>
       <td>${r.status==='cancelled' ? '<span class="pill pill-neutral">ยกเลิกแล้ว</span>' : (r.approval==='pending' ? '<span class="pill pill-warn">รออนุมัติ</span>' : r.approval==='approved' ? `<span class="pill pill-ok" title="${esc(r.approvedBy||'')}">อนุมัติแล้ว</span>` : r.approval==='rejected' ? `<span class="pill pill-neutral" style="color:var(--danger);" title="${esc(r.approvalNote||'')}">ไม่อนุมัติ</span>` : '<span class="pill pill-ok">บันทึกแล้ว</span>')}</td>
       <td class="lr-actions-cell">
         <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์ใบลา" onclick="printLeaveForm(${i})"></button>
@@ -2358,12 +2370,32 @@ function renderLeaveRequestList(){
   const fyFilter = document.getElementById('lr-approved-fy').value;
   const searchEl = document.getElementById('lr-approved-search');
   const q = searchEl ? searchEl.value.trim().toLowerCase() : '';
-  const rows = leaveRequests.map((r,i)=>({r,i}))
+  const base = leaveRequests.map((r,i)=>({r,i}))
     .filter(({r})=>(!q || r.name.toLowerCase().includes(q)) && String(fiscalYearOf(r.from))===fyFilter)
     .sort((a,b)=> (b.r.from||'').localeCompare(a.r.from||'') || (b.r.to||'').localeCompare(a.r.to||''));
+  const counts = {all:base.length, pending:0, done:0, other:0};
+  base.forEach(({r})=>{ counts[__lrStatusGroup(r)]++; });
+  const rows = __lrStatusFilter==='all' ? base : base.filter(({r})=>__lrStatusGroup(r)===__lrStatusFilter);
+  __renderLrFilterBar(counts);
   document.getElementById('lr-list-body').innerHTML = rows.map(({r,i})=>__leaveRowHTML(r,i)).join('')
-    || `<tr><td colspan="5" style="text-align:center;color:var(--ink-400);padding:16px;">${q ? 'ไม่พบรายการที่ตรงกับคำค้นหา' : 'ยังไม่มีการบันทึกข้อมูลการลาในปีงบประมาณนี้'}</td></tr>`;
+    || `<tr><td colspan="7" style="text-align:center;color:var(--ink-400);padding:16px;">${(q || __lrStatusFilter!=='all') ? 'ไม่พบรายการที่ตรงกับตัวกรอง/คำค้นหา' : 'ยังไม่มีการบันทึกข้อมูลการลาในปีงบประมาณนี้'}</td></tr>`;
   __renderLrLastUpdated();
+}
+/* ตัวกรองสถานะเหนือตารางการลา: all / pending (รออนุมัติ) / done (บันทึกแล้ว+อนุมัติแล้ว) / other (ยกเลิก+ไม่อนุมัติ) */
+let __lrStatusFilter = 'all';
+function __lrStatusGroup(r){
+  if(r.status==='cancelled' || r.approval==='rejected') return 'other';
+  if(r.approval==='pending') return 'pending';
+  return 'done';
+}
+function __setLrStatusFilter(k){ __lrStatusFilter = k; renderLeaveRequestList(); }
+function __renderLrFilterBar(counts){
+  const el = document.getElementById('lr-filter-bar');
+  if(!el) return;
+  const defs = [['all','ทั้งหมด'],['pending','รออนุมัติ'],['done','บันทึกแล้ว / อนุมัติแล้ว'],['other','ยกเลิก / ไม่อนุมัติ']];
+  el.innerHTML = defs
+    .filter(([k])=> k==='all' || k==='pending' || counts[k]>0 || __lrStatusFilter===k)
+    .map(([k,label])=>`<button type="button" class="lr-filter-btn${__lrStatusFilter===k?' active':''}" onclick="__setLrStatusFilter('${k}')">${label} <span class="n">${counts[k]}</span></button>`).join('');
 }
 // แสดงวันที่ลาล่าสุดในระบบ (ดูจากวันสิ้นสุดการลาของทุกคำขอลา)
 function __renderLrLastUpdated(){
