@@ -144,7 +144,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .table-wrap-scroll::-webkit-scrollbar-track{margin-top:40px;}
   /* การลา: การ์ดตารางชิดขอบเหมือนหน้าบุคลากร เลื่อนขึ้น-ลงในกรอบ */
   .lr-grid.lr-flush{padding:0;gap:0;}
-  .lr-grid.lr-flush .table-wrap-scroll{max-height:62vh;}
+  .lr-grid.lr-flush .table-wrap-scroll{max-height:62vh;overflow-x:hidden;}   /* ตารางการลาพอดีความกว้างเสมอ (table-layout:fixed) — ไม่ต้องมีแถบเลื่อนซ้าย-ขวา */
   /* ตาราง "ติดตามคำร้องทุกข์": หัวตารางกับข้อมูลอยู่กึ่งกลางแนวนอนทุกคอลัมน์ ยกเว้น "เรื่อง"/"หมายเหตุ" (คอลัมน์ที่ 6,7) ที่เป็นข้อความยาวจึงชิดซ้ายตามเดิม */
   #panel-complaints table thead th{text-align:center;}
   #complaint-body td{text-align:center;}
@@ -322,32 +322,34 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .sd-acc>summary::before{content:'▸';display:inline-block;width:16px;}
   .sd-acc[open]>summary::before{content:'▾';}
   .sd-acc .acc-b{padding:14px 16px;}
-  .exec-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
-  .exec-bar .btn{margin-left:auto;}
-  .exec-seg{display:inline-flex;background:var(--paper-100);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;}
-  .exec-seg button{border:0;background:none;padding:6px 14px;border-radius:8px;cursor:pointer;font-weight:600;color:var(--ink-600);font-family:inherit;font-size:12.5px;}
-  .exec-seg button.on{background:var(--navy-900);color:#fff;}
-  .exec-h{font-size:13px;font-weight:700;margin:0 0 12px;color:var(--navy-800);}
   .exec-note{font-size:12.5px;color:var(--ink-600);background:var(--paper-100);border-left:3px solid var(--orange-600);border-radius:8px;padding:9px 12px;margin-bottom:12px;}
   .exec-empty{padding:26px;text-align:center;color:var(--ink-400);font-size:13px;}
-  .vt{position:relative;}
-  .vt .vi{display:grid;grid-template-columns:132px 28px 1fr;align-items:stretch;}
-  .vt .vd{text-align:right;padding:14px 8px 0 0;line-height:1.35;}
-  .vt .vd b{display:block;font-size:13px;}
-  .vt .vd span{font-size:12px;color:var(--ink-400);}
-  .vt .vn{position:relative;}
-  .vt .vn:before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:2px solid var(--line);margin-left:-1px;}
-  .vt .vi:first-child .vn:before{top:20px;}
-  .vt .vi:last-child .vn:before{bottom:calc(100% - 26px);}
-  .vt .vn i{position:absolute;left:50%;top:15px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:#fff;border:3px solid #b9b5a8;}
-  .vt .vi.cur .vn i{background:var(--orange-600);border-color:#fff;box-shadow:0 0 0 3px var(--orange-600);}
-  .vt .vc{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:6px 0 10px;background:#fff;}
-  .vt .vi.cur .vc{background:#fffaf0;border-color:#f1d59b;}
-  .vt .vm{flex:1;min-width:0;}
-  .vt .vm .meta{font-size:12px;color:var(--ink-400);}
+  /* ทะเบียนผู้บริหารแบบสองคอลัมน์: ซ้าย = หัวหน้าหมวด, ขวา = ผู้ช่วยหมวด */
+  .ec-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .ec-col{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;min-width:0;}
+  .ec-h{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);}
+  .ec-col.head .ec-h{background:linear-gradient(90deg,#fdf3d8,#fff);box-shadow:inset 4px 0 0 #b7791f;}
+  .ec-col.assist .ec-h{background:linear-gradient(90deg,#d9f3ef,#fff);box-shadow:inset 4px 0 0 #0f766e;}
+  .ec-star{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;flex-shrink:0;}
+  .ec-col.head .ec-star{background:#b7791f;}
+  .ec-col.assist .ec-star{background:#0f766e;}
+  .ec-h h4{margin:0;font-family:'Kanit';font-weight:600;font-size:14px;color:var(--ink-900);}
+  .ec-h .ec-cnt{font-size:11.5px;color:var(--ink-400);}
+  .ec-h .btn{margin-left:auto;padding:4px 12px;font-size:12px;}
+  .ec-b{padding:14px 14px 4px;}
+  .ec-tl{position:relative;padding-left:22px;}
+  .ec-tl:before{content:"";position:absolute;left:6px;top:10px;bottom:22px;border-left:2px solid var(--line);}
+  .ec-it{position:relative;margin-bottom:12px;}
+  .ec-it:before{content:"";position:absolute;left:-22px;top:14px;width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid #b9b5a8;box-sizing:border-box;}
+  .ec-it.cur:before{background:var(--orange-600);border-color:#fff;box-shadow:0 0 0 3px var(--orange-600);}
+  .ec-dt{font-size:12px;color:var(--ink-400);font-weight:600;margin-bottom:4px;}
+  .ec-cd{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff;}
+  .ec-it.cur .ec-cd{background:#fffaf0;border-color:#f1d59b;}
+  .ec-cd .ec-m{flex:1;min-width:0;}
+  .ec-cd .meta{font-size:12px;color:var(--ink-400);}
   .exec-mini{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed var(--line);font-size:12.5px;}
   .exec-mini:last-child{border-bottom:0;}
-  @media (max-width:640px){ .vt .vi{grid-template-columns:92px 24px 1fr;} }
+  @media (max-width:760px){ .ec-cols{grid-template-columns:1fr;} }
   .lr-stat-panel{background:var(--paper-100);border-radius:10px;padding:11px 14px;margin-top:4px;display:flex;flex-direction:column;gap:7px;}
   .lr-stat-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .lr-stat-label{font-size:11px;color:var(--ink-400);font-weight:600;min-width:88px;}
@@ -574,7 +576,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 
       <!-- ============ EXEC REGISTER (ทะเบียนผู้บริหาร) MODAL ============ -->
       <div id="exec-reg-modal" class="modal-overlay hidden no-print">
-        <div class="modal-box" style="max-width:640px;">
+        <div class="modal-box" style="max-width:900px;">
           <div class="modal-head">
             <div class="modal-head-icon">🏛️</div>
             <h3>ทะเบียนผู้บริหาร</h3>
@@ -1856,33 +1858,33 @@ function execRoleCellHTML(s, role){
   return __execPill(role) + (t ? `<div class="exec-since">ตั้งแต่ ${__fmtDateBE(t.startDate)}</div>` : '');
 }
 
-/* ---------- โมดัลทะเบียนผู้บริหาร: เส้นเวลาแนวตั้ง ---------- */
-let execRegRole = 'head';
+/* ---------- โมดัลทะเบียนผู้บริหาร: สองคอลัมน์ (หัวหน้าหมวด | ผู้ช่วยหมวด) ในหน้าเดียว ---------- */
 function openExecReg(){ renderExecReg(); document.getElementById('exec-reg-modal').classList.remove('hidden'); }
 function closeExecReg(){ document.getElementById('exec-reg-modal').classList.add('hidden'); }
-function setExecRegRole(r){ execRegRole = r; renderExecReg(); }
 function renderExecReg(){
-  const r = execRegRole, admin = isAdmin(), list = execTermsOfRole(r);
-  const items = list.map(t=>{
-    const s = execStaffOf(t), cur = execIsActive(t);
-    const name = s ? s.name : (t.staffName || '—');
-    return `<div class="vi ${cur?'cur':''}">
-      <div class="vd"><b>${__fmtDateBE(t.startDate)}</b><span>${t.endDate ? 'ถึง '+__fmtDateBE(t.endDate) : 'ถึงปัจจุบัน'}</span></div>
-      <div class="vn"><i></i></div>
-      <div class="vc">${s ? ptypeBadge(s.ptype) : ''}<div class="vm"><div style="font-weight:600;">${esc(name)} ${cur?'<span class="pill pill-ok">ปัจจุบัน</span>':''}</div>
-        <div class="meta">ดำรงตำแหน่ง ${execDuration(t.startDate, t.endDate)}${s && s.status==='resigned' ? ' · ลาออก' : ''}${s && s.status==='retired' ? ' · เกษียณอายุ' : ''}</div>
-        ${t.ref ? `<div class="meta">${esc(t.ref)}</div>` : ''}</div>
-        ${admin ? `<button type="button" class="btn btn-ghost" style="padding:3px 12px;font-size:12px;" onclick="openExecTerm('${esc(t.id)}')">แก้ไข</button>` : ''}</div>
-    </div>`;
-  }).join('');
+  const admin = isAdmin();
+  const col = r => {
+    const list = execTermsOfRole(r);
+    const items = list.map(t=>{
+      const s = execStaffOf(t), cur = execIsActive(t);
+      const name = s ? s.name : (t.staffName || '—');
+      return `<div class="ec-it ${cur?'cur':''}">
+        <div class="ec-dt">${__fmtDateBE(t.startDate)} – ${t.endDate ? __fmtDateBE(t.endDate) : 'ปัจจุบัน'}</div>
+        <div class="ec-cd">${s ? ptypeBadge(s.ptype) : ''}<div class="ec-m"><div style="font-weight:600;">${esc(name)} ${cur?'<span class="pill pill-ok">ปัจจุบัน</span>':''}</div>
+          <div class="meta">ดำรงตำแหน่ง ${execDuration(t.startDate, t.endDate)}${s && s.status==='resigned' ? ' · ลาออก' : ''}${s && s.status==='retired' ? ' · เกษียณอายุ' : ''}</div>
+          ${t.ref ? `<div class="meta">${esc(t.ref)}</div>` : ''}</div>
+          ${admin ? `<button type="button" class="btn btn-ghost" style="padding:3px 12px;font-size:12px;" onclick="openExecTerm('${esc(t.id)}')">แก้ไข</button>` : ''}</div>
+      </div>`;
+    }).join('');
+    return `<section class="ec-col ${r}">
+      <div class="ec-h"><span class="ec-star">${r==='head'?'★':'☆'}</span><div><h4>${EXEC_ROLE_NAME[r]}</h4><div class="ec-cnt">${list.length} วาระ</div></div>
+        ${admin ? `<button type="button" class="btn btn-primary" onclick="openExecTerm(null,'${r}')">＋ แต่งตั้ง</button>` : ''}</div>
+      <div class="ec-b">${items ? `<div class="ec-tl">${items}</div>` : `<div class="exec-empty">ยังไม่มีข้อมูลวาระ${admin ? ' — กด "แต่งตั้ง" เพื่อบันทึกวาระแรก' : ''}</div>`}</div>
+    </section>`;
+  };
   document.getElementById('er-body').innerHTML = `
-    <div class="exec-bar">
-      <div class="exec-seg">${['head','assist'].map(k=>`<button type="button" class="${k===r?'on':''}" onclick="setExecRegRole('${k}')">${k==='head'?'★':'☆'} ${EXEC_ROLE_NAME[k]}</button>`).join('')}</div>
-      ${admin ? `<button type="button" class="btn btn-primary" onclick="openExecTerm(null,'${r}')">＋ แต่งตั้งคนใหม่</button>` : ''}
-    </div>
     ${execTermsLoaded ? '' : '<div class="exec-note">ยังโหลดทะเบียนผู้บริหารจากฐานข้อมูลกลางไม่ได้ (ตรวจสอบว่าเผยแพร่กฎ Firestore ฉบับล่าสุดแล้ว และอินเทอร์เน็ตปกติ) แล้วรีเฟรชหน้านี้</div>'}
-    <h4 class="exec-h">ประวัติผู้ดำรงตำแหน่ง ${EXEC_ROLE_NAME[r]}</h4>
-    ${items ? `<div class="vt">${items}</div>` : `<div class="exec-empty">ยังไม่มีข้อมูลวาระ${admin ? ' — กด "แต่งตั้งคนใหม่" เพื่อบันทึกวาระแรก' : ''}</div>`}`;
+    <div class="ec-cols">${col('head')}${col('assist')}</div>`;
 }
 
 /* ---------- ฟอร์มแต่งตั้ง / แก้ไขวาระ ---------- */
@@ -2669,10 +2671,10 @@ function __leaveRowHTML(r,i){
       <td class="lr-actions-cell">
         <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์ใบลา" onclick="printLeaveForm(${i})"></button>
         ${r.status==='cancelled'
-          ? `<button class="btn btn-ghost btn-ic btn-sm" data-ic="doc" data-tip="พิมพ์ใบขอยกเลิกวันลา" onclick="printCancelForm(${i})"></button>`          : (__lrStatusGroup(r)==='done'
-            ? `<button class="btn btn-ghost btn-sm btn-ic-danger" data-tip="ยกเลิกใบลานี้ (ไม่นับวันลา เก็บประวัติไว้)" onclick="openCancelLeave(${i})">ยกเลิกใบลา</button>`
-              + (__lrCanDeleteDone() ? `<button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบรายการลานี้" onclick="deleteLeaveRequest(${i})"></button>` : '')
-            : `<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไขคำขอลานี้" onclick="openEditLeave(${i})"></button>
+          ? `<button class="btn btn-ghost btn-ic btn-sm" data-ic="doc" data-tip="พิมพ์ใบขอยกเลิกวันลา" onclick="printCancelForm(${i})"></button>`
+            + (__lrCanDeleteCancelled() ? `<button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบรายการที่ยกเลิกแล้ว" onclick="deleteLeaveRequest(${i})"></button>` : '')
+          : (__lrStatusGroup(r)==='done'
+            ? `<button class="btn btn-ghost btn-sm btn-ic-danger" data-tip="ยกเลิกใบลานี้ (ไม่นับวันลา เก็บประวัติไว้)" onclick="openCancelLeave(${i})">ยกเลิกใบลา</button>`            : `<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไขคำขอลานี้" onclick="openEditLeave(${i})"></button>
         <button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบคำขอลานี้" onclick="deleteLeaveRequest(${i})"></button>`)}
       </td>
     </tr>`;
@@ -2741,14 +2743,15 @@ function __renderLrLastUpdated(){
 /* ทุกคำขอลาที่ยื่นเข้าระบบถือเป็นข้อมูลลาจริงแล้ว (2569-09-18 — ตัดสถานะอนุมัติดิจิทัลออกทั้งระบบ)
    จึงใช้ขั้นตอนลบแบบเข้มงวด (ต้องเป็นแอดมิน + คำเตือนเรื่องผลต่อทะเบียนคุมลา) กับทุกรายการเสมอ
    ไม่มีการแยกกรณี "ยังไม่อนุมัติ" อีกต่อไป */
-/* ปุ่มถังขยะข้างปุ่ม "ยกเลิกใบลา" (แถวสถานะบันทึกแล้ว/อนุมัติแล้ว): เห็น/กดได้เฉพาะเจ้าของระบบ / หัวหน้าหมวด / ผู้ช่วยหมวด (ตามบทบาทบัญชี) */
-function __lrCanDeleteDone(){
+/* ปุ่มถังขยะของแถวสถานะ "ยกเลิกแล้ว": เห็น/กดได้เฉพาะเจ้าของระบบ / หัวหน้าหมวด / ผู้ช่วยหมวด (ตามบทบาทบัญชี) */
+function __lrCanDeleteCancelled(){
   return !!(window.FBL && FBL.user && ['owner','chief','assistant'].indexOf(FBL.user.role)!==-1);
 }
 function deleteLeaveRequest(i){
   const r = leaveRequests[i];
   if(!r) return;
-  if(__lrStatusGroup(r)==='done' ? !__lrCanDeleteDone() : !isAdmin()) return;
+  const isCancelled = r.status==='cancelled';
+  if(isCancelled ? !__lrCanDeleteCancelled() : !isAdmin()) return;
   const doDelete = async ()=>{
     try{
       await apiPost('delete', 'leave_requests', null, r.id);
@@ -2763,7 +2766,9 @@ function deleteLeaveRequest(i){
   showConfirm({
     title:'ลบรายการลา',
     message:`ยืนยันลบรายการลาของ <b>"${esc(r.name)}"</b><br><b>${esc(r.type)} ${fmtDate(r.from)} – ${fmtDate(r.to)}</b><br>ทิ้งทั้งหมด?`,
-    warn:'ใช้สำหรับกรณีกรอกผิดพลาดหรือรายการซ้ำเท่านั้น หากพนักงานต้องการยกเลิกวันลาตามปกติ กรุณาใช้ปุ่ม "ใบขอยกเลิกวันลา" แทน\nการลบไม่สามารถย้อนกลับได้ และจะลบสถิติการลาที่เกี่ยวข้องออกจากทะเบียนคุมลา (จ.3-03) ด้วย',
+    warn: isCancelled
+      ? 'รายการนี้ยกเลิกแล้วและไม่นับเป็นวันลา การลบจะลบประวัติการยกเลิก (รวมเหตุผลที่ระบุ) ออกจากระบบ ไม่สามารถย้อนกลับได้'
+      : 'ใช้สำหรับกรณีกรอกผิดพลาดหรือรายการซ้ำเท่านั้น หากพนักงานต้องการยกเลิกวันลาตามปกติ กรุณาใช้ปุ่ม "ใบขอยกเลิกวันลา" แทน\nการลบไม่สามารถย้อนกลับได้ และจะลบสถิติการลาที่เกี่ยวข้องออกจากทะเบียนคุมลา (จ.3-03) ด้วย',
     onConfirm:doDelete
   });
 }
