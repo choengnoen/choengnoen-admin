@@ -230,10 +230,78 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   tr.mileage-row.route-row .mi-label .mi-icon{background:var(--orange-500);}
   /* ไอคอนหน้าชื่อรถ/เครื่องจักรในแถวปริมาณน้ำมัน (โทนเขียว) ให้ครบชุดสี 3 ประเภทข้อมูล: เขียว=ปริมาณน้ำมัน, น้ำเงิน=เลขไมล์, ส้ม=สายทาง */
   .fuel-veh-icon{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--success-bg);font-size:10px;flex:none;line-height:1;}
-  .ec1w-table th,.ec1w-table td{text-align:center;white-space:nowrap;font-size:12.5px;}
-  .ec1w-table td.ec1w-left{text-align:left;white-space:normal;}
-  .ec1w-table .ec1w-hol{background:#fbeae7;}
-  .ec1w-table thead th{vertical-align:middle;}
+  /* แบบฟอร์ม EC 1-W ตามไฟล์ "ตย. ec1.pdf" ของกรม (A4 แนวนอน 842 x 595 pt) — หน้าจอกับตอนพิมพ์ใช้ชุดเดียวกัน
+     ฟอนต์ TH Sarabun 13pt เหมือนต้นฉบับ ถ้าเครื่องไม่มีฟอนต์นี้ (.nofont) ใช้ Sarabun ขนาดเล็กลงแทนให้หน้าฟอร์มไม่เพี้ยน */
+  @page ec1wpage{size:A4 landscape;margin:0;}
+  .ec1w-desk{background:#e4e1d8;border-radius:12px;padding:14px;margin:12px 20px 0;overflow-x:auto;}
+  /* เนื้อหาฟอร์ม (กว้าง 791.5pt) วางกึ่งกลางหน้ากระดาษทั้งแนวนอนและแนวตั้ง */
+  .ec1w-sheet{page:ec1wpage;box-sizing:border-box;width:842pt;min-height:595pt;margin:0 auto;background:#fff;position:relative;padding:12pt 0;
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    font-family:'TH Sarabun New','THSarabunNew','TH SarabunPSK','THSarabunPSK','Sarabun',sans-serif;font-size:13pt;line-height:1.15;color:#000;
+    box-shadow:0 18px 40px -24px rgba(0,0,0,.45);-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .ec1w-sheet.nofont{font-family:'Sarabun',sans-serif;font-size:10pt;}
+  .ec1w-sheet>*{width:791.5pt;flex:none;}
+  .ec1w-sheet .box{border:1pt solid #000;}
+  .ec1w-sheet .f-top{position:relative;height:64pt;}
+  .ec1w-sheet .f-title{position:absolute;left:0;right:0;top:3pt;text-align:center;font-weight:700;font-size:1.16em;}
+  .ec1w-sheet .f-ec{position:absolute;right:0;top:0;width:77.5pt;text-align:center;height:16pt;line-height:15pt;}
+  .ec1w-sheet .f-start{position:absolute;right:0;top:17pt;font-size:.85em;}
+  .ec1w-sheet .f-copy{position:absolute;right:0;top:32pt;width:77.5pt;height:16pt;line-height:15pt;padding:0 3pt;white-space:nowrap;}
+  .ec1w-sheet .f-hd{position:absolute;top:32pt;display:grid;text-align:center;}
+  .ec1w-sheet .f-hd>div{padding:0 4pt;height:16pt;line-height:16pt;white-space:nowrap;overflow:hidden;}
+  .ec1w-sheet .f-hd>div+div{border-top:1pt solid #000;}
+  .ec1w-sheet .f-unit{left:0;width:308.5pt;grid-template-columns:167.5pt 1fr;}
+  .ec1w-sheet .f-unit .lab{grid-column:1/3;}
+  .ec1w-sheet .f-unit .v2{border-left:1pt solid #000;}
+  .ec1w-sheet .f-mc{left:362.5pt;width:135pt;}
+  .ec1w-sheet .f-dr{left:551.5pt;width:108pt;}
+  .ec1w-sheet table.ec1w-table{margin-top:17pt;width:791.5pt;border-collapse:collapse;border-spacing:0;table-layout:fixed;border:1.2pt solid #000;font-size:1em;}
+  .ec1w-sheet table.ec1w-table th,.ec1w-sheet table.ec1w-table td{border-left:1pt solid #000;border-right:1pt solid #000;padding:0 1pt;text-align:center;vertical-align:middle;
+    font-weight:400;font-size:1em;color:#000;background:#fff;overflow:hidden;letter-spacing:normal;text-transform:none;position:static;}
+  .ec1w-sheet table.ec1w-table thead th{border:1pt solid #000;line-height:16.2pt;padding:0;white-space:nowrap;}
+  .ec1w-sheet table.ec1w-table thead tr:first-child th{height:16.2pt;}
+  .ec1w-sheet table.ec1w-table thead tr:last-child th{height:32.4pt;}
+  .ec1w-sheet table.ec1w-table tbody td{height:31.6pt;border-bottom:1pt dotted #000;}
+  .ec1w-sheet table.ec1w-table tbody tr.last td{border-bottom:none;}
+  .ec1w-sheet td.dt{text-align:left !important;padding-left:2pt !important;white-space:nowrap;}
+  .ec1w-sheet td.dt .w{display:inline-block;width:47pt;}
+  .ec1w-sheet .two div{height:15.5pt;line-height:15.5pt;white-space:nowrap;overflow:hidden;}
+  .ec1w-sheet .f-foot{display:grid;grid-template-columns:123pt 187pt 160pt 1fr 1fr;margin-top:26pt;line-height:16.5pt;}
+  .ec1w-sheet .f-foot h4{margin:0;font-weight:700;font-size:1em;text-decoration:underline;font-family:inherit;color:#000;}
+  .ec1w-sheet .f-foot .in{padding-left:15pt;}
+  /* ช่องลงชื่อ 2 ช่องกว้างเท่ากัน ป้าย "ลงชื่อ/วันที่" อยู่นอกเส้นทางซ้าย ข้อความทุกบรรทัดกึ่งกลางเดียวกัน */
+  .ec1w-sheet .sig{text-align:center;margin-left:30pt;}
+  .ec1w-sheet .sig .l{position:relative;border-bottom:1pt dotted #000;height:15pt;line-height:15pt;}
+  .ec1w-sheet .sig .l span{position:absolute;right:100%;bottom:0;padding-right:4pt;white-space:nowrap;}
+  .ec1w-sheet .f-note{margin-top:20pt;line-height:16.5pt;}
+  /* หน้าจอ: คลิกแถวของวันเพื่อกรอก/แก้ไข (ช่องกรอกกางใต้แถว) — ไม่ติดไปตอนพิมพ์ */
+  .ec1w-sheet tr.r.can{cursor:pointer;}
+  .ec1w-sheet tr.r.can:hover td{background:#fff6dc;}
+  .ec1w-sheet tr.r.open td{background:#ffefbd;}
+  .ec1w-sheet .miss-hint{color:var(--orange-600);font-size:.9em;font-weight:600;}
+  .ec1w-sheet tr.ed td{padding:0 !important;height:auto !important;border-bottom:1pt dotted #000;background:#fffaf0;}
+  .ec1w-ed{padding:12px 14px 14px;display:grid;grid-template-columns:1.7fr 2fr 1.5fr;gap:12px 18px;text-align:left;border-left:4px solid var(--orange-500);
+    font-family:'Sarabun',sans-serif;font-size:13px;line-height:1.4;white-space:normal;}
+  .ec1w-ed h4{font-family:'Kanit';font-weight:600;font-size:13px;color:var(--navy-800);margin:0 0 6px;}
+  .ec1w-ed label{font-size:12px;color:var(--ink-600);display:block;margin-bottom:3px;}
+  .ec1w-ed .loc{display:grid;grid-template-columns:1.3fr 1fr;gap:6px;margin-bottom:2px;}
+  .ec1w-ed .hrow{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+  .ec1w-ed .hrow.three{grid-template-columns:repeat(3,1fr);}
+  .ec1w-ed .hrow label{text-align:center;}
+  .ec1w-ed .hrow input{text-align:center;}
+  .ec1w-ed .edit-input{width:100%;}
+  .ec1w-ed .wide{grid-column:1/-1;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+  .ec1w-ed .wide>.grow{flex:1 1 220px;}
+  .ec1w-ed .auto{font-size:12px;color:var(--ink-600);background:var(--paper-100);border-radius:8px;padding:8px 10px;}
+  @media (max-width:900px){.ec1w-ed{grid-template-columns:1fr;}}
+  @media print{
+    /* พิมพ์ EC1-W: ซ่อนส่วนอื่นทั้งหมด ให้หน้าแรกเป็นหน้า A4 แนวนอนของฟอร์มทันที (ไม่มีหน้าว่างนำหน้า) */
+    body:has(#print-ec1w.show-print) .app{display:none !important;}
+    #print-ec1w.show-print{page:ec1wpage;}
+    .ec1w-sheet{box-shadow:none;margin:0;height:595pt;overflow:hidden;}
+    .ec1w-sheet tr.ed,.ec1w-sheet .miss-hint{display:none !important;}
+    .ec1w-sheet tr.r td{background:#fff !important;}
+  }
   tr.mileage-row input.mi-decrease,tr.mileage-row td.mi-decrease{background:var(--danger-bg)!important;}
   tr.mileage-row input.mi-decrease{border-color:var(--danger)!important;color:var(--danger);font-weight:600;}
   tr.mileage-row input.mi-jump,tr.mileage-row td.mi-jump{background:#fff4e0!important;}
@@ -806,6 +874,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
     .print-only{display:none;}
     .print-only.show-print{display:block;}
     .route-header,.sidebar,.topbar,.sec-tabs,.no-print,.page-head .toolbar{display:none !important;}
+    .app{min-height:0 !important;} /* ตอนพิมพ์ .app ว่างเปล่า แต่ min-height:100vh = สูงเต็ม 1 หน้ากระดาษ ดันแบบฟอร์มไปหน้า 2 */
     .content{padding:0;max-width:none;}
     .section{border:none;box-shadow:none;}
     .panel{display:none !important;}
@@ -1059,11 +1128,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <button class="btn btn-ghost btn-ic" data-ic="right" data-tip="สัปดาห์ถัดไป" onclick="shiftEc1wWeek(1)"></button>
             </div>
           </div>
-          <div id="ec1w-form-head" style="margin:14px 20px 0;font-size:12.5px;color:var(--ink-600);"></div>
-          <div class="table-wrap" id="ec1w-table-wrap" style="margin-top:10px;"></div>
+          <div id="ec1w-table-wrap"></div>
           <div class="legend-block" id="ec1w-foot-block">
             <button type="button" class="legend-dot-btn no-print" id="ec1w-foot-toggle" onclick="__toggleNote('ec1w-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="ec1w-foot" style="display:none;background:transparent;border-top:none;">คลิก "✎" ที่แต่ละวัน (สำหรับผู้มีสิทธิ์แก้ไข) เพื่อบันทึกสถานที่ปฏิบัติงาน ชั่วโมงปฏิบัติงาน/ไม่ปฏิบัติงาน และหมายเหตุของวันนั้นตามที่พนักงานขับรถ/ผู้ควบคุมเครื่องจักรรายงานมา — คอลัมน์ "น้ำมันเชื้อเพลิงที่เติม" และ "มิเตอร์เลิกงาน" เชื่อมโยงข้อมูลมาจากตารางบริหารจัดการน้ำมันเชื้อเพลิง (แท็บ "พ.1-02 / พ.1-03") โดยอัตโนมัติทันทีที่คีย์ข้อมูลในแท็บนั้นเรียบร้อย ไม่ต้องกรอกซ้ำ</div>
+            <div class="foot-note" id="ec1w-foot" style="display:none;background:transparent;border-top:none;">หน้าจอนี้คือแบบฟอร์ม EC 1-W ตามที่จะพิมพ์ออกมาจริง (A4 แนวนอน) — คลิกที่แถวของแต่ละวัน (สำหรับผู้มีสิทธิ์แก้ไข) ช่องกรอกจะกางออกใต้แถวนั้น เพื่อบันทึกสถานที่ปฏิบัติงาน ชั่วโมงปฏิบัติงาน/ไม่ปฏิบัติงาน และหมายเหตุของวันนั้นตามที่พนักงานขับรถ/ผู้ควบคุมเครื่องจักรรายงานมา — คอลัมน์ "น้ำมันเชื้อเพลิงที่เติม" และ "มิเตอร์เลิกงาน" เชื่อมโยงข้อมูลมาจากตารางบริหารจัดการน้ำมันเชื้อเพลิง (แท็บ "พ.1-02 / พ.1-03") โดยอัตโนมัติทันทีที่คีย์ข้อมูลในแท็บนั้นเรียบร้อย ไม่ต้องกรอกซ้ำ</div>
           </div>
         </div>
         <div class="section">
@@ -5025,81 +5093,157 @@ function onEc1wVehKeydown(e){
     e.stopPropagation(); // กัน Esc นี้ไปปิด modal ทั้งใบทับซ้อน (ต้องการแค่ปิด dropdown)
   }
 }
-function ec1wLocCell(l, field, vehicle, date){
-  const locs = (l && l.locations && l.locations.length) ? l.locations : ((vehicle && date) ? dailyWorkOrderLocationsForVehicleDate(vehicle, date) : []);
-  if(!locs || !locs.length) return '-';
-  return locs.map(x=> esc(field==='route' ? (x.route?('ทล.'+x.route):(x.officeLabel?x.officeLabel:(x.km?'อื่นๆ':'-'))) : (x.km||'-')) ).join('<br>');
+/* ---------- แบบฟอร์ม EC 1-W ตรงตามไฟล์ "ตย. ec1.pdf" ของกรม — ฟังก์ชันเดียวกันใช้ทั้งบนหน้าจอและตอนพิมพ์ ---------- */
+const EC1W_UNIT_NAME = 'หมวดทางหลวงเชิงเนิน  แขวงทางหลวงระยอง', EC1W_UNIT_CODE = '426';
+const EC1W_SUPERVISOR_POS = 'ชม.ขท.เชิงเนิน';                                      // ผู้ควบคุมงาน = SECTION_HEAD_NAME
+const EC1W_LESSOR = { name:'นายณัฐวุฒิ  สิโนทก', pos:'ชป.ขท.ระยอง' };              // ผู้ให้เช่า
+let __ec1wOpen = null;   // วันที่กำลังกางช่องกรอกอยู่ {vehicle,date}
+let __ec1wHasTh = null;
+/* เช็กว่าเครื่องมีฟอนต์ TH Sarabun ไหม (เทียบความกว้างข้อความกับฟอนต์สำรอง) — ไม่มีให้ใช้ Sarabun ขนาดเล็กลงแทน */
+function ec1wHasThaiFont(){
+  if(__ec1wHasTh!==null) return __ec1wHasTh;
+  try{
+    const c = document.createElement('canvas').getContext('2d'), s = 'รายงานการปฏิบัติงาน 0123';
+    c.font = '40px monospace'; const a = c.measureText(s).width;
+    c.font = '40px "TH Sarabun New","TH SarabunPSK",monospace'; __ec1wHasTh = c.measureText(s).width !== a;
+  }catch(e){ __ec1wHasTh = false; }
+  return __ec1wHasTh;
+}
+/* ชั่วโมง/ลิตร: 0 = "-" เหมือนฟอร์มกระดาษ, จำนวนเต็มไม่มีทศนิยม */
+function ec1wNum(n){ n = Number(n)||0; return n ? String(Math.round(n*100)/100) : '-'; }
+/* สถานที่ปฏิบัติงาน (ฟอร์มมีได้ 2 บรรทัดต่อวัน) — สายทางแสดงเฉพาะหมายเลขแบบต้นฉบับ เช่น "3574" */
+function ec1wLocLines(l, vehicle, date){
+  const locs = (l && l.locations && l.locations.length) ? l.locations : dailyWorkOrderLocationsForVehicleDate(vehicle, date);
+  return (locs||[]).map(x=>({ route: x.route ? x.route : (x.officeLabel || (x.km ? 'อื่นๆ' : '')), km: x.km || '' }));
+}
+/* ชื่อพนักงานขับ/ควบคุม: ใช้ชื่อที่รายงานบ่อยที่สุดในสัปดาห์ ถ้ายังไม่มีใช้ผู้รับผิดชอบรถในทะเบียน */
+function ec1wDriverForWeek(vehicle, dates){
+  const cnt = {};
+  dates.forEach(d=>{ const l = ec1wFindLog(vehicle, d); if(l && l.driver) cnt[l.driver] = (cnt[l.driver]||0)+1; });
+  const top = Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0];
+  return top || ((vehicles.find(x=>x.label===vehicle)||{}).note || '');
+}
+function ec1wSheetHtml(vehicle, dates, interactive){
+  const can = interactive && isAdmin();
+  const body = dates.map((date, i)=>{
+    const l = ec1wFindLog(vehicle, date);
+    const dow = EC1W_DOW_FULL[new Date(date+'T00:00:00').getDay()];
+    const dayOff = l && l.dayOff!=null ? l.dayOff : ec1wAutoDayOff(date);
+    const benzine = fuelForVehicleDate(vehicle, date, 'เบนซิน');
+    const diesel = fuelForVehicleDate(vehicle, date, 'ดีเซล');
+    const meter = meterForVehicleDate(vehicle, date);
+    const locs = ec1wLocLines(l, vehicle, date);
+    const open = can && __ec1wOpen && __ec1wOpen.vehicle===vehicle && __ec1wOpen.date===date;
+    const cls = 'r' + (can?' can':'') + (open?' open':'') + (i===dates.length-1?' last':'');
+    const click = can ? ` onclick="toggleEc1wDay('${jsArg(vehicle)}','${date}')"` : '';
+    const dt = `<td class="dt"><span class="w">${dow}</span>${fmtDate(date)}</td><td>${dayOff?'/':''}</td>`;
+    let tr;
+    if(!l && !benzine && !diesel && meter==null && !locs.length){
+      /* ยังไม่มีข้อมูลของวันนี้เลย = แถวว่างแบบฟอร์มกระดาษ */
+      tr = `<tr class="${cls}"${click}>${dt}<td></td><td>${(can && !dayOff) ? '<span class="miss-hint">✎ ยังไม่กรอก — คลิกเพื่อกรอก</span>' : ''}</td>${'<td></td>'.repeat(15)}</tr>`;
+    } else {
+      tr = `<tr class="${cls}"${click}>${dt}
+        <td class="two">${locs.map(x=>`<div>${esc(x.route)}</div>`).join('')}</td>
+        <td class="two">${locs.map(x=>`<div>${esc(x.km)}</div>`).join('')}</td>
+        <td>${ec1wNum(l&&l.hrW)}</td><td>${ec1wNum(l&&l.hrM)}</td><td>${ec1wNum(l&&l.hrC)}</td><td>${ec1wNum(l&&l.hrV)}</td><td>${ec1wNum(l&&l.hrO)}</td>
+        <td>${esc(l&&l.otherUnitCode||'-')}</td>
+        <td>${ec1wNum(l&&l.hrF)}</td><td>${ec1wNum(l&&l.hrR)}</td><td>${ec1wNum(l&&l.hrS)}</td>
+        <td style="font-size:.9em;white-space:normal;line-height:1.05">${esc(l&&l.otherReason||'-')}</td>
+        <td>${ec1wNum(benzine)}</td><td>${ec1wNum(diesel)}</td><td>-</td>
+        <td>${esc(meter!=null?meter:'-')}</td>
+        <td style="font-size:.85em;white-space:normal;line-height:1.05">${esc(l&&l.note||'')}</td></tr>`;
+    }
+    return tr + (open ? `<tr class="ed"><td colspan="19">${ec1wEditorHtml(vehicle, date)}</td></tr>` : '');
+  }).join('');
+  const cols = [99,22.5,46,141.5,27,27,27,27,27,54,27,27,27,53.5,27,27.5,27,38.5,39].map(w=>`<col style="width:${w}pt">`).join('');
+  return `<div class="ec1w-sheet${ec1wHasThaiFont()?'':' nofont'}">
+    <div class="f-top">
+      <div class="f-title">รายงานการปฏิบัติงานของเครื่องจักร - ยานพาหนะประจำสัปดาห์</div>
+      <div class="f-ec box">EC 1 - W</div><div class="f-start">เริ่มใช้ 1 พฤษภาคม 2549</div>
+      <div class="f-copy box">สำเนาฉบับที่...........</div>
+      <div class="f-hd f-unit box"><div class="lab">ชื่อหน่วยงาน (สำนักงานทางหลวง,แขวง,หมวดฯ,ศูนย์,ฯลฯ) / รหัส</div><div style="white-space:pre">${EC1W_UNIT_NAME}</div><div class="v2">${EC1W_UNIT_CODE}</div></div>
+      <div class="f-hd f-mc box"><div>หมายเลขเครื่องจักร - ยานพาหนะ</div><div>${esc(String(vehicleRegNo(vehicle)).split('-').map(s=>s.trim()).join(' - '))}</div></div>
+      <div class="f-hd f-dr box"><div>ชื่อพนักงานขับ / ควบคุม</div><div>${esc(ec1wDriverForWeek(vehicle, dates))}</div></div>
+    </div>
+    <table class="ec1w-table"><colgroup>${cols}</colgroup><thead>
+      <tr><th rowspan="2">วัน/เดือน/ปี</th><th rowspan="2">วัน<br>หยุด<br>(/)</th><th colspan="2">สถานที่ปฏิบัติงาน</th>
+        <th colspan="5">ชั่วโมงปฏิบัติงาน</th><th rowspan="2">รหัสหน่วยงาน<br>ที่ปฏิบัติงาน<br>อื่นๆ (O)</th><th colspan="3">ชั่วโมงที่ไม่ปฏิบัติงาน</th>
+        <th rowspan="2">สาเหตุอื่นๆ<br>ที่ไม่<br>ปฏิบัติงาน</th><th colspan="3" style="font-size:.9em;letter-spacing:-.2pt">น้ำมันเชื้อเพลิงที่เติม (ลิตร)</th><th rowspan="2">มิเตอร์<br>เลิกงาน</th><th rowspan="2">หมายเหตุ</th></tr>
+      <tr><th>หมายเลข<br>สายทาง</th><th>กิโลเมตร</th><th>W</th><th>M</th><th>C</th><th>V</th><th>O</th><th>F</th><th>R</th><th>S</th><th>เบน<br>ซิน</th><th>ดี<br>เซล</th><th>อื่นๆ<br>......</th></tr></thead>
+      <tbody>${body}</tbody></table>
+    <div class="f-foot">
+      <div><h4>สถานที่ปฏิบัติงาน</h4>กรณีไม่ได้ปฏิบัติงาน<br>สนาม ให้ระบุหน่วย-<br>งานที่ปฏิบัติงาน</div>
+      <div><h4>ชั่วโมงปฏิบัติงาน</h4>W = งานตามหน้าที่ปกติของหน่วยงาน<br>M = งานของผู้ให้เช่า<br>C = งานฉุกเฉิน/บริการสาธารณะ<br>V = งานอื่นๆของหน่วยงานที่ไม่ใช้หน้าที่<br>O = งานที่ใช้งบประมาณส่วนราชการอื่น</div>
+      <div><h4>ชั่วโมงที่ไม่ปฏิบัติงาน</h4>F = ความผิดของผู้ให้เช่า<br><span class="in">หรืออุปสรรคธรรมชาติ</span><br>R = ชำรุด/บริการหล่อลื่น<br>S = รองานทุกกรณี</div>
+      <div class="sig"><div class="l"><span>ลงชื่อ</span></div>( ${esc(SECTION_HEAD_NAME)} )<br>${EC1W_SUPERVISOR_POS}<br>ผู้ควบคุมงาน
+        <div class="l"><span>วันที่</span>${fmtDateFull(toLocalISODate(TODAY)).replace(' พ.ศ.','')}</div></div>
+      <div class="sig"><div class="l"><span>ลงชื่อ</span></div>( ${esc(EC1W_LESSOR.name)} )<br>${EC1W_LESSOR.pos}<br>ผู้ให้เช่า
+        <div class="l"><span>วันที่</span></div></div>
+    </div>
+    <div class="f-note">หมายเหตุ: ระบุข้อเสนอแนะ/อุปสรรค เช่น จัดส่ง พ.1 - 26 วันนี้<br>
+      อธิบายความหมายเพิ่มเติม รหัส F คือการไม่ได้ปฏิบัติงานเนื่องจากความผิดของผู้ให้เช่า เช่น กรณีเครื่องจักรที่ปฏิบัติงานร่วมกันมีคันใดคันหนึ่งชำรุดทำให้เครื่องจักรอื่นปฏิบัติงานไม่ได้</div>
+  </div>`;
+}
+/* ช่องกรอกที่กางใต้แถวของวัน — ใช้ id ชุดเดิม (em-*) ของหน้าต่างบันทึก EC1-W ทำให้ saveMachineryLogModal/removeMachineryLog ทำงานเหมือนเดิม */
+function ec1wEditorHtml(vehicle, date){
+  const l = ec1wFindLog(vehicle, date);
+  const v = vehicles.find(x=>x.label===vehicle);
+  const linkedLocs = (!l || !l.locations || !l.locations.length) ? dailyWorkOrderLocationsForVehicleDate(vehicle, date) : [];
+  const loc1 = (l && l.locations && l.locations[0]) || linkedLocs[0] || {route:'',km:''};
+  const loc2 = (l && l.locations && l.locations[1]) || linkedLocs[1] || {route:'',km:''};
+  const dayOffChecked = l && l.dayOff!=null ? l.dayOff : ec1wAutoDayOff(date);
+  const hin = (k, id) => `<div><label>${k}</label><input type="number" step="0.5" min="0" class="edit-input" id="${id}" value="${esc(l&&l['hr'+k]?l['hr'+k]:'')}"></div>`;
+  const meter = meterForVehicleDate(vehicle, date);
+  return `<div class="ec1w-ed" onclick="event.stopPropagation()">
+    <input type="hidden" id="em-vehicle" value="${esc(vehicle)}"><input type="hidden" id="em-date" value="${date}">
+    <div><h4>${l?'แก้ไข':'บันทึก'}ข้อมูลวัน${EC1W_DOW_FULL[new Date(date+'T00:00:00').getDay()]}ที่ ${fmtDate(date)}</h4>
+      <label>พนักงานขับ/ควบคุม (ตามที่รายงาน) <span class="req">*</span></label>
+      <input class="edit-input" id="em-driver" value="${esc(l?l.driver:(v&&v.note)||'')}" placeholder="ชื่อพนักงานขับรถ" style="margin-bottom:8px;">
+      <label>สถานที่ปฏิบัติงาน (สายทาง / กม.) — ได้ 2 แห่ง</label>
+      ${linkedLocs.length?'<div class="auto" style="margin-bottom:6px;">🔗 ดึงจากใบสั่งการรายวันของระบบงานสถิติฯ อัตโนมัติ — แก้ไขได้ตามจริง</div>':''}
+      <div class="loc"><select class="edit-input" id="em-route1" onchange="validateRouteKm('em-route1','em-km1','em-msg1')">${routeOptionsHtml(loc1.route)}</select>
+        <input class="edit-input" id="em-km1" value="${esc(loc1.km)}" placeholder="กม. เช่น 247+902" oninput="validateRouteKm('em-route1','em-km1','em-msg1')"></div>
+      <div id="em-msg1" style="margin-bottom:6px;"></div>
+      <div class="loc"><select class="edit-input" id="em-route2" onchange="validateRouteKm('em-route2','em-km2','em-msg2')">${routeOptionsHtml(loc2.route)}</select>
+        <input class="edit-input" id="em-km2" value="${esc(loc2.km)}" placeholder="สายทางที่ 2 (ถ้ามี)" oninput="validateRouteKm('em-route2','em-km2','em-msg2')"></div>
+      <div id="em-msg2"></div></div>
+    <div><h4>ชั่วโมงปฏิบัติงาน</h4><div class="hrow">${hin('W','em-hw')}${hin('M','em-hm')}${hin('C','em-hc')}${hin('V','em-hv')}${hin('O','em-ho')}</div>
+      <label style="margin-top:8px;">รหัสหน่วยงานที่ปฏิบัติงานอื่นๆ (สำหรับชั่วโมง O)</label>
+      <input class="edit-input" id="em-ounit" value="${l&&l.otherUnitCode?esc(l.otherUnitCode):''}" placeholder="เช่น รหัสหน่วยงานที่ขอยืมเครื่องจักร">
+      <label style="display:flex;align-items:center;gap:8px;margin-top:10px;"><input type="checkbox" id="em-dayoff" ${dayOffChecked?'checked':''}> วันหยุด (/)</label></div>
+    <div><h4>ชั่วโมงที่ไม่ปฏิบัติงาน</h4><div class="hrow three">${hin('F','em-hf')}${hin('R','em-hr')}${hin('S','em-hs')}</div>
+      <label style="margin-top:8px;">สาเหตุอื่นๆ ที่ไม่ปฏิบัติงาน</label>
+      <input class="edit-input" id="em-reason" value="${l&&l.otherReason?esc(l.otherReason):''}" placeholder="เช่น รอซ่อม, ฝนตก">
+      ${(v && v.fuelType==='เบนซิน') ? '' : `<label style="margin-top:8px;">มิเตอร์เลิกงาน (ค่าเดียวกับแถว 📏 เลขไมล์ใน พ.1-03)</label>
+      <input class="edit-input" id="em-mileage" value="${esc(meter!=null?String(meter):'')}" placeholder="ตัวเลข หรือ เช่น ชำรุด">`}</div>
+    <div class="wide"><div class="grow"><label>หมายเหตุ</label><input class="edit-input" id="em-note" value="${esc(l&&l.note?l.note:'')}" placeholder="หมายเหตุเพิ่มเติม"></div>
+      <div class="auto">🔗 น้ำมันเชื้อเพลิงที่เติมดึงจาก พ.1-03 อัตโนมัติ (แก้ไขที่นั่น) — ดีเซล ${fmtNum(fuelForVehicleDate(vehicle,date,'ดีเซล'),1)} ล. · เบนซิน ${fmtNum(fuelForVehicleDate(vehicle,date,'เบนซิน'),1)} ล.</div>
+      ${l?`<button type="button" class="btn btn-danger" onclick="removeMachineryLog(${l.id})">ลบรายการนี้</button>`:''}
+      <button type="button" class="btn btn-ghost" onclick="closeMachineryLogModal()">ยกเลิก</button>
+      <button type="button" class="btn btn-primary" id="em-save-btn" onclick="saveMachineryLogModal()">บันทึก</button></div>
+  </div>`;
+}
+function toggleEc1wDay(vehicle, date){
+  if(__ec1wOpen && __ec1wOpen.vehicle===vehicle && __ec1wOpen.date===date) closeMachineryLogModal();
+  else openMachineryLogModal(vehicle, date);
 }
 function renderMachinery(){
   populateEc1wVehicleSelect();
   const sel = document.getElementById('ec1w-veh-select');
   const vehicle = sel ? sel.value : (vehicles[0] && vehicles[0].label) || '';
   const dates = ec1wSelectedWeekDates();
-  const admin = isAdmin();
-
-  document.getElementById('ec1w-form-head').innerHTML = vehicle ? `<div style="display:flex;flex-wrap:wrap;gap:6px 20px;">
-      <div><b>หมายเลขเครื่องจักร-ยานพาหนะ:</b> ${esc(vehicleRegNo(vehicle))}</div>
-      <div><b>ผู้รับผิดชอบเครื่องจักร:</b> ${esc((vehicles.find(x=>x.label===vehicle)||{}).note || '—')}</div>
-      <div><b>สัปดาห์:</b> ${fmtDate(dates[0])} – ${fmtDate(dates[6])}</div>
-    </div>` : '<span style="color:var(--ink-400);">ยังไม่มีเครื่องจักร/ยานพาหนะในระบบ</span>';
-
-  const rows = dates.map(date=>{
-    const l = ec1wFindLog(vehicle, date);
-    const dow = EC1W_DOW_FULL[new Date(date+'T00:00:00').getDay()];
-    const isHol = ec1wAutoDayOff(date);
-    const dayOff = l && l.dayOff!=null ? l.dayOff : isHol;
-    const benzine = fuelForVehicleDate(vehicle, date, 'เบนซิน');
-    const diesel = fuelForVehicleDate(vehicle, date, 'ดีเซล');
-    const meter = meterForVehicleDate(vehicle, date);
-    const editBtn = admin ? `<button class="btn btn-ghost btn-sm" onclick="openMachineryLogModal('${jsArg(vehicle)}','${date}')" title="บันทึก/แก้ไข">${l?'✎':'+'}</button>` : '';
-    return `<tr${isHol?' class="ec1w-hol"':''}>
-      <td class="ec1w-left">${dow}<br><span style="color:var(--ink-400);font-size:11px;">${fmtDate(date)}</span></td>
-      <td>${dayOff?'/':'-'}</td>
-      <td class="ec1w-left">${ec1wLocCell(l,'route',vehicle,date)}</td>
-      <td class="ec1w-left">${ec1wLocCell(l,'km',vehicle,date)}</td>
-      <td>${l&&l.hrW?fmtNum(l.hrW,1):'-'}</td>
-      <td>${l&&l.hrM?fmtNum(l.hrM,1):'-'}</td>
-      <td>${l&&l.hrC?fmtNum(l.hrC,1):'-'}</td>
-      <td>${l&&l.hrV?fmtNum(l.hrV,1):'-'}</td>
-      <td>${l&&l.hrO?fmtNum(l.hrO,1):'-'}</td>
-      <td class="ec1w-left">${esc(l&&l.otherUnitCode?l.otherUnitCode:'-')}</td>
-      <td>${l&&l.hrF?fmtNum(l.hrF,1):'-'}</td>
-      <td>${l&&l.hrR?fmtNum(l.hrR,1):'-'}</td>
-      <td>${l&&l.hrS?fmtNum(l.hrS,1):'-'}</td>
-      <td class="ec1w-left">${esc(l&&l.otherReason?l.otherReason:'-')}</td>
-      <td>${benzine?fmtNum(benzine,1):'-'}</td>
-      <td>${diesel?fmtNum(diesel,1):'-'}</td>
-      <td>-</td>
-      <td>${esc(meter!=null?meter:'-')}</td>
-      <td class="ec1w-left">${esc(l&&l.note?l.note:'-')}</td>
-      <td>${editBtn}</td>
-    </tr>`;
-  }).join('');
-
-  document.getElementById('ec1w-table-wrap').innerHTML = vehicle ? `<table class="ec1w-table">
-    <thead>
-      <tr>
-        <th rowspan="2">วัน/เดือน/ปี</th>
-        <th rowspan="2">วันหยุด<br>(/)</th>
-        <th colspan="2">สถานที่ปฏิบัติงาน</th>
-        <th colspan="5">ชั่วโมงปฏิบัติงาน</th>
-        <th rowspan="2">รหัสหน่วยงาน<br>ที่ปฏิบัติงาน<br>อื่นๆ (O)</th>
-        <th colspan="3">ชั่วโมงที่ไม่ปฏิบัติงาน</th>
-        <th rowspan="2">สาเหตุอื่นๆ<br>ที่ไม่ปฏิบัติงาน</th>
-        <th colspan="3">น้ำมันเชื้อเพลิงที่เติม (ลิตร)</th>
-        <th rowspan="2">มิเตอร์<br>เลิกงาน</th>
-        <th rowspan="2">หมายเหตุ</th>
-        <th rowspan="2"></th>
-      </tr>
-      <tr>
-        <th>หมายเลข<br>สายทาง</th><th>กิโลเมตร</th>
-        <th>W</th><th>M</th><th>C</th><th>V</th><th>O</th>
-        <th>F</th><th>R</th><th>S</th>
-        <th>เบนซิน</th><th>ดีเซล</th><th>อื่นๆ</th>
-      </tr>
-    </thead>
-    <tbody>${rows}</tbody>
-  </table>` : '';
+  /* เปลี่ยนรถ/สัปดาห์ = ปิดช่องกรอกที่ค้างไว้ ; ถ้ายังเป็นวันเดิม (เช่น ข้อมูลโหลดเสร็จแล้ววาดใหม่) เก็บค่าที่พิมพ์ไว้ไม่ให้หาย */
+  if(__ec1wOpen && (__ec1wOpen.vehicle!==vehicle || !dates.includes(__ec1wOpen.date))) __ec1wOpen = null;
+  const keep = {};
+  if(__ec1wOpen) document.querySelectorAll('.ec1w-ed [id]').forEach(e=>{ if('value' in e) keep[e.id] = e.type==='checkbox' ? e.checked : e.value; });
+  const wrap = document.getElementById('ec1w-table-wrap');
+  wrap.innerHTML = vehicle ? `<div class="ec1w-desk">${ec1wSheetHtml(vehicle, dates, true)}</div>`
+    : '<div style="margin:14px 20px 0;color:var(--ink-400);font-size:13px;">ยังไม่มีเครื่องจักร/ยานพาหนะในระบบ</div>';
+  Object.keys(keep).forEach(id=>{ const e = document.getElementById(id); if(e){ if(e.type==='checkbox') e.checked = keep[id]; else e.value = keep[id]; } });
+  if(__ec1wOpen && document.getElementById('em-route1')){
+    validateRouteKm('em-route1','em-km1','em-msg1');
+    validateRouteKm('em-route2','em-km2','em-msg2');
+  }
 
   const d = new Date(TODAY);
   const dow2 = d.getDay();
@@ -5111,67 +5255,16 @@ function openMachineryLogModal(vehicle, date){
   if(!vehicle){ const sel=document.getElementById('ec1w-veh-select'); vehicle = sel ? sel.value : (vehicles[0]&&vehicles[0].label); }
   if(!date) date = ec1wSelectedWeekDates()[0];
   if(!vehicle){ showAlertModal('ยังไม่มีเครื่องจักร/ยานพาหนะในระบบ'); return; }
-  const l = ec1wFindLog(vehicle, date);
-  const v = vehicles.find(x=>x.label===vehicle);
-  const linkedLocs = (!l || !l.locations || !l.locations.length) ? dailyWorkOrderLocationsForVehicleDate(vehicle, date) : [];
-  const loc1 = (l && l.locations && l.locations[0]) || linkedLocs[0] || {route:'',km:''};
-  const loc2 = (l && l.locations && l.locations[1]) || linkedLocs[1] || {route:'',km:''};
-  const locFromDaily = !!linkedLocs.length;
-  const dayOffChecked = l && l.dayOff!=null ? l.dayOff : ec1wAutoDayOff(date);
-  const lbl = 'style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;"';
-  document.getElementById('ec1w-modal-title').textContent = (l?'แก้ไข':'บันทึก')+'ข้อมูล EC1-W — วัน'+EC1W_DOW_FULL[new Date(date+'T00:00:00').getDay()]+'ที่ '+fmtDate(date);
-  document.getElementById('ec1w-modal-body').innerHTML = `
-    <input type="hidden" id="em-vehicle" value="${esc(vehicle)}">
-    <input type="hidden" id="em-date" value="${date}">
-    <div class="foot-note" style="margin:0 0 12px;padding:0;border:none;">${esc(vehicleShortName(vehicle))} (${esc(vehicleRegNo(vehicle))})</div>
-    <div style="margin-bottom:12px;"><label ${lbl}>พนักงานขับ/ควบคุม (ตามที่รายงาน) <span class="req">*</span></label>
-      <input class="edit-input" id="em-driver" value="${esc(l?l.driver:(v&&v.note)||'')}" placeholder="ชื่อพนักงานขับรถ"></div>
-    <div style="margin-bottom:4px;"><label ${lbl}>สถานที่ปฏิบัติงาน (สายทาง / กม.)</label></div>
-    ${locFromDaily?`<div style="margin:0 0 8px;padding:6px 10px;background:var(--paper-100);border-radius:6px;font-size:11.5px;color:var(--ink-500);">🔗 ดึงมาจากใบสั่งการรายวันของระบบงานสถิติฯ อัตโนมัติ — ตรวจสอบและแก้ไขได้ตามจริง</div>`:''}
-    <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:10px;margin-bottom:4px;">
-      <select class="edit-input" id="em-route1" onchange="validateRouteKm('em-route1','em-km1','em-msg1')">${routeOptionsHtml(loc1.route)}</select>
-      <input class="edit-input" id="em-km1" value="${esc(loc1.km)}" placeholder="กม. เช่น 247+902" oninput="validateRouteKm('em-route1','em-km1','em-msg1')">
-    </div>
-    <div id="em-msg1" style="margin-bottom:8px;"></div>
-    <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:10px;margin-bottom:4px;">
-      <select class="edit-input" id="em-route2" onchange="validateRouteKm('em-route2','em-km2','em-msg2')">${routeOptionsHtml(loc2.route)}</select>
-      <input class="edit-input" id="em-km2" value="${esc(loc2.km)}" placeholder="สายทางที่ 2 (ถ้ามี)" oninput="validateRouteKm('em-route2','em-km2','em-msg2')">
-    </div>
-    <div id="em-msg2" style="margin-bottom:12px;"></div>
-    <div style="margin-bottom:4px;"><label ${lbl}>ชั่วโมงปฏิบัติงาน</label></div>
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px;">
-      <div><label ${lbl}>W</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hw" value="${esc(l&&l.hrW?l.hrW:'')}"></div>
-      <div><label ${lbl}>M</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hm" value="${esc(l&&l.hrM?l.hrM:'')}"></div>
-      <div><label ${lbl}>C</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hc" value="${esc(l&&l.hrC?l.hrC:'')}"></div>
-      <div><label ${lbl}>V</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hv" value="${esc(l&&l.hrV?l.hrV:'')}"></div>
-      <div><label ${lbl}>O</label><input type="number" step="0.5" min="0" class="edit-input" id="em-ho" value="${esc(l&&l.hrO?l.hrO:'')}"></div>
-    </div>
-    <div style="margin-bottom:12px;"><label ${lbl}>รหัสหน่วยงานที่ปฏิบัติงานอื่นๆ (สำหรับชั่วโมง O)</label>
-      <input class="edit-input" id="em-ounit" value="${l&&l.otherUnitCode?esc(l.otherUnitCode):''}" placeholder="เช่น รหัสหน่วยงานที่ขอยืมเครื่องจักร"></div>
-    <div style="margin-bottom:4px;"><label ${lbl}>ชั่วโมงที่ไม่ปฏิบัติงาน</label></div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;">
-      <div><label ${lbl}>F</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hf" value="${esc(l&&l.hrF?l.hrF:'')}"></div>
-      <div><label ${lbl}>R</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hr" value="${esc(l&&l.hrR?l.hrR:'')}"></div>
-      <div><label ${lbl}>S</label><input type="number" step="0.5" min="0" class="edit-input" id="em-hs" value="${esc(l&&l.hrS?l.hrS:'')}"></div>
-    </div>
-    <div style="margin-bottom:12px;"><label ${lbl}>สาเหตุอื่นๆ ที่ไม่ปฏิบัติงาน</label>
-      <input class="edit-input" id="em-reason" value="${l&&l.otherReason?esc(l.otherReason):''}" placeholder="เช่น รอซ่อม, ฝนตก"></div>
-    <div style="margin-bottom:12px;"><label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-600);">
-      <input type="checkbox" id="em-dayoff" ${dayOffChecked?'checked':''}> วันหยุด (/)</label></div>
-    <div style="margin-bottom:6px;"><label ${lbl}>หมายเหตุ</label>
-      <textarea class="edit-input" id="em-note" rows="2" placeholder="หมายเหตุเพิ่มเติม">${esc(l&&l.note?l.note:'')}</textarea></div>
-    ${(v && v.fuelType==='เบนซิน') ? '' : `<div style="margin-bottom:6px;"><label ${lbl}>มิเตอร์เลิกงาน (เลขไมล์) — ใช้ค่าเดียวกับแถว 📏 เลขไมล์ในตาราง พ.1-03</label>
-      <input class="edit-input" id="em-mileage" value="${esc(meterForVehicleDate(vehicle,date)!=null?String(meterForVehicleDate(vehicle,date)):'')}" placeholder="ตัวเลข หรือ เช่น ชำรุด"></div>`}
-    <div class="foot-note" style="margin:6px 0 0;padding:8px 0 0;border-top:1px solid var(--line);">น้ำมันเชื้อเพลิงที่เติมของวันนี้เชื่อมโยงจากใบสั่งการ/ตาราง พ.1-03 อัตโนมัติ (แก้ไขที่นั่น) — ดีเซล ${fmtNum(fuelForVehicleDate(vehicle,date,'ดีเซล'),1)} ล. · เบนซิน ${fmtNum(fuelForVehicleDate(vehicle,date,'เบนซิน'),1)} ล.</div>
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
-      ${l?`<button type="button" class="btn btn-danger" onclick="removeMachineryLog(${l.id})">ลบรายการนี้</button>`:''}
-      <button type="button" class="btn btn-primary" id="em-save-btn" onclick="saveMachineryLogModal()">บันทึก</button>
-    </div>`;
-  document.getElementById('ec1w-modal-overlay').classList.remove('hidden');
-  validateRouteKm('em-route1','em-km1','em-msg1');
-  validateRouteKm('em-route2','em-km2','em-msg2');
+  /* กางช่องกรอกใต้แถวของวันนั้นในแบบฟอร์ม (แทนหน้าต่างเด้ง) — ดู ec1wEditorHtml() */
+  __ec1wOpen = { vehicle, date };
+  renderMachinery();
+  const ed = document.querySelector('.ec1w-ed');
+  if(ed){ ed.scrollIntoView({block:'nearest', behavior:'smooth'}); const f = document.getElementById('em-driver'); if(f) f.focus({preventScroll:true}); }
 }
-function closeMachineryLogModal(){ document.getElementById('ec1w-modal-overlay').classList.add('hidden'); }
+function closeMachineryLogModal(){
+  document.getElementById('ec1w-modal-overlay').classList.add('hidden');
+  if(__ec1wOpen){ __ec1wOpen = null; renderMachinery(); }
+}
 async function saveMachineryLogModal(){
   if(!isAdmin()) return;
   const vehicle = document.getElementById('em-vehicle').value;
@@ -5242,34 +5335,9 @@ function removeMachineryLog(id){
 function printMachinery(){
   const sel = document.getElementById('ec1w-veh-select');
   const vehicle = sel ? sel.value : (vehicles[0] && vehicles[0].label) || '';
-  const v = vehicles.find(x=>x.label===vehicle);
-  const dates = ec1wSelectedWeekDates();
-  const rows = dates.map(date=>{
-    const l = ec1wFindLog(vehicle, date);
-    const dow = EC1W_DOW_FULL[new Date(date+'T00:00:00').getDay()];
-    const isHol = l && l.dayOff!=null ? l.dayOff : ec1wAutoDayOff(date);
-    const benzine = fuelForVehicleDate(vehicle, date, 'เบนซิน');
-    const diesel = fuelForVehicleDate(vehicle, date, 'ดีเซล');
-    const meter = meterForVehicleDate(vehicle, date);
-    return `<tr><td>${dow} ${fmtDate(date)}</td><td>${isHol?'/':''}</td><td>${ec1wLocCell(l,'route').replace(/<br>/g,' / ')}</td><td>${ec1wLocCell(l,'km').replace(/<br>/g,' / ')}</td>
-      <td>${esc(l&&l.hrW||'')}</td><td>${esc(l&&l.hrM||'')}</td><td>${esc(l&&l.hrC||'')}</td><td>${esc(l&&l.hrV||'')}</td><td>${esc(l&&l.hrO||'')}</td><td>${esc(l&&l.otherUnitCode||'')}</td>
-      <td>${esc(l&&l.hrF||'')}</td><td>${esc(l&&l.hrR||'')}</td><td>${esc(l&&l.hrS||'')}</td><td>${esc(l&&l.otherReason||'')}</td>
-      <td>${benzine||''}</td><td>${diesel||''}</td><td>${esc(meter!=null?meter:'')}</td><td>${esc(l&&l.note||'')}</td></tr>`;
-  }).join('');
-  document.getElementById('print-ec1w').innerHTML = `
-    <div class="official-form" style="font-size:11px;">
-      <div class="form-code">EC1-W</div>
-      <div class="form-title">รายงานการปฏิบัติงานของเครื่องจักรและยานพาหนะ (รายสัปดาห์)</div>
-      <div class="form-org">กรมทางหลวง แขวงทางหลวงระยอง หมวดทางหลวงเชิงเนิน 426 — เครื่องจักร/ยานพาหนะ ${esc(vehicleRegNo(vehicle))} — สัปดาห์ ${fmtDate(dates[0])} – ${fmtDate(dates[6])}</div>
-      <table class="of-table">
-        <thead><tr><th>วัน/เดือน/ปี</th><th>วันหยุด</th><th>สายทาง</th><th>กม.</th><th>W</th><th>M</th><th>C</th><th>V</th><th>O</th><th>รหัสหน่วยงานอื่นๆ</th><th>F</th><th>R</th><th>S</th><th>สาเหตุอื่นๆ</th><th>เบนซิน</th><th>ดีเซล</th><th>มิเตอร์เลิกงาน</th><th>หมายเหตุ</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <div style="display:flex;justify-content:space-between;margin-top:30px;">
-        <div>ลงชื่อ .................................  ผู้รวบรวมรายงาน<br><br>( ................................................... )</div>
-        <div>ลงชื่อ .................................  หัวหน้าหมวด<br><br>( นายอิศรินทร์  อรุณสวัสดิ์ )</div>
-      </div>
-    </div>`;
+  if(!vehicle){ showAlertModal('ยังไม่มีเครื่องจักร/ยานพาหนะในระบบ'); return; }
+  /* พิมพ์จากฟังก์ชันเดียวกับที่แสดงบนจอ = ได้แบบฟอร์ม EC 1-W ของกรมตรงทุกจุด (A4 แนวนอน ไม่มีช่องกรอก/คำแนะนำติดไป) */
+  document.getElementById('print-ec1w').innerHTML = ec1wSheetHtml(vehicle, ec1wSelectedWeekDates(), false);
   printForm('print-ec1w');
 }
 
