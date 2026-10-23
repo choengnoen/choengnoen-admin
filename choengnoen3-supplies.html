@@ -234,7 +234,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
      ฟอนต์ TH Sarabun 13pt เหมือนต้นฉบับ ถ้าเครื่องไม่มีฟอนต์นี้ (.nofont) ใช้ Sarabun ขนาดเล็กลงแทนให้หน้าฟอร์มไม่เพี้ยน */
   @page ec1wpage{size:A4 landscape;margin:0;}
   /* บนจอย่อทั้งใบให้พอดีความกว้าง (ดู fitEc1wSheet) — ไม่มีแถบเลื่อนซ้าย-ขวา ; ตอนพิมพ์ใช้สำเนาแยกใน #print-ec1w ขนาดจริงเสมอ */
-  .ec1w-desk{background:#e4e1d8;border-radius:12px;padding:14px;margin:12px 20px 0;overflow:hidden;}
+  .ec1w-desk{background:#e4e1d8;border-radius:12px;padding:14px;margin:12px 20px 20px;overflow:hidden;}
   /* เนื้อหาฟอร์ม (กว้าง 791.5pt) วางกึ่งกลางหน้ากระดาษทั้งแนวนอนและแนวตั้ง */
   .ec1w-sheet{page:ec1wpage;box-sizing:border-box;width:842pt;min-height:595pt;margin:0 auto;background:#fff;position:relative;padding:12pt 0;
     display:flex;flex-direction:column;justify-content:center;align-items:center;
@@ -274,6 +274,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ec1w-sheet .sig{text-align:center;margin-left:30pt;}
   .ec1w-sheet .sig .l{position:relative;border-bottom:1pt dotted #000;height:15pt;line-height:15pt;}
   .ec1w-sheet .sig .l span{position:absolute;right:100%;bottom:0;padding-right:4pt;white-space:nowrap;}
+  /* ไอคอนแก้ไขชื่อผู้ให้เช่า: บนเส้นลงชื่อ ชิดขวาสุด (เฉพาะบนจอ ผู้มีสิทธิ์แก้ไข) */
+  .ec1w-sheet .ec1w-lessor-btn{position:absolute;right:0;bottom:2pt;width:15pt;height:15pt;padding:2pt;border:none;border-radius:4pt;background:transparent;color:var(--ink-400);cursor:pointer;line-height:0;}
+  .ec1w-sheet .ec1w-lessor-btn:hover{background:var(--paper-100);color:var(--orange-600);}
+  .ec1w-sheet .ec1w-lessor-btn svg{width:100%;height:100%;}
   .ec1w-sheet .f-note{margin-top:20pt;line-height:16.5pt;}
   /* หน้าจอ: คลิกแถวของวันเพื่อกรอก/แก้ไข (ช่องกรอกกางใต้แถว) — ไม่ติดไปตอนพิมพ์ */
   .ec1w-sheet tr.r.can{cursor:pointer;}
@@ -300,8 +304,17 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
     body:has(#print-ec1w.show-print) .app{display:none !important;}
     #print-ec1w.show-print{page:ec1wpage;}
     .ec1w-sheet{box-shadow:none;margin:0;height:595pt;overflow:hidden;}
-    .ec1w-sheet tr.ed,.ec1w-sheet .miss-hint{display:none !important;}
+    .ec1w-sheet tr.ed,.ec1w-sheet .miss-hint,.ec1w-sheet .ec1w-lessor-btn{display:none !important;}
     .ec1w-sheet tr.r td{background:#fff !important;}
+  }
+  /* ใบขออนุญาตใช้รถส่วนกลาง พ.4-08 ตามไฟล์ "พ.4-08 ใบขออนุญาตใช้รถส่วนกลาง (ใช้จริง).pdf" (A4 แนวตั้ง 595 x 842 pt)
+     วาดเป็น SVG พิกัดเดียวกับต้นฉบับทุกตัวอักษร/เส้นจุด ดู printVehReq() */
+  @page vehreqpage{size:A4 portrait;margin:0;}
+  .p408-sheet{width:210mm;height:297mm;overflow:hidden;background:#fff;}
+  .p408-sheet svg{display:block;width:210mm;height:297mm;}
+  @media print{
+    body:has(#print-vehreq.show-print) .app{display:none !important;}
+    #print-vehreq.show-print{page:vehreqpage;}
   }
   tr.mileage-row input.mi-decrease,tr.mileage-row td.mi-decrease{background:var(--danger-bg)!important;}
   tr.mileage-row input.mi-decrease{border-color:var(--danger)!important;color:var(--danger);font-weight:600;}
@@ -1124,10 +1137,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </div>
           </div>
           <div id="ec1w-table-wrap"></div>
-          <div class="legend-block" id="ec1w-foot-block">
-            <button type="button" class="legend-dot-btn no-print" id="ec1w-foot-toggle" onclick="__toggleNote('ec1w-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="ec1w-foot" style="display:none;background:transparent;border-top:none;">หน้าจอนี้คือแบบฟอร์ม EC 1-W ตามที่จะพิมพ์ออกมาจริง (A4 แนวนอน) — คลิกที่แถวของแต่ละวัน (สำหรับผู้มีสิทธิ์แก้ไข) ช่องกรอกจะกางออกใต้แถวนั้น เพื่อบันทึกสถานที่ปฏิบัติงาน ชั่วโมงปฏิบัติงาน/ไม่ปฏิบัติงาน และหมายเหตุของวันนั้นตามที่พนักงานขับรถ/ผู้ควบคุมเครื่องจักรรายงานมา — คอลัมน์ "น้ำมันเชื้อเพลิงที่เติม" และ "มิเตอร์เลิกงาน" เชื่อมโยงข้อมูลมาจากตารางบริหารจัดการน้ำมันเชื้อเพลิง (แท็บ "พ.1-02 / พ.1-03") โดยอัตโนมัติทันทีที่คีย์ข้อมูลในแท็บนั้นเรียบร้อย ไม่ต้องกรอกซ้ำ</div>
-          </div>
         </div>
         <div class="section">
           <div class="section-head">
@@ -1142,10 +1151,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <thead><tr><th>วันที่ขอใช้</th><th>ผู้ขอใช้</th><th>รถ/เครื่องจักร</th><th>ไปที่ / สายทาง</th><th>วันที่ไป – กลับ</th><th>เลขไมล์ (เริ่ม–สิ้นสุด)</th><th>ระยะทาง (กม.)</th><th></th></tr></thead>
             <tbody id="vehreq-body"></tbody>
           </table></div>
-          <div class="legend-block" id="vehreq-foot-block">
-            <button type="button" class="legend-dot-btn no-print" id="vehreq-foot-toggle" onclick="__toggleNote('vehreq-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="vehreq-foot" style="display:none;background:transparent;border-top:none;">เลขไมล์เริ่มต้นจะดึงจากแถว "📏 เลขไมล์" ในตาราง พ.1-03 ให้อัตโนมัติเมื่อพบข้อมูลของรถคันนั้นก่อนวันที่ไป — สายทางเลือกจากฐานข้อมูลทางหลวงควบคุมชุดเดียวกับระบบรองที่ 2 เพื่อความสอดคล้องกัน กรอกเลขไมล์เมื่อกลับหลังเสร็จภารกิจเพื่อคำนวณระยะทางอัตโนมัติ แล้วกดพิมพ์เพื่อเสนอลงนาม</div>
-          </div>
         </div>
       </div>
 
@@ -1276,8 +1281,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   <div class="modal-box" style="max-width:520px;">
     <div class="modal-head">
       <div class="modal-head-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1Z"/><path d="M8 4H6a1 1 0 0 0-1 1v15a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-2"/><path d="M9 12h6M9 16h6"/></svg></div>
-      <h3 id="ec1w-modal-title">บันทึกข้อมูล EC1-W</h3>
-      <button type="button" class="modal-close" onclick="closeMachineryLogModal()">✕</button>
+      <h3 id="ec1w-modal-title">แก้ไขชื่อผู้ให้เช่า (EC 1-W)</h3>
+      <button type="button" class="modal-close" onclick="document.getElementById('ec1w-modal-overlay').classList.add('hidden')">✕</button>
     </div>
     <div class="modal-body" id="ec1w-modal-body"></div>
   </div>
@@ -3221,35 +3226,133 @@ function removeVehReq(id){
     showSuccessModal('ลบใบขอใช้รถเรียบร้อยแล้ว');
   });
 }
+/* แบบฟอร์ม พ.4-08 (A4 595 x 842 pt) — ข้อความ/ลำดับบรรทัดตามต้นฉบับ PDF ของกรม แต่จัดโครงสร้างแบบเดียวกับใบลา (ระบบสารบรรณ)
+   ฟอนต์ป้าย TH SarabunIT๙ 16pt, ค่าที่กรอก TH SarabunPSK เลขไทย ยกเหนือเส้นจุด 2.2pt, เส้นจุดกลม 1pt ทุก 2.55pt เริ่มทันทีหลังป้าย
+   ส่วนบน (วันที่/เรียน/ข้าพเจ้า) และบล็อกลงชื่อใช้พิกัดเดียวกับใบลาพักผ่อน จ.๓-๐๖ ; y = เส้นฐานนับจากขอบบนกระดาษ */
+const P408_TH_DIGITS = '๐๑๒๓๔๕๖๗๘๙';
+function p408Th(v){ return String(v==null?'':v).replace(/\d/g,d=>P408_TH_DIGITS[d]); }
+function p408HasThFont(){
+  try{
+    const c = document.createElement('canvas').getContext('2d'); const t='ขออนุญาตใช้รถส่วนกลาง';
+    c.font='40px serif'; const a=c.measureText(t).width;
+    c.font='40px "TH SarabunIT๙","TH SarabunPSK",serif';
+    return c.measureText(t).width!==a;
+  }catch(e){ return false; }
+}
+function p408DateParts(iso){
+  if(!iso) return ['','',''];
+  const d = new Date(iso+'T00:00:00');
+  const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  return [p408Th(d.getDate()), months[d.getMonth()], p408Th(d.getFullYear()+543)];
+}
+function buildP408Svg(r){
+  const th = p408HasThFont();
+  const famL = th ? "'TH SarabunIT๙','THSarabunIT๙','TH SarabunPSK','THSarabunPSK','TH Sarabun New'" : "'Sarabun'";
+  const famV = th ? "'TH SarabunPSK','THSarabunPSK','TH Sarabun PSK','TH Sarabun New'" : "'Sarabun'";
+  const k = th ? 1 : 0.85; // ไม่มีฟอนต์ TH ใช้ Sarabun ย่อลงเหมือนใบลา (.lv-sar)
+  const cv = document.createElement('canvas').getContext('2d');
+  const tw = (s,size,bold,fam)=>{ cv.font = `${bold?'700 ':''}${size*k}px ${fam||famL}`; return cv.measureText(s).width; };
+  let h = '', d = '';
+  // ข้อความคงที่ ; o.mid = จัดกึ่งกลางที่ x ; <u>..</u> = ขีดเส้นใต้แบบต้นฉบับ
+  const T = (x,y,s,o)=>{ o=o||{}; const size=o.size||16;
+    const body = esc(s).replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g,'<tspan text-decoration="underline">$1</tspan>');
+    h += `<text x="${x}" y="${y}" font-size="${size*k}"${o.bold?' font-weight="700"':''}${o.mid?' text-anchor="middle"':''}>${body}</text>`; };
+  const D = (x0,x1,y)=>{ if(x1-x0>1) d += `<line x1="${x0+0.5}" y1="${y-0.5}" x2="${x1}" y2="${y-0.5}"/>`; };
+  // ป้าย + เส้นจุดต่อท้ายทันทีจนถึง x1
+  const L = (x,y,x1,s,o)=>{ T(x,y,s,o); D(x+tw(s.replace(/<\/?u>/g,''),(o&&o.size)||16,o&&o.bold)+1,x1,y); };
+  // ค่าที่กรอก (x0..x1) — ยาวเกินช่องจะลดขนาดตัวอักษรลง (ต่ำสุด 10pt) เหมือน lvV ของใบลา
+  // o.half = บรรทัดยาว: วางกึ่งกลางของครึ่งซ้ายของเส้นจุด
+  const V = (x0,x1,y,s,o)=>{ o=o||{}; s = s==null ? '' : String(s).trim(); if(!s) return;
+    if(o.half) x1 = (x0+x1)/2;
+    /* เหลือเส้นจุดหน้า-หลังข้อความอย่างน้อย 14.6pt (~6 จุด) ; ช่องสั้น (วัน/ปี) ใช้ไม่เกิน 20% ของช่องต่อข้าง */
+    const m = o.flat ? 0 : Math.min(14.6, (x1-x0)*0.2);
+    const room = x1-x0-2*m-(o.flat?4:0), w = tw(s,16,0,famV), size = w>room ? Math.max(10, Math.floor(160*room/w)/10) : 16;
+    const yy = y-(o.flat?0:2.2);
+    h += o.left
+      ? `<text x="${o.flat ? x0+2+3.3 : x0+m}" y="${yy}" font-family="${esc(famV)}" font-size="${size*k}">${esc(s)}</text>`
+      : `<text x="${(x0+x1)/2}" y="${yy}" font-family="${esc(famV)}" font-size="${size*k}" text-anchor="middle">${esc(s)}</text>`; };
+  // บล็อกลงชื่อ ขนาดเดียวกันทั้ง 3 ช่อง (ผู้ขอ/ผู้สั่งการ/พนักงานขับรถ) ตามช่องพนักงานขับรถของต้นฉบับ
+  // x = แนวซ้ายของป้าย ; วงเล็บ x+33.1 .. x+180 ; ชื่อและตำแหน่งกึ่งกลางระหว่างวงเล็บ
+  const SIGN = (x,y,g,label,name,role)=>{
+    const P = x+33.1, R = x+180, C = (P+3+R)/2;
+    L(x,y,R+3,label);
+    L(P,y+g,R,'('); T(R,y+g,')'); V(P+3,R,y+g,name);
+    T(C,y+2*g,role,{mid:1});
+  };
+
+  const num = v => v!=null && v!=='' ? p408Th(fmtNum(v,0)) : '';
+  const [rd,rm,ry] = p408DateParts(r.requestDate);
+  const [fd,fm,fy] = p408DateParts(r.dateFrom);
+  const [td,tm,ty] = p408DateParts(r.dateTo);
+  const distance = (r.mileageStart!=null && r.mileageEnd!=null) ? (r.mileageEnd-r.mileageStart) : null;
+  // สายทาง + ชื่อตอน จากฐานข้อมูลทางหลวงควบคุม เช่น "ทล.3143 ตอน บ้านค่าย-หนองละลอก"
+  const routes = p408Th((r.routeNos||[]).map(no=>{
+    if(no==='__other__') return 'อื่นๆ';
+    const rt = findRoute(no), sec = rt && rt.section ? String(rt.section).trim().replace(/^ตอน\s*/,'') : '';
+    return `ทล.${no}${sec?' ตอน '+sec:''}`;
+  }).join(', '));
+  const vehicle = r.vehicleLabel ? p408Th(`${vehicleRegNo(r.vehicleLabel)} (${vehicleShortName(r.vehicleLabel)})`) : '';
+
+  /* ส่วนหัว — ตำแหน่งเดียวกับใบลาพักผ่อน */
+  T(297.6,54.7,'ใบขออนุญาตใช้รถส่วนกลาง',{bold:1,size:18,mid:1});
+  T(481.8,54.7,'กรมทางหลวง',{bold:1}); T(481.8,70.7,'พ.๔-๐๘',{bold:1}); T(481.8,86.7,'เริ่มใช้ ๑ มิ.ย.๒๕๒๔',{size:13});
+  L(325,119.2,370,'วันที่'); L(373.5,119.2,473,'เดือน'); L(477.1,119.2,542,'พ.ศ.');
+  V(344,370,119.2,rd); V(396,473,119.2,rm); V(496,542,119.2,ry);
+  T(54,162.4,'เรียน'); V(77.5,232.2,162.4,'ชม.ขท.เชิงเนิน',{left:1,flat:1});
+  L(126,184.1,325.1,'ข้าพเจ้า'); L(327.1,184.1,542,'ตำแหน่ง');
+  V(126+tw('ข้าพเจ้า',16),325.1,184.1,r.requesterName,{left:1}); V(327.1+tw('ตำแหน่ง',16),542,184.1,r.requesterPosition,{left:1});
+  /* เนื้อหา — ระยะบรรทัด 21.7pt เท่าใบลา ; แนว x ของช่องย่อยตามต้นฉบับ พ.4-08 */
+  let y = 205.8;
+  L(54,y,345,'ขออนุญาตใช้รถ(ไปที่ไหน)'); L(347.8,y,542,'เพื่อ');
+  V(54+tw('ขออนุญาตใช้รถ(ไปที่ไหน)',16),345,y,routes,{left:1}); V(347.8+tw('เพื่อ',16),542,y,r.purpose,{left:1});
+  y += 21.7;
+  /* ให้ "น." ชิดขอบขวา 542 — ระยะที่เหลือแบ่งครึ่งให้ช่องจำนวนคนนั่ง (a) และช่องวันที่ (b) */
+  /* แบ่ง a/b ให้เส้นจุดช่อง "ในวันที่" (บรรทัดนี้) ยาวเท่าช่อง "ถึงวันที่" (บรรทัดล่าง ซึ่ง "เดือน" ตรงแนว "คน") */
+  const ex = Math.max(0, 542-(513.1+tw('น.',16)));
+  const a = (ex-4.8-tw('ในวันที่',16)+tw('ถึงวันที่',16))/2, b = ex-a;
+  L(54,y,120.9+a,'มีคนนั่ง'); T(122.9+a,y,'คน'); L(142.8+a,y,204.9+a+b,'ในวันที่'); L(206.9+a+b,y,310.3+ex,'เดือน'); L(312.3+ex,y,408.4+ex,'พ.ศ.'); L(410.4+ex,y,511.1+ex,'เวลา'); T(513.1+ex,y,'น.');
+  V(54+tw('มีคนนั่ง',16),120.9+a,y,p408Th(r.passengers)); V(142.8+a+tw('ในวันที่',16),204.9+a+b,y,fd); V(206.9+a+b+tw('เดือน',16),310.3+ex,y,fm); V(312.3+ex+tw('พ.ศ.',16),408.4+ex,y,fy);
+  y += 21.7;
+  /* "เดือน" บรรทัดนี้ตั้งตรงแนว "คน" บรรทัดบน — ส่วนที่เหลือเลื่อนตาม ความกว้างช่องเดิม */
+  const s2 = 122.9+a-118.4;
+  L(54,y,116.4+s2,'ถึงวันที่'); L(118.4+s2,y,221.6+s2,'เดือน'); L(223.6+s2,y,319.8+s2,'พ.ศ.'); L(321.8+s2,y,429.3+s2,'เวลา'); T(431.3+s2,y,'น.');
+  V(54+tw('ถึงวันที่',16),116.4+s2,y,td); V(118.4+s2+tw('เดือน',16),221.6+s2,y,tm); V(223.6+s2+tw('พ.ศ.',16),319.8+s2,y,ty);
+  /* ตั้งแต่ช่องลงชื่อผู้ขอลงไป ใช้ระยะบรรทัด g เดียวกันทั้งหมด (ต้นฉบับ 18pt) ให้จบใน 1 หน้า A4
+     ช่องลงชื่อทั้ง 3 ช่องเว้น 1 บรรทัด (2g) สำหรับเซ็น และระยะ ลงชื่อ → (ชื่อ) → ตำแหน่ง เท่ากันทุกช่อง */
+  const g = 17.7;
+  y += 2*g;
+  SIGN(293.9,y,g,'ลงชื่อ',r.requesterName,'ผู้ขออนุญาต');
+  y += 2*g;
+  /* หัวข้อ "การสั่งการ" และ "ผลการปฏิบัติงาน" เว้นจากบรรทัดก่อนหน้าเท่ากัน 1.5 บรรทัด */
+  y += 1.5*g; T(54,y,'การสั่งการ',{bold:1});
+  y += g; L(54,y,542,'อนุมัติรถหมายเลขกรม'); V(54+tw('อนุมัติรถหมายเลขกรม',16),542,y,vehicle,{half:1});
+  y += 2*g;   /* เว้น 1 บรรทัดก่อน (ลงชื่อ) สำหรับเซ็น เหมือนใบลา */
+  SIGN(293.9,y,g,'(ลงชื่อ)',r.approverName,'ผู้สั่งการ');
+  y += 3.5*g; T(54,y,'ผลการปฏิบัติงาน',{bold:1});
+  y += g; L(54,y,542,'มาตร<u>วัด</u>เริ่มใช้งาน'); V(54+tw('มาตรวัดเริ่มใช้งาน',16),542,y,num(r.mileageStart),{half:1});
+  y += g; T(54,y,'จำนวนน้ำมัน',{bold:1});
+  ['เบนซิน','ดีเซล','น้ำมันเครื่อง','อื่น ๆ',''].forEach(s=>{ y += g; if(s) L(161.9,y,379.4,s); else D(161.9,379.4,y); T(381.4,y,'ลิตร'); });
+  y += g; L(54,y,542,'มาตร<u>วัด</u>เมื่อเลิกใช้งาน'); V(54+tw('มาตรวัดเมื่อเลิกใช้งาน',16),542,y,num(r.mileageEnd),{half:1});
+  y += g; T(54,y,'ผลงาน',{bold:1});
+  /* หน่วย (คน/ลิตร/ม.³/เที่ยว/ชม.) และ "ถึง กม." ตั้งแนวเดียวกับคอลัมน์ "ลิตร" ของจำนวนน้ำมัน (x 381.4) */
+  y += g; L(161.9,y,379.4,'เขตทำงานระหว่าง กม.'); L(381.4,y,542,'ถึง กม.');
+  [['บรรทุก','คน'],['ระยะทาง','ลิตร'],['บรรทุก','ม.'],['จำนวน','เที่ยว'],['เวลา','ชม.']].forEach(([a,u])=>{
+    y += g; L(161.9,y,379.4,a); T(381.4,y,u);
+    if(u==='ม.') T(381.4+tw('ม.',16)+0.5,y-5,'๓',{size:10.6});
+    if(a==='ระยะทาง') V(161.9+tw(a,16),379.4,y,distance!=null ? p408Th(fmtNum(distance,0))+' กม.' : '');
+  });
+  y += g; T(54,y,'รับรองถูกต้อง',{bold:1});
+  /* พนักงานขับรถ — เว้น 1 บรรทัดสำหรับเซ็น ; ชื่อ/ตำแหน่งกึ่งกลางระหว่างวงเล็บ */
+  y += 2*g; SIGN(161.9,y,g,'(ลงนาม)',r.driverName,'พนักงานขับรถ');
+  return `<div class="p408-sheet"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 595.22 842" font-family="${esc(famL)}" fill="#000">
+    <g stroke="#000" stroke-width="0.975" stroke-linecap="round" stroke-dasharray="0 2.55">${d}</g>
+    <g>${h}</g>
+  </svg></div>`;
+}
 function printVehReq(id){
   const r = vehicleRequests.find(x=>x.id===id);
   if(!r) return;
-  const routeLine = routeNosLabel(r.routeNos);
-  const distance = (r.mileageStart!=null && r.mileageEnd!=null) ? (r.mileageEnd-r.mileageStart) : null;
-  document.getElementById('print-vehreq').innerHTML = `
-    <div class="official-form" style="font-size:13px;">
-      <div class="form-code">พ.4-08</div>
-      <div class="form-title">ใบขออนุญาตใช้รถส่วนกลาง</div>
-      <div class="form-org">กรมทางหลวง แขวงทางหลวงระยอง หมวดทางหลวงเชิงเนิน</div>
-      <div style="margin-top:14px;line-height:2;">
-        วันที่ ${fmtDateFull(r.requestDate)}<br>
-        เรียน หัวหน้าหมวดทางหลวงเชิงเนิน<br>
-        ข้าพเจ้า ${r.requesterName?esc(r.requesterName):'.........................'} ตำแหน่ง ${r.requesterPosition?esc(r.requesterPosition):'.........................'}
-        หน่วยงาน หมวดทางหลวงเชิงเนิน แขวงทางหลวงระยอง<br>
-        ขออนุญาตใช้รถ ${r.vehicleLabel?esc(vehicleShortName(r.vehicleLabel)+' ทะเบียน '+vehicleRegNo(r.vehicleLabel)):'.........................'}
-        สายทางที่ปฏิบัติงาน ${esc(routeLine)}<br>
-        เพื่อ ${r.purpose?esc(r.purpose):'.........................'} มีคนนั่ง ${r.passengers!=null?r.passengers:'....'} คน<br>
-        ในวันที่ ${fmtDateFull(r.dateFrom)} ถึงวันที่ ${fmtDateFull(r.dateTo)}<br>
-        พนักงานขับรถ ${r.driverName?esc(r.driverName):'.........................'}<br>
-        เลขไมล์ก่อนออกเดินทาง ${r.mileageStart!=null?fmtNum(r.mileageStart,0):'.........................'} กม.
-        เลขไมล์เมื่อกลับ ${r.mileageEnd!=null?fmtNum(r.mileageEnd,0):'.........................'} กม.
-        ระยะทางรวม ${distance!=null?fmtNum(distance,0):'.........................'} กม.
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:40px;">
-        <div>ลงชื่อ .................................  ผู้ขอใช้รถ<br><br>( ${r.requesterName?esc(r.requesterName):'...................................................'} )</div>
-        <div>ลงชื่อ .................................  หัวหน้าหน่วยงาน/ผู้แทน<br><br>( ${r.approverName?esc(r.approverName):'...................................................'} )</div>
-      </div>
-    </div>`;
+  document.getElementById('print-vehreq').innerHTML = buildP408Svg(r);
   printForm('print-vehreq');
 }
 
@@ -5081,7 +5184,53 @@ function onEc1wVehKeydown(e){
 /* ---------- แบบฟอร์ม EC 1-W ตรงตามไฟล์ "ตย. ec1.pdf" ของกรม — ฟังก์ชันเดียวกันใช้ทั้งบนหน้าจอและตอนพิมพ์ ---------- */
 const EC1W_UNIT_NAME = 'หมวดทางหลวงเชิงเนิน  แขวงทางหลวงระยอง', EC1W_UNIT_CODE = '426';
 const EC1W_SUPERVISOR_POS = 'ชม.ขท.เชิงเนิน';                                      // ผู้ควบคุมงาน = SECTION_HEAD_NAME
-const EC1W_LESSOR = { name:'นายณัฐวุฒิ  สิโนทก', pos:'ชป.ขท.ระยอง' };              // ผู้ให้เช่า
+/* ผู้ให้เช่า (คนนอกหมวด ไม่อยู่ในทะเบียนบุคลากร) — แก้ได้จากไอคอนดินสอท้ายเส้นลงชื่อ เก็บที่ app_state/s3.ec1wLessor ใช้ร่วมกันทุกเครื่อง */
+const EC1W_LESSOR_DEFAULT = { name:'นายณัฐวุฒิ  สิโนทก', pos:'ชป.ขท.ระยอง' };
+let EC1W_LESSOR = Object.assign({}, EC1W_LESSOR_DEFAULT);
+async function loadEc1wLessorFromState(){
+  try{
+    const s = (window.FBL && FBL.stateGet) ? await FBL.stateGet('s3') : {};
+    if(s && s.ec1wLessor && s.ec1wLessor.name) EC1W_LESSOR = { name:String(s.ec1wLessor.name), pos:String(s.ec1wLessor.pos||'') };
+  }catch(e){ console.error('โหลดชื่อผู้ให้เช่า EC1-W ไม่สำเร็จ — ใช้ชื่อเดิมแทน', e); }
+}
+function openEc1wLessorEdit(){
+  if(!isAdmin()) return;
+  document.getElementById('ec1w-modal-title').textContent = 'แก้ไขชื่อผู้ให้เช่า (EC 1-W)';
+  document.getElementById('ec1w-modal-body').innerHTML = `
+    <div class="f-row" style="margin-bottom:12px;"><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">ชื่อ-สกุล ผู้ให้เช่า <span class="req">*</span></label>
+      <input class="edit-input" id="ec1w-lessor-name" style="width:100%;" value="${esc(EC1W_LESSOR.name)}" placeholder="เช่น นายณัฐวุฒิ  สิโนทก"></div>
+    <div class="f-row" style="margin-bottom:6px;"><label style="font-size:12.5px;color:var(--ink-600);display:block;margin-bottom:4px;">ตำแหน่ง (บรรทัดใต้ชื่อ)</label>
+      <input class="edit-input" id="ec1w-lessor-pos" style="width:100%;" value="${esc(EC1W_LESSOR.pos)}" placeholder="เช่น ชป.ขท.ระยอง"></div>
+    <div class="foot-note" style="margin:8px 0 0;padding:0;border:none;">ใช้กับแบบฟอร์ม EC 1-W ทุกคัน ทุกสัปดาห์ และทุกเครื่องที่เปิดระบบ</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+      <button type="button" class="btn btn-ghost" onclick="document.getElementById('ec1w-modal-overlay').classList.add('hidden')">ยกเลิก</button>
+      <button type="button" class="btn btn-primary" id="ec1w-lessor-save" onclick="saveEc1wLessor()">บันทึก</button>
+    </div>`;
+  document.getElementById('ec1w-modal-overlay').classList.remove('hidden');
+  const f = document.getElementById('ec1w-lessor-name'); if(f){ f.focus(); f.select(); }
+}
+async function saveEc1wLessor(){
+  if(!isAdmin()) return;
+  const name = (document.getElementById('ec1w-lessor-name').value||'').trim();
+  const pos = (document.getElementById('ec1w-lessor-pos').value||'').trim();
+  if(!name){ showAlertModal('กรุณากรอกชื่อ-สกุล ผู้ให้เช่า'); return; }
+  const btn = document.getElementById('ec1w-lessor-save');
+  if(btn){ btn.disabled = true; btn.textContent = 'กำลังบันทึก...'; }
+  try{
+    const cur = await FBL.stateGet('s3');                 // อ่านค่าล่าสุดมารวม ไม่ทับยอดคงเหลือวัสดุที่อยู่ในเอกสารเดียวกัน
+    await FBL.stateSet('s3', Object.assign({}, cur, { ec1wLessor:{ name, pos } }));
+    const chk = await FBL.stateGet('s3');                 // stateSet ไม่แจ้งข้อผิดพลาดออกมา — อ่านกลับเพื่อยืนยันว่าบันทึกจริง
+    if(!chk.ec1wLessor || chk.ec1wLessor.name !== name || chk.ec1wLessor.pos !== pos) throw new Error('ฐานข้อมูลกลางยังไม่ได้รับค่าใหม่');
+  }catch(err){
+    showAlertModal('บันทึกชื่อผู้ให้เช่าไม่สำเร็จ: ' + err.message + '\nกรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่');
+    if(btn){ btn.disabled = false; btn.textContent = 'บันทึก'; }
+    return;
+  }
+  EC1W_LESSOR = { name, pos };
+  document.getElementById('ec1w-modal-overlay').classList.add('hidden');
+  renderMachinery();
+  showSuccessModal('บันทึกชื่อผู้ให้เช่าเรียบร้อยแล้ว');
+}
 let __ec1wOpen = null;   // วันที่กำลังกางช่องกรอกอยู่ {vehicle,date}
 let __ec1wHasTh = null;
 /* เช็กว่าเครื่องมีฟอนต์ TH Sarabun ไหม (เทียบความกว้างข้อความกับฟอนต์สำรอง) — ไม่มีให้ใช้ Sarabun ขนาดเล็กลงแทน */
@@ -5162,7 +5311,7 @@ function ec1wSheetHtml(vehicle, dates, interactive){
       <div><h4>ชั่วโมงที่ไม่ปฏิบัติงาน</h4>F = ความผิดของผู้ให้เช่า<br><span class="in">หรืออุปสรรคธรรมชาติ</span><br>R = ชำรุด/บริการหล่อลื่น<br>S = รองานทุกกรณี</div>
       <div class="sig"><div class="l"><span>ลงชื่อ</span></div>( ${esc(SECTION_HEAD_NAME)} )<br>${EC1W_SUPERVISOR_POS}<br>ผู้ควบคุมงาน
         <div class="l"><span>วันที่</span>${fmtDateFull(toLocalISODate(TODAY)).replace(' พ.ศ.','')}</div></div>
-      <div class="sig"><div class="l"><span>ลงชื่อ</span></div>( ${esc(EC1W_LESSOR.name)} )<br>${EC1W_LESSOR.pos}<br>ผู้ให้เช่า
+      <div class="sig"><div class="l"><span>ลงชื่อ</span>${can?'<button type="button" class="ec1w-lessor-btn" onclick="openEc1wLessorEdit()" title="แก้ไขชื่อผู้ให้เช่า" aria-label="แก้ไขชื่อผู้ให้เช่า"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>':''}</div>( ${esc(EC1W_LESSOR.name)} )<br>${esc(EC1W_LESSOR.pos)}<br>ผู้ให้เช่า
         <div class="l"><span>วันที่</span></div></div>
     </div>
     <div class="f-note">หมายเหตุ: ระบุข้อเสนอแนะ/อุปสรรค เช่น จัดส่ง พ.1 - 26 วันนี้<br>
@@ -5613,22 +5762,29 @@ renderAll();
     loadVehicleMileageFromApi(),
     loadMachineryLogsFromApi(),
     loadVehicleRequestsFromApi(),
-    loadControlledRoutesCacheFromApi()
+    loadControlledRoutesCacheFromApi(),
+    loadEc1wLessorFromState()
   ]);
   renderAll();
   __s3DataReady = true;
   __publishStockSnapshot();
 })();
 /* ส่งยอดคงเหลือวัสดุปัจจุบัน (ตามบัญชี พ.1-02 รวมค่าที่แก้ยอดยกมา/รับเข้า) ไปให้ระบบหลักแสดงผลให้ตรงกับหน้านี้ทุกตัวเลข
-   เก็บที่ app_state/s3 — เขียนเฉพาะเมื่อยอดเปลี่ยน และเฉพาะผู้มีสิทธิ์แก้ไขระบบที่ 3 (ผู้ดูอย่างเดียว stateSet จะข้ามเอง) */
+   เก็บที่ app_state/s3 — เขียนเฉพาะเมื่อยอดเปลี่ยน และเฉพาะผู้มีสิทธิ์แก้ไขระบบที่ 3
+   เอกสารนี้เก็บค่าอื่นร่วมด้วย (เช่น ec1wLessor = ชื่อผู้ให้เช่าใน EC1-W) จึงอ่านค่าล่าสุดมารวมก่อนเขียนทุกครั้ง ไม่เขียนทับทั้งก้อน */
 let __s3DataReady = false;
-function __publishStockSnapshot(){
-  if(!__s3DataReady || !(window.FBL && FBL.stateSet)) return;
+let __lastStockJson = null;
+async function __publishStockSnapshot(){
+  if(!__s3DataReady || !(window.FBL && FBL.stateSet && FBL.canEdit && FBL.canEdit('s3'))) return;
   try{
     const materialStock = {};
     materials.forEach(m=>{ materialStock[m.code] = currentStock(m); });
-    FBL.stateSet('s3', {materialStock});
-  }catch(e){ console.error('ส่งยอดคงเหลือวัสดุให้ระบบหลักไม่สำเร็จ', e); }
+    const sj = JSON.stringify(materialStock);
+    if(sj === __lastStockJson) return;
+    __lastStockJson = sj;
+    const cur = await FBL.stateGet('s3');
+    await FBL.stateSet('s3', Object.assign({}, cur, {materialStock}));
+  }catch(e){ __lastStockJson = null; console.error('ส่งยอดคงเหลือวัสดุให้ระบบหลักไม่สำเร็จ', e); }
 }
 setInterval(__publishStockSnapshot, 5000);
 
