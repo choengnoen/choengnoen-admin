@@ -3278,11 +3278,12 @@ function buildP408Svg(r){
       ? `<text x="${o.flat ? x0+2+3.3 : x0+m}" y="${yy}" font-family="${esc(famV)}" font-size="${size*k}">${esc(s)}</text>`
       : `<text x="${(x0+x1)/2}" y="${yy}" font-family="${esc(famV)}" font-size="${size*k}" text-anchor="middle">${esc(s)}</text>`; };
   // บล็อกลงชื่อ ขนาดเดียวกันทั้ง 3 ช่อง (ผู้ขอ/ผู้สั่งการ/พนักงานขับรถ) ตามช่องพนักงานขับรถของต้นฉบับ
-  // x = แนวซ้ายของป้าย ; วงเล็บ x+33.1 .. x+180 ; ชื่อและตำแหน่งกึ่งกลางระหว่างวงเล็บ
+  // x = แนวซ้ายของป้าย "(ลงชื่อ)" ; E = ปลายเส้นจุดบรรทัดเซ็น
+  // "(" ตรงแนว "(" ของ (ลงชื่อ) และ ")" ชิดปลายเส้นจุดบรรทัดบน ; ชื่อและตำแหน่งกึ่งกลางระหว่างวงเล็บ
   const SIGN = (x,y,g,label,name,role)=>{
-    const P = x+33.1, R = x+180, C = (P+3+R)/2;
-    L(x,y,R+3,label);
-    L(P,y+g,R,'('); T(R,y+g,')'); V(P+3,R,y+g,name);
+    const E = x+183, R = E-tw(')',16), P0 = x+tw('(',16), C = (P0+R)/2;
+    L(x,y,E,label);
+    L(x,y+g,R-1,'('); h += `<text x="${E}" y="${y+g}" font-size="${16*k}" text-anchor="end">)</text>`; V(P0+1,R-1,y+g,name);
     T(C,y+2*g,role,{mid:1});
   };
 
@@ -3327,7 +3328,7 @@ function buildP408Svg(r){
      ช่องลงชื่อทั้ง 3 ช่องเว้น 1 บรรทัด (2g) สำหรับเซ็น และระยะ ลงชื่อ → (ชื่อ) → ตำแหน่ง เท่ากันทุกช่อง */
   const g = 17.7;
   y += 2*g;
-  SIGN(293.9,y,g,'ลงชื่อ',r.requesterName,'ผู้ขออนุญาต');
+  SIGN(293.9,y,g,'(ลงชื่อ)',r.requesterName,'ผู้ขออนุญาต');
   y += 2*g;
   /* หัวข้อ "การสั่งการ" และ "ผลการปฏิบัติงาน" เว้นจากบรรทัดก่อนหน้าเท่ากัน 1.5 บรรทัด */
   y += 1.5*g; T(54,y,'การสั่งการ',{bold:1});
@@ -3349,7 +3350,7 @@ function buildP408Svg(r){
   });
   y += g; T(54,y,'รับรองถูกต้อง',{bold:1});
   /* พนักงานขับรถ — เว้น 1 บรรทัดสำหรับเซ็น ; ชื่อ/ตำแหน่งกึ่งกลางระหว่างวงเล็บ */
-  y += 2*g; SIGN(161.9,y,g,'(ลงนาม)',r.driverName,'พนักงานขับรถ');
+  y += 2*g; SIGN(161.9,y,g,'(ลงชื่อ)',r.driverName,'พนักงานขับรถ');
   return `<div class="p408-sheet"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 595.22 842" font-family="${esc(famL)}" fill="#000">
     <g stroke="#000" stroke-width="0.975" stroke-linecap="round" stroke-dasharray="0 2.55">${d}</g>
     <g>${h}</g>
