@@ -46,7 +46,7 @@
   '.btn-split.hidden{display:none}'+
   '.btn-split>.btn:first-child{border-top-right-radius:0;border-bottom-right-radius:0}'+
   '.btn-split>.bs-caret{border-top-left-radius:0;border-bottom-left-radius:0;padding:0 9px!important;border-left:1px solid rgba(255,255,255,.45)}'+
-  '.bs-menu{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line,#e4e4e0);border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.16);min-width:200px;z-index:70;padding:5px;display:none}'+
+  '.bs-menu{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line,#e4e4e0);border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.16);min-width:100%;box-sizing:border-box;z-index:70;padding:5px;display:none}'+
   '.bs-menu.open{display:block}'+
   '.bs-menu button{display:flex;gap:8px;align-items:center;width:100%;text-align:left;background:none;border:none;border-radius:7px;padding:8px 10px;font:600 13px "Sarabun",sans-serif;color:var(--ink-900,#1d2433);cursor:pointer}'+
   '.bs-menu button:hover{background:var(--paper-100,#f4f4f2)}';

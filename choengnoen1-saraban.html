@@ -449,7 +449,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s1"></script>
 <script src="emoji-img.js" defer></script>
-<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261023" defer></script>
+<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261024" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
 .route-header .topbar-right{flex-direction:column;align-items:flex-end;gap:6px}
@@ -3163,7 +3163,7 @@ function buildForm305(name, s, type, from, to, days, reason, cover, contact, sta
   h += lvLead(236.7,292.1,181.8,'ถึงวันที่') + lvV(270.1,419.7,292.1,lvDateTh(to),{center:1});
   h += lvLead(427.2,292.1,102.7,'มีกำหนด') + lvV(469,525,292.1,lvTh(dnum),{center:1}) + lvT(529.9,292.1,'วัน');   /* เพิ่มจุดก่อน วัน ให้ วัน จบที่ขอบขวา 542 pt */
   h += lvT(54,313.7,'ข้าพเจ้าได้ลา') + lvBox(132.6,304.1,!!prev&&prev.type==='ป่วย') + lvT(147.7,313.7,'ป่วย') + lvBox(189,304.6,!!prev&&prev.type==='กิจ') + lvT(208.6,313.7,'กิจส่วนตัว') + lvBox(270,304.9,!!prev&&prev.type==='คลอดบุตร') + lvT(285.8,313.7,'คลอดบุตร') + lvLead(332.9,313.7,209.1,'ครั้งสุดท้ายตั้งแต่วันที่');
-  h += lvV(425.3,521.1,313.7,prev?lvDateTh(prev.from):'',{center:1});
+  h += lvV(425.3,542,313.7,prev?lvDateTh(prev.from):'',{center:1});   /* ช่องยืดถึงขอบขวา 542 pt ให้วันที่เดือนยาว (พฤศจิกายน) มีเส้นจุดหน้า-หลังโดยไม่ต้องย่อตัวอักษร */
   h += lvLead(54,335.3,178.5,'ถึงวันที่') + lvV(88.1,238.1,335.3,prev?lvDateTh(prev.to):'',{center:1});
   h += lvLead(239.3,335.3,101.2,'มีกำหนด') + lvV(281.3,341.1,335.3,prev?lvTh(prevDays):'',{center:1}) + lvT(344.7,335.3,'วัน') + lvT(360.4,335.3,'ในระหว่างลาขออนุมัติและสั่งการให้');
   h += lvBox(54,346.3,cv.pre==='นาย') + lvT(67.2,356.9,'นาย') + lvBox(89.7,347,cv.pre==='นาง') + lvT(103.1,356.9,'นาง') + lvBox(124.7,347.4,cv.pre==='นางสาว') + lvLead(138.5,356.9,166,'นางสาว');

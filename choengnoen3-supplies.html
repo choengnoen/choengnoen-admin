@@ -916,7 +916,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s3"></script>
 <script src="emoji-img.js" defer></script>
-<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261023" defer></script>
+<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261024" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
 .route-header .topbar-right{flex-direction:column;align-items:flex-end;gap:6px}
@@ -969,6 +969,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         <div class="sec-tab" data-sec="report">พ.1-02 วัสดุ</div>
         <div class="sec-tab" data-sec="reportfuel">พ.1-03 น้ำมัน</div>
         <div class="sec-tab" data-sec="machinery">EC 1-W</div>
+        <div class="sec-tab" data-sec="vehreq">พ.4-08 ใช้รถ</div>
         <div class="sec-tab" data-sec="vehicles">ทะเบียนเครื่องจักร</div>
       </div>
 
@@ -1138,6 +1139,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           </div>
           <div id="ec1w-table-wrap"></div>
         </div>
+      </div>
+
+      <!-- ============ ใบขออนุญาตใช้รถส่วนกลาง (พ.4-08) ============ -->
+      <div class="panel" id="panel-vehreq">
         <div class="section">
           <div class="section-head">
             <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M3 17l4-8h10l4 8"/><path d="M5 17v3h14v-3"/><circle cx="8" cy="17" r="1.4"/><circle cx="16" cy="17" r="1.4"/></svg></span>
