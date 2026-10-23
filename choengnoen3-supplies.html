@@ -2841,8 +2841,9 @@ function renderVehicleRequests(){
       <td class="num">${r.mileageStart!=null&&r.mileageStart!==''?fmtNum(r.mileageStart,0):'—'} – ${r.mileageEnd!=null&&r.mileageEnd!==''?fmtNum(r.mileageEnd,0):'—'}</td>
       <td class="num">${distance!=null?fmtNum(distance,0):'—'}</td>
       <td style="white-space:nowrap;">
-        ${isAdmin()?`<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="openVehReqModal('${jsArg(r.id)}')"></button>`:''}
         <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์" onclick="printVehReq('${jsArg(r.id)}')"></button>
+        ${isAdmin()?`<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="openVehReqModal('${jsArg(r.id)}')"></button>`:''}
+        ${isAdmin()?`<button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบ" onclick="removeVehReq('${jsArg(r.id)}')"></button>`:''}
       </td>
     </tr>`;
   }).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--ink-400);">ยังไม่มีใบขอใช้รถ</td></tr>`;
