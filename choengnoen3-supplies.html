@@ -1153,7 +1153,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </div>
           </div>
           <div class="table-wrap"><table>
-            <thead><tr><th>วันที่ขอใช้</th><th>ผู้ขอใช้</th><th>รถ/เครื่องจักร</th><th>ไปที่ / สายทาง</th><th>วันที่ไป – กลับ</th><th>เลขไมล์ (เริ่ม–สิ้นสุด)</th><th>ระยะทาง (กม.)</th><th></th></tr></thead>
+            <thead><tr><th>วันที่ขอใช้</th><th>ผู้ขอใช้</th><th>รถ/เครื่องจักร</th><th>ไปที่ / สายทาง</th><th>เลขไมล์ (เริ่ม–สิ้นสุด)</th><th></th></tr></thead>
             <tbody id="vehreq-body"></tbody>
           </table></div>
         </div>
@@ -2831,22 +2831,19 @@ function renderVehicleRequests(){
   body.innerHTML = sorted.map(r=>{
     const routeLabel = routeNosLabel(r.routeNos);
     const dest = routeLabel;
-    const distance = (r.mileageStart!=null && r.mileageEnd!=null && r.mileageEnd!=='' && r.mileageStart!=='') ? (parseFloat(r.mileageEnd)-parseFloat(r.mileageStart)) : null;
     return `<tr>
       <td>${fmtDate(r.requestDate)}</td>
       <td>${esc(r.requesterName||'—')}</td>
       <td style="font-weight:600;">${esc(r.vehicleLabel?vehicleShortName(r.vehicleLabel)+' ('+vehicleRegNo(r.vehicleLabel)+')':'—')}</td>
       <td>${esc(dest)}</td>
-      <td>${fmtDate(r.dateFrom)} – ${fmtDate(r.dateTo)}</td>
       <td class="num">${r.mileageStart!=null&&r.mileageStart!==''?fmtNum(r.mileageStart,0):'—'} – ${r.mileageEnd!=null&&r.mileageEnd!==''?fmtNum(r.mileageEnd,0):'—'}</td>
-      <td class="num">${distance!=null?fmtNum(distance,0):'—'}</td>
       <td style="white-space:nowrap;">
         <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์" onclick="printVehReq('${jsArg(r.id)}')"></button>
         ${isAdmin()?`<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="openVehReqModal('${jsArg(r.id)}')"></button>`:''}
         ${isAdmin()?`<button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบ" onclick="removeVehReq('${jsArg(r.id)}')"></button>`:''}
       </td>
     </tr>`;
-  }).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--ink-400);">ยังไม่มีใบขอใช้รถ</td></tr>`;
+  }).join('') || `<tr><td colspan="6" style="text-align:center;color:var(--ink-400);">ยังไม่มีใบขอใช้รถ</td></tr>`;
 }
 function openVehReqModal(id){
   if(!isAdmin()) return;
