@@ -2911,6 +2911,7 @@ function printLeaveForm(i){
   const contact = r.contact||'';
   const fy = fiscalYearOf(from);
   const stats = leaveStatsRows(name, fy, from);
+  LV_FILED = r.recordedDate || null;   /* วันที่บันทึก/ยื่นใบลา — ใช้หาหัวหน้าหมวด ณ วันนั้นจากทะเบียนผู้บริหาร (ใบลาเก่าไม่เปลี่ยนชื่อเมื่อเปลี่ยนหัวหน้า) */
 
   if(type==='ไปราชการ'){
     alert('การไปราชการใช้หนังสือขออนุมัติเดินทางไปราชการแยกต่างหาก ไม่ได้อยู่ในแบบฟอร์ม จ.3-05 / จ.3-06 ที่แนบมา ระบบจึงยังไม่มีแบบฟอร์มพิมพ์สำหรับกรณีนี้');
@@ -3025,7 +3026,23 @@ function lvWrap(inner,kind){
   /* ถ้าเครื่องไม่มีฟอนต์ TH Sarabun ใช้ Sarabun แทนและลดขนาดลงให้ความกว้างใกล้เคียง */
   return `<div class="lv-page${kind==='sick'?' lv-sick':''}${lvHasThFont()?'':' lv-sar'}">${inner}</div>`;
 }
-const LV_CHIEF = 'นายอิศรินทร์  อรุณสวัสดิ์';
+/* ผู้ลงนามความเห็นผู้บังคับบัญชา — อ้างอิงทะเบียนผู้บริหารหมวด (exec_terms) ตามวันที่ยื่นใบลา (วันนี้)
+   เปลี่ยนหัวหน้าหมวดที่ทะเบียนผู้บริหาร ใบลาที่พิมพ์หลังจากนั้นจะเปลี่ยนชื่อตามทันที
+   - เจ้าหน้าที่ลา → หัวหน้าหมวดปัจจุบัน (ตำแหน่ง ชม.ขท.เชิงเนิน)
+   - หัวหน้าหมวดลาเอง → ผู้รักษาราชการแทนที่ระบุในใบลา (ไม่ระบุ = ผู้ช่วยหมวดปัจจุบัน) ตำแหน่ง "รก.ชม.ขท.เชิงเนิน"
+   - ทะเบียนยังว่าง/โหลดไม่ได้ → ใช้ชื่อเดิม (LV_CHIEF_FALLBACK) เพื่อไม่ให้ใบลาเดิมเปลี่ยนโดยไม่ตั้งใจ */
+const LV_CHIEF_FALLBACK = 'นายอิศรินทร์  อรุณสวัสดิ์';
+const LV_CHIEF_POS = 'ชม.ขท.เชิงเนิน';
+let LV_FILED = null;   /* วันที่ยื่นใบลาที่กำลังพิมพ์ (YYYY-MM-DD) ตั้งใน printLeaveForm; null = วันนี้ */
+function lvChiefSigner(applicantName, cover){
+  const h = execHolderAt('head', LV_FILED || undefined);
+  if(!h) return {name: LV_CHIEF_FALLBACK, pos: LV_CHIEF_POS};
+  const hs = execStaffOf(h), headName = hs ? hs.name : (h.staffName || '');
+  if(String(headName).trim() !== String(applicantName||'').trim()) return {name: headName, pos: LV_CHIEF_POS};
+  let actName = cover || '';
+  if(!actName){ const a = execHolderAt('assist', LV_FILED || undefined); const as = a && execStaffOf(a); actName = as ? as.name : (a ? a.staffName : ''); }
+  return actName ? {name: actName, pos: 'รก.' + LV_CHIEF_POS} : {name:'', pos:''};
+}
 
 function buildForm306(name, s, from, to, days, cover, contact, stats, fy){
   const td = TODAY;
@@ -3081,7 +3098,8 @@ function buildForm306(name, s, from, to, days, cover, contact, stats, fy){
   h += lvV(62.2,124.2,552.7,lvTh(stats.vac),{center:1,flat:1}) + lvV(124.2,188.1,552.7,lvTh(dnum),{center:1,flat:1}) + lvV(188.1,251.9,552.7,lvTh(stats.vac+dnum),{center:1,flat:1});
   h += lvDash(323.1,509,523.1) + lvDash(293.9,509,545.8);   /* ความเห็น: เค้าโครงเดียวกับ จ.๓-๐๕ (บรรทัดแรกเริ่มที่จุดแรกของ (ลงชื่อ) บรรทัดที่สองเริ่มที่ขอบซ้ายบล็อก) */
   LV_DY = -16.1;   /* เว้น 1 บรรทัดก่อน (ลงชื่อ) สำหรับเซ็น */
-  h += lvSignRight(568, LV_CHIEF, 'ชม.ขท.เชิงเนิน');
+  const sg = lvChiefSigner(nm, cover);
+  h += lvSignRight(568, sg.name, sg.pos);
   /* ลายเซ็นผู้ตรวจสอบ (ซ้ายล่าง) */
   LV_DY = -37.8;
   h += lvLead(52.9,610.3,155.4,'(ลงชื่อ)') + lvT(211.8,610.3,'ผู้ตรวจสอบ',{bold:1});
@@ -3166,7 +3184,8 @@ function buildForm305(name, s, type, from, to, days, reason, cover, contact, sta
   h += lvT(326.9,655.7,'คำสั่ง',{bold:1});   /* หัวข้ออยู่บรรทัดบน */
   h += lvBox(356.4,666.2,false) + lvT(371.9,677.8,'อนุญาต',{bold:1}) + lvBox(430.2,666.2,false) + lvT(445.7,677.8,'ไม่อนุญาต',{bold:1});   /* กล่องติ๊กลงบรรทัดถัดไป ชิดซ้ายพอดีกับจุดแรกของเส้นจุดบรรทัดล่าง (356.1) */
   h += lvDash(356.1,542,700.8) + lvDash(326.9,542,722.5);   /* เส้นคำสั่ง 2 บรรทัด: บรรทัดแรกเริ่มจุดเท่าจุดแรกของบรรทัด (ลงชื่อ) บรรทัดที่สองเต็มแนวจากขอบซ้าย */
-  h += lvSignRight(742.9, LV_CHIEF, 'ชม.ขท.เชิงเนิน', 33);
+  const sg = lvChiefSigner(nm, cover);
+  h += lvSignRight(742.9, sg.name, sg.pos, 33);
   document.getElementById('print-leave-form').innerHTML = lvWrap(h,'sick');
 }
 
