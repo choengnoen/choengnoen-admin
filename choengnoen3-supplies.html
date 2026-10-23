@@ -2841,15 +2841,15 @@ function renderVehicleRequests(){
       <td class="num">${r.mileageStart!=null&&r.mileageStart!==''?fmtNum(r.mileageStart,0):'—'} – ${r.mileageEnd!=null&&r.mileageEnd!==''?fmtNum(r.mileageEnd,0):'—'}</td>
       <td class="num">${distance!=null?fmtNum(distance,0):'—'}</td>
       <td style="white-space:nowrap;">
-        ${isAdmin()?`<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="openVehReqModal(${r.id})"></button>`:''}
-        <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์" onclick="printVehReq(${r.id})"></button>
+        ${isAdmin()?`<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="openVehReqModal('${jsArg(r.id)}')"></button>`:''}
+        <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์" onclick="printVehReq('${jsArg(r.id)}')"></button>
       </td>
     </tr>`;
   }).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--ink-400);">ยังไม่มีใบขอใช้รถ</td></tr>`;
 }
 function openVehReqModal(id){
   if(!isAdmin()) return;
-  const r = id!=null ? vehicleRequests.find(x=>x.id===id) : null;
+  const r = id!=null ? vehicleRequests.find(x=>String(x.id)===String(id)) : null;
   document.getElementById('vehreq-modal-title').textContent = r ? 'แก้ไขใบขอใช้รถส่วนกลาง (พ.4-08)' : 'สร้างใบขอใช้รถส่วนกลาง (พ.4-08)';
   const vehOpts = '<option value="">— เลือกรถ/เครื่องจักร —</option>' + vehicles.map(v=>`<option value="${esc(v.label)}" ${r&&r.vehicleLabel===v.label?'selected':''}>${esc(vehicleShortName(v.label))} (${esc(vehicleRegNo(v.label))})</option>`).join('');
   vrRouteSelected = r ? (r.routeNos ? r.routeNos.slice() : (r.routeNo ? [r.routeNo] : [])) : [];
@@ -2901,7 +2901,7 @@ function openVehReqModal(id){
     <div id="vr-mi-hint" style="font-size:12px;color:var(--ink-400);margin-bottom:6px;"></div>
     <div id="vr-approver-hint" style="font-size:12px;color:var(--ink-400);margin-bottom:12px;"></div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
-      ${r?`<button type="button" class="btn btn-danger" onclick="removeVehReq(${r.id})">ลบรายการนี้</button>`:''}
+      ${r?`<button type="button" class="btn btn-danger" onclick="removeVehReq('${jsArg(r.id)}')">ลบรายการนี้</button>`:''}
       <button type="button" class="btn btn-primary" id="vr-save-btn" onclick="saveVehReqModal()">บันทึก</button>
     </div>`;
   document.getElementById('vehreq-modal-overlay').classList.remove('hidden');
@@ -3192,7 +3192,7 @@ function saveVehReqModal(){
     if(vrSaveBtn){ vrSaveBtn.disabled = true; vrSaveBtn.textContent = 'กำลังบันทึก...'; }
     try{
       if(id){
-        const r = vehicleRequests.find(x=>x.id===+id);
+        const r = vehicleRequests.find(x=>String(x.id)===id);
         if(r){
           Object.assign(r, data);
           await apiPost('update', 'vehicle_requests', vehReqToApi(r));
@@ -3224,7 +3224,7 @@ function removeVehReq(id){
       showAlertModal('ลบใบขอใช้รถในฐานข้อมูลกลางไม่สำเร็จ: ' + err.message);
       return;
     }
-    const i = vehicleRequests.findIndex(r=>r.id===id);
+    const i = vehicleRequests.findIndex(r=>String(r.id)===String(id));
     if(i>-1) vehicleRequests.splice(i,1);
     closeVehReqModal();
     renderAll();
@@ -3355,7 +3355,7 @@ function buildP408Svg(r){
   </svg></div>`;
 }
 function printVehReq(id){
-  const r = vehicleRequests.find(x=>x.id===id);
+  const r = vehicleRequests.find(x=>String(x.id)===String(id));
   if(!r) return;
   document.getElementById('print-vehreq').innerHTML = buildP408Svg(r);
   printForm('print-vehreq');
