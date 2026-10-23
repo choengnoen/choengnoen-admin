@@ -1762,13 +1762,14 @@ function renderStaffTabCounts(){
     const label = STAFF_TAB_LABELS[key] || key;
     const count = key==='all' ? activeStaff().length
       : key==='ลูกจ้างชั่วคราว' ? staff.filter(s=>s.ptype===key && s.status==='ok').length
-      : staff.filter(s=>s.ptype===key).length;
+      : staff.filter(s=>s.ptype===key && s.status!=='retired').length;
     t.textContent = `${label} (${count})`;
   });
 }
 const PTYPE_ORDER = ['ข้าราชการ','ลูกจ้างประจำ','พนักงานราชการ','ลูกจ้างชั่วคราว'];
 function staffSortTier(s){
   if(s.status==='resigned') return PTYPE_ORDER.length; // ลาออก อยู่ล่างสุดเสมอ ไม่ว่าประเภทเดิมคืออะไร
+  if(s.status==='retired') return PTYPE_ORDER.length; // เกษียณอายุ อยู่ล่างสุดเช่นเดียวกับลาออก
   const idx = PTYPE_ORDER.indexOf(s.ptype);
   return idx===-1 ? PTYPE_ORDER.length-1 : idx;
 }
@@ -1799,7 +1800,7 @@ function renderStaff(){
       <td>${s.role?esc(s.role):'<span style="color:var(--ink-400);font-size:12.5px">ยังไม่ระบุ</span>'}${s.duty?` <span class="pill pill-warn" style="font-size:10.5px;">ปฏิบัติหน้าที่${esc(s.duty)}</span>`:''}${(()=>{const el=__leaveEligibleDate(s); if(!el || TODAY.toISOString().slice(0,10)>=el) return ''; return ` <span class="pill pill-danger" style="font-size:10.5px;" title="ยังไม่มีสิทธิ์ลาถึง ${fmtDate(el)}">🔒 ทดลองงาน</span>`;})()}${(()=>{const ri=__retirementInfo(s); if(!ri || s.status!=='ok') return ''; return ri.status==='overdue' ? ` <span class="pill pill-danger" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ</span>` : ` <span class="pill pill-warn" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ</span>`;})()}</td>
       <td><span class="pill pill-neutral">${esc(s.ptype)}</span></td>
       <td>${execRoleCellHTML(s, eRole)}</td>
-      <td>${s.status==='resigned'?'<span class="pill pill-danger">● ลาออก</span>':'<span class="pill pill-ok">● ปฏิบัติงาน</span>'}</td>
+      <td>${__staffStatusPill(s)}</td>
     </tr>`;
   };
   if(execIdx.length){
@@ -1870,7 +1871,7 @@ function renderExecReg(){
       <div class="vd"><b>${__fmtDateBE(t.startDate)}</b><span>${t.endDate ? 'ถึง '+__fmtDateBE(t.endDate) : 'ถึงปัจจุบัน'}</span></div>
       <div class="vn"><i></i></div>
       <div class="vc">${s ? ptypeBadge(s.ptype) : ''}<div class="vm"><div style="font-weight:600;">${esc(name)} ${cur?'<span class="pill pill-ok">ปัจจุบัน</span>':''}</div>
-        <div class="meta">ดำรงตำแหน่ง ${execDuration(t.startDate, t.endDate)}${s && s.status==='resigned' ? ' · ลาออก' : ''}</div>
+        <div class="meta">ดำรงตำแหน่ง ${execDuration(t.startDate, t.endDate)}${s && s.status==='resigned' ? ' · ลาออก' : ''}${s && s.status==='retired' ? ' · เกษียณอายุ' : ''}</div>
         ${t.ref ? `<div class="meta">${esc(t.ref)}</div>` : ''}</div>
         ${admin ? `<button type="button" class="btn btn-ghost" style="padding:3px 12px;font-size:12px;" onclick="openExecTerm('${esc(t.id)}')">แก้ไข</button>` : ''}</div>
     </div>`;
@@ -1894,7 +1895,7 @@ function openExecTerm(id, role){
   execTermRole = t ? t.role : role;
   const holder = t ? null : execHolderAt(execTermRole);
   const sel = t ? (execStaffOf(t) || {}).id : (holder ? (execStaffOf(holder) || {}).id : '');
-  const opts = staff.slice().sort((a,b)=>(a.status==='resigned')-(b.status==='resigned')).map(s=>`<option value="${esc(s.id)}" ${s.id===sel?'selected':''}>${esc(s.name)}${s.nickname?' ('+esc(s.nickname)+')':''}${s.status==='resigned'?' – ลาออก':''}</option>`).join('');
+  const opts = staff.slice().sort((a,b)=>(a.status==='resigned'||a.status==='retired')-(b.status==='resigned'||b.status==='retired')).map(s=>`<option value="${esc(s.id)}" ${s.id===sel?'selected':''}>${esc(s.name)}${s.nickname?' ('+esc(s.nickname)+')':''}${s.status==='resigned'?' – ลาออก':''}${s.status==='retired'?' – เกษียณอายุ':''}</option>`).join('');
   document.getElementById('et-title').textContent = (t ? 'แก้ไขวาระ ' : 'แต่งตั้ง ') + EXEC_ROLE_NAME[execTermRole];
   document.getElementById('et-body').innerHTML = `
     <div class="f-row"><label>ผู้ดำรงตำแหน่ง</label><select class="edit-input" id="et-staff">${opts}</select></div>
@@ -1997,7 +1998,7 @@ function __staffDetailViewHTML(s){
     f('ชื่อเล่น', s.nickname ? esc(s.nickname) : ''),
     f('ตำแหน่งทางราชการ', posVal),
     f('ประเภทบุคลากร', esc(s.ptype)),
-    f('สถานะ', s.status==='resigned' ? '<span class="pill pill-danger">● ลาออก</span>' : '<span class="pill pill-ok">● ปฏิบัติงาน</span>'),
+    f('สถานะ', __staffStatusPill(s) + (s.status==='retired' && s.retiredDate ? ` <span style="font-size:12.5px;color:var(--ink-400);">เมื่อ ${fmtDate(s.retiredDate)}</span>` : '')),
     f('วันเกิด / อายุ', s.birth ? fmtDateFull(s.birth)+' ('+age+' ปี)' : ''),
     f('วันที่เริ่มงาน', startVal),
     f('วุฒิการศึกษา', s.education ? esc(s.education) : ''),
@@ -2063,6 +2064,7 @@ function renderStaffDetailModal(){
         <div class="f-row"><label>สถานะ</label><select class="edit-input" id="sd-status">
           <option value="ok" ${s.status==='ok'?'selected':''}>ปฏิบัติงาน</option>
           <option value="resigned" ${s.status==='resigned'?'selected':''}>ลาออก</option>
+          <option value="retired" ${s.status==='retired'?'selected':''}>เกษียณอายุ</option>
         </select></div>
         <div class="f-row"><label>วันเกิด</label><input type="date" class="edit-input" id="sd-birth" value="${esc(s.birth||'')}"></div>
       </div>
@@ -2103,11 +2105,44 @@ function renderStaffDetailModal(){
     foot.innerHTML = isAdmin()
       ? `<button class="btn btn-danger" onclick="deleteStaffDetail()">ลบรายการ</button>
          <div style="display:flex;gap:8px;">
+           ${s.status==='ok' ? `<button class="btn btn-ghost" onclick="retireStaffDetail()">เกษียณอายุ</button>` : ''}
            <button class="btn btn-ghost" onclick="closeStaffDetail()">ปิด</button>
            <button class="btn btn-primary" onclick="toggleStaffDetailEdit(true)">แก้ไขรายการ</button>
          </div>`
       : `<button class="btn btn-ghost" onclick="closeStaffDetail()">ปิด</button>`;
   }
+}
+// สถานะ "เกษียณอายุ" — แอดมินกดยืนยันเองเท่านั้น (ระบบไม่เปลี่ยนสถานะให้อัตโนมัติ) ไม่ลบข้อมูล ประวัติการลายังอ้างชื่อเดิมได้
+function __staffStatusPill(s){
+  if(s.status==='resigned') return '<span class="pill pill-danger">● ลาออก</span>';
+  if(s.status==='retired') return '<span class="pill pill-neutral">● เกษียณอายุ</span>';
+  return '<span class="pill pill-ok">● ปฏิบัติงาน</span>';
+}
+function retireStaffDetail(){
+  if(!isAdmin() || staffDetailIndex===null) return;
+  const s = staff[staffDetailIndex];
+  if(!s || s.status!=='ok') return;
+  const rd = __retirementDate(s) || TODAY.toISOString().slice(0,10);
+  showConfirm({
+    title:'เกษียณอายุ',
+    message:`ยืนยันปรับสถานะของ <b>"${esc(s.name)}"</b> เป็น <b>เกษียณอายุ</b> (วันที่เกษียณ ${fmtDate(rd)})?`,
+    warn:'จะไม่นับเป็นกำลังคนที่ปฏิบัติงานอยู่ แต่ข้อมูลและประวัติการลายังอยู่ครบ แก้กลับได้ที่ "แก้ไขรายการ"',
+    onConfirm: async ()=>{
+      const before = Object.assign({}, s);
+      s.status = 'retired';
+      s.retiredDate = rd;
+      try{
+        const saved = await apiPost('update', 'staff', s);
+        Object.assign(s, saved);
+      }catch(err){
+        Object.assign(s, before);
+        alert('บันทึกสถานะเกษียณอายุไปยังฐานข้อมูลกลางไม่สำเร็จ: ' + err.message);
+        return;
+      }
+      renderAll();
+      renderStaffDetailModal();
+    }
+  });
 }
 function deleteStaffDetail(){
   if(!isAdmin() || staffDetailIndex===null) return;
@@ -2141,6 +2176,8 @@ async function saveStaffDetail(){
   s.duty = document.getElementById('sd-duty').value.trim() || null;
   s.ptype = document.getElementById('sd-ptype').value;
   s.status = document.getElementById('sd-status').value;
+  if(s.status==='retired'){ if(!s.retiredDate) s.retiredDate = (__retirementDate(s) || TODAY.toISOString().slice(0,10)); }
+  else s.retiredDate = null;
   s.birth = document.getElementById('sd-birth').value || null;
   s.startDate = document.getElementById('sd-startdate').value || null;
   const vcVal = document.getElementById('sd-vaccarry').value, vcFy = document.getElementById('sd-vaccarryfy').value;
@@ -3180,7 +3217,7 @@ function __filterRegNameSuggest(){
   if(!q){ box.innerHTML=''; box.classList.add('hidden'); return; }
   const items = staff.filter(s=>s.name.toLowerCase().includes(q.toLowerCase()));
   if(!items.length){ box.innerHTML=''; box.classList.add('hidden'); return; }
-  box.innerHTML = items.slice(0,8).map(s=>`<div class="ac-item" title="${esc(s.name)}${s.status==='resigned'?' (ลาออก)':''}" onmousedown="__pickRegName('${jsArg(s.name)}')">${esc(s.name)}${s.status==='resigned'?' (ลาออก)':''}</div>`).join('');
+  box.innerHTML = items.slice(0,8).map(s=>`<div class="ac-item" title="${esc(s.name)}${s.status==='resigned'?' (ลาออก)':''}${s.status==='retired'?' (เกษียณอายุ)':''}" onmousedown="__pickRegName('${jsArg(s.name)}')">${esc(s.name)}${s.status==='resigned'?' (ลาออก)':''}${s.status==='retired'?' (เกษียณอายุ)':''}</div>`).join('');
   box.classList.remove('hidden');
 }
 function __pickRegName(name){
@@ -3301,7 +3338,7 @@ function registryOnscreenHTML(name, fy){
         ${name ? ptypeBadge(s.ptype||'ลูกจ้างชั่วคราว') : ''}
         <div>
           <div class="p-name" style="font-size:15px;">${name ? esc(name) : 'ยังไม่ได้เลือกพนักงาน'}</div>
-          <div class="p-sub">${esc(s.ptype) || (name ? 'ไม่พบข้อมูลประเภทบุคลากร' : 'พิมพ์ชื่อด้านบนเพื่อค้นหา')}${s.status==='resigned' ? ' · ลาออกแล้ว' : ''}</div>
+          <div class="p-sub">${esc(s.ptype) || (name ? 'ไม่พบข้อมูลประเภทบุคลากร' : 'พิมพ์ชื่อด้านบนเพื่อค้นหา')}${s.status==='resigned' ? ' · ลาออกแล้ว' : ''}${s.status==='retired' ? ' · เกษียณอายุแล้ว' : ''}</div>
         </div>
       </div>
     </div>
