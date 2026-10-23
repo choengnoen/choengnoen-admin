@@ -307,6 +307,47 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .radio-group{display:flex;gap:14px;flex-wrap:wrap;}
   .radio-group label{display:flex;align-items:center;gap:6px;font-weight:400;font-size:13px;color:var(--ink-900);}
   .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  /* ---------- ทะเบียนผู้บริหารหมวด (หัวหน้า/ผู้ช่วยหมวด) + โมดัลบุคลากรแบบพับหัวข้อ ---------- */
+  .exec-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:99px;font-size:11.5px;font-weight:700;white-space:nowrap;}
+  .exec-pill.head{background:#fdf3d8;color:#b7791f;}
+  .exec-pill.assist{background:#d9f3ef;color:#0f766e;}
+  .exec-since{font-size:11px;color:var(--ink-400);margin-top:2px;}
+  tr.exec-grp td{background:var(--paper-100);font-size:12px;font-weight:700;color:var(--ink-600);padding:7px 14px;}
+  tr.exec-grp .btn{float:right;padding:3px 12px;font-size:11.5px;}
+  tr.exec-row td:first-child{box-shadow:inset 4px 0 0 var(--amber-400);}
+  tr.exec-row.assist td:first-child{box-shadow:inset 4px 0 0 #0f766e;}
+  .sd-acc{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden;}
+  .sd-acc>summary{padding:11px 16px;font-weight:700;font-size:13px;cursor:pointer;background:var(--paper-100);list-style:none;}
+  .sd-acc>summary::-webkit-details-marker{display:none;}
+  .sd-acc>summary::before{content:'▸';display:inline-block;width:16px;}
+  .sd-acc[open]>summary::before{content:'▾';}
+  .sd-acc .acc-b{padding:14px 16px;}
+  .exec-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .exec-bar .btn{margin-left:auto;}
+  .exec-seg{display:inline-flex;background:var(--paper-100);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;}
+  .exec-seg button{border:0;background:none;padding:6px 14px;border-radius:8px;cursor:pointer;font-weight:600;color:var(--ink-600);font-family:inherit;font-size:12.5px;}
+  .exec-seg button.on{background:var(--navy-900);color:#fff;}
+  .exec-h{font-size:13px;font-weight:700;margin:0 0 12px;color:var(--navy-800);}
+  .exec-note{font-size:12.5px;color:var(--ink-600);background:var(--paper-100);border-left:3px solid var(--orange-600);border-radius:8px;padding:9px 12px;margin-bottom:12px;}
+  .exec-empty{padding:26px;text-align:center;color:var(--ink-400);font-size:13px;}
+  .vt{position:relative;}
+  .vt .vi{display:grid;grid-template-columns:132px 28px 1fr;align-items:stretch;}
+  .vt .vd{text-align:right;padding:14px 8px 0 0;line-height:1.35;}
+  .vt .vd b{display:block;font-size:13px;}
+  .vt .vd span{font-size:12px;color:var(--ink-400);}
+  .vt .vn{position:relative;}
+  .vt .vn:before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:2px solid var(--line);margin-left:-1px;}
+  .vt .vi:first-child .vn:before{top:20px;}
+  .vt .vi:last-child .vn:before{bottom:calc(100% - 26px);}
+  .vt .vn i{position:absolute;left:50%;top:15px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:#fff;border:3px solid #b9b5a8;}
+  .vt .vi.cur .vn i{background:var(--orange-600);border-color:#fff;box-shadow:0 0 0 3px var(--orange-600);}
+  .vt .vc{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:6px 0 10px;background:#fff;}
+  .vt .vi.cur .vc{background:#fffaf0;border-color:#f1d59b;}
+  .vt .vm{flex:1;min-width:0;}
+  .vt .vm .meta{font-size:12px;color:var(--ink-400);}
+  .exec-mini{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed var(--line);font-size:12.5px;}
+  .exec-mini:last-child{border-bottom:0;}
+  @media (max-width:640px){ .vt .vi{grid-template-columns:92px 24px 1fr;} }
   .lr-stat-panel{background:var(--paper-100);border-radius:10px;padding:11px 14px;margin-top:4px;display:flex;flex-direction:column;gap:7px;}
   .lr-stat-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .lr-stat-label{font-size:11px;color:var(--ink-400);font-weight:600;min-width:88px;}
@@ -531,6 +572,34 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         </div>
       </div>
 
+      <!-- ============ EXEC REGISTER (ทะเบียนผู้บริหาร) MODAL ============ -->
+      <div id="exec-reg-modal" class="modal-overlay hidden no-print">
+        <div class="modal-box" style="max-width:640px;">
+          <div class="modal-head">
+            <div class="modal-head-icon">🏛️</div>
+            <h3>ทะเบียนผู้บริหาร</h3>
+            <button type="button" class="modal-close" onclick="closeExecReg()">✕</button>
+          </div>
+          <div class="modal-body" id="er-body"></div>
+          <div class="modal-foot">
+            <button class="btn btn-ghost" onclick="closeExecReg()">ปิด</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ EXEC TERM (แต่งตั้ง/แก้ไขวาระ) MODAL ============ -->
+      <div id="exec-term-modal" class="modal-overlay hidden no-print">
+        <div class="modal-box" style="max-width:560px;">
+          <div class="modal-head">
+            <div class="modal-head-icon">📝</div>
+            <h3 id="et-title">แต่งตั้งผู้บริหาร</h3>
+            <button type="button" class="modal-close" onclick="closeExecTerm()">✕</button>
+          </div>
+          <div class="modal-body" id="et-body"></div>
+          <div class="modal-foot" id="et-foot"></div>
+        </div>
+      </div>
+
       <!-- ============ COMPLAINTS TRACKING ============ -->
       <div class="panel active" id="panel-complaints">
         <div class="section">
@@ -579,6 +648,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </h2>
             <div class="toolbar">
               <div class="search-box">🔍 <input id="staff-search" placeholder="ค้นหาชื่อ / ชื่อเล่น"></div>
+              <button class="btn btn-ghost" onclick="openExecReg()">ทะเบียนผู้บริหาร</button>
               <button class="btn btn-primary" data-ic="plus" onclick="openAddStaff()">เพิ่มเจ้าหน้าที่</button>
             </div>
           </div>
@@ -590,7 +660,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div class="tab" data-stafftab="ลูกจ้างชั่วคราว">ลูกจ้างชั่วคราว</div>
           </div>
           <div class="table-wrap table-wrap-scroll"><table>
-            <thead><tr><th>ชื่อ-สกุล</th><th>ตำแหน่งทางราชการ</th><th>ประเภทบุคลากร</th><th>สถานะ</th></tr></thead>
+            <thead><tr><th>ชื่อ-สกุล</th><th>ตำแหน่งทางราชการ</th><th>ประเภทบุคลากร</th><th>ตำแหน่งในหมวด</th><th>สถานะ</th></tr></thead>
             <tbody id="staff-body"></tbody>
           </table></div>
           <div class="legend-block" id="staff-foot-block">
@@ -716,6 +786,26 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div class="modal-foot">
             <button id="el-cancel-btn" class="btn btn-ghost" onclick="closeEditLeave()">ยกเลิก</button>
             <button id="el-save-btn" class="btn btn-primary" onclick="saveEditLeave()">บันทึกการแก้ไข</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ CANCEL LEAVE MODAL ============ -->
+      <div id="cancel-leave-modal" class="modal-overlay hidden no-print">
+        <div class="modal-box confirm-modal-box">
+          <div class="modal-head">
+            <div class="modal-head-icon">🚫</div>
+            <h3>ยกเลิกใบลา</h3>
+            <button type="button" class="modal-close" onclick="closeCancelLeave()">✕</button>
+          </div>
+          <div class="modal-body">
+            <div id="cl-info" class="confirm-modal-msg" style="margin-bottom:10px;"></div>
+            <div class="f-row"><label>เหตุผลการยกเลิก <span class="req">*</span></label><textarea id="cl-reason" rows="2" placeholder="เช่น ผู้ลามาปฏิบัติงานตามปกติ / เปลี่ยนแผนการลา"></textarea></div>
+            <div class="confirm-warn" style="margin-top:8px;">⚠️ ใบลานี้จะไม่ถูกนับวันลา แต่ยังเก็บประวัติไว้ในรายการ (แท็บ "ยกเลิก / ไม่อนุมัติ") หากต้องการลาใหม่ให้บันทึกใบลาใหม่</div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn btn-ghost" id="cl-close-btn" onclick="closeCancelLeave()">ปิด</button>
+            <button class="btn btn-danger" id="cl-ok-btn" onclick="confirmCancelLeave()">ยืนยันยกเลิกใบลา</button>
           </div>
         </div>
       </div>
@@ -1696,18 +1786,238 @@ function renderStaff(){
   // เรียงตามลำดับ ข้าราชการ > ลูกจ้างประจำ > พนักงานราชการ > ลูกจ้างชั่วคราว > พนักงานที่ลาออก (ล่างสุดเสมอ ไม่ว่าประเภทใด)
   // sort เสถียร คงลำดับเดิมภายในกลุ่มเดียวกัน — ใช้ค่าเดียวกันนี้กับทุกแท็บ แท็บที่กรองประเภทเดียวอยู่แล้วจะได้แค่ผลลัพธ์ resigned-ล่างสุดเหมือนเดิม
   indices.sort((a,b)=> staffSortTier(staff[a]) - staffSortTier(staff[b]));
+  // ผู้บริหารหมวด (หัวหน้า → ผู้ช่วย) ปักหมุดไว้บนสุดของรายการที่กรองอยู่ ตามด้วยเจ้าหน้าที่อื่น (เรียงตามเดิม)
+  const __roleRank = i=>{ const r = execRoleOfStaff(staff[i]); return r==='head' ? 0 : r==='assist' ? 1 : 2; };
+  const execIdx = indices.filter(i=>__roleRank(i)<2).sort((a,b)=>__roleRank(a)-__roleRank(b));
+  const restIdx = indices.filter(i=>__roleRank(i)===2);
   let html='';
-  indices.forEach(i=>{
+  const rowHTML = (i)=>{
     const s = staff[i];
-    html += `<tr style="cursor:pointer;" ondblclick="openStaffDetail(${i})" title="ดับเบิ้ลคลิกเพื่อดูรายละเอียด">
+    const eRole = execRoleOfStaff(s);
+    return `<tr class="${eRole?'exec-row '+eRole:''}" style="cursor:pointer;" ondblclick="openStaffDetail(${i})" title="ดับเบิ้ลคลิกเพื่อดูรายละเอียด">
       <td><div class="person">${ptypeBadge(s.ptype)}<div><div class="p-name">${esc(s.name)}</div>${s.nickname?`<div class="p-sub">(${esc(s.nickname)})</div>`:''}</div></div></td>
       <td>${s.role?esc(s.role):'<span style="color:var(--ink-400);font-size:12.5px">ยังไม่ระบุ</span>'}${s.duty?` <span class="pill pill-warn" style="font-size:10.5px;">ปฏิบัติหน้าที่${esc(s.duty)}</span>`:''}${(()=>{const el=__leaveEligibleDate(s); if(!el || TODAY.toISOString().slice(0,10)>=el) return ''; return ` <span class="pill pill-danger" style="font-size:10.5px;" title="ยังไม่มีสิทธิ์ลาถึง ${fmtDate(el)}">🔒 ทดลองงาน</span>`;})()}${(()=>{const ri=__retirementInfo(s); if(!ri || s.status!=='ok') return ''; return ri.status==='overdue' ? ` <span class="pill pill-danger" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ</span>` : ` <span class="pill pill-warn" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ</span>`;})()}</td>
       <td><span class="pill pill-neutral">${esc(s.ptype)}</span></td>
+      <td>${execRoleCellHTML(s, eRole)}</td>
       <td>${s.status==='resigned'?'<span class="pill pill-danger">● ลาออก</span>':'<span class="pill pill-ok">● ปฏิบัติงาน</span>'}</td>
     </tr>`;
-  });
-  body.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:var(--ink-400);padding:20px;">ไม่พบรายการ</td></tr>';
+  };
+  if(execIdx.length){
+    html += `<tr class="exec-grp"><td colspan="5">ผู้บริหารหมวด<button type="button" class="btn btn-ghost" onclick="openExecReg()">ทะเบียนผู้บริหาร</button></td></tr>` + execIdx.map(rowHTML).join('');
+    if(restIdx.length) html += `<tr class="exec-grp"><td colspan="5">เจ้าหน้าที่ (${restIdx.length})</td></tr>`;
+  }
+  html += restIdx.map(rowHTML).join('');
+  body.innerHTML = html || '<tr><td colspan="5" style="text-align:center;color:var(--ink-400);padding:20px;">ไม่พบรายการ</td></tr>';
   document.getElementById('staff-foot').textContent = `ปฏิบัติงาน ${activeStaff().length} · ลาออก ${staff.length-activeStaff().length} (คงข้อมูลไว้ตรวจสอบ) · ทั้งหมด ${staff.length} คน` + (isAdmin()?' · โหมดแก้ไข: เปิด':' · โหมดแก้ไข: ปิด (ดูอย่างเดียว)');
+}
+
+/* ============================================================
+   ทะเบียนผู้บริหารหมวด (หัวหน้าหมวด / ผู้ช่วยหมวด) — ตาราง exec_terms
+   1 วาระ = 1 รายการ: role ('head'|'assist'), staffId, startDate, endDate (ว่าง = ยังดำรงตำแหน่งอยู่), ref (คำสั่ง/หนังสือที่)
+   ระบบอื่น (เช่น ใบลา) ต้องการรู้ว่า ณ วันที่หนึ่งใครเป็นหัวหน้า/ผู้ช่วยหมวด ให้เรียก execHolderAt(role, 'YYYY-MM-DD') จากตารางนี้ที่เดียว
+   เปลี่ยนตัวหัวหน้าหมวด = เพิ่มวาระใหม่ที่นี่ ระบบจะปิดวาระเดิมให้อัตโนมัติ (สิ้นสุดก่อนวันที่เริ่มของท่านใหม่ 1 วัน)
+   ============================================================ */
+let execTerms = [];
+let execTermsLoaded = false;
+const EXEC_ROLE_NAME = {head:'หัวหน้าหมวดทางหลวง', assist:'ผู้ช่วยหมวดทางหลวง'};
+const EXEC_ROLE_SHORT = {head:'หัวหน้าหมวด', assist:'ผู้ช่วยหมวด'};
+async function loadExecTermsFromApi(){
+  // โหลดแยกจาก 5 ตารางหลัก: ถ้ากฎ Firestore ยังไม่ได้เผยแพร่ตารางนี้ หน้าอื่นต้องไม่พัง (แค่ไม่มีข้อมูลผู้บริหาร)
+  try{
+    execTerms = await apiGet('exec_terms');
+    execTermsLoaded = true;
+  }catch(err){
+    console.error('โหลดทะเบียนผู้บริหารหมวดไม่สำเร็จ', err);
+    execTerms = [];
+    execTermsLoaded = false;
+  }
+}
+function __todayISO(){ return __isoOfDate(new Date()); }
+function __addDaysISO(iso, n){ const d = new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return __isoOfDate(d); }
+function __fmtDateBE(iso){ if(!iso) return 'ปัจจุบัน'; const d = new Date(iso+'T00:00:00'); return d.getDate()+' '+THAI_MONTH_ABBR[d.getMonth()]+' '+(d.getFullYear()+543); }
+function execDuration(a, b){
+  const s = new Date(a+'T00:00:00'), e = new Date((b||__todayISO())+'T00:00:00');
+  let y = e.getFullYear()-s.getFullYear(), m = e.getMonth()-s.getMonth(), d = e.getDate()-s.getDate()+1;
+  if(d<0){ m--; d += 30; } if(d>=30){ m++; d -= 30; } if(m<0){ y--; m += 12; } if(m>=12){ y++; m -= 12; }
+  return [y&&y+' ปี', m&&m+' เดือน', d&&d+' วัน'].filter(Boolean).join(' ') || '1 วัน';
+}
+function execIsActive(t){ const n = __todayISO(); return t.startDate<=n && (!t.endDate || t.endDate>=n); }
+function execHolderAt(role, iso){ iso = iso || __todayISO(); return execTerms.find(t=>t.role===role && t.startDate<=iso && (!t.endDate || t.endDate>=iso)) || null; }
+function execTermsOfRole(role){ return execTerms.filter(t=>t.role===role).sort((a,b)=>String(b.startDate).localeCompare(String(a.startDate))); }
+function execMatchesStaff(t, s){ return t.staffId ? t.staffId===s.id : t.staffName===s.name; }
+function execRoleOfStaff(s){ const t = execTerms.find(t=>execIsActive(t) && execMatchesStaff(t, s)); return t ? t.role : null; }
+function execTermsOfStaff(s){ return execTerms.filter(t=>execMatchesStaff(t, s)).sort((a,b)=>String(b.startDate).localeCompare(String(a.startDate))); }
+function execStaffOf(t){ return staff.find(s=>t.staffId ? s.id===t.staffId : s.name===t.staffName) || null; }
+function __execPill(role, full){ return `<span class="exec-pill ${role}">${role==='head'?'★':'☆'} ${full?EXEC_ROLE_NAME[role]:EXEC_ROLE_SHORT[role]}</span>`; }
+function __execRolePill(s){ const r = execRoleOfStaff(s); return r ? ' '+__execPill(r, true) : ''; }
+function execRoleCellHTML(s, role){
+  if(!role) return '<span style="color:var(--ink-400);">—</span>';
+  const t = execTerms.find(t=>execIsActive(t) && t.role===role && execMatchesStaff(t, s));
+  return __execPill(role) + (t ? `<div class="exec-since">ตั้งแต่ ${__fmtDateBE(t.startDate)}</div>` : '');
+}
+
+/* ---------- โมดัลทะเบียนผู้บริหาร: เส้นเวลาแนวตั้ง ---------- */
+let execRegRole = 'head';
+function openExecReg(){ renderExecReg(); document.getElementById('exec-reg-modal').classList.remove('hidden'); }
+function closeExecReg(){ document.getElementById('exec-reg-modal').classList.add('hidden'); }
+function setExecRegRole(r){ execRegRole = r; renderExecReg(); }
+function renderExecReg(){
+  const r = execRegRole, admin = isAdmin(), list = execTermsOfRole(r);
+  const items = list.map(t=>{
+    const s = execStaffOf(t), cur = execIsActive(t);
+    const name = s ? s.name : (t.staffName || '—');
+    return `<div class="vi ${cur?'cur':''}">
+      <div class="vd"><b>${__fmtDateBE(t.startDate)}</b><span>${t.endDate ? 'ถึง '+__fmtDateBE(t.endDate) : 'ถึงปัจจุบัน'}</span></div>
+      <div class="vn"><i></i></div>
+      <div class="vc">${s ? ptypeBadge(s.ptype) : ''}<div class="vm"><div style="font-weight:600;">${esc(name)} ${cur?'<span class="pill pill-ok">ปัจจุบัน</span>':''}</div>
+        <div class="meta">ดำรงตำแหน่ง ${execDuration(t.startDate, t.endDate)}${s && s.status==='resigned' ? ' · ลาออก' : ''}</div>
+        ${t.ref ? `<div class="meta">${esc(t.ref)}</div>` : ''}</div>
+        ${admin ? `<button type="button" class="btn btn-ghost" style="padding:3px 12px;font-size:12px;" onclick="openExecTerm('${esc(t.id)}')">แก้ไข</button>` : ''}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('er-body').innerHTML = `
+    <div class="exec-bar">
+      <div class="exec-seg">${['head','assist'].map(k=>`<button type="button" class="${k===r?'on':''}" onclick="setExecRegRole('${k}')">${k==='head'?'★':'☆'} ${EXEC_ROLE_NAME[k]}</button>`).join('')}</div>
+      ${admin ? `<button type="button" class="btn btn-primary" onclick="openExecTerm(null,'${r}')">＋ แต่งตั้งคนใหม่</button>` : ''}
+    </div>
+    ${execTermsLoaded ? '' : '<div class="exec-note">ยังโหลดทะเบียนผู้บริหารจากฐานข้อมูลกลางไม่ได้ (ตรวจสอบว่าเผยแพร่กฎ Firestore ฉบับล่าสุดแล้ว และอินเทอร์เน็ตปกติ) แล้วรีเฟรชหน้านี้</div>'}
+    <h4 class="exec-h">ประวัติผู้ดำรงตำแหน่ง ${EXEC_ROLE_NAME[r]}</h4>
+    ${items ? `<div class="vt">${items}</div>` : `<div class="exec-empty">ยังไม่มีข้อมูลวาระ${admin ? ' — กด "แต่งตั้งคนใหม่" เพื่อบันทึกวาระแรก' : ''}</div>`}`;
+}
+
+/* ---------- ฟอร์มแต่งตั้ง / แก้ไขวาระ ---------- */
+let execTermEditingId = null, execTermRole = 'head';
+function openExecTerm(id, role){
+  if(!isAdmin()) return;
+  const t = id ? execTerms.find(x=>x.id===id) : null;
+  execTermEditingId = t ? t.id : null;
+  execTermRole = t ? t.role : role;
+  const holder = t ? null : execHolderAt(execTermRole);
+  const sel = t ? (execStaffOf(t) || {}).id : (holder ? (execStaffOf(holder) || {}).id : '');
+  const opts = staff.slice().sort((a,b)=>(a.status==='resigned')-(b.status==='resigned')).map(s=>`<option value="${esc(s.id)}" ${s.id===sel?'selected':''}>${esc(s.name)}${s.nickname?' ('+esc(s.nickname)+')':''}${s.status==='resigned'?' – ลาออก':''}</option>`).join('');
+  document.getElementById('et-title').textContent = (t ? 'แก้ไขวาระ ' : 'แต่งตั้ง ') + EXEC_ROLE_NAME[execTermRole];
+  document.getElementById('et-body').innerHTML = `
+    <div class="f-row"><label>ผู้ดำรงตำแหน่ง</label><select class="edit-input" id="et-staff">${opts}</select></div>
+    <div class="two-col">
+      <div class="f-row"><label>วันที่เริ่มดำรงตำแหน่ง <span class="req">*</span></label><input type="date" class="edit-input" id="et-start" value="${esc(t ? t.startDate : __todayISO())}" oninput="__execTermPreview()"><div id="et-start-pv" class="exec-since"></div></div>
+      <div class="f-row"><label>วันที่สิ้นสุด (เว้นว่าง = ยังดำรงตำแหน่งอยู่)</label><input type="date" class="edit-input" id="et-end" value="${esc(t && t.endDate ? t.endDate : '')}" oninput="__execTermPreview()"><div id="et-end-pv" class="exec-since"></div></div>
+    </div>
+    <div class="f-row"><label>คำสั่ง / หนังสือที่ (ถ้ามี)</label><input class="edit-input" id="et-ref" value="${esc(t && t.ref ? t.ref : '')}" placeholder="เช่น คำสั่งแขวงฯ ที่ 100/2569"></div>
+    ${t ? '' : '<div class="exec-note">ถ้าเว้นวันที่สิ้นสุดไว้ วาระของท่านเดิมจะถูกปิดให้อัตโนมัติ (สิ้นสุดก่อนวันที่เริ่มของท่านใหม่ 1 วัน)</div>'}
+    <div id="et-err" style="color:var(--danger);font-size:12.5px;min-height:18px;"></div>`;
+  document.getElementById('et-foot').style.justifyContent = t ? 'space-between' : 'flex-end';
+  document.getElementById('et-foot').innerHTML = `${t ? '<button type="button" class="btn btn-danger" id="et-del-btn" onclick="deleteExecTerm()">ลบวาระนี้</button>' : ''}
+    <div style="display:flex;gap:8px;"><button type="button" class="btn btn-ghost" id="et-cancel-btn" onclick="closeExecTerm()">ยกเลิก</button><button type="button" class="btn btn-primary" id="et-save-btn" onclick="saveExecTerm()">บันทึก</button></div>`;
+  __execTermPreview();
+  document.getElementById('exec-term-modal').classList.remove('hidden');
+}
+function closeExecTerm(){ document.getElementById('exec-term-modal').classList.add('hidden'); }
+function __execTermPreview(){
+  const s = document.getElementById('et-start').value, e = document.getElementById('et-end').value;
+  document.getElementById('et-start-pv').textContent = s ? '= ' + __fmtDateBE(s) : '';
+  document.getElementById('et-end-pv').textContent = e ? '= ' + __fmtDateBE(e) : '';
+}
+function __execAfterChange(){
+  renderExecReg(); renderStaff();
+  if(staffDetailIndex!==null && !document.getElementById('staff-detail-modal').classList.contains('hidden')) renderStaffDetailModal();
+}
+async function saveExecTerm(){
+  if(!isAdmin()) return;
+  const errBox = document.getElementById('et-err');
+  const sid = document.getElementById('et-staff').value, s = staff.find(x=>x.id===sid);
+  const start = document.getElementById('et-start').value, end = document.getElementById('et-end').value || null;
+  const ref = document.getElementById('et-ref').value.trim() || null;
+  if(!s){ errBox.textContent = 'กรุณาเลือกผู้ดำรงตำแหน่ง'; return; }
+  if(!start){ errBox.textContent = 'กรุณาระบุวันที่เริ่มดำรงตำแหน่ง'; return; }
+  if(end && end<start){ errBox.textContent = 'วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่ม'; return; }
+  const role = execTermRole;
+  const saveBtn = document.getElementById('et-save-btn'), cancelBtn = document.getElementById('et-cancel-btn'), delBtn = document.getElementById('et-del-btn');
+  const lock = v=>{ saveBtn.disabled = v; cancelBtn.disabled = v; if(delBtn) delBtn.disabled = v; saveBtn.textContent = v ? 'กำลังบันทึก...' : 'บันทึก'; };
+  lock(true);
+  try{
+    if(!execTermEditingId){
+      if(!end){
+        // แต่งตั้งแบบไม่มีวันสิ้นสุด: ปิดวาระที่ยังเปิดอยู่ของตำแหน่งเดียวกัน (และของคนนี้ในอีกตำแหน่ง) ก่อน
+        const toClose = execTerms.filter(t=>!t.endDate && (t.role===role || t.staffId===sid));
+        if(toClose.some(t=>t.startDate>=start)){
+          errBox.textContent = 'มีวาระที่ยังไม่สิ้นสุดและเริ่มวันเดียวกันหรือหลังวันที่นี้อยู่แล้ว — แก้ไขวาระนั้นก่อน หรือเลือกวันที่เริ่มให้ใหม่กว่า';
+          lock(false); return;
+        }
+        for(const t of toClose){
+          const upd = await apiPost('update', 'exec_terms', Object.assign({}, t, {endDate: __addDaysISO(start, -1)}));
+          Object.assign(t, upd);
+        }
+      }
+      const saved = await apiPost('add', 'exec_terms', {role, staffId:s.id, staffName:s.name, startDate:start, endDate:end, ref});
+      execTerms.push(saved);
+    } else {
+      const t = execTerms.find(x=>x.id===execTermEditingId), before = Object.assign({}, t);
+      Object.assign(t, {staffId:s.id, staffName:s.name, startDate:start, endDate:end, ref});
+      try{ Object.assign(t, await apiPost('update', 'exec_terms', t)); }
+      catch(err){ Object.assign(t, before); throw err; }
+    }
+  }catch(err){
+    alert('บันทึกทะเบียนผู้บริหารไปยังฐานข้อมูลกลางไม่สำเร็จ: ' + err.message);
+    lock(false); return;
+  }
+  closeExecTerm();
+  __execAfterChange();
+}
+function deleteExecTerm(){
+  if(!isAdmin() || !execTermEditingId) return;
+  const t = execTerms.find(x=>x.id===execTermEditingId); if(!t) return;
+  const s = execStaffOf(t);
+  showConfirm({
+    title:'ลบวาระผู้บริหาร',
+    message:`ยืนยันลบวาระ <b>"${esc(s ? s.name : t.staffName)}"</b> (${__fmtDateBE(t.startDate)} – ${__fmtDateBE(t.endDate)}) ออกจากทะเบียนผู้บริหาร?`,
+    warn:'การลบไม่สามารถย้อนกลับได้ ถ้าเพียงแค่เปลี่ยนตัวผู้ดำรงตำแหน่ง ให้ใช้ "แต่งตั้งคนใหม่" แทน เพื่อเก็บประวัติไว้',
+    onConfirm: async ()=>{
+      try{ await apiPost('delete', 'exec_terms', null, t.id, {trash:false}); }
+      catch(err){ alert('ลบวาระในฐานข้อมูลกลางไม่สำเร็จ: ' + err.message); return; }
+      execTerms = execTerms.filter(x=>x.id!==t.id);
+      closeExecTerm();
+      __execAfterChange();
+    }
+  });
+}
+
+/* ---------- เนื้อหาโมดัลรายละเอียดบุคลากร (โหมดดู): หัวข้อพับเก็บได้ ช่องที่ไม่ได้กรอกไม่แสดง ---------- */
+function __staffDetailViewHTML(s){
+  const age = ageFromBirth(s.birth);
+  const f = (label, val, full)=> (val===null || val===undefined || val==='') ? '' : `<div${full?' style="grid-column:1/-1;"':''}><div class="d-label">${label}</div><div class="d-val">${val}</div></div>`;
+  const grid = items=>{ const h = items.join(''); return h ? `<div class="detail-grid" style="grid-template-columns:repeat(2,1fr);">${h}</div>` : ''; };
+  const acc = (title, inner, open)=> inner ? `<details class="sd-acc" ${open?'open':''}><summary>${title}</summary><div class="acc-b">${inner}</div></details>` : '';
+  const ri = __retirementInfo(s);
+  const retirePill = (ri && s.status==='ok') ? (ri.status==='overdue' ? ` <span class="pill pill-danger" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ (${fmtDate(ri.date)})</span>` : ` <span class="pill pill-warn" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ (${fmtDate(ri.date)})</span>`) : '';
+  const posVal = ((s.role?esc(s.role):'') + (s.duty?` <span class="pill pill-warn">ปฏิบัติหน้าที่${esc(s.duty)}</span>`:'') + retirePill).trim();
+  const el = __leaveEligibleDate(s);
+  const startVal = s.startDate ? fmtDate(s.startDate) + (el ? (TODAY.toISOString().slice(0,10) < el ? ` <span class="pill pill-warn">ยังไม่มีสิทธิ์ลา (ถึง ${fmtDate(el)})</span>` : ' <span class="pill pill-ok">มีสิทธิ์ลาแล้ว</span>') : '') : '';
+  const vacVal = (s.vacCarry!=null && s.vacCarry!=='') ? esc(s.vacCarry)+' วันทำการ'+(s.vacCarryFy?' (ปีงบ '+esc(s.vacCarryFy)+')':'') : '';
+  const general = grid([
+    f('ชื่อเล่น', s.nickname ? esc(s.nickname) : ''),
+    f('ตำแหน่งทางราชการ', posVal),
+    f('ประเภทบุคลากร', esc(s.ptype)),
+    f('สถานะ', s.status==='resigned' ? '<span class="pill pill-danger">● ลาออก</span>' : '<span class="pill pill-ok">● ปฏิบัติงาน</span>'),
+    f('วันเกิด / อายุ', s.birth ? fmtDateFull(s.birth)+' ('+age+' ปี)' : ''),
+    f('วันที่เริ่มงาน', startVal),
+    f('วุฒิการศึกษา', s.education ? esc(s.education) : ''),
+    f('อัตราค่าจ้าง/วัน', s.rate ? fmtMoney(s.rate)+' บาท' : ''),
+    f('วันลาพักผ่อนสะสมยกมา', vacVal),
+    f('ไซส์เสื้อ', s.shirt ? esc(s.shirt) : '')
+  ]);
+  const contact = grid([
+    f('เบอร์โทรศัพท์', s.phone ? esc(s.phone) : ''),
+    f('ที่อยู่ปัจจุบัน', s.address ? esc(s.address) : '', true),
+    f('ผู้ติดต่อฉุกเฉิน', s.emergencyContact ? esc(s.emergencyContact) : ''),
+    f('เบอร์โทรผู้ติดต่อฉุกเฉิน', s.emergencyPhone ? esc(s.emergencyPhone) : '')
+  ]);
+  const health = grid([
+    f('กรุ๊ปเลือด', s.bloodType ? esc(s.bloodType) : ''),
+    f('ข้อมูลการรักษาพยาบาล', s.med ? esc(s.med) : '')
+  ]);
+  const terms = execTermsOfStaff(s);
+  const hist = terms.map(t=>`<div class="exec-mini">${__execPill(t.role, true)}<span>${__fmtDateBE(t.startDate)} – ${__fmtDateBE(t.endDate)}</span><span style="color:var(--ink-400);">${execDuration(t.startDate, t.endDate)}</span>${t.ref ? `<span style="color:var(--ink-400);">${esc(t.ref)}</span>` : ''}</div>`).join('');
+  return acc('ข้อมูลทั่วไป', general, true) + acc('การติดต่อ & ผู้ติดต่อฉุกเฉิน', contact) + acc('สุขภาพ', health) + acc('ประวัติตำแหน่งบริหารหมวด', hist, true);
 }
 
 /* ---------- Staff detail / edit modal ---------- */
@@ -1735,7 +2045,7 @@ function renderStaffDetailModal(){
   const s = staff[i];
   const body = document.getElementById('sd-body');
   const foot = document.getElementById('sd-foot');
-  document.getElementById('sd-title').innerHTML = staffDetailEditing ? `✏️ แก้ไขข้อมูล — ${esc(s.name)}` : `👤 ${esc(s.name)}`;
+  document.getElementById('sd-title').innerHTML = staffDetailEditing ? `✏️ แก้ไขข้อมูล — ${esc(s.name)}` : `👤 ${esc(s.name)}${__execRolePill(s)}`;
   if(staffDetailEditing){
     body.innerHTML = `
       <div class="two-col">
@@ -1788,28 +2098,7 @@ function renderStaffDetailModal(){
       <button class="btn btn-primary" id="sd-save-btn" onclick="saveStaffDetail()">บันทึกการแก้ไข</button>
     `;
   } else {
-    const age = ageFromBirth(s.birth);
-    body.innerHTML = `
-      <div class="detail-grid" style="grid-template-columns:repeat(2,1fr);">
-        <div><div class="d-label">ชื่อ-สกุล</div><div class="d-val">${esc(s.name)}</div></div>
-        <div><div class="d-label">ชื่อเล่น</div><div class="d-val">${esc(s.nickname||'—')}</div></div>
-        <div><div class="d-label">ตำแหน่งทางราชการ</div><div class="d-val">${esc(s.role||'—')}${s.duty?` <span class="pill pill-warn">ปฏิบัติหน้าที่${esc(s.duty)}</span>`:''}${(()=>{const ri=__retirementInfo(s); if(!ri || s.status!=='ok') return ''; return ri.status==='overdue' ? ` <span class="pill pill-danger" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ (${fmtDate(ri.date)})</span>` : ` <span class="pill pill-warn" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ (${fmtDate(ri.date)})</span>`;})()}</div></div>
-        <div><div class="d-label">ประเภทบุคลากร</div><div class="d-val">${esc(s.ptype)}</div></div>
-        <div><div class="d-label">วันลาพักผ่อนสะสมยกมา</div><div class="d-val">${s.vacCarry!=null&&s.vacCarry!==''?esc(s.vacCarry)+' วันทำการ'+(s.vacCarryFy?' (ปีงบ '+esc(s.vacCarryFy)+')':''):'ยังไม่ระบุ'}</div></div>
-        <div><div class="d-label">สถานะ</div><div class="d-val">${s.status==='resigned'?'<span class="pill pill-danger">● ลาออก</span>':'<span class="pill pill-ok">● ปฏิบัติงาน</span>'}</div></div>
-        <div><div class="d-label">วันเกิด / อายุ</div><div class="d-val">${s.birth?fmtDateFull(s.birth)+' ('+age+' ปี)':'—'}</div></div>
-        <div><div class="d-label">วันที่เริ่มงาน</div><div class="d-val">${s.startDate?fmtDate(s.startDate):'—'}${(()=>{const el=__leaveEligibleDate(s); if(!el) return ''; const restricted = TODAY.toISOString().slice(0,10) < el; return restricted ? ` <span class="pill pill-warn">ยังไม่มีสิทธิ์ลา (ถึง ${fmtDate(el)})</span>` : ` <span class="pill pill-ok">มีสิทธิ์ลาแล้ว</span>`;})()}</div></div>
-        <div><div class="d-label">อัตราค่าจ้าง/วัน</div><div class="d-val">${s.rate?fmtMoney(s.rate)+' บาท':'—'}</div></div>
-        <div><div class="d-label">ไซส์เสื้อ</div><div class="d-val">${esc(s.shirt||'—')}</div></div>
-        <div><div class="d-label">ข้อมูลการรักษาพยาบาล</div><div class="d-val">${esc(s.med||'—')}</div></div>
-        <div><div class="d-label">กรุ๊ปเลือด</div><div class="d-val">${esc(s.bloodType||'—')}</div></div>
-        <div><div class="d-label">เบอร์โทรศัพท์</div><div class="d-val">${esc(s.phone||'—')}</div></div>
-        <div><div class="d-label">วุฒิการศึกษา</div><div class="d-val">${esc(s.education||'—')}</div></div>
-        <div style="grid-column:1/-1;"><div class="d-label">ที่อยู่ปัจจุบัน</div><div class="d-val">${esc(s.address||'—')}</div></div>
-        <div><div class="d-label">ผู้ติดต่อฉุกเฉิน</div><div class="d-val">${esc(s.emergencyContact||'—')}</div></div>
-        <div><div class="d-label">เบอร์โทรผู้ติดต่อฉุกเฉิน</div><div class="d-val">${esc(s.emergencyPhone||'—')}</div></div>
-      </div>
-    `;
+    body.innerHTML = __staffDetailViewHTML(s);
     foot.style.justifyContent = isAdmin() ? 'space-between' : 'flex-end';
     foot.innerHTML = isAdmin()
       ? `<button class="btn btn-danger" onclick="deleteStaffDetail()">ลบรายการ</button>
@@ -2337,15 +2626,18 @@ function __leaveRowHTML(r,i){
   const role = (staff.find(x=>x.name===r.name)||{}).role || '';
   const days = (r.days!=null && r.days!=='') ? r.days : daysBetween(r.from,r.to);
   return `
-    <tr>
-      <td class="p-name">${esc(r.name)}</td><td>${role ? esc(role) : '<span style="color:var(--ink-400);">-</span>'}</td><td>${esc(r.type)}</td><td>${fmtDate(r.from)} – ${fmtDate(r.to)}</td>
+    <tr${r.status==='cancelled' ? ' style="opacity:.6;"' : ''}>
+      <td class="p-name"${r.status==='cancelled' ? ' style="text-decoration:line-through;"' : ''}>${esc(r.name)}</td><td>${role ? esc(role) : '<span style="color:var(--ink-400);">-</span>'}</td><td>${esc(r.type)}</td><td>${fmtDate(r.from)} – ${fmtDate(r.to)}</td>
       <td>${esc(String(days))} วัน</td>
       <td>${r.status==='cancelled' ? '<span class="pill pill-neutral">ยกเลิกแล้ว</span>' : (r.approval==='pending' ? '<span class="pill pill-warn">รออนุมัติ</span>' : r.approval==='approved' ? `<span class="pill pill-ok" title="${esc(r.approvedBy||'')}">อนุมัติแล้ว</span>` : r.approval==='rejected' ? `<span class="pill pill-neutral" style="color:var(--danger);" title="${esc(r.approvalNote||'')}">ไม่อนุมัติ</span>` : '<span class="pill pill-ok">บันทึกแล้ว</span>')}</td>
       <td class="lr-actions-cell">
         <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์ใบลา" onclick="printLeaveForm(${i})"></button>
-        ${__canCancelLeave(r) ? `<button class="btn btn-ghost btn-ic btn-sm" data-ic="doc" data-tip="พิมพ์ใบขอยกเลิกวันลา" onclick="printCancelForm(${i})"></button>` : ''}
-        <button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไขคำขอลานี้" onclick="openEditLeave(${i})"></button>
-        <button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบคำขอลานี้" onclick="deleteLeaveRequest(${i})"></button>
+        ${r.status==='cancelled'
+          ? `<button class="btn btn-ghost btn-ic btn-sm" data-ic="doc" data-tip="พิมพ์ใบขอยกเลิกวันลา" onclick="printCancelForm(${i})"></button>`
+          : (__lrStatusGroup(r)==='done'
+            ? `<button class="btn btn-ghost btn-sm btn-ic-danger" data-tip="ยกเลิกใบลานี้ (ไม่นับวันลา เก็บประวัติไว้)" onclick="openCancelLeave(${i})">ยกเลิกใบลา</button>`
+            : `<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไขคำขอลานี้" onclick="openEditLeave(${i})"></button>
+        <button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบคำขอลานี้" onclick="deleteLeaveRequest(${i})"></button>`)}
       </td>
     </tr>`;
 }
@@ -2434,6 +2726,49 @@ function deleteLeaveRequest(i){
     warn:'ใช้สำหรับกรณีกรอกผิดพลาดหรือรายการซ้ำเท่านั้น หากพนักงานต้องการยกเลิกวันลาตามปกติ กรุณาใช้ปุ่ม "ใบขอยกเลิกวันลา" แทน\nการลบไม่สามารถย้อนกลับได้ และจะลบสถิติการลาที่เกี่ยวข้องออกจากทะเบียนคุมลา (จ.3-03) ด้วย',
     onConfirm:doDelete
   });
+}
+
+/* ยกเลิกใบลาที่อนุมัติ/บันทึกแล้ว — ไม่แก้ไข/ลบ แต่เปลี่ยนสถานะเป็น cancelled พร้อมเหตุผล เก็บประวัติไว้ตรวจสอบย้อนหลัง */
+let __cancelLeaveIndex = null;
+function openCancelLeave(i){
+  if(!isAdmin()) return;
+  const r = leaveRequests[i];
+  if(!r || r.status==='cancelled') return;
+  __cancelLeaveIndex = i;
+  document.getElementById('cl-info').innerHTML = `<b>${esc(r.name)}</b><br>${esc(r.type)} ${fmtDate(r.from)} – ${fmtDate(r.to)}`;
+  document.getElementById('cl-reason').value = '';
+  document.getElementById('cancel-leave-modal').classList.remove('hidden');
+}
+function closeCancelLeave(){
+  document.getElementById('cancel-leave-modal').classList.add('hidden');
+  __cancelLeaveIndex = null;
+}
+async function confirmCancelLeave(){
+  if(!isAdmin() || __cancelLeaveIndex===null) return;
+  const r = leaveRequests[__cancelLeaveIndex];
+  if(!r) return;
+  const reason = document.getElementById('cl-reason').value.trim();
+  if(!reason){ alert('กรุณาระบุเหตุผลการยกเลิกใบลา'); return; }
+  const before = Object.assign({}, r);
+  r.status = 'cancelled';
+  r.cancelReason = reason;
+  r.cancelledAt = new Date().toISOString();
+  const okBtn = document.getElementById('cl-ok-btn');
+  const closeBtn = document.getElementById('cl-close-btn');
+  okBtn.disabled = true; closeBtn.disabled = true; okBtn.textContent = 'กำลังบันทึก...';
+  try{
+    const saved = await apiPost('update', 'leave_requests', r);
+    Object.assign(r, saved);
+  }catch(err){
+    Object.assign(r, before);
+    alert('บันทึกการยกเลิกใบลาไปยังฐานข้อมูลกลางไม่สำเร็จ: ' + err.message);
+    okBtn.disabled = false; closeBtn.disabled = false; okBtn.textContent = 'ยืนยันยกเลิกใบลา';
+    return;
+  }
+  okBtn.disabled = false; closeBtn.disabled = false; okBtn.textContent = 'ยืนยันยกเลิกใบลา';
+  __saveSharedLeaveRequests();
+  renderAll();
+  closeCancelLeave();
 }
 
 let __editLeaveIndex = null;
@@ -2801,7 +3136,7 @@ function buildForm305(name, s, type, from, to, days, reason, cover, contact, sta
 function printCancelForm(i){
   const r = leaveRequests[i];
   const s = staff.find(x=>x.name===r.name) || {};
-  const reason = prompt('เหตุผลที่ขอยกเลิกวันลา:',''); if(reason===null) return;
+  const reason = r.cancelReason || '';
   const days = daysBetween(r.from,r.to);
   document.getElementById('print-cancel-form').innerHTML = `
   <div class="official-form">
@@ -2825,12 +3160,6 @@ function printCancelForm(i){
     <p>(ลงชื่อ)......................................................<br>(ตำแหน่ง)......................................................<br>วันที่.....................................</p>
   </div>`;
   printForm('print-cancel-form');
-  r.status='cancelled';
-  apiPost('update', 'leave_requests', r).catch(err=>{
-    alert('บันทึกสถานะยกเลิกวันลาไปยังฐานข้อมูลกลางไม่สำเร็จ: ' + err.message);
-  });
-  __saveSharedLeaveRequests();
-  renderAll();
 }
 
 /* ============================================================
@@ -3204,6 +3533,7 @@ renderAll();
     await loadControlledRoutesCacheFromApi();
     await loadComplaintsFromApi();
   }
+  await loadExecTermsFromApi(); // ทะเบียนผู้บริหารหมวด (โหลดแยก ไม่ให้กระทบตารางหลัก)
   __saveSharedLeaveRequests();
   renderAll();
 })();
