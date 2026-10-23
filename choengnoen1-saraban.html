@@ -2669,9 +2669,9 @@ function __leaveRowHTML(r,i){
       <td class="lr-actions-cell">
         <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์ใบลา" onclick="printLeaveForm(${i})"></button>
         ${r.status==='cancelled'
-          ? `<button class="btn btn-ghost btn-ic btn-sm" data-ic="doc" data-tip="พิมพ์ใบขอยกเลิกวันลา" onclick="printCancelForm(${i})"></button>`
-          : (__lrStatusGroup(r)==='done'
+          ? `<button class="btn btn-ghost btn-ic btn-sm" data-ic="doc" data-tip="พิมพ์ใบขอยกเลิกวันลา" onclick="printCancelForm(${i})"></button>`          : (__lrStatusGroup(r)==='done'
             ? `<button class="btn btn-ghost btn-sm btn-ic-danger" data-tip="ยกเลิกใบลานี้ (ไม่นับวันลา เก็บประวัติไว้)" onclick="openCancelLeave(${i})">ยกเลิกใบลา</button>`
+              + (__lrCanDeleteDone() ? `<button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบรายการลานี้" onclick="deleteLeaveRequest(${i})"></button>` : '')
             : `<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไขคำขอลานี้" onclick="openEditLeave(${i})"></button>
         <button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบคำขอลานี้" onclick="deleteLeaveRequest(${i})"></button>`)}
       </td>
@@ -2741,10 +2741,14 @@ function __renderLrLastUpdated(){
 /* ทุกคำขอลาที่ยื่นเข้าระบบถือเป็นข้อมูลลาจริงแล้ว (2569-09-18 — ตัดสถานะอนุมัติดิจิทัลออกทั้งระบบ)
    จึงใช้ขั้นตอนลบแบบเข้มงวด (ต้องเป็นแอดมิน + คำเตือนเรื่องผลต่อทะเบียนคุมลา) กับทุกรายการเสมอ
    ไม่มีการแยกกรณี "ยังไม่อนุมัติ" อีกต่อไป */
+/* ปุ่มถังขยะข้างปุ่ม "ยกเลิกใบลา" (แถวสถานะบันทึกแล้ว/อนุมัติแล้ว): เห็น/กดได้เฉพาะเจ้าของระบบ / หัวหน้าหมวด / ผู้ช่วยหมวด (ตามบทบาทบัญชี) */
+function __lrCanDeleteDone(){
+  return !!(window.FBL && FBL.user && ['owner','chief','assistant'].indexOf(FBL.user.role)!==-1);
+}
 function deleteLeaveRequest(i){
   const r = leaveRequests[i];
   if(!r) return;
-  if(!isAdmin()) return;
+  if(__lrStatusGroup(r)==='done' ? !__lrCanDeleteDone() : !isAdmin()) return;
   const doDelete = async ()=>{
     try{
       await apiPost('delete', 'leave_requests', null, r.id);
