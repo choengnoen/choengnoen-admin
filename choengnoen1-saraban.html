@@ -660,7 +660,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div class="tab" data-stafftab="ลูกจ้างชั่วคราว">ลูกจ้างชั่วคราว</div>
           </div>
           <div class="table-wrap table-wrap-scroll"><table>
-            <thead><tr><th>ชื่อ-สกุล</th><th>ตำแหน่งทางราชการ</th><th>ประเภทบุคลากร</th><th>สถานะ</th></tr></thead>
+            <thead><tr><th>ชื่อ-สกุล</th><th>ตำแหน่งทางราชการ</th><th>ประเภทบุคลากร</th><th>เบอร์โทรศัพท์</th><th>สถานะ</th></tr></thead>
             <tbody id="staff-body"></tbody>
           </table></div>
           <div class="legend-block" id="staff-foot-block">
@@ -1798,15 +1798,16 @@ function renderStaff(){
     return `<tr class="${eRole?'exec-row '+eRole:''}" style="cursor:pointer;" ondblclick="openStaffDetail(${i})" title="ดับเบิ้ลคลิกเพื่อดูรายละเอียด">
       <td><div class="person">${ptypeBadge(s.ptype)}<div><div class="p-name">${esc(s.name)}</div>${s.nickname?`<div class="p-sub">(${esc(s.nickname)})</div>`:''}</div></div></td>
       <td>${s.role?esc(s.role):'<span style="color:var(--ink-400);font-size:12.5px">ยังไม่ระบุ</span>'}${s.duty?` <span class="pill pill-warn" style="font-size:10.5px;">ปฏิบัติหน้าที่${esc(s.duty)}</span>`:''}${(()=>{const el=__leaveEligibleDate(s); if(!el || TODAY.toISOString().slice(0,10)>=el) return ''; return ` <span class="pill pill-danger" style="font-size:10.5px;" title="ยังไม่มีสิทธิ์ลาถึง ${fmtDate(el)}">🔒 ทดลองงาน</span>`;})()}${(()=>{const ri=__retirementInfo(s); if(!ri || s.status!=='ok') return ''; return ri.status==='overdue' ? ` <span class="pill pill-danger" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ</span>` : ` <span class="pill pill-warn" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ</span>`;})()}</td>
-      <td><span class="pill pill-neutral">${esc(s.ptype)}</span></td>      <td>${__staffStatusPill(s)}</td>
+      <td><span class="pill pill-neutral">${esc(s.ptype)}</span></td>
+      <td style="white-space:nowrap;">${s.phone?esc(s.phone):''}</td>      <td>${__staffStatusPill(s)}</td>
     </tr>`;
   };
   if(execIdx.length){
-    html += `<tr class="exec-grp"><td colspan="4">ผู้บริหารหมวด<button type="button" class="btn btn-ghost" onclick="openExecReg()">ทะเบียนผู้บริหาร</button></td></tr>` + execIdx.map(rowHTML).join('');
-    if(restIdx.length) html += `<tr class="exec-grp"><td colspan="4">เจ้าหน้าที่ (${restIdx.length})</td></tr>`;
+    html += `<tr class="exec-grp"><td colspan="5">ผู้บริหารหมวด<button type="button" class="btn btn-ghost" onclick="openExecReg()">ทะเบียนผู้บริหาร</button></td></tr>` + execIdx.map(rowHTML).join('');
+    if(restIdx.length) html += `<tr class="exec-grp"><td colspan="5">เจ้าหน้าที่ (${restIdx.length})</td></tr>`;
   }
   html += restIdx.map(rowHTML).join('');
-  body.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:var(--ink-400);padding:20px;">ไม่พบรายการ</td></tr>';
+  body.innerHTML = html || '<tr><td colspan="5" style="text-align:center;color:var(--ink-400);padding:20px;">ไม่พบรายการ</td></tr>';
   document.getElementById('staff-foot').textContent = `ปฏิบัติงาน ${activeStaff().length} · ลาออก ${staff.length-activeStaff().length} (คงข้อมูลไว้ตรวจสอบ) · ทั้งหมด ${staff.length} คน` + (isAdmin()?' · โหมดแก้ไข: เปิด':' · โหมดแก้ไข: ปิด (ดูอย่างเดียว)');
 }
 
@@ -3233,18 +3234,12 @@ function printCancelForm(i){
   h += lvRow(54,270.5,260,['จึงขอยกเลิกวันลา'+r.type+' จำนวน',{v:lvTh(days),fix:40},' (วัน)']);
   h += lvRow(54,292.1,488,['ตั้งแต่วันที่',{v:lvDateTh(r.from)},' ถึงวันที่',{v:lvDateTh(r.to)}]);
   /* ผู้ขอยกเลิก — ตำแหน่งเดียวกับใบลาพักผ่อน (ขอแสดงความนับถือ → ลงชื่อ ห่าง 37.5 pt) */
-  h += lvT(325,353.8,'ขอแสดงความนับถือ');
   h += lvSignApplicant(391.3, 21.7, nm, false);
   /* ความเห็นผู้บังคับบัญชา (ขวา) — เจ้าหน้าที่ลา: หัวหน้าหมวดปัจจุบัน / หัวหน้าหมวดลาเอง: ผู้รักษาราชการแทน */
   h += lvT(293.9,460,'ความเห็นผู้บังคับบัญชา',{bold:1});
   h += lvDash(323.1,509,485.3) + lvDash(293.9,509,508);
   const sg = lvChiefSigner(nm, cv);
   h += lvSignRight(551.9, sg.name, sg.pos);
-  /* ผู้ตรวจสอบ (ซ้ายล่าง) */
-  h += lvLead(52.9,572.5,155.4,'(ลงชื่อ)') + lvT(211.8,572.5,'ผู้ตรวจสอบ',{bold:1});
-  h += lvLead(79,593.2,126.3,'(') + lvT(205.3,593.2,')');
-  h += lvLead(52.9,614,155.4,'(ตำแหน่ง)');
-  h += lvLine(52.9,634.9,155.4,'วันที่'+'................../.................................../...........................');
   /* คำสั่ง (ขวาล่าง) — ช่องว่างให้ผู้สั่งการเขียนเอง */
   h += lvT(293.9,639.6,'คำสั่ง',{bold:1});
   h += lvBox(323.4,650.1,false) + lvT(338.9,661.7,'อนุญาต',{bold:1}) + lvBox(397.2,650.1,false) + lvT(412.7,661.7,'ไม่อนุญาต',{bold:1});
