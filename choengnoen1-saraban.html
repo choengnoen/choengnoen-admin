@@ -2558,7 +2558,7 @@ function lvLine(x,y,w,s,o){
 }
 function lvDots(x,y,w){ return lvLine(x,y,w,'.'); }
 function lvDash(x0,x1,y){ // เส้นประของแบบ จ.3-05 (ขีดสั้น 1.5pt ทุก 3pt)
-  return `<svg class="lv-t" style="left:${x0}pt;top:${y+LV_DY-1}pt;width:${x1-x0}pt;height:2pt;overflow:visible"><line x1="0" y1="1.33" x2="100%" y2="1.33" stroke="#000" stroke-width=".7" stroke-dasharray="2 2"/></svg>`;
+  return `<svg class="lv-t" style="left:${x0}pt;top:${y+LV_DY-2.6}pt;width:${x1-x0}pt;height:2pt;overflow:visible"><line x1="0" y1="1.33" x2="100%" y2="1.33" stroke="#000" stroke-width=".7" stroke-dasharray="2 2"/></svg>`;
 }
 function lvHL(x0,x1,y){ return `<div class="lv-t lv-ln" style="left:${x0}pt;top:${y+LV_DY}pt;width:${x1-x0}pt;height:.5pt"></div>`; }
 function lvVL(x,y0,y1){ return `<div class="lv-t lv-ln" style="left:${x}pt;top:${y0+LV_DY}pt;width:.5pt;height:${y1-y0}pt"></div>`; }
