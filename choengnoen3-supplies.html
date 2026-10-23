@@ -233,7 +233,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   /* แบบฟอร์ม EC 1-W ตามไฟล์ "ตย. ec1.pdf" ของกรม (A4 แนวนอน 842 x 595 pt) — หน้าจอกับตอนพิมพ์ใช้ชุดเดียวกัน
      ฟอนต์ TH Sarabun 13pt เหมือนต้นฉบับ ถ้าเครื่องไม่มีฟอนต์นี้ (.nofont) ใช้ Sarabun ขนาดเล็กลงแทนให้หน้าฟอร์มไม่เพี้ยน */
   @page ec1wpage{size:A4 landscape;margin:0;}
-  .ec1w-desk{background:#e4e1d8;border-radius:12px;padding:14px;margin:12px 20px 0;overflow-x:auto;}
+  /* บนจอย่อทั้งใบให้พอดีความกว้าง (ดู fitEc1wSheet) — ไม่มีแถบเลื่อนซ้าย-ขวา ; ตอนพิมพ์ใช้สำเนาแยกใน #print-ec1w ขนาดจริงเสมอ */
+  .ec1w-desk{background:#e4e1d8;border-radius:12px;padding:14px;margin:12px 20px 0;overflow:hidden;}
   /* เนื้อหาฟอร์ม (กว้าง 791.5pt) วางกึ่งกลางหน้ากระดาษทั้งแนวนอนและแนวตั้ง */
   .ec1w-sheet{page:ec1wpage;box-sizing:border-box;width:842pt;min-height:595pt;margin:0 auto;background:#fff;position:relative;padding:12pt 0;
     display:flex;flex-direction:column;justify-content:center;align-items:center;
@@ -1016,7 +1017,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </div>
             <div class="mc-actions">
               <span class="btn-split" id="ib-split"><button class="btn btn-primary" id="ib-add-btn" data-ic="plus" onclick="openIbCreate()" title="บันทึกของที่หมวดรับจากแขวงตามใบเบิก (พัสดุหรือน้ำมัน)">รับของในบัญชี</button><button type="button" class="btn btn-primary bs-caret" data-ic="caret" data-tip="ตัวเลือกอื่น" onclick="BtnStd.toggleMenu(this)"></button><div class="bs-menu"><button type="button" id="ib-add-off-btn" onclick="BtnStd.closeMenus();openIbCreate('off')" title="บันทึกพัสดุนอกบัญชีที่หมวดได้รับอนุเคราะห์หรือจัดหาเอง (ไม่ได้มาจากใบเบิกแขวง)">รับของนอกบัญชี</button></div></span>
-              <button class="btn btn-ghost" id="ib-add-off-btn" onclick="openIbCreate('off')" title="บันทึกพัสดุนอกบัญชีที่หมวดได้รับอนุเคราะห์หรือจัดหาเอง (ไม่ได้มาจากใบเบิกแขวง)">+ รับของนอกบัญชี</button>
             </div>
           </div>
           <div class="mc-tabrow">
@@ -1104,7 +1104,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               รายงานการปฏิบัติงานของเครื่องจักร (EC1-W)
             </h2>
             <div class="toolbar">
-              <span id="ec1w-countdown" class="hazard-soft" title="รวบรวมข้อมูลการปฏิบัติงานจากพนักงานขับรถให้ครบก่อนถึงกำหนดส่ง"></span>
               <button class="btn btn-primary" data-ic="print" onclick="printMachinery()">พิมพ์แบบฟอร์ม EC1-W</button>
             </div>
           </div>
@@ -1122,10 +1121,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div style="display:flex;flex-direction:column;gap:3px;">
               <label style="font-size:11.5px;color:var(--ink-600);">วันที่ในสัปดาห์ที่ต้องการดู</label>
               <input type="date" id="ec1w-week-date" class="edit-input" style="width:150px;" onchange="renderMachinery()">
-            </div>
-            <div style="display:flex;gap:6px;margin-left:auto;align-self:flex-end;">
-              <button class="btn btn-ghost btn-ic" data-ic="left" data-tip="สัปดาห์ก่อน" onclick="shiftEc1wWeek(-1)"></button>
-              <button class="btn btn-ghost btn-ic" data-ic="right" data-tip="สัปดาห์ถัดไป" onclick="shiftEc1wWeek(1)"></button>
             </div>
           </div>
           <div id="ec1w-table-wrap"></div>
@@ -2004,10 +1999,8 @@ function renderInbound(){
         `<option value="${f}" ${f===mk?'selected':''}>ปีงบประมาณ ${f+543}${f===curFy?' (ปีนี้)':''}</option>`
       ).join('');
   }
-  const addBtn = document.getElementById('ib-add-btn');
-  if(addBtn) addBtn.classList.toggle('hidden', !admin);
-  const addOffBtn = document.getElementById('ib-add-off-btn');
-  if(addOffBtn) addOffBtn.classList.toggle('hidden', !admin);
+  const addSplit = document.getElementById('ib-split'); // ปุ่มส้ม + เมนู (รวมรับของนอกบัญชี)
+  if(addSplit) addSplit.classList.toggle('hidden', !admin);
   const sub = document.getElementById('ib-sub');
   if(sub) sub.textContent = all.length ? '📌 ใบเบิกล่าสุดที่รับเข้า '+fmtDate(all[0].date) : 'ยังไม่มีใบเบิกรับเข้า';
 
@@ -4940,14 +4933,6 @@ function ec1wSelectedWeekDates(){
   ensureDwoMonths(week);
   return week;
 }
-function shiftEc1wWeek(delta){
-  const inp = document.getElementById('ec1w-week-date');
-  const dates = ec1wSelectedWeekDates();
-  const d = new Date(dates[0]+'T00:00:00');
-  d.setDate(d.getDate()+7*delta);
-  inp.value = toLocalISODate(d);
-  renderMachinery();
-}
 function ec1wAutoDayOff(date){
   if(THAI_HOLIDAYS[date]) return true;
   const dow = new Date(date+'T00:00:00').getDay();
@@ -5223,6 +5208,22 @@ function ec1wEditorHtml(vehicle, date){
       <button type="button" class="btn btn-primary" id="em-save-btn" onclick="saveMachineryLogModal()">บันทึก</button></div>
   </div>`;
 }
+/* ย่อแบบฟอร์มบนจอให้เห็นครบทั้งใบพอดีความกว้างพื้นที่ (ไม่ขยายเกินขนาดจริง) — วัดใหม่ทุกครั้งที่ขนาดพื้นที่เปลี่ยน
+   รวมถึงตอนสลับมาเปิดแท็บ EC 1-W (ตอนแท็บซ่อนอยู่กว้าง 0 จึงข้ามไปก่อน) */
+let __ec1wFitObs = null;
+function fitEc1wSheet(){
+  const wrap = document.getElementById('ec1w-table-wrap');
+  if(!wrap) return;
+  if(!__ec1wFitObs && window.ResizeObserver){ __ec1wFitObs = new ResizeObserver(()=>fitEc1wSheet()); __ec1wFitObs.observe(wrap); }
+  const desk = wrap.querySelector('.ec1w-desk'), sh = desk && desk.querySelector('.ec1w-sheet');
+  if(!sh) return;
+  const cs = getComputedStyle(desk);
+  const avail = desk.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  if(avail <= 0) return;
+  const z = Math.min(1, avail / (842*96/72));
+  const cur = parseFloat(sh.style.zoom) || 1;
+  if(Math.abs(cur - z) > 0.001) sh.style.zoom = z < 1 ? String(z) : '';
+}
 function toggleEc1wDay(vehicle, date){
   if(__ec1wOpen && __ec1wOpen.vehicle===vehicle && __ec1wOpen.date===date) closeMachineryLogModal();
   else openMachineryLogModal(vehicle, date);
@@ -5239,16 +5240,12 @@ function renderMachinery(){
   const wrap = document.getElementById('ec1w-table-wrap');
   wrap.innerHTML = vehicle ? `<div class="ec1w-desk">${ec1wSheetHtml(vehicle, dates, true)}</div>`
     : '<div style="margin:14px 20px 0;color:var(--ink-400);font-size:13px;">ยังไม่มีเครื่องจักร/ยานพาหนะในระบบ</div>';
+  fitEc1wSheet();
   Object.keys(keep).forEach(id=>{ const e = document.getElementById(id); if(e){ if(e.type==='checkbox') e.checked = keep[id]; else e.value = keep[id]; } });
   if(__ec1wOpen && document.getElementById('em-route1')){
     validateRouteKm('em-route1','em-km1','em-msg1');
     validateRouteKm('em-route2','em-km2','em-msg2');
   }
-
-  const d = new Date(TODAY);
-  const dow2 = d.getDay();
-  let daysToFriday = (5 - dow2 + 7) % 7;
-  document.getElementById('ec1w-countdown').textContent = daysToFriday===0 ? '⏰ วันนี้ครบกำหนดส่ง EC1-W' : `⏰ อีก ${daysToFriday} วัน ครบกำหนดส่ง EC1-W`;
 }
 function openMachineryLogModal(vehicle, date){
   if(!isAdmin()) return;
