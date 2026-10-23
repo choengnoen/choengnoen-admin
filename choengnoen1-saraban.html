@@ -2624,14 +2624,22 @@ function lvV(x0,x1,y,s,o){
 function lvSignRight(y, name, role, dx){
   dx = dx||0; const g = 21.9; const R = 505.9+dx;   /* ความกว้างบรรทัดเท่า จ.๓-๐๕ (ปลายขวา = 505.9 + dx) */   /* ปลายขวา: วงเล็บปิดไม่เกิน 542 pt (แนวอ้างอิงบรรทัด เขียนที่) ; ตำแหน่งเริ่มแนวเดียวกับ (ลงชื่อ) ; วันที่ ชิดขวาให้ ที่ ลงใต้ ง ของตำแหน่ง (293.9+35.6-19.0) */
   return lvLead(293.9+dx,y,R-293.9-dx,'(ลงชื่อ)')
-    + lvLead(320.1+dx,y+g,R-320.1-dx,'(') + lvT(R,y+g,')') + lvV(332.8+dx,R,y+g,name||'',{center:1})
-    + lvLead(293.9+dx,y+2*g,R-293.9-dx,'ตำแหน่ง') + lvV(332.8+dx,R,y+2*g,role||'',{center:1})
+    + lvLead(320.1+dx,y+g,R-320.1-dx,'(') + lvT(R,y+g,')') + lvV(323.1+dx,R,y+g,name||'',{center:1})
+    + lvLead(293.9+dx,y+2*g,R-293.9-dx,'ตำแหน่ง') + lvV(323.1+dx,R,y+2*g,role||'',{center:1})
     + lvLead(310.5+dx,y+3*g,R-310.5-dx,'วันที่') + lvT(374.8+dx,y+3*g,'/') + lvT(450+dx,y+3*g,'/');
 }
 /* ลายเซ็นผู้ลา (ใต้ "ขอแสดงความนับถือ") — เส้นจุดแบบเดียวกันทุกฟอร์ม ; เว้นให้เซ็นด้านบน 1 บรรทัดโดยผู้เรียก */
+/* ความกว้างข้อความ (pt) ที่ฟอนต์ TH SarabunPSK ขนาด size pt — ใช้เลื่อนแนวกรอกตามความยาวชื่อ */
+function lvTextW(txt,size){
+  try{ const c = document.createElement('canvas').getContext('2d'); c.font = (size||16)+'pt "TH SarabunPSK","THSarabunPSK","Sarabun",sans-serif'; return c.measureText(String(txt||'')).width/(96/72); }
+  catch(e){ return String(txt||'').length*5; }
+}
 function lvSignApplicant(y, gap, nm, dotted){
-  return lvLead(293.9,y,167.6,'(ลงชื่อ)')
-    + lvLead(320.1,y+gap,138.4,'(') + lvT(458.5,y+gap,')') + lvV(332.3,458.5,y+gap,nm,{center:1});
+  /* แนวกรอกชื่อผู้ลายืดตามความยาวชื่อ: ปกติวงเล็บปิดอยู่ที่ 458.5 pt ถ้าชื่อยาวกว่าจะเพิ่มจุดและเลื่อนวงเล็บปิดออกไป
+     (สูงสุด 538.9 pt = แนวขอบขวา) ให้ชื่อเต็มขนาดตัวอักษรและอยู่ภายในเส้นจุด/วงเล็บเสมอ */
+  const P = Math.min(538.9, Math.max(458.5, 323.1 + lvTextW(nm) + 14));
+  return lvLead(293.9,y,P+3-293.9,'(ลงชื่อ)')
+    + lvLead(320.1,y+gap,P-320.1,'(') + lvT(P,y+gap,')') + lvV(323.1,P,y+gap,nm,{center:1});
 }
 function lvHasThFont(){
   try{
