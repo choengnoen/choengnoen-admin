@@ -660,7 +660,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div class="tab" data-stafftab="ลูกจ้างชั่วคราว">ลูกจ้างชั่วคราว</div>
           </div>
           <div class="table-wrap table-wrap-scroll"><table>
-            <thead><tr><th>ชื่อ-สกุล</th><th>ตำแหน่งทางราชการ</th><th>ประเภทบุคลากร</th><th>ตำแหน่งในหมวด</th><th>สถานะ</th></tr></thead>
+            <thead><tr><th>ชื่อ-สกุล</th><th>ตำแหน่งทางราชการ</th><th>ประเภทบุคลากร</th><th>สถานะ</th></tr></thead>
             <tbody id="staff-body"></tbody>
           </table></div>
           <div class="legend-block" id="staff-foot-block">
@@ -1798,17 +1798,15 @@ function renderStaff(){
     return `<tr class="${eRole?'exec-row '+eRole:''}" style="cursor:pointer;" ondblclick="openStaffDetail(${i})" title="ดับเบิ้ลคลิกเพื่อดูรายละเอียด">
       <td><div class="person">${ptypeBadge(s.ptype)}<div><div class="p-name">${esc(s.name)}</div>${s.nickname?`<div class="p-sub">(${esc(s.nickname)})</div>`:''}</div></div></td>
       <td>${s.role?esc(s.role):'<span style="color:var(--ink-400);font-size:12.5px">ยังไม่ระบุ</span>'}${s.duty?` <span class="pill pill-warn" style="font-size:10.5px;">ปฏิบัติหน้าที่${esc(s.duty)}</span>`:''}${(()=>{const el=__leaveEligibleDate(s); if(!el || TODAY.toISOString().slice(0,10)>=el) return ''; return ` <span class="pill pill-danger" style="font-size:10.5px;" title="ยังไม่มีสิทธิ์ลาถึง ${fmtDate(el)}">🔒 ทดลองงาน</span>`;})()}${(()=>{const ri=__retirementInfo(s); if(!ri || s.status!=='ok') return ''; return ri.status==='overdue' ? ` <span class="pill pill-danger" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ</span>` : ` <span class="pill pill-warn" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ</span>`;})()}</td>
-      <td><span class="pill pill-neutral">${esc(s.ptype)}</span></td>
-      <td>${execRoleCellHTML(s, eRole)}</td>
-      <td>${__staffStatusPill(s)}</td>
+      <td><span class="pill pill-neutral">${esc(s.ptype)}</span></td>      <td>${__staffStatusPill(s)}</td>
     </tr>`;
   };
   if(execIdx.length){
-    html += `<tr class="exec-grp"><td colspan="5">ผู้บริหารหมวด<button type="button" class="btn btn-ghost" onclick="openExecReg()">ทะเบียนผู้บริหาร</button></td></tr>` + execIdx.map(rowHTML).join('');
-    if(restIdx.length) html += `<tr class="exec-grp"><td colspan="5">เจ้าหน้าที่ (${restIdx.length})</td></tr>`;
+    html += `<tr class="exec-grp"><td colspan="4">ผู้บริหารหมวด<button type="button" class="btn btn-ghost" onclick="openExecReg()">ทะเบียนผู้บริหาร</button></td></tr>` + execIdx.map(rowHTML).join('');
+    if(restIdx.length) html += `<tr class="exec-grp"><td colspan="4">เจ้าหน้าที่ (${restIdx.length})</td></tr>`;
   }
   html += restIdx.map(rowHTML).join('');
-  body.innerHTML = html || '<tr><td colspan="5" style="text-align:center;color:var(--ink-400);padding:20px;">ไม่พบรายการ</td></tr>';
+  body.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:var(--ink-400);padding:20px;">ไม่พบรายการ</td></tr>';
   document.getElementById('staff-foot').textContent = `ปฏิบัติงาน ${activeStaff().length} · ลาออก ${staff.length-activeStaff().length} (คงข้อมูลไว้ตรวจสอบ) · ทั้งหมด ${staff.length} คน` + (isAdmin()?' · โหมดแก้ไข: เปิด':' · โหมดแก้ไข: ปิด (ดูอย่างเดียว)');
 }
 
@@ -3189,32 +3187,70 @@ function buildForm305(name, s, type, from, to, days, reason, cover, contact, sta
   document.getElementById('print-leave-form').innerHTML = lvWrap(h,'sick');
 }
 
+/* แบบใบขอยกเลิกวันลา — จัดหน้าแบบเดียวกับใบลาป่วย/พักผ่อน (A4 วางพิกัด pt, ฟอนต์ THSarabunIT๙ 16pt, เส้นจุด, บล็อกลงนามขวา)
+   แถวที่มีข้อความยาวไม่แน่นอน (ชนิดการลา/วันที่/เหตุผล) ใช้แถว flex: ป้ายข้อความ + ช่องจุดที่ยืดตามค่าที่กรอก */
+function lvRow(x,y,w,parts){
+  const dot = '<svg class="lv-d" style="width:100%"><line x1="1" y1="16.4" x2="100%" y2="16.4" stroke="#000" stroke-width="1.3" stroke-linecap="round" stroke-dasharray="0 3.4"/></svg>';
+  const inner = parts.map(p=>{
+    if(typeof p==='string') return `<span class="lv-s">${p}</span>`;
+    const v = String(p.v==null?'':p.v);
+    const sz = p.size||16;
+    const basis = p.fix ? `0 0 ${p.fix}pt` : `1 1 ${Math.max(24, lvTextW(v,sz)+14)}pt`;
+    return `<div style="flex:${basis};position:relative;min-width:0;height:16pt">${dot}<div class="lv-psk" style="position:absolute;left:0;right:0;top:${-LV_RAISE}pt;text-align:center;white-space:pre;font-size:${sz}pt;line-height:${sz}pt">${esc(v)}</div></div>`;
+  }).join('');
+  return `<div class="lv-t lv-fl" style="left:${x}pt;top:${y+LV_DY-LV_BASE}pt;width:${w}pt">${inner}</div>`;
+}
+
 function printCancelForm(i){
   const r = leaveRequests[i];
+  if(!r){ alert('ไม่พบข้อมูลการลานี้'); return; }
   const s = staff.find(x=>x.name===r.name) || {};
-  const reason = r.cancelReason || '';
+  const nm = String(r.name).trim();
+  const td = TODAY;
   const days = daysBetween(r.from,r.to);
-  document.getElementById('print-cancel-form').innerHTML = `
-  <div class="official-form">
-    <div class="form-title">แบบใบขอยกเลิกวันลา</div>
-    <div class="writeline">(เขียนที่) หมวดทางหลวงเชิงเนิน<br>วันที่ .......... เดือน .............................. พ.ศ. ...................</div>
-    <p>เรื่อง &nbsp;ขอยกเลิกวันลา${esc(r.type)}</p>
-    <p>เรียน &nbsp;หัวหน้าหมวดทางหลวงเชิงเนิน</p>
-    <p>ตามที่ข้าพเจ้า <span class="dotted">${esc(r.name)}</span> ตำแหน่ง <span class="dotted">${s.role?esc(s.role):'&nbsp;'}</span></p>
-    <p>สังกัด <span class="dotted">หมวดทางหลวงเชิงเนิน แขวงทางหลวงระยอง กรมทางหลวง</span></p>
-    <p>ได้รับอนุญาตให้ลา${esc(r.type)} ตั้งแต่วันที่ <span class="dotted">${fmtDate(r.from)}</span> ถึงวันที่ <span class="dotted">${fmtDate(r.to)}</span> รวม <span class="dotted">${days}</span> วัน นั้น</p>
-    <p>เนื่องจาก <span class="dotted">${reason?esc(reason):'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></p>
-    <p>จึงขอยกเลิกวันลา${esc(r.type)} จำนวน <span class="dotted">${days}</span> (วัน)</p>
-    <p>ตั้งแต่วันที่ <span class="dotted">${fmtDate(r.from)}</span> ถึงวันที่ <span class="dotted">${fmtDate(r.to)}</span></p>
-    <div class="sig-block">ขอแสดงความนับถือ<br><br><br>(ลงชื่อ) .......................................................<br>( ${esc(r.name)} )</div>
-    <p style="margin-top:20px;"><b>ความเห็นผู้บังคับบัญชา</b></p>
-    <p>..............................................................................................................................................</p>
-    <p>..............................................................................................................................................</p>
-    <p>(ลงชื่อ)......................................................<br>(ตำแหน่ง)......................................................<br>วันที่.....................................</p>
-    <p style="margin-top:10px;"><b>คำสั่ง</b> &nbsp;☐ อนุญาต &nbsp;☐ ไม่อนุญาต</p>
-    <p>..............................................................................................................................................</p>
-    <p>(ลงชื่อ)......................................................<br>(ตำแหน่ง)......................................................<br>วันที่.....................................</p>
-  </div>`;
+  const reason = r.cancelReason || '';
+  const lt = 'ลา'+r.type;
+  const cv = r.cover || '';
+  LV_FILED = null;   /* ใบยกเลิกยื่น ณ วันนี้ — หาหัวหน้าหมวดจากทะเบียนผู้บริหารตามวันนี้ */
+  LV_BASE = 12.7; LV_DY = 0;
+  let h = '';
+  /* ส่วนหัว: ชื่อแบบกึ่งกลางหน้า / เขียนที่ / วันที่ — พิกัดเดียวกับ จ.๓-๐๕ */
+  h += `<div class="lv-t" style="left:0;width:595.3pt;text-align:center;top:${54.7-LV_BASE-3.2}pt;font-size:20pt;line-height:20pt;font-weight:700">แบบใบขอยกเลิกวันลา</div>`;
+  h += lvLead(343.9,97.6,198.1,'(เขียนที่)') + lvV(385.7,542,97.6,'หมวดทางหลวงเชิงเนิน',{lead:2});
+  h += lvLead(325,119.2,45,'วันที่') + lvLead(373.5,119.2,99.5,'เดือน') + lvLead(477.1,119.2,64.9,'พ.ศ.');
+  h += lvV(344,370,119.2,lvTh(td.getDate()),{center:1}) + lvV(396,473,119.2,THAI_MONTH_FULL[td.getMonth()],{center:1}) + lvV(496,542,119.2,lvTh(td.getFullYear()+543),{center:1});
+  h += lvT(54,140.8,'เรื่อง') + lvV(78,235.1,140.8,'ขอยกเลิกวันลา'+r.type,{flat:1});
+  h += lvT(54,162.4,'เรียน') + lvV(77.5,232.2,162.4,'ผอ.ขท.ระยอง',{flat:1});
+  h += lvLead(126,184.1,198.5,'ข้าพเจ้า') + lvV(159.4,325.1,184.1,nm,{lead:1});
+  h += lvLead(327.1,184.1,214.9,'ตำแหน่ง') + lvV(371.3,542,184.1,s.role||'',{lead:1});
+  h += lvLead(54,205.7,488,'สังกัด') + lvV(80.6,542,205.7,'แขวงทางหลวงระยอง   หมวดทางหลวงเชิงเนิน',{lead:1});
+  /* เนื้อหา */
+  h += lvRow(54,227.3,488,['ได้รับอนุญาตให้'+lt+' ตั้งแต่วันที่',{v:lvDateTh(r.from)},' ถึงวันที่',{v:lvDateTh(r.to)}]);
+  const wRum = lvTextW('รวม'), wDay = lvTextW(' วัน นั้น  '), wCause = lvTextW('เนื่องจาก');
+  const availReason = 488 - wRum - 36 - wDay - wCause;
+  const rsz = reason ? Math.max(10, Math.min(16, Math.floor(16*(availReason-14)/Math.max(1,lvTextW(reason,16))*10)/10)) : 16;
+  h += lvRow(54,248.9,488,['รวม',{v:lvTh(days),fix:36},' วัน นั้น  เนื่องจาก',{v:reason,size:rsz}]);
+  h += lvRow(54,270.5,260,['จึงขอยกเลิกวันลา'+r.type+' จำนวน',{v:lvTh(days),fix:40},' (วัน)']);
+  h += lvRow(54,292.1,488,['ตั้งแต่วันที่',{v:lvDateTh(r.from)},' ถึงวันที่',{v:lvDateTh(r.to)}]);
+  /* ผู้ขอยกเลิก — ตำแหน่งเดียวกับใบลาพักผ่อน (ขอแสดงความนับถือ → ลงชื่อ ห่าง 37.5 pt) */
+  h += lvT(325,353.8,'ขอแสดงความนับถือ');
+  h += lvSignApplicant(391.3, 21.7, nm, false);
+  /* ความเห็นผู้บังคับบัญชา (ขวา) — เจ้าหน้าที่ลา: หัวหน้าหมวดปัจจุบัน / หัวหน้าหมวดลาเอง: ผู้รักษาราชการแทน */
+  h += lvT(293.9,460,'ความเห็นผู้บังคับบัญชา',{bold:1});
+  h += lvDash(323.1,509,485.3) + lvDash(293.9,509,508);
+  const sg = lvChiefSigner(nm, cv);
+  h += lvSignRight(551.9, sg.name, sg.pos);
+  /* ผู้ตรวจสอบ (ซ้ายล่าง) */
+  h += lvLead(52.9,572.5,155.4,'(ลงชื่อ)') + lvT(211.8,572.5,'ผู้ตรวจสอบ',{bold:1});
+  h += lvLead(79,593.2,126.3,'(') + lvT(205.3,593.2,')');
+  h += lvLead(52.9,614,155.4,'(ตำแหน่ง)');
+  h += lvLine(52.9,634.9,155.4,'วันที่'+'................../.................................../...........................');
+  /* คำสั่ง (ขวาล่าง) — ช่องว่างให้ผู้สั่งการเขียนเอง */
+  h += lvT(293.9,639.6,'คำสั่ง',{bold:1});
+  h += lvBox(323.4,650.1,false) + lvT(338.9,661.7,'อนุญาต',{bold:1}) + lvBox(397.2,650.1,false) + lvT(412.7,661.7,'ไม่อนุญาต',{bold:1});
+  h += lvDash(323.1,509,684.7) + lvDash(293.9,509,706.4);
+  h += lvSignRight(748.5, '', '');
+  document.getElementById('print-cancel-form').innerHTML = lvWrap(h,'vac');
   printForm('print-cancel-form');
 }
 
