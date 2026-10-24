@@ -190,6 +190,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .banner b{font-family:'Kanit';}
 
   /* ตารางค่าสาธารณูปโภครายเดือน — กดแถวเดือนเพื่อเปิดดูบิลรายใบ */
+  #util-report-table{table-layout:fixed;min-width:960px;} /* ความกว้างคอลัมน์ตาม colgroup ไม่ยืดตามเนื้อหาแถวย่อย */
   tr.util-month{cursor:pointer;}
   tr.util-month:hover{background:var(--paper-50);}
   tr.util-month.row-latest:hover{background:rgba(242,169,48,.2);}
@@ -2203,7 +2204,7 @@ function renderUtilReport(){
       <td><b>${fmtMoney(totalAll)}</b></td>
       <td></td><td></td>
     </tr>` : '';
-  document.getElementById('util-report-table').innerHTML = `<thead><tr><th>เดือน</th><th>ค่าไฟฟ้า</th><th>ค่าน้ำประปา</th><th>ค่าอินเตอร์เน็ต</th><th>ค่าโทรศัพท์</th><th>รวม</th><th>จ่ายบิล</th><th>รายงานแขวง</th></tr></thead><tbody>${rows}${totalRow}</tbody>`;
+  document.getElementById('util-report-table').innerHTML = `<colgroup><col style="width:19%">${UTIL_TYPES.map(()=>'<col style="width:12%">').join('')}<col style="width:10%"><col style="width:10%"><col style="width:13%"></colgroup><thead><tr><th>เดือน</th><th>ค่าไฟฟ้า</th><th>ค่าน้ำประปา</th><th>ค่าอินเตอร์เน็ต</th><th>ค่าโทรศัพท์</th><th>รวม</th><th>จ่ายบิล</th><th>รายงานแขวง</th></tr></thead><tbody>${rows}${totalRow}</tbody>`;
 }
 
 /* ============================================================
