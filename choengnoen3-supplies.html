@@ -523,7 +523,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .mc-col.neg{background:var(--danger-bg);}.mc-col.low{background:#fdeede;}.mc-col.ok{background:var(--success-bg);}
   .mc-col h3{font-size:14.5px;margin:0;padding:4px 6px 12px;display:flex;align-items:center;gap:7px;color:var(--navy-900);}
   .mc-col h3 .n{margin-left:auto;background:#fff;border-radius:99px;padding:1px 11px;font-size:12.5px;}
-  .mc-card{background:#fff;border-radius:11px;padding:12px 13px;margin-bottom:9px;box-shadow:0 1px 2px rgba(0,0,0,.07);}
+  .mc-card{background:#fff;border-radius:11px;padding:12px 13px;margin-bottom:9px;box-shadow:0 1px 2px rgba(0,0,0,.07);display:flex;flex-direction:column;box-sizing:border-box;}
+  .mc-card .mc-l1{margin-bottom:auto;}
   .mc-l1{display:flex;gap:10px;align-items:center;}
   .mc-nm{flex:1;font-size:13.5px;line-height:1.35;color:var(--ink-900);}
   .mc-nm small{display:block;color:var(--ink-400);font-size:11.5px;margin-top:2px;}
@@ -804,9 +805,19 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fhist-tbl .sep{border-left:2px solid var(--line);}
   .fhist-tbl td,.fhist-tbl th{white-space:nowrap;}
   /* คอลัมน์ "เดือน" กว้างเท่ากันทุกแท็บ (ภาพรวม/ดีเซล/เบนซิน) */
-  .fhist-tbl{table-layout:fixed;width:100%;min-width:640px;}
-  .fhist-tbl.fh-all{min-width:900px;}
-  .fhist-tbl col.fh-col-month{width:210px;}
+  .fhist-tbl{table-layout:fixed;width:100%;min-width:520px;}
+  .fhist-tbl.fh-all{min-width:740px;}
+  .fhist-tbl col.fh-col-month{width:160px;}
+  /* โมดัลสรุปน้ำมัน — ระยะห่างกระชับ */
+  .fhist-tbl thead th{padding:6px 10px;}
+  .fhist-tbl th.grp{padding:7px 10px;font-size:13px;}
+  .fhist-tbl tbody td{padding:7px 10px;}
+  .fh-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;}
+  /* การ์ดสรุปแบบบรรทัดเดียว: ชื่อซ้าย ตัวเลขขวา */
+  .fh-stats .stat-card{padding:7px 12px 7px 14px;display:flex;align-items:baseline;justify-content:space-between;gap:8px;border-radius:10px;}
+  .fh-stats .stat-card .label{font-size:11.5px;margin:0;white-space:nowrap;}
+  .fh-stats .stat-card .val{font-size:14.5px;white-space:nowrap;}
+  @media (max-width:640px){ .fh-stats{grid-template-columns:repeat(2,1fr);} }
   .fhist-latest-tag{display:inline-block;margin-left:8px;font-family:'Kanit';font-size:10px;font-weight:600;color:#fff;background:var(--success,#2e8b57);padding:1px 8px;border-radius:20px;vertical-align:middle;}
   .fh-row-edit input{width:100%;}
   .fh-row-edit td{padding:6px 8px;}
@@ -1217,7 +1228,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 
 <!-- ============ FUEL HISTORY MODAL — ประวัติน้ำมัน: สรุปรายเดือน / รายการรับเข้า (แก้ไข-ลบได้) ============ -->
 <div class="modal-overlay hidden no-print" id="fuel-history-overlay">
-  <div class="modal-box" style="max-width:900px;">
+  <div class="modal-box modal-l">
     <div class="modal-head">
       <div class="modal-head-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z"/></svg></div>
       <h3 id="fuel-history-title">ประวัติน้ำมัน</h3>
@@ -1644,6 +1655,22 @@ function renderMaterialCols(){
     return `<div class="mc-col ${k}"><h3>${ic} ${title}<span class="n">${list.length}</span></h3>${list.map(card).join('') || '<div class="mc-empty">— ไม่มีรายการ —</div>'}</div>`;
   };
   el.innerHTML = col('neg','ต้องตรวจสอบ (ยอดติดลบ)','⚠️') + col('low','ต้องสั่งซื้อ','🛒') + col('ok','ปกติ','✅');
+  equalizeMatCards();
+}
+/* ให้การ์ดทุกใบทุกคอลัมน์สูงเท่ากัน = ความสูงของการ์ดที่สูงที่สุด (คำนวณใหม่เมื่อความกว้างเปลี่ยน/แผงถูกเปิด) */
+let _mcEqW = -1;
+function equalizeMatCards(){
+  const el = document.getElementById('mat-cols');
+  if(!el) return;
+  const cards = el.querySelectorAll('.mc-card');
+  cards.forEach(c=>c.style.minHeight='');
+  let h = 0; cards.forEach(c=>{ h = Math.max(h, c.offsetHeight); });
+  if(h) cards.forEach(c=>c.style.minHeight=h+'px');
+  _mcEqW = el.clientWidth;
+  if(!el._mcRO && window.ResizeObserver){
+    el._mcRO = new ResizeObserver(()=>{ if(el.clientWidth!==_mcEqW) equalizeMatCards(); });
+    el._mcRO.observe(el);
+  }
 }
 /* ---- โมดัลตรวจสอบ / แจ้งซื้อ ---- */
 function closeMatActModal(){ document.getElementById('mat-act-overlay').classList.add('hidden'); }
@@ -1896,7 +1923,7 @@ function renderFuelHistoryModal(){
   if(!body || !title) return;
   title.textContent = 'สรุปยอดน้ำมันเชื้อเพลิงรายเดือน';
   const tabs = [['all','ภาพรวม'],['ดีเซล','🛢️ ดีเซล'],['เบนซิน','⛽ เบนซิน']];
-  const tabsHtml = `<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+  const tabsHtml = `<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
     <div class="seg-toggle">${tabs.map(([k,l])=>`<button type="button" class="seg-btn${__fuelHistTab===k?' active':''}" onclick="setFuelHistTab('${k}')">${l}</button>`).join('')}</div>
     <div style="margin-left:auto;"><select data-fy onchange="onFuelHistFyChange(this.value)">${itemHistFyOptionsHtml(__fuelHistFy)}</select></div>
   </div>`;
@@ -1914,11 +1941,11 @@ function fuelHistoryFyHtml(ft, fy){
   const first = sums[0].s, last = sums[sums.length-1].s;
   const totalIn = sums.reduce((a,x)=>a+x.s.received,0);
   const totalOut = sums.reduce((a,x)=>a+x.s.issued,0);
-  const statsHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;">
-    <div class="stat-card"><div class="bar"></div><div class="label">ยกมาต้นปีงบ</div><div class="val" style="font-size:16px;">${fmtNum(first.opening,1)} ลิตร</div></div>
-    <div class="stat-card"><div class="bar" style="background:var(--success);"></div><div class="label">รับเข้ารวม</div><div class="val" style="font-size:16px;color:var(--success);">+${fmtNum(totalIn,1)} ลิตร</div></div>
-    <div class="stat-card"><div class="bar" style="background:var(--danger);"></div><div class="label">จ่ายรวม</div><div class="val" style="font-size:16px;color:var(--danger);">−${fmtNum(totalOut,1)} ลิตร</div></div>
-    <div class="stat-card"><div class="bar"></div><div class="label">คงเหลือล่าสุด</div><div class="val" style="font-size:16px;${last.closing<0?'color:var(--danger);':''}">${fmtNum(last.closing,1)} ลิตร</div></div>
+  const statsHtml = `<div class="fh-stats">
+    <div class="stat-card"><div class="bar"></div><div class="label">ยกมาต้นปีงบ</div><div class="val">${fmtNum(first.opening,1)} ลิตร</div></div>
+    <div class="stat-card"><div class="bar" style="background:var(--success);"></div><div class="label">รับเข้ารวม</div><div class="val" style="color:var(--success);">+${fmtNum(totalIn,1)} ลิตร</div></div>
+    <div class="stat-card"><div class="bar" style="background:var(--danger);"></div><div class="label">จ่ายรวม</div><div class="val" style="color:var(--danger);">−${fmtNum(totalOut,1)} ลิตร</div></div>
+    <div class="stat-card"><div class="bar"></div><div class="label">คงเหลือล่าสุด</div><div class="val" style="${last.closing<0?'color:var(--danger);':''}">${fmtNum(last.closing,1)} ลิตร</div></div>
   </div>`;
   const rows = sums.slice().reverse().map(({k,s})=>{
     const [y,m] = k.split('-').map(Number);
