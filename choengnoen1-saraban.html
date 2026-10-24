@@ -449,7 +449,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s1"></script>
 <script src="emoji-img.js" defer></script>
-<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261024" defer></script>
+<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261024" defer></script><script src="table-scroll-standard.js?v=20261024" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
 .route-header .topbar-right{flex-direction:column;align-items:flex-end;gap:6px}
@@ -535,7 +535,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 <option>ข้าราชการ</option><option>ลูกจ้างประจำ</option><option>พนักงานราชการ</option><option selected>ลูกจ้างชั่วคราว</option>
               </select></div>
             </div>
-            <div class="f-row"><label>หน้าที่พิเศษ (ถ้ามี เช่น ปฏิบัติหน้าที่ยาม)</label><input class="edit-input" id="as-duty" placeholder="ไม่มี"></div>
+            <div class="two-col">
+              <div class="f-row"><label>ปฏิบัติหน้าที่ยาม (จ้างรวมวันเสาร์)</label><label style="display:flex;align-items:center;gap:8px;font-weight:normal;min-height:38px;cursor:pointer;"><input type="checkbox" id="as-guard" onchange="__toggleGuardStart('as')"> ปฏิบัติหน้าที่ยาม — ทำงานวันเสาร์ด้วย (วันอาทิตย์หยุด)</label></div>
+              <div class="f-row"><label>เริ่มปฏิบัติหน้าที่ยามตั้งแต่วันที่</label><input type="date" class="edit-input" id="as-dutystart" disabled></div>
+            </div>
             <div class="two-col">
               <div class="f-row"><label>สถานะ</label><select class="edit-input" id="as-status">
                 <option value="ok" selected>ปฏิบัติงาน</option>
@@ -1227,7 +1230,7 @@ function __leaveRestrictionInfo(name, asOfISO){
   return null;
 }
 function __workerLeaveUsed(name, type, fy){
-  return computeLeaveHistory().filter(r=>r.name===name && r.fy===fy && r.type===type).reduce((a,r)=>a+daysBetween(r.from,r.to),0);
+  return computeLeaveHistory().filter(r=>r.name===name && r.fy===fy && r.type===type).reduce((a,r)=>a+daysBetween(r.from,r.to,r.name),0);
 }
 // ระบบเตือนใกล้เกษียณอายุ (60 ปีบริบูรณ์) — วันที่เกษียณอายุราชการจริงคือวันสิ้นปีงบประมาณ (30 กันยายน)
 // ของปีงบประมาณที่บุคคลนั้นมีอายุครบ 60 ปีบริบูรณ์ ตามระเบียบราชการ
@@ -1311,18 +1314,29 @@ function renderDocMonthOptions(){
 function ageFromBirth(iso){ if(!iso) return null; const b=new Date(iso+'T00:00:00'); let age=TODAY.getFullYear()-b.getFullYear(); const m=TODAY.getMonth()-b.getMonth(); if(m<0||(m===0&&TODAY.getDate()<b.getDate())) age--; return age; }
 function isPublicHolidayISO(iso){ return publicHolidays.some(h=>h.date===iso); }
 function __isoOfDate(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+/* หน้าที่ยาม = จ้างรวมวันเสาร์ (วันอาทิตย์หยุด) นับตั้งแต่วันที่ dutyStart (ว่าง = นับทุกวันที่ผ่านมา)
+   ระบบที่ 4 (บัญชีลงเวลา ง.3-12 / หลักฐานการจ่ายเงิน ง.3-26) ใช้เงื่อนไขเดียวกันนี้ */
+function __isGuard(s){ return !!(s && String(s.duty||'').includes('ยาม')); }
+function __worksSaturday(s, iso){ return __isGuard(s) && (!s.dutyStart || iso>=s.dutyStart); }
+function __toggleGuardStart(prefix){
+  const on = document.getElementById(prefix+'-guard').checked, d = document.getElementById(prefix+'-dutystart');
+  d.disabled = !on;
+  if(!on) d.value = '';
+}
 /* นับ "จำนวนวันทำการ" ตั้งแต่ a ถึง b (รวมปลายทั้งสองด้าน) สำหรับการลางานแบบต่อเนื่องหลายวัน
    ไม่นับวันเสาร์-อาทิตย์ และวันที่อยู่ในรายการ publicHolidays — จัดการรายการวันหยุดได้ที่ปุ่ม "🗓 วันหยุดนักขัตฤกษ์" ในหน้าการลา
+   ส่งชื่อผู้ลา (name) มาด้วย → ผู้ปฏิบัติหน้าที่ยามนับวันเสาร์เป็นวันลา (เพราะเป็นวันทำงานของเขา) ตั้งแต่วันเริ่มปฏิบัติหน้าที่ยาม
    ใช้คำนวณจำนวนวันลาทุกจุดในระบบ (รวมรายการที่เคยบันทึกไว้แล้ว เพราะ from/to ของแต่ละรายการยังอยู่ครบ มีแต่ตัวฟังก์ชันนี้ที่เปลี่ยน) */
-function daysBetween(a,b){
+function daysBetween(a,b,name){
   if(!a||!b) return 0;
   const start = new Date(a+'T00:00:00'), end = new Date(b+'T00:00:00');
   if(isNaN(start.getTime())||isNaN(end.getTime())||end<start) return 0;
+  const person = name ? staff.find(x=>x.name===name) : null;
   let count = 0;
   const cur = new Date(start);
   while(cur<=end){
-    const dow = cur.getDay();
-    if(dow!==0 && dow!==6 && !isPublicHolidayISO(__isoOfDate(cur))) count++;
+    const dow = cur.getDay(), iso = __isoOfDate(cur);
+    if(dow!==0 && (dow!==6 || __worksSaturday(person, iso)) && !isPublicHolidayISO(iso)) count++;
     cur.setDate(cur.getDate()+1);
   }
   return count;
@@ -1802,7 +1816,7 @@ function renderStaff(){
     const eRole = execRoleOfStaff(s);
     return `<tr class="${eRole?'exec-row '+eRole:''}" style="cursor:pointer;" ondblclick="openStaffDetail(${i})" title="ดับเบิ้ลคลิกเพื่อดูรายละเอียด">
       <td><div class="person">${ptypeBadge(s.ptype)}<div><div class="p-name">${esc(s.name)}</div>${s.nickname?`<div class="p-sub">(${esc(s.nickname)})</div>`:''}</div></div></td>
-      <td>${s.role?esc(s.role):'<span style="color:var(--ink-400);font-size:12.5px">ยังไม่ระบุ</span>'}${s.duty?` <span class="pill pill-warn" style="font-size:10.5px;">ปฏิบัติหน้าที่${esc(s.duty)}</span>`:''}${(()=>{const el=__leaveEligibleDate(s); if(!el || TODAY.toISOString().slice(0,10)>=el) return ''; return ` <span class="pill pill-danger" style="font-size:10.5px;" title="ยังไม่มีสิทธิ์ลาถึง ${fmtDate(el)}">🔒 ทดลองงาน</span>`;})()}${(()=>{const ri=__retirementInfo(s); if(!ri || s.status!=='ok') return ''; return ri.status==='overdue' ? ` <span class="pill pill-danger" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ</span>` : ` <span class="pill pill-warn" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ</span>`;})()}</td>
+      <td>${s.role?esc(s.role):'<span style="color:var(--ink-400);font-size:12.5px">ยังไม่ระบุ</span>'}${s.duty?` <span class="pill pill-warn" style="font-size:10.5px;"${__isGuard(s)?` title="จ้างรวมวันเสาร์${s.dutyStart?' ตั้งแต่ '+fmtDate(s.dutyStart):''}"`:''}>ปฏิบัติหน้าที่${esc(s.duty)}${__isGuard(s)?' (ส.)':''}</span>`:''}${(()=>{const el=__leaveEligibleDate(s); if(!el || TODAY.toISOString().slice(0,10)>=el) return ''; return ` <span class="pill pill-danger" style="font-size:10.5px;" title="ยังไม่มีสิทธิ์ลาถึง ${fmtDate(el)}">🔒 ทดลองงาน</span>`;})()}${(()=>{const ri=__retirementInfo(s); if(!ri || s.status!=='ok') return ''; return ri.status==='overdue' ? ` <span class="pill pill-danger" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ</span>` : ` <span class="pill pill-warn" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ</span>`;})()}</td>
       <td><span class="pill pill-neutral">${esc(s.ptype)}</span></td>
       <td style="white-space:nowrap;">${s.phone?esc(s.phone):''}</td>      <td>${__staffStatusPill(s)}</td>
     </tr>`;
@@ -1994,7 +2008,10 @@ function __staffDetailViewHTML(s){
   const acc = (title, inner, open)=> inner ? `<details class="sd-acc" ${open?'open':''}><summary>${title}</summary><div class="acc-b">${inner}</div></details>` : '';
   const ri = __retirementInfo(s);
   const retirePill = (ri && s.status==='ok') ? (ri.status==='overdue' ? ` <span class="pill pill-danger" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ (${fmtDate(ri.date)})</span>` : ` <span class="pill pill-warn" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ (${fmtDate(ri.date)})</span>`) : '';
-  const posVal = ((s.role?esc(s.role):'') + (s.duty?` <span class="pill pill-warn">ปฏิบัติหน้าที่${esc(s.duty)}</span>`:'') + retirePill).trim();
+  const dutyPill = __isGuard(s)
+    ? ` <span class="pill pill-warn">ปฏิบัติหน้าที่ยาม · จ้างรวมวันเสาร์${s.dutyStart?' ตั้งแต่ '+fmtDate(s.dutyStart):''}</span>`
+    : (s.duty ? ` <span class="pill pill-warn">ปฏิบัติหน้าที่${esc(s.duty)}</span>` : '');
+  const posVal = ((s.role?esc(s.role):'') + dutyPill + retirePill).trim();
   const el = __leaveEligibleDate(s);
   const startVal = s.startDate ? fmtDate(s.startDate) + (el ? (TODAY.toISOString().slice(0,10) < el ? ` <span class="pill pill-warn">ยังไม่มีสิทธิ์ลา (ถึง ${fmtDate(el)})</span>` : ' <span class="pill pill-ok">มีสิทธิ์ลาแล้ว</span>') : '') : '';
   const vacVal = (s.vacCarry!=null && s.vacCarry!=='') ? esc(s.vacCarry)+' วันทำการ'+(s.vacCarryFy?' (ปีงบ '+esc(s.vacCarryFy)+')':'') : '';
@@ -2066,7 +2083,10 @@ function renderStaffDetailModal(){
           ${['ข้าราชการ','ลูกจ้างประจำ','พนักงานราชการ','ลูกจ้างชั่วคราว'].map(p=>`<option ${p===s.ptype?'selected':''}>${p}</option>`).join('')}
         </select></div>
       </div>
-      <div class="f-row"><label>หน้าที่พิเศษ (ถ้ามี เช่น ปฏิบัติหน้าที่ยาม)</label><input class="edit-input" id="sd-duty" value="${esc(s.duty||'')}" placeholder="ไม่มี"></div>
+      <div class="two-col">
+        <div class="f-row"><label>ปฏิบัติหน้าที่ยาม (จ้างรวมวันเสาร์)</label><label style="display:flex;align-items:center;gap:8px;font-weight:normal;min-height:38px;cursor:pointer;"><input type="checkbox" id="sd-guard" ${__isGuard(s)?'checked':''} onchange="__toggleGuardStart('sd')"> ปฏิบัติหน้าที่ยาม — ทำงานวันเสาร์ด้วย (วันอาทิตย์หยุด)</label></div>
+        <div class="f-row"><label>เริ่มปฏิบัติหน้าที่ยามตั้งแต่วันที่</label><input type="date" class="edit-input" id="sd-dutystart" value="${esc(s.dutyStart||'')}" ${__isGuard(s)?'':'disabled'}></div>
+      </div>
       <div class="two-col">
         <div class="f-row"><label>สถานะ</label><select class="edit-input" id="sd-status">
           <option value="ok" ${s.status==='ok'?'selected':''}>ปฏิบัติงาน</option>
@@ -2181,7 +2201,9 @@ async function saveStaffDetail(){
   s.name = newName || s.name;
   s.nickname = document.getElementById('sd-nickname').value.trim() || null;
   s.role = document.getElementById('sd-role').value.trim();
-  s.duty = document.getElementById('sd-duty').value.trim() || null;
+  const sdGuard = document.getElementById('sd-guard').checked;
+  s.duty = sdGuard ? 'ยาม' : (__isGuard(before) ? null : (before.duty || null)); // หน้าที่พิเศษอื่นที่ไม่ใช่ยาม (ข้อมูลเก่า) คงไว้ตามเดิม
+  s.dutyStart = sdGuard ? (document.getElementById('sd-dutystart').value || null) : null;
   s.ptype = document.getElementById('sd-ptype').value;
   s.status = document.getElementById('sd-status').value;
   if(s.status==='retired'){ if(!s.retiredDate) s.retiredDate = (__retirementDate(s) || TODAY.toISOString().slice(0,10)); }
@@ -2223,7 +2245,9 @@ async function saveStaffDetail(){
 /* ---------- Add staff modal ---------- */
 function openAddStaff(){
   if(!isAdmin()){ alert('ต้องเข้าสู่ระบบด้วยสิทธิ์แก้ไข (หัวหน้าหมวด/ผู้ช่วยหัวหน้าหมวด) จึงจะเพิ่มข้อมูลได้'); return; }
-  ['as-name','as-nickname','as-role','as-duty','as-rate','as-shirt','as-med','as-birth','as-startdate','as-vaccarry','as-vaccarryfy','as-blood','as-phone','as-education','as-address','as-emergency-contact','as-emergency-phone','as-bank'].forEach(id=>{ document.getElementById(id).value=''; });
+  document.getElementById('as-guard').checked = false;
+  document.getElementById('as-dutystart').disabled = true;
+  ['as-name','as-nickname','as-role','as-dutystart','as-rate','as-shirt','as-med','as-birth','as-startdate','as-vaccarry','as-vaccarryfy','as-blood','as-phone','as-education','as-address','as-emergency-contact','as-emergency-phone','as-bank'].forEach(id=>{ document.getElementById(id).value=''; });
   document.getElementById('as-ptype').value = 'ลูกจ้างชั่วคราว';
   document.getElementById('as-status').value = 'ok';
   const saveBtn = document.getElementById('as-save-btn');
@@ -2242,7 +2266,8 @@ async function submitAddStaff(){
     nickname: document.getElementById('as-nickname').value.trim() || null,
     birth: document.getElementById('as-birth').value || null,
     role: document.getElementById('as-role').value.trim(),
-    duty: document.getElementById('as-duty').value.trim() || null,
+    duty: document.getElementById('as-guard').checked ? 'ยาม' : null,
+    dutyStart: document.getElementById('as-guard').checked ? (document.getElementById('as-dutystart').value || null) : null,
     ptype: document.getElementById('as-ptype').value,
     rate: rateVal ? Number(rateVal) : null,
     shirt: document.getElementById('as-shirt').value.trim() || null,
@@ -2338,12 +2363,13 @@ function onLeaveNameChange(){
   const metaEl = document.getElementById('lr-meta');
   metaEl.textContent = `ตำแหน่ง: ${s ? (s.role||'-') : '-'} · ปีงบประมาณ ${fy}`;
   if(restr) metaEl.innerHTML += ` · <span class="pill pill-danger" style="font-size:10.5px;">🔒 ยังไม่มีสิทธิ์ลาถึง ${fmtDate(restr.eligibleDate)}</span>`;
+  calcLrDays(); // ผู้ปฏิบัติหน้าที่ยามนับวันเสาร์ด้วย จำนวนวันลาจึงขึ้นกับชื่อผู้ลา
   updateLrStats();
   checkLrWarning();
 }
 function calcLrDays(){
   const f = document.getElementById('lr-from').value, t = document.getElementById('lr-to').value;
-  document.getElementById('lr-days').value = (f&&t) ? Math.max(daysBetween(f,t),0) : '';
+  document.getElementById('lr-days').value = (f&&t) ? Math.max(daysBetween(f,t,document.getElementById('lr-name').value),0) : '';
   checkLrWarning();
 }
 function updateLrStats(){
@@ -2606,7 +2632,7 @@ async function submitLeaveRequest(){
     const fy = fiscalYearOf(from);
     const used = __workerLeaveUsed(name,type,fy);
     const quota = LEAVE_QUOTA_WORKER[type];
-    const requestedDays = Math.max(daysBetween(from,to),0);
+    const requestedDays = Math.max(daysBetween(from,to,name),0);
     if(used + requestedDays > quota){
       alert(`สิทธิลา${type}ของ ${name} เหลือไม่พอ (ใช้ไปแล้ว ${used}/${quota} วัน ปีงบประมาณ ${fy})\nกรุณาเลือกประเภทการลาเป็น "ขาดงาน (ไม่จ่ายค่าจ้าง)" แทน`);
       return;
@@ -2616,7 +2642,7 @@ async function submitLeaveRequest(){
   const advanceDays = Math.round((new Date(from+'T00:00:00')-TODAY)/86400000);
   const newLeave = {
     name, type, from, to,
-    days: daysBetween(from,to),
+    days: daysBetween(from,to,name),
     cover: document.getElementById('lr-cover').value,
     contact,
     reason: document.getElementById('lr-reason').value,
@@ -2671,7 +2697,7 @@ function __canCancelLeave(r){
 }
 function __leaveRowHTML(r,i){
   const role = (staff.find(x=>x.name===r.name)||{}).role || '';
-  const days = (r.days!=null && r.days!=='') ? r.days : daysBetween(r.from,r.to);
+  const days = (r.days!=null && r.days!=='') ? r.days : daysBetween(r.from,r.to,r.name);
   return `
     <tr${r.status==='cancelled' ? ' style="opacity:.6;"' : ''}>
       <td class="p-name"${r.status==='cancelled' ? ' style="text-decoration:line-through;"' : ''}>${esc(r.name)}</td><td>${role ? esc(role) : '<span style="color:var(--ink-400);">-</span>'}</td><td>${esc(r.type)}</td><td>${fmtDate(r.from)} – ${fmtDate(r.to)}</td>
@@ -2864,8 +2890,8 @@ async function saveEditLeave(){
   if((newType==='ป่วย'||newType==='พักผ่อน') && __isTempWorker(r.name)){
     const fy = fiscalYearOf(newFrom);
     // นับสิทธิที่ใช้ไปแล้วของคำขออื่น ๆ (ไม่รวมรายการที่กำลังแก้ไขนี้)
-    const usedElsewhere = computeLeaveHistory().filter(h=>h.name===r.name && h.fy===fy && h.type===newType && !(h.name===r.name && h.type===r.type && h.from===r.from && h.to===r.to)).reduce((a,h)=>a+daysBetween(h.from,h.to),0);
-    const requestedDays = Math.max(daysBetween(newFrom,newTo),0);
+    const usedElsewhere = computeLeaveHistory().filter(h=>h.name===r.name && h.fy===fy && h.type===newType && !(h.name===r.name && h.type===r.type && h.from===r.from && h.to===r.to)).reduce((a,h)=>a+daysBetween(h.from,h.to,h.name),0);
+    const requestedDays = Math.max(daysBetween(newFrom,newTo,r.name),0);
     const quota = LEAVE_QUOTA_WORKER[newType];
     if(usedElsewhere + requestedDays > quota){
       alert(`สิทธิลา${newType}ของ ${r.name} เหลือไม่พอ (ใช้ไปแล้ว ${usedElsewhere}/${quota} วัน ปีงบประมาณ ${fy})\nกรุณาเลือกประเภทการลาเป็น "ขาดงาน (ไม่จ่ายค่าจ้าง)" แทน`);
@@ -2876,7 +2902,7 @@ async function saveEditLeave(){
   r.type = newType;
   r.from = newFrom;
   r.to = newTo;
-  r.days = daysBetween(newFrom, newTo);
+  r.days = daysBetween(newFrom, newTo, r.name);
   r.reason = document.getElementById('el-reason').value;
   r.cover = document.getElementById('el-cover').value;
   r.contact = document.getElementById('el-contact').value;
@@ -2911,7 +2937,7 @@ window.addEventListener('afterprint', ()=>{ document.querySelectorAll('.print-on
 
 function leaveStatsRows(name, fy, uptoDate){
   const recs = computeLeaveHistory().filter(r=>r.name===name && r.fy===fy && r.from<uptoDate);
-  const sum = t => recs.filter(r=>r.type===t).reduce((a,r)=>a+daysBetween(r.from,r.to),0);
+  const sum = t => recs.filter(r=>r.type===t).reduce((a,r)=>a+daysBetween(r.from,r.to,r.name),0);
   return {sick: sum('ป่วย'), vac: sum('พักผ่อน'), biz: sum('กิจ'), mat: sum('คลอดบุตร')};
 }
 
@@ -2922,7 +2948,7 @@ function printLeaveForm(i){
   const s = staff.find(x=>x.name===name) || {};
   const type = r.type;
   const from = r.from, to = r.to;
-  const days = daysBetween(from,to);
+  const days = daysBetween(from,to,name);
   const reason = r.reason;
   const cover = r.cover;
   const contact = r.contact||'';
@@ -3145,7 +3171,7 @@ function buildForm305(name, s, type, from, to, days, reason, cover, contact, sta
   const prev = computeLeaveHistory()
     .filter(h=>h.name===name && ['ป่วย','กิจ','คลอดบุตร'].includes(h.type) && h.from<from)
     .sort((a,b)=>b.from.localeCompare(a.from))[0];
-  const prevDays = prev ? daysBetween(prev.from, prev.to) : 0;
+  const prevDays = prev ? daysBetween(prev.from, prev.to, prev.name) : 0;
   const cur = {sick: type==='ป่วย'?dnum:0, biz: type==='กิจ'?dnum:0, mat: type==='คลอดบุตร'?dnum:0};
   const cell = (v)=> v ? lvTh(v) : '';
   /* ฟอนต์ THSarabunIT๙ 16pt เหมือน จ.๓-๐๖ (ตามที่ผู้ใช้เลือก 21 ต.ค. 69; ไฟล์ PDF เดิมเป็น Angsana New) — ชื่อฟอร์ม 20 หนา — พิกัด x,y ถอดจาก ลาป่วย.pdf โดยตรง */
@@ -3226,7 +3252,7 @@ function printCancelForm(i){
   const s = staff.find(x=>x.name===r.name) || {};
   const nm = String(r.name).trim();
   const td = TODAY;
-  const days = daysBetween(r.from,r.to);
+  const days = daysBetween(r.from,r.to,r.name);
   const reason = r.cancelReason || '';
   const lt = 'ลา'+r.type;
   const cv = r.cover || '';
@@ -3362,7 +3388,7 @@ function searchLeaveRange(){
       <td>${esc(r.type)}</td>
       <td>${fmtDate(r.from)}</td>
       <td>${fmtDate(r.to)}</td>
-      <td>${daysBetween(r.from,r.to)}</td>
+      <td>${daysBetween(r.from,r.to,r.name)}</td>
     </tr>`).join('');
   results.innerHTML = `
     <div class="foot-note" style="margin-bottom:8px;">พบทั้งหมด ${recs.length} รายการ</div>
@@ -3377,17 +3403,17 @@ function registryRecords(name, fy){
 function registryOnscreenHTML(name, fy){
   const s = staff.find(x=>x.name===name) || {};
   const recs = registryRecords(name, fy);
-  const cell = (r,t)=> __registryLeaveType(r.type)===t ? daysBetween(r.from,r.to) : '-';
+  const cell = (r,t)=> __registryLeaveType(r.type)===t ? daysBetween(r.from,r.to,r.name) : '-';
   const cellPill = (v)=> v==='-' ? `<span style="color:var(--ink-400);">–</span>` : `<span class="pill pill-ok" style="min-width:24px;justify-content:center;">${v}</span>`;
   const statFor = (t) => {
     const list = recs.filter(r=>__registryLeaveType(r.type)===t);
-    return { count: list.length, days: list.reduce((a,r)=>a+daysBetween(r.from,r.to),0) };
+    return { count: list.length, days: list.reduce((a,r)=>a+daysBetween(r.from,r.to,r.name),0) };
   };
   const sickStat = statFor('ป่วย'), personalStat = statFor('กิจ'), vacStat = statFor('พักผ่อน');
   const totalCount = sickStat.count + personalStat.count + vacStat.count;
   const totalDays = sickStat.days + personalStat.days + vacStat.days;
   let rows = recs.map((r,idx)=>{
-    const d = daysBetween(r.from,r.to);
+    const d = daysBetween(r.from,r.to,r.name);
     return `<tr>
       <td><span class="pill pill-neutral" style="min-width:22px;justify-content:center;">${idx+1}</span></td>
       <td>${cellPill(cell(r,'ป่วย'))}</td>
@@ -3441,10 +3467,10 @@ function registryOnscreenHTML(name, fy){
 function registryPrintHTML(name, fy){
   const s = staff.find(x=>x.name===name) || {};
   const recs = registryRecords(name, fy);
-  const cell = (r,t)=> __registryLeaveType(r.type)===t ? daysBetween(r.from,r.to) : '-';
+  const cell = (r,t)=> __registryLeaveType(r.type)===t ? daysBetween(r.from,r.to,r.name) : '-';
   const ptypeCk = (label)=> `${s.ptype===label?'☑':'☐'} ${label}`;
   let rows = recs.map((r,idx)=>{
-    const d = daysBetween(r.from,r.to);
+    const d = daysBetween(r.from,r.to,r.name);
     return `<tr>
       <td>${idx+1}</td>
       <td>${cell(r,'ป่วย')}</td><td>${cell(r,'กิจ')}</td><td>${cell(r,'พักผ่อน')}</td><td>${cell(r,'คลอดบุตร')}</td>
@@ -3520,7 +3546,7 @@ const __STORAGE_KEY = 'saraban_subsystem1_v2';
 const __SHARED_STAFF_KEY = 'saraban_shared_staff_v1';
 function __saveSharedStaff(){
   try{
-    const payload = staff.map(s=>({name:s.name, role:s.role||null, duty:s.duty||null, ptype:s.ptype, rate:s.rate??null, status:s.status}));
+    const payload = staff.map(s=>({name:s.name, role:s.role||null, duty:s.duty||null, dutyStart:s.dutyStart||null, ptype:s.ptype, rate:s.rate??null, status:s.status}));
     localStorage.setItem(__SHARED_STAFF_KEY, JSON.stringify(payload));
   }catch(e){ console.error('ซิงก์ข้อมูลพนักงานไปยังระบบอื่นล้มเหลว', e); }
 }

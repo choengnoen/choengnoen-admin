@@ -276,14 +276,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .gov-words{margin-top:10px;font-size:14px;}
   .gov-signs{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:36px;font-size:14px;text-align:center;line-height:2;}
   /* ตารางสรุปยอดจ่ายค่าแรงรายเดือน — ตัวเลขชิดขวาให้หลักตรงกัน, แถวที่กำลังแสดงในฟอร์ม ง.3-12 ด้านล่างไฮไลต์ไว้ */
-  /* มีแค่ 12 เดือน — แสดงครบทุกแถว ไม่เลื่อนในกรอบ (กันแถบเลื่อนซ้อนกับของหน้าเว็บ) */
+  /* เลื่อนขึ้น-ลงในกรอบแบบเดียวกับตารางฐานข้อมูลบุคลากร — หัวตาราง/แถวรวมตรึงไว้ แถบเลื่อนอยู่ระหว่างกลาง (table-scroll-standard.js) */
+  .sum-wrap{max-height:62vh;overflow-y:auto;}
   .sum-table th,.sum-table td{white-space:nowrap;}
   .sum-table .num{text-align:right;font-variant-numeric:tabular-nums;}
   .sum-table .ctr{text-align:center;}
   .sum-table thead th.num{text-align:right;}
   .sum-table thead th.ctr{text-align:center;}
-  .sum-table tfoot td{padding:10px 14px;border-top:2px solid var(--line);background:var(--paper-50);font-weight:700;color:var(--navy-900);}
-  .sum-table tr.is-viewing td{background:rgba(242,169,48,.12);}
+  .sum-table tfoot td{padding:10px 14px;border-top:2px solid var(--line);background:var(--paper-50);font-weight:700;color:var(--navy-900);position:sticky;bottom:0;z-index:2;}  .sum-table tr.is-viewing td{background:rgba(242,169,48,.12);}
   .sum-table tr.is-viewing td:first-child{box-shadow:inset 3px 0 0 var(--orange-600);}
   .labor-summary{display:flex;gap:14px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid var(--line);}
   .labor-summary .ov-metric{
@@ -352,7 +352,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s4"></script>
 <script src="emoji-img.js" defer></script>
-<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261024" defer></script>
+<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261024" defer></script><script src="table-scroll-standard.js?v=20261024" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
 .route-header .topbar-right{flex-direction:column;align-items:flex-end;gap:6px}
@@ -517,15 +517,16 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 <div class="dw-group-title"><span class="dot"></span>รายละเอียดการปฏิบัติงาน</div>
                 <div class="f-row">
                   <label>ผู้ขอปฏิบัติงาน / ทีมงาน <span class="req">*</span></label>
-                  <select id="ot-name"></select>
+                  <select id="ot-name" onchange="checkOtGuard()"></select>
                 </div>
                 <div class="two-col">
-                  <div class="f-row"><label>วันที่ปฏิบัติงาน <span class="req">*</span></label><input type="date" id="ot-date"></div>
-                  <div class="f-row"><label>ช่วงเวลา <span class="req">*</span></label><input type="text" id="ot-time" placeholder="เช่น 16.30 - 20.30 น."></div>
+                  <div class="f-row"><label>วันที่ปฏิบัติงาน <span class="req">*</span></label><input type="date" id="ot-date" onchange="checkOtGuard()"></div>
+                  <div class="f-row"><label>ช่วงเวลา <span class="req">*</span></label><input type="text" id="ot-time" placeholder="เช่น 16.30 - 20.30 น." oninput="checkOtGuard()"></div>
                 </div>
                 <div class="f-row"><label>ลักษณะงานที่ทำ <span class="req">*</span></label><input type="text" id="ot-task" placeholder="เช่น งานซ่อมแซมไฟฟ้าแสงสว่างฉุกเฉิน"></div>
                 <div class="f-row"><label>จำนวนเงินค่าตอบแทน (บาท)</label><input type="number" id="ot-amount" placeholder="0.00"></div>
               </div>
+              <div id="ot-guard-warn" style="display:none;margin:0 0 12px;padding:10px 12px;border-radius:8px;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger);font-size:14px;line-height:1.6;"></div>
               <div class="stat-mini">สถานะจะขึ้นเป็น "รออนุมัติ" ให้หัวหน้าหมวดพิจารณาก่อน จากนั้นเมื่อปฏิบัติงานเสร็จสิ้น ระบบจะนับถอยหลัง 5 วัน ให้รายงานผลและแนบหลักฐานการจ่ายเงิน</div>
             </div>
             <div class="modal-foot">
@@ -732,7 +733,7 @@ const __SHARED_STAFF_KEY = 'saraban_shared_staff_v1';
 /* อ่านรายชื่อบุคลากรจาก Firestore โดยตรง (โหลดไว้ตอนเปิดหน้าใน __initApiData) — เดิมอ่าน localStorage ที่มีเฉพาะเครื่องที่เคยเปิดระบบที่ 1 */
 function loadRealStaffRoster(){
   if(!(window.FBL && FBL.rows)) return [];
-  return FBL.rows('staff').map(s=>({name:s.name, role:s.role||null, duty:s.duty||null, ptype:s.ptype, rate:(s.rate===''||s.rate==null)?null:Number(s.rate), status:s.status, bankAcc:s.bankAcc||''}));
+  return FBL.rows('staff').map(s=>({name:s.name, role:s.role||null, duty:s.duty||null, dutyStart:s.dutyStart||null, ptype:s.ptype, rate:(s.rate===''||s.rate==null)?null:Number(s.rate), status:s.status, bankAcc:s.bankAcc||''}));
 }
 // รายชื่อสำรอง ใช้เฉพาะกรณีที่ยังไม่เคยเปิด/บันทึกข้อมูลบุคลากรในระบบที่ 1 เลย (localStorage ที่ใช้ร่วมกันยังว่างอยู่)
 const FALLBACK_STAFF_ROSTER = [
@@ -773,8 +774,12 @@ function buildLaborRoster(){
   const source = __normalizeStaffSource(real.length ? real : FALLBACK_STAFF_ROSTER);
   return source
     .filter(s=>s.status==='ok' && s.role==='คนงาน')
-    .map(s=>({name:s.name, role:s.role, duty:s.duty||null, rate:s.rate||0, bankAcc:s.bankAcc||''}));
+    .map(s=>({name:s.name, role:s.role, duty:s.duty||null, dutyStart:s.dutyStart||null, rate:s.rate||0, bankAcc:s.bankAcc||''}));
 }
+/* หน้าที่ยาม = จ้างรวมวันเสาร์ (วันอาทิตย์หยุด) ตั้งแต่วันเริ่มปฏิบัติหน้าที่ยาม (dutyStart ว่าง = ทุกวัน)
+   ตั้งค่าได้ที่ระบบที่ 1 → ข้อมูลบุคลากร → "ปฏิบัติหน้าที่ยาม (จ้างรวมวันเสาร์)" — ระบบที่ 1 ใช้เงื่อนไขเดียวกันนับวันลา */
+function isGuard(emp){ return String(emp && emp.duty || '').includes('ยาม'); }
+function worksSaturday(emp, iso){ return isGuard(emp) && (!emp.dutyStart || iso>=emp.dutyStart); }
 let laborRoster = buildLaborRoster();
 function __refreshLaborRoster(){ laborRoster = buildLaborRoster(); }
 
@@ -847,7 +852,7 @@ function generateAttendance(cycleKey){
       const dow = new Date(y,m-1,d).getDay();
       if(holidays.has(d)){ codes.push('1'); continue; } // วันหยุดนักขัตฤกษ์ จ่ายค่าจ้างเสมือนมาปฏิบัติงาน
       if(dow===0){ codes.push('-'); continue; } // อาทิตย์หยุดทุกตำแหน่ง
-      if(dow===6 && emp.duty!=='ยาม'){ codes.push('-'); continue; } // เสาร์หยุด ยกเว้นผู้ปฏิบัติหน้าที่ยามที่จ้างรวมวันเสาร์
+      if(dow===6 && !worksSaturday(emp, dateISO)){ codes.push('-'); continue; } // เสาร์หยุด ยกเว้นผู้ปฏิบัติหน้าที่ยามที่จ้างรวมวันเสาร์ (นับตั้งแต่วันเริ่มปฏิบัติหน้าที่ยาม)
       const leaveCode = leaveCodeForDay(approvedLeaves, emp.name, dateISO);
       codes.push(leaveCode || '1'); // ไม่มีคำขอลาที่อนุมัติในวันนี้ → ถือว่ามาปฏิบัติงาน
     }
@@ -1556,7 +1561,9 @@ function buildPaymentEvidenceSVG(cyc, mode){
       s += T(mid(R[0],R[1]), y, '0', {a:'middle'}) + money(y,0,R[1],R[2]) + money(y,0,R[2],R[3]) + money(y,0,R[3],R[4]);
       continue;
     }
-    if(String(emp.duty||'').includes('ยาม')) guards.push(i+1);
+    /* ยามที่เริ่มปฏิบัติหน้าที่ภายในเดือนนี้ → ระบุวันที่เริ่มในหมายเหตุ / เริ่มหลังสิ้นเดือน → ยังไม่ใช่ยามของเดือนนี้ */
+    const cycEnd = `${cyc}-${String(nDays).padStart(2,'0')}`;
+    if(isGuard(emp) && (!emp.dutyStart || emp.dutyStart<=cycEnd)) guards.push({no:i+1, from: (emp.dutyStart && emp.dutyStart>`${cyc}-01`) ? +emp.dutyStart.slice(8,10) : 0});
     const codes = att[emp.name] || [];
     const workDays = codes.filter(c=>WORKDAY_CODES.has(c)).length;
     const amount = workDays*emp.rate, ss = Math.round(amount*0.05), net = amount-ss;
@@ -1597,7 +1604,11 @@ function buildPaymentEvidenceSVG(cyc, mode){
   s += sign(DOTS_L, yb+58.02, 'หัวหน้าผู้ควบคุม', 191.5, 313.1, ctl, 150)
      + sign(DOTS_R, yb+58.02, 'ผู้จ่ายเงิน', 497.5, 600.4, pay, 180);
   const notes = [];
-  if(guards.length) notes.push(`ลำดับที่ ${guards.join(',')} ปฏิบัติหน้าที่ยามรักษาความปลอดภัย จ้างรวมวันหยุด เสาร์ - อาทิตย์`);
+  /* ยามที่เริ่มพร้อมกัน (ทั้งเดือน หรือวันเริ่มเดียวกัน) รวมเป็นบรรทัดเดียว */
+  [...new Set(guards.map(g=>g.from))].sort((a,b)=>a-b).forEach(from=>{
+    const nos = guards.filter(g=>g.from===from).map(g=>g.no).join(',');
+    notes.push(`ลำดับที่ ${nos} ปฏิบัติหน้าที่ยามรักษาความปลอดภัย จ้างรวมวันเสาร์` + (from ? ` ตั้งแต่วันที่ ${from} ${MONTH_FULL[cm-1]} ${cy+543}` : ''));
+  });
   String(laborRemark||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean).forEach(x=>notes.push(x));
   notes.forEach((n,i)=>{
     const y = yb + 118.62 + i*12.1;
@@ -1709,10 +1720,50 @@ function openOTModal(){
   document.getElementById('ot-time').value='';
   document.getElementById('ot-task').value='';
   document.getElementById('ot-amount').value='';
+  checkOtGuard();
   document.getElementById('ot-modal-overlay').classList.remove('hidden');
 }
 function closeOTModal(){
   document.getElementById('ot-modal-overlay').classList.add('hidden');
+}
+/* ห้ามเบิกค่าตอบแทนนอกเวลาราชการในช่วงเวลาราชการ 08.30 - 16.30 น. ของวันทำงานของผู้นั้น
+   (ได้ค่าจ้างรายวันตามบัญชีแรงงาน ง.3-12/ง.3-26 อยู่แล้ว) — นอกช่วงเวลานี้ยื่น OT ได้ตามปกติ
+   วันทำงาน = จันทร์-ศุกร์ที่ไม่ใช่วันหยุดนักขัตฤกษ์ + วันเสาร์ของผู้ปฏิบัติหน้าที่ยาม (ตั้งแต่วันเริ่มปฏิบัติหน้าที่ยาม)
+   คืนข้อความเหตุผล หรือ '' ถ้าไม่ติด */
+const OT_OFFICE_START = 8*60+30, OT_OFFICE_END = 16*60+30;
+/* อ่านช่วงเวลาจากช่องข้อความ เช่น "16.30 - 20.30 น.", "17:00-21:00", "18 - 22 น." → {start, end} เป็นนาที (ข้ามเที่ยงคืน = end + 24 ชม.) / อ่านไม่ได้ → null */
+function parseOtTimeRange(text){
+  const t = [...String(text||'').matchAll(/(\d{1,2})(?:[.:](\d{2}))?/g)].map(m=>(+m[1])*60 + (+(m[2]||0))).filter(v=>v<=24*60);
+  if(t.length < 2) return null;
+  let [start, end] = t;
+  if(end <= start) end += 24*60;
+  return {start, end};
+}
+function otGuardBlockReason(name, date, time){
+  if(!name || !date) return '';
+  const emp = laborRoster.find(e=>e.name===name);
+  if(!emp) return '';
+  const dow = new Date(date+'T00:00:00').getDay();
+  const isGuardSat = dow===6 && worksSaturday(emp, date);
+  const workday = isGuardSat || (dow>=1 && dow<=5 && !holidayNameOn(date.slice(0,7), +date.slice(8,10)));
+  if(!workday) return '';
+  const dayLabel = isGuardSat
+    ? `วันเสาร์ที่ ${fmtDateTH(date)} เป็นวันปฏิบัติงานปกติของ ${name} (ปฏิบัติหน้าที่ยามรักษาความปลอดภัย จ้างรวมวันเสาร์${emp.dutyStart ? ' ตั้งแต่วันที่ '+fmtDateTH(emp.dutyStart) : ''})`
+    : `วันที่ ${fmtDateTH(date)} เป็นวันทำงานปกติของ ${name}`;
+  if(!String(time||'').trim()) return '';                  // ยังไม่กรอกเวลา — ให้ช่องบังคับกรอกเตือนตอนกดส่งตามเดิม
+  const r = parseOtTimeRange(time);
+  if(!r) return `${dayLabel} กรุณาระบุช่วงเวลาให้ชัดเจน เช่น 16.30 - 20.30 น. เพื่อตรวจสอบว่าไม่ทับช่วงเวลาราชการ 08.30 - 16.30 น.`;
+  if(r.start < OT_OFFICE_END && r.end > OT_OFFICE_START)
+    return `ไม่สามารถให้ค่าตอบแทนนอกเวลาราชการได้ เนื่องจาก ${dayLabel} ช่วงเวลา 08.30 - 16.30 น. เป็นเวลาราชการที่ได้รับค่าจ้างรายวันตามบัญชีแรงงาน (ง.3-12 / ง.3-26) แล้ว — ยื่น OT ได้เฉพาะช่วงก่อน 08.30 น. หรือหลัง 16.30 น.`;
+  return '';
+}
+function checkOtGuard(){
+  const reason = otGuardBlockReason(document.getElementById('ot-name').value, document.getElementById('ot-date').value, document.getElementById('ot-time').value);
+  const box = document.getElementById('ot-guard-warn'), btn = document.getElementById('ot-submit-btn');
+  box.textContent = reason ? '⛔ ' + reason : '';
+  box.style.display = reason ? '' : 'none';
+  if(btn){ btn.disabled = !!reason; btn.style.opacity = reason ? '.45' : ''; btn.style.cursor = reason ? 'not-allowed' : ''; btn.title = reason ? 'บันทึกไม่ได้ — ดูเหตุผลในกรอบสีแดง' : ''; }
+  return reason;
 }
 async function submitOT(){
   const name = document.getElementById('ot-name').value;
@@ -1721,6 +1772,8 @@ async function submitOT(){
   const task = document.getElementById('ot-task').value;
   const amount = parseFloat(document.getElementById('ot-amount').value)||0;
   if(!name||!date||!time||!task){ alert('กรุณากรอกข้อมูลให้ครบถ้วน'); return; }
+  const guardReason = checkOtGuard();
+  if(guardReason){ alert(guardReason); return; }
   const rec = {no:`บช.OT-0${otCounter++}/2569`, name, team:'', date, time, task, amount, status:'awaiting_work'};
   const saveBtn = document.getElementById('ot-submit-btn');
   const cancelBtn = document.getElementById('ot-cancel-btn');
