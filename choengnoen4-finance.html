@@ -2160,7 +2160,8 @@ function renderUtilReport(){
   document.getElementById('util-report-banner').innerHTML = bannerHtml;
 
   populateUtilFYSelect();
-  const cycles = utilityCyclesList(selectedUtilFY);
+  // แสดงเฉพาะเดือนที่ถึงวันที่ 1 แล้ว (เดือนล่วงหน้ายังไม่แสดง เว้นแต่มีบิลบันทึกไว้แล้ว)
+  const cycles = utilityCyclesList(selectedUtilFY).filter(cy=>cy<=cur || utilityBills.some(b=>b.cycle===cy));
   const records = cycles.map(cy=>{
     const bt = utilityTypesTotal(cy);
     const total = UTIL_TYPES.reduce((s,t)=>s+bt[t],0);
