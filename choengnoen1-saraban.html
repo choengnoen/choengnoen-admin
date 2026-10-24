@@ -315,6 +315,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .sf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0 12px;}
   .sf-grid .c1{grid-column:span 1;} .sf-grid .c2{grid-column:span 2;} .sf-grid .c4{grid-column:span 4;}
   .sf-grid .edit-input{height:36px;font-size:13.5px;}
+  .sf-grid select.edit-input{padding:0 6px 0 10px;}
   .sf-hint{font-size:11.5px;color:var(--ink-400);margin-top:4px;}
   .sf-seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;height:36px;}
   .sf-seg label{flex:1;display:flex;align-items:center;justify-content:center;margin:0;font-size:13.5px;font-weight:500;color:var(--ink-600);cursor:pointer;background:#fff;}
@@ -1348,8 +1349,8 @@ function __staffFormHTML(p, s, isAdd){
           <label><input type="radio" name="${p}-dutyopt" id="${p}-noguard" ${g?'':'checked'} onchange="__toggleGuardStart('${p}')">ไม่มี</label>
           <label><input type="radio" name="${p}-dutyopt" id="${p}-guard" ${g?'checked':''} onchange="__toggleGuardStart('${p}')">ยาม (ทำงานวันเสาร์)</label>
         </div></div>
-        <div class="f-row c2"><label>เริ่มปฏิบัติหน้าที่ยามตั้งแต่วันที่</label><input type="date" class="edit-input" id="${p}-dutystart" value="${v(s.dutyStart)}" ${g?'':'disabled'}><div class="sf-hint">เลือก "ยาม" ก่อนจึงจะกรอกได้ · วันอาทิตย์หยุด</div></div>
-        <div class="f-row c2" id="${p}-w-start"><label>วันที่เริ่มงาน</label><input type="date" class="edit-input" id="${p}-startdate" value="${v(s.startDate)}"><div class="sf-hint">ใช้คำนวณสิทธิ์ลาของคนงาน (ไม่มีสิทธิ์ลาภายใน 6 เดือนแรก)</div></div>
+        <div class="f-row c2"><label>เริ่มปฏิบัติหน้าที่ยามตั้งแต่วันที่</label><input type="date" class="edit-input" id="${p}-dutystart" value="${v(s.dutyStart)}" ${g?'':'disabled'}></div>
+        <div class="f-row c2" id="${p}-w-start"><label>วันที่เริ่มงาน</label><input type="date" class="edit-input" id="${p}-startdate" value="${v(s.startDate)}"></div>
         <div class="f-row c2" id="${p}-w-rate"><label>อัตราค่าจ้าง/วัน (บาท)</label><input type="number" class="edit-input" id="${p}-rate" value="${v(s.rate)}" placeholder="เช่น 400"></div>
       </div>
     </div>
@@ -1372,7 +1373,7 @@ function __staffFormHTML(p, s, isAdd){
     <div class="sf-sec">
       <h4><span class="n" id="${p}-n5">5</span>การเงินและสวัสดิการ</h4>
       <div class="sf-grid">
-        <div class="f-row c2"><label>เลขบัญชีธนาคาร</label><input class="edit-input" id="${p}-bank" value="${v(s.bankAcc)}" placeholder="เช่น 218-0-12345-6"><div class="sf-hint">ใช้พิมพ์หลักฐานการจ่ายเงินค่าจ้าง ง.3-26</div></div>
+        <div class="f-row c2"><label>เลขบัญชีธนาคาร</label><input class="edit-input" id="${p}-bank" value="${v(s.bankAcc)}" placeholder="เช่น 218-0-12345-6"></div>
         <div class="f-row c2"><label>ข้อมูลการรักษาพยาบาล</label><input class="edit-input" id="${p}-med" value="${v(s.med)}" placeholder="สิทธิ/สถานพยาบาล"></div>
       </div>
     </div>`;
