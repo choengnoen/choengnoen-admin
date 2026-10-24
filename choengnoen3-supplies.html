@@ -539,7 +539,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .mc-alt:hover{color:var(--navy-900);}
   .mc-ed{margin:-4px -4px -4px auto;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:7px;background:none;padding:0;color:var(--ink-600);cursor:pointer;}
   .mc-ed .bs-i{width:15px;height:15px;}
-  .mc-alt + .mc-ed{margin-left:0;}
+  .mc-ed + .mc-ed{margin-left:-6px;}
   .mc-ed:hover{color:var(--navy-900);background:var(--paper-50,#f3f5f7);}
   .me-foot-l{margin-right:auto;display:flex;gap:8px;flex-wrap:wrap;}
   #mat-act-foot{flex-wrap:wrap;}
@@ -803,6 +803,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fhist-tbl th.g-b{background:#fdf0e6;color:#a8470a;}
   .fhist-tbl .sep{border-left:2px solid var(--line);}
   .fhist-tbl td,.fhist-tbl th{white-space:nowrap;}
+  /* คอลัมน์ "เดือน" กว้างเท่ากันทุกแท็บ (ภาพรวม/ดีเซล/เบนซิน) */
+  .fhist-tbl{table-layout:fixed;width:100%;min-width:640px;}
+  .fhist-tbl.fh-all{min-width:900px;}
+  .fhist-tbl col.fh-col-month{width:210px;}
   .fhist-latest-tag{display:inline-block;margin-left:8px;font-family:'Kanit';font-size:10px;font-weight:600;color:#fff;background:var(--success,#2e8b57);padding:1px 8px;border-radius:20px;vertical-align:middle;}
   .fh-row-edit input{width:100%;}
   .fh-row-edit td{padding:6px 8px;}
@@ -1622,7 +1626,8 @@ function renderMaterialCols(){
     const lab = act==='recv' ? 'รับเข้า' : act==='check' ? 'ตรวจสอบ' : act==='buy' ? 'แจ้งซื้อ' : 'ประวัติ';
     const cj0 = jsArg(r.m.code);
     const onclick = act==='history' ? `openItemHistoryModal('material','${cj0}')` : act==='recv' ? `openReceiveFor('${cj0}')` : `openMatAction('${act}','${cj0}')`;
-    const alt = act==='recv' ? `<a class="mc-alt" onclick="openMatAction('check','${cj0}')" title="ดูรายการเคลื่อนไหวล่าสุด / ปรับยอดตามที่นับได้จริง">ตรวจสอบ/ปรับยอด</a>` : '';
+    // ไอคอนตาชั่ง (ปรับยอด) — ไม่มีใน btn-standard.js จึงวาด svg ตรงนี้ ขนาด/สีตาม .mc-ed
+    const alt = act==='recv' ? `<button type="button" class="mc-ed" data-tip="ตรวจสอบ/ปรับยอด" aria-label="ตรวจสอบ/ปรับยอด" onclick="openMatAction('check','${cj0}')"><svg class="bs-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v16M8 20h8M5 7h14"/><path d="M5 7 2.5 13a2.5 2.5 0 0 0 5 0zM19 7l-2.5 6a2.5 2.5 0 0 0 5 0z"/></svg></button>` : '';
     // แก้ไขทีละรายการ (ผู้ดูแล, เฉพาะเดือนปัจจุบัน) — แทนโหมดแก้ทั้งตารางเดิม
     const ed = isCur && isAdmin() ? `<button type="button" class="mc-ed" data-ic="pen" data-tip="แก้ไขรายการ" aria-label="แก้ไขรายการ" onclick="openMatEdit('${cj0}')"></button>` : '';
     return `<div class="mc-card">
@@ -1926,8 +1931,15 @@ function fuelHistoryFyHtml(ft, fy){
       <td class="num" style="font-weight:700;${s.closing<0?'color:var(--danger);':''}">${fmtNum(s.closing,1)}</td>
     </tr>`;
   }).join('');
+  /* หัวตารางแบบ 2 ชั้นเหมือนแท็บภาพรวม (หัวกลุ่มสีตามชนิดน้ำมัน) ให้ทั้ง 3 แท็บหน้าตาเดียวกัน */
+  const grpCls = ft==='เบนซิน' ? 'g-b' : 'g-d';
+  const grpLbl = ft==='เบนซิน' ? '⛽ เบนซิน (ลิตร)' : '🛢️ ดีเซล (ลิตร)';
   return statsHtml + `<div class="table-wrap"><table class="fhist-tbl">
-    <thead><tr><th>เดือน</th><th class="num sep">ยกมา</th><th class="num">รับเข้า</th><th class="num">จ่าย</th><th class="num">คงเหลือ</th></tr></thead>
+    <colgroup><col class="fh-col-month"></colgroup>
+    <thead>
+      <tr><th rowspan="2">เดือน</th><th class="grp ${grpCls} sep" colspan="4">${grpLbl}</th></tr>
+      <tr><th class="num sep">ยกมา</th><th class="num">รับเข้า</th><th class="num">จ่าย</th><th class="num">คงเหลือ</th></tr>
+    </thead>
     <tbody>${rows}</tbody>
   </table></div>`;
 }
@@ -1953,7 +1965,8 @@ function fuelHistoryMonthsHtml(fy){
     </tr>`;
   }).join('');
   const sub = `<th class="num sep">ยกมา</th><th class="num">รับเข้า</th><th class="num">จ่าย</th><th class="num">คงเหลือ</th>`;
-  return `<div class="table-wrap"><table class="fhist-tbl">
+  return `<div class="table-wrap"><table class="fhist-tbl fh-all">
+    <colgroup><col class="fh-col-month"></colgroup>
     <thead>
       <tr><th rowspan="2">เดือน</th><th class="grp g-d sep" colspan="4">🛢️ ดีเซล (ลิตร)</th><th class="grp g-b sep" colspan="4">⛽ เบนซิน (ลิตร)</th></tr>
       <tr>${sub}${sub}</tr>
