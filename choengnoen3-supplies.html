@@ -537,9 +537,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .mc-mv .in{color:var(--success);}.mc-mv .out{color:#a3350f;}
   .mc-alt{margin-left:auto;color:var(--ink-600);text-decoration:underline;cursor:pointer;font-size:12px;}
   .mc-alt:hover{color:var(--navy-900);}
-  .mc-ed{margin-left:auto;border:0;background:none;padding:0;color:var(--ink-600);cursor:pointer;font-size:12px;font-family:inherit;text-decoration:underline;}
+  .mc-ed{margin:-4px -4px -4px auto;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:7px;background:none;padding:0;color:var(--ink-600);cursor:pointer;}
+  .mc-ed .bs-i{width:15px;height:15px;}
   .mc-alt + .mc-ed{margin-left:0;}
-  .mc-ed:hover{color:var(--navy-900);}
+  .mc-ed:hover{color:var(--navy-900);background:var(--paper-50,#f3f5f7);}
   .me-foot-l{margin-right:auto;display:flex;gap:8px;flex-wrap:wrap;}
   #mat-act-foot{flex-wrap:wrap;}
   /* ท้ายหน้าทะเบียนพัสดุ: ไม่แสดงแถบเทาว่างเปล่า (ปุ่ม ⋮ ลอยอยู่มุมขวา เปิดหมายเหตุเมื่อกด) */
@@ -1623,7 +1624,7 @@ function renderMaterialCols(){
     const onclick = act==='history' ? `openItemHistoryModal('material','${cj0}')` : act==='recv' ? `openReceiveFor('${cj0}')` : `openMatAction('${act}','${cj0}')`;
     const alt = act==='recv' ? `<a class="mc-alt" onclick="openMatAction('check','${cj0}')" title="ดูรายการเคลื่อนไหวล่าสุด / ปรับยอดตามที่นับได้จริง">ตรวจสอบ/ปรับยอด</a>` : '';
     // แก้ไขทีละรายการ (ผู้ดูแล, เฉพาะเดือนปัจจุบัน) — แทนโหมดแก้ทั้งตารางเดิม
-    const ed = isCur && isAdmin() ? `<button type="button" class="mc-ed" onclick="openMatEdit('${cj0}')" title="แก้ชื่อ หน่วยนับ ลักษณะการใช้งาน จุดสั่งซื้อ / ปรับยอด / ลบรายการ">✎ แก้ไข</button>` : '';
+    const ed = isCur && isAdmin() ? `<button type="button" class="mc-ed" data-ic="pen" data-tip="แก้ไขรายการ" aria-label="แก้ไขรายการ" onclick="openMatEdit('${cj0}')"></button>` : '';
     return `<div class="mc-card">
       <div class="mc-l1">
         <div class="mc-nm">${esc(r.m.name)}<small>จุดสั่งซื้อ ${fmtNum(r.m.reorder,1)} ${esc(r.m.unit)}</small>${r.watch?'<span class="mc-watch">ใกล้ถึงจุดสั่งซื้อ</span>':''}${masterUsage==='all' && matUsage(r.m)==='สำนักงาน'?'<span class="mc-use">🗂 สำนักงาน</span>':''}</div>
@@ -1892,12 +1893,16 @@ function renderFuelHistoryModal(){
   const tabs = [['all','ภาพรวม'],['ดีเซล','🛢️ ดีเซล'],['เบนซิน','⛽ เบนซิน']];
   const tabsHtml = `<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
     <div class="seg-toggle">${tabs.map(([k,l])=>`<button type="button" class="seg-btn${__fuelHistTab===k?' active':''}" onclick="setFuelHistTab('${k}')">${l}</button>`).join('')}</div>
-    ${__fuelHistTab==='all' ? '' : `<select class="edit-input" data-fy="nolabel" style="width:170px;margin-left:auto;" onchange="onFuelHistFyChange(this.value)">${itemHistFyOptionsHtml(__fuelHistFy)}</select>`}
+    <div style="margin-left:auto;"><select data-fy onchange="onFuelHistFyChange(this.value)">${itemHistFyOptionsHtml(__fuelHistFy)}</select></div>
   </div>`;
-  body.innerHTML = tabsHtml + (__fuelHistTab==='all' ? fuelHistoryMonthsHtml() : fuelHistoryFyHtml(__fuelHistTab, __fuelHistFy));
+  body.innerHTML = tabsHtml + (__fuelHistTab==='all' ? fuelHistoryMonthsHtml(__fuelHistFy) : fuelHistoryFyHtml(__fuelHistTab, __fuelHistFy));
+}
+/* เดือนล่าสุดที่แสดง = เดือนที่มีความเคลื่อนไหวล่าสุด หรือเดือนปัจจุบัน (ไม่แสดงเดือนในอนาคต) */
+function fuelHistLatestKey(){
+  return [latestActivityMonthKey(), monthKeyOf(toLocalISODate(TODAY))].sort().pop();
 }
 function fuelHistoryFyHtml(ft, fy){
-  const latest = [latestActivityMonthKey(), monthKeyOf(toLocalISODate(TODAY))].sort().pop();
+  const latest = fuelHistLatestKey();
   const mks = fyMonthKeys(fy).filter(k=>k<=latest);
   if(!mks.length) return '<div class="vb-empty">ยังไม่มีข้อมูลในปีงบประมาณนี้</div>';
   const sums = mks.map(k=>({k, s:fuelMonthSummary(ft, k)}));
@@ -1926,20 +1931,11 @@ function fuelHistoryFyHtml(ft, fy){
     <tbody>${rows}</tbody>
   </table></div>`;
 }
-function fuelHistoryMonthsHtml(){
+function fuelHistoryMonthsHtml(fy){
   const FTS = ['ดีเซล','เบนซิน'];
-  const keys = new Set();
-  fuelTransactions.filter(t=>FTS.includes(t.fuelType)).forEach(t=>{ if(t.date) keys.add(monthKeyOf(t.date)); });
-  FTS.forEach(ft=>{
-    Object.keys(fuelOpeningOverride).forEach(k=>{ if(k.startsWith(ft+'|')) keys.add(k.split('|')[1]); });
-    Object.keys(fuelReceivedOverride).forEach(k=>{ if(k.startsWith(ft+'|')) keys.add(k.split('|')[1]); });
-  });
-  const latest = latestActivityMonthKey();
-  keys.add(latest);
-  const minKey = Array.from(keys).sort()[0];
-  const list = [];
-  let mk = latest;
-  while(mk >= minKey && list.length < 18){ list.push(mk); mk = prevMonthKey(mk); }
+  const latest = fuelHistLatestKey();
+  const list = fyMonthKeys(fy).filter(k=>k<=latest).reverse();
+  if(!list.length) return '<div class="vb-empty">ยังไม่มีข้อมูลในปีงบประมาณนี้</div>';
   const rows = list.map((k,i)=>{
     const [y,m] = k.split('-').map(Number);
     const isLatest = k===latest;
