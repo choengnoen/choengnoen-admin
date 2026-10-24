@@ -276,9 +276,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .gov-words{margin-top:10px;font-size:14px;}
   .gov-signs{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:36px;font-size:14px;text-align:center;line-height:2;}
   /* ตารางสรุปยอดจ่ายค่าแรงรายเดือน — ตัวเลขชิดขวาให้หลักตรงกัน, แถวที่กำลังแสดงในฟอร์ม ง.3-12 ด้านล่างไฮไลต์ไว้ */
-  /* ครบ 12 เดือนแล้วไม่ดันฟอร์ม ง.3-12 ลงไปไกล — เลื่อนในกรอบ (หัวตาราง/แถวรวมติดขอบ) */
-  .sum-wrap{max-height:360px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#c3cad3 transparent;}
-  .sum-table tfoot td{position:sticky;bottom:0;z-index:2;}
+  /* มีแค่ 12 เดือน — แสดงครบทุกแถว ไม่เลื่อนในกรอบ (กันแถบเลื่อนซ้อนกับของหน้าเว็บ) */
   .sum-table th,.sum-table td{white-space:nowrap;}
   .sum-table .num{text-align:right;font-variant-numeric:tabular-nums;}
   .sum-table .ctr{text-align:center;}
