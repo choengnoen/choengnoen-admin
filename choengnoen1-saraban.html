@@ -423,10 +423,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .lv-ln{background:#000;}
   .lv-box{width:11.3pt;height:11.3pt;border:.75pt solid #000;box-sizing:border-box;}
   .lv-box svg{display:block;width:100%;height:100%;}
-  /* ทะเบียนการลาและการขาดราชการ จ.3-03 วางพิกัดตามไฟล์ "จ.3-03.pdf" (A4 แนวตั้ง 595 x 842 pt) — หน้าจอกับตอนพิมพ์ใช้ชุดเดียวกัน
+  /* ทะเบียนการลาและการขาดราชการ จ.3-03 (ใช้ตอนพิมพ์) วางพิกัดตามไฟล์ "จ.3-03.pdf" (A4 แนวตั้ง 595 x 842 pt)
      ฟอนต์ TH SarabunPSK 12pt เหมือนต้นฉบับ ถ้าเครื่องไม่มีฟอนต์นี้ (.j303-sar) ใช้ Sarabun ขนาดเล็กลงให้ความกว้างใกล้เคียง */
-  .j303-desk{background:#e4e1d8;border-radius:12px;padding:14px;margin:14px 20px 20px;overflow:hidden;}
-  .j303-desk .j303-page+.j303-page{margin-top:14px;}
   .j303-page{page:lvpage;position:relative;box-sizing:border-box;width:595.3pt;height:841pt;overflow:hidden;margin:0 auto;background:#fff;color:#000;
     font-family:'TH SarabunPSK','THSarabunPSK','TH Sarabun New','THSarabunNew','Sarabun',sans-serif;font-size:12pt;line-height:12pt;
     box-shadow:0 18px 40px -24px rgba(0,0,0,.45);-webkit-print-color-adjust:exact;print-color-adjust:exact;}
@@ -3421,7 +3419,10 @@ function registryRecords(name, fy){
   return computeLeaveHistory().filter(r=>r.name===name && r.fy===fy).slice().sort((a,b)=>a.from.localeCompare(b.from));
 }
 function registryOnscreenHTML(name, fy){
+  const s = staff.find(x=>x.name===name) || {};
   const recs = registryRecords(name, fy);
+  const cell = (r,t)=> __registryLeaveType(r.type)===t ? daysBetween(r.from,r.to,r.name) : '-';
+  const cellPill = (v)=> v==='-' ? `<span style="color:var(--ink-400);">–</span>` : `<span class="pill pill-ok" style="min-width:24px;justify-content:center;">${v}</span>`;
   const statFor = (t) => {
     const list = recs.filter(r=>__registryLeaveType(r.type)===t);
     return { count: list.length, days: list.reduce((a,r)=>a+daysBetween(r.from,r.to,r.name),0) };
@@ -3429,8 +3430,30 @@ function registryOnscreenHTML(name, fy){
   const sickStat = statFor('ป่วย'), personalStat = statFor('กิจ'), vacStat = statFor('พักผ่อน');
   const totalCount = sickStat.count + personalStat.count + vacStat.count;
   const totalDays = sickStat.days + personalStat.days + vacStat.days;
-  /* หน้าจอแสดงเป็นแบบฟอร์ม จ.3-03 ชุดเดียวกับที่พิมพ์ (เหมือนหน้า EC1-W) — มีแถบสรุปจำนวนครั้ง/วันไว้ด้านบน */
+  let rows = recs.map((r,idx)=>{
+    const d = daysBetween(r.from,r.to,r.name);
+    return `<tr>
+      <td><span class="pill pill-neutral" style="min-width:22px;justify-content:center;">${idx+1}</span></td>
+      <td>${cellPill(cell(r,'ป่วย'))}</td>
+      <td>${cellPill(cell(r,'กิจ'))}</td>
+      <td>${cellPill(cell(r,'พักผ่อน'))}</td>
+      <td>${cellPill(cell(r,'คลอดบุตร'))}</td>
+      <td><b>${d}</b></td>
+      <td>${fmtDate(r.from)}</td>
+      <td>${fmtDate(r.to)}</td>
+    </tr>`;
+  }).join('');
+  if(!rows) rows = `<tr><td colspan="8" style="text-align:center;color:var(--ink-400);padding:26px 14px;">ไม่มีข้อมูลการลาในปีงบประมาณนี้</td></tr>`;
   return `
+    <div class="reg-summary">
+      <div class="person">
+        ${name ? ptypeBadge(s.ptype||'ลูกจ้างชั่วคราว') : ''}
+        <div>
+          <div class="p-name" style="font-size:15px;">${name ? esc(name) : 'ยังไม่ได้เลือกพนักงาน'}</div>
+          <div class="p-sub">${esc(s.ptype) || (name ? 'ไม่พบข้อมูลประเภทบุคลากร' : 'พิมพ์ชื่อด้านบนเพื่อค้นหา')}${s.status==='resigned' ? ' · ลาออกแล้ว' : ''}${s.status==='retired' ? ' · เกษียณอายุแล้ว' : ''}</div>
+        </div>
+      </div>
+    </div>
     ${name ? `
     <div class="lr-stat-panel" style="margin:14px 20px 0;">
       <div class="lr-stat-row">
@@ -3444,8 +3467,20 @@ function registryOnscreenHTML(name, fy){
         <span class="lr-stat-label">รวมทั้งหมด</span>
         <span class="lr-stat-chip" style="border-color:var(--orange-500);">รวม <b>${totalCount}</b> ครั้ง · <b>${totalDays}</b> วันทำการ</span>
       </div>
-    </div>` : `<div style="margin:14px 20px 0;color:var(--ink-400);font-size:13px;">ยังไม่ได้เลือกพนักงาน — พิมพ์ชื่อด้านบนเพื่อค้นหา</div>`}
-    <div class="j303-desk">${registrySheetsHTML(name, fy)}</div>`;
+    </div>` : ''}
+    <div class="table-wrap table-wrap-scroll" style="max-height:60vh;">
+      <table class="reg-table">
+        <thead>
+          <tr>
+            <th>ครั้งที่ลา</th>
+            <th>ป่วย</th><th>กิจ</th><th>พักผ่อน</th><th>คลอดบุตร</th>
+            <th>ขาดราชการ (วัน)</th>
+            <th>จากวันที่</th><th>ถึงวันที่</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
 }
 /* ---- แบบฟอร์ม จ.3-03 (พิกัด pt วัดจากไฟล์ "จ.3-03.pdf" — วัดจากขอบบนกระดาษ) ----
    ตาราง: เส้นตั้งตามขอบคอลัมน์ J303_X ; หัวตาราง 161.4–268.9 ; แถวข้อมูล 30 แถว (แถวแรก = ปีงบประมาณ) สูงแถวละ 15.36 ถึงเส้นล่าง 729.7 */
@@ -3515,25 +3550,10 @@ function registrySheetsHTML(name, fy){
   for(let i=0;i===0 || i<recs.length;i+=J303_PER_PAGE) out += j303PageHtml(name, fy, recs.slice(i, i+J303_PER_PAGE), i+1);
   return out;
 }
-/* ย่อแผ่นฟอร์มบนจอให้พอดีความกว้าง (ไม่ขยายเกินขนาดจริง) — วิธีเดียวกับหน้า EC1-W */
-let __j303FitObs = null;
-function fitRegistrySheet(){
-  const wrap = document.getElementById('registry-onscreen');
-  if(!wrap) return;
-  if(!__j303FitObs && window.ResizeObserver){ __j303FitObs = new ResizeObserver(()=>fitRegistrySheet()); __j303FitObs.observe(wrap); }
-  const desk = wrap.querySelector('.j303-desk');
-  if(!desk) return;
-  const cs = getComputedStyle(desk);
-  const avail = desk.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-  if(avail <= 0) return;
-  const z = Math.min(1, avail / (595.3*96/72));
-  desk.querySelectorAll('.j303-page').forEach(p=>{ const cur = parseFloat(p.style.zoom) || 1; if(Math.abs(cur - z) > 0.001) p.style.zoom = z < 1 ? String(z) : ''; });
-}
 function renderRegistry(){
   const name = document.getElementById('reg-name').value;
   const fy = parseInt(document.getElementById('reg-fy').value);
   document.getElementById('registry-onscreen').innerHTML = registryOnscreenHTML(name, fy);
-  fitRegistrySheet();
 }
 function printRegistry(){
   const name = document.getElementById('reg-name').value;
