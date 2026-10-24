@@ -199,6 +199,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .vb-col h3:before{content:"";width:11px;height:11px;border-radius:50%;background:var(--c);}
   .vb-col h3 span{margin-left:auto;background:#fff;border-radius:99px;padding:1px 10px;font-size:12.5px;}
   .vb-card{background:#fff;border-radius:12px;padding:13px;margin-bottom:10px;box-shadow:0 1px 3px rgba(10,37,64,.12);border-top:4px solid var(--c);}
+  /* กล่องกลุ่มชนิดน้ำมัน — สีและการ์ดแบบคอลัมน์หน้าพัสดุ (.mc-col/.mc-card) */
+  .vb-fg{grid-column:1/-1;border-radius:14px;padding:12px;}
+  .vb-fg.d{background:#fdeede;} .vb-fg.g{background:var(--success-bg);} .vb-fg.o{background:var(--paper-100);}
+  .vb-fg h3{font-size:14.5px;margin:0;padding:4px 6px 12px;display:flex;align-items:center;gap:7px;color:var(--navy-900);}
+  .vb-fg h3 .n{margin-left:auto;background:#fff;border-radius:99px;padding:1px 11px;font-size:12.5px;}
+  .vb-fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:9px;align-items:stretch;}
+  .vb-fg .vb-card{border-top:0;border-radius:11px;margin:0;padding:12px 13px;box-shadow:0 1px 2px rgba(0,0,0,.07);display:flex;flex-direction:column;}
+  .vb-fg .vb-r1{margin-bottom:auto;}
   .vb-r1{display:flex;gap:11px;align-items:flex-start;}
   .vb-r1 .vb-nm{flex:1;min-width:0;} .vb-r1 b{display:block;font-size:14.5px;color:var(--ink-900);}
   .vb-sub{font-size:12px;color:var(--ink-400);}
@@ -797,27 +805,21 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fuel-month-badge{display:inline-flex;align-items:center;gap:8px;color:var(--navy-900);font-family:'Kanit';font-size:17px;font-weight:600;letter-spacing:.2px;padding:0;}
   .fuel-month-badge svg{flex-shrink:0;stroke:var(--orange-600);}
   .fuel-hist-btn-top{white-space:nowrap;}
-  .fhist-row-latest td{background:#eef7ee;font-weight:700;}
-  .fhist-row-latest td:first-child{position:relative;}
-  .fhist-tbl th.grp{text-align:center;font-family:'Kanit';font-size:13.5px;font-weight:600;border-bottom:1px solid var(--line);}
-  .fhist-tbl th.g-d{background:#eef3fa;color:#16457a;}
-  .fhist-tbl th.g-b{background:#fdf0e6;color:#a8470a;}
-  .fhist-tbl .sep{border-left:2px solid var(--line);}
-  .fhist-tbl td,.fhist-tbl th{white-space:nowrap;}
-  /* คอลัมน์ "เดือน" กว้างเท่ากันทุกแท็บ (ภาพรวม/ดีเซล/เบนซิน) */
+  /* ตารางสรุปน้ำมันรายเดือน — โทนมินิมอล ขาว-เทา: หัวกลุ่มบอกชนิดน้ำมันด้วยเส้นใต้สี (ดีเซลฟ้า/เบนซินส้ม) */
   .fhist-tbl{table-layout:fixed;width:100%;min-width:520px;}
   .fhist-tbl.fh-all{min-width:740px;}
   .fhist-tbl col.fh-col-month{width:160px;}
-  /* โมดัลสรุปน้ำมัน — ระยะห่างกระชับ */
-  .fhist-tbl thead th{padding:6px 10px;}
-  .fhist-tbl th.grp{padding:7px 10px;font-size:13px;}
-  .fhist-tbl tbody td{padding:7px 10px;}
-  .fh-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;}
-  /* การ์ดสรุปแบบบรรทัดเดียว: ชื่อซ้าย ตัวเลขขวา */
-  .fh-stats .stat-card{padding:7px 12px 7px 14px;display:flex;align-items:baseline;justify-content:space-between;gap:8px;border-radius:10px;}
-  .fh-stats .stat-card .label{font-size:11.5px;margin:0;white-space:nowrap;}
-  .fh-stats .stat-card .val{font-size:14.5px;white-space:nowrap;}
-  @media (max-width:640px){ .fh-stats{grid-template-columns:repeat(2,1fr);} }
+  .fhist-tbl td,.fhist-tbl th{white-space:nowrap;}
+  .fhist-tbl thead th{padding:6px 10px;background:#fff;color:#7a8594;font-weight:500;border-bottom:1px solid #d5dbe3;}
+  .fhist-tbl th.grp{text-align:center;font-family:'Kanit';font-size:13px;font-weight:600;padding:7px 10px;}
+  .fhist-tbl th.g-d{color:#16457a;border-bottom:3px solid #2f6fbf;}
+  .fhist-tbl th.g-b{color:#a8470a;border-bottom:3px solid #e0620f;}
+  .fhist-tbl .sep{border-left:1px solid #e3e6ea;}
+  .fhist-tbl tbody td{padding:7px 10px;border-bottom:1px solid #eef0f3;}
+  .fhist-row-latest td{background:#fff8f1;}
+  /* แถวรวมปีงบท้ายตาราง */
+  .fhist-tbl tfoot td{padding:8px 10px;background:#f5f6f8;border-top:1px solid #c5ccd5;font-weight:600;color:var(--navy-900);white-space:nowrap;}
+  .fhist-tbl tfoot td:first-child{font-family:'Kanit';}
   .fhist-latest-tag{display:inline-block;margin-left:8px;font-family:'Kanit';font-size:10px;font-weight:600;color:#fff;background:var(--success,#2e8b57);padding:1px 8px;border-radius:20px;vertical-align:middle;}
   .fh-row-edit input{width:100%;}
   .fh-row-edit td{padding:6px 8px;}
@@ -1020,7 +1022,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </div>
             <span class="mc-sp"></span>
             <div class="search-box mc-search" id="mat-search-box">🔍 <input id="mat-search" oninput="renderMaterials()" placeholder="ค้นหาชื่อวัสดุ"></div>
-            <button type="button" class="btn btn-ghost btn-ic fuel-hist-btn-top hidden" id="fuel-hist-btn" data-ic="hist" onclick="openFuelHistoryModal()" data-tip="สรุปยอดน้ำมันรายเดือน (ภาพรวม / ดีเซล / เบนซิน)"></button>
+            <button type="button" class="btn btn-ghost btn-ic fuel-hist-btn-top hidden" id="fuel-hist-btn" data-ic="hist" onclick="openFuelHistoryModal()" data-tip="สรุปยอดน้ำมันรายเดือน (ดีเซล / เบนซิน)"></button>
           </div>
           <div class="mc-usagebar hidden" id="mat-usage-bar"></div>
           <div class="mc-cols" id="mat-cols"></div>
@@ -1897,21 +1899,16 @@ function renderMasterFuel(){
    แท็บ 1: สรุปยอดยกมา/รับเข้า/จ่าย/คงเหลือ รายเดือน (ข้อมูลชุดเดียวกับตาราง พ.1-03)
    แท็บ 2: รายการรับเข้าย้อนหลัง — แก้ไข/ลบได้ (แก้ปัญหาพิมพ์ยอดรับผิดแล้วแก้ไม่ได้)
    ============================================================ */
-/* แท็บในโมดัล: 'all' = ภาพรวมทั้ง 2 ชนิด · 'ดีเซล'/'เบนซิน' = สรุปรายเดือนของชนิดนั้นตามปีงบประมาณ (ตัวเลขสรุปเท่านั้น ไม่แสดงรายการย่อย) */
-let __fuelHistTab = 'all';
+/* หน้าเดียว: ตารางภาพรวมดีเซล+เบนซินรายเดือนตามปีงบประมาณ + แถวรวมปีงบท้ายตาราง
+   (เดิมมีแท็บแยกดีเซล/เบนซิน แต่ตัวเลขซ้ำกับภาพรวม จึงรวมเหลือหน้าเดียว 2569-10-25) */
 let __fuelHistFy = null;
-function openFuelHistoryModal(tab){
-  __fuelHistTab = tab || 'all';
+function openFuelHistoryModal(){
   __fuelHistFy = fyMonthOf(monthKeyOf(toLocalISODate(TODAY))).fy;
   document.getElementById('fuel-history-overlay').classList.remove('hidden');
   renderFuelHistoryModal();
 }
 function closeFuelHistoryModal(){
   document.getElementById('fuel-history-overlay').classList.add('hidden');
-}
-function setFuelHistTab(tab){
-  __fuelHistTab = tab;
-  renderFuelHistoryModal();
 }
 function onFuelHistFyChange(v){
   __fuelHistFy = +v;
@@ -1922,53 +1919,14 @@ function renderFuelHistoryModal(){
   const title = document.getElementById('fuel-history-title');
   if(!body || !title) return;
   title.textContent = 'สรุปยอดน้ำมันเชื้อเพลิงรายเดือน';
-  const tabs = [['all','ภาพรวม'],['ดีเซล','🛢️ ดีเซล'],['เบนซิน','⛽ เบนซิน']];
-  const tabsHtml = `<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
-    <div class="seg-toggle">${tabs.map(([k,l])=>`<button type="button" class="seg-btn${__fuelHistTab===k?' active':''}" onclick="setFuelHistTab('${k}')">${l}</button>`).join('')}</div>
-    <div style="margin-left:auto;"><select data-fy onchange="onFuelHistFyChange(this.value)">${itemHistFyOptionsHtml(__fuelHistFy)}</select></div>
+  const barHtml = `<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+    <select data-fy onchange="onFuelHistFyChange(this.value)">${itemHistFyOptionsHtml(__fuelHistFy)}</select>
   </div>`;
-  body.innerHTML = tabsHtml + (__fuelHistTab==='all' ? fuelHistoryMonthsHtml(__fuelHistFy) : fuelHistoryFyHtml(__fuelHistTab, __fuelHistFy));
+  body.innerHTML = barHtml + fuelHistoryMonthsHtml(__fuelHistFy);
 }
 /* เดือนล่าสุดที่แสดง = เดือนที่มีความเคลื่อนไหวล่าสุด หรือเดือนปัจจุบัน (ไม่แสดงเดือนในอนาคต) */
 function fuelHistLatestKey(){
   return [latestActivityMonthKey(), monthKeyOf(toLocalISODate(TODAY))].sort().pop();
-}
-function fuelHistoryFyHtml(ft, fy){
-  const latest = fuelHistLatestKey();
-  const mks = fyMonthKeys(fy).filter(k=>k<=latest);
-  if(!mks.length) return '<div class="vb-empty">ยังไม่มีข้อมูลในปีงบประมาณนี้</div>';
-  const sums = mks.map(k=>({k, s:fuelMonthSummary(ft, k)}));
-  const first = sums[0].s, last = sums[sums.length-1].s;
-  const totalIn = sums.reduce((a,x)=>a+x.s.received,0);
-  const totalOut = sums.reduce((a,x)=>a+x.s.issued,0);
-  const statsHtml = `<div class="fh-stats">
-    <div class="stat-card"><div class="bar"></div><div class="label">ยกมาต้นปีงบ</div><div class="val">${fmtNum(first.opening,1)} ลิตร</div></div>
-    <div class="stat-card"><div class="bar" style="background:var(--success);"></div><div class="label">รับเข้ารวม</div><div class="val" style="color:var(--success);">+${fmtNum(totalIn,1)} ลิตร</div></div>
-    <div class="stat-card"><div class="bar" style="background:var(--danger);"></div><div class="label">จ่ายรวม</div><div class="val" style="color:var(--danger);">−${fmtNum(totalOut,1)} ลิตร</div></div>
-    <div class="stat-card"><div class="bar"></div><div class="label">คงเหลือล่าสุด</div><div class="val" style="${last.closing<0?'color:var(--danger);':''}">${fmtNum(last.closing,1)} ลิตร</div></div>
-  </div>`;
-  const rows = sums.slice().reverse().map(({k,s})=>{
-    const [y,m] = k.split('-').map(Number);
-    const isLatest = k===latest;
-    return `<tr${isLatest?' class="fhist-row-latest"':''}>
-      <td>${monthNamesTh[m-1]} ${y+543}${isLatest?'<span class="fhist-latest-tag">ล่าสุด</span>':''}</td>
-      <td class="num sep">${fmtNum(s.opening,1)}</td>
-      <td class="num" style="color:var(--success);">+${fmtNum(s.received,1)}</td>
-      <td class="num" style="color:var(--danger);">−${fmtNum(s.issued,1)}</td>
-      <td class="num" style="font-weight:700;${s.closing<0?'color:var(--danger);':''}">${fmtNum(s.closing,1)}</td>
-    </tr>`;
-  }).join('');
-  /* หัวตารางแบบ 2 ชั้นเหมือนแท็บภาพรวม (หัวกลุ่มสีตามชนิดน้ำมัน) ให้ทั้ง 3 แท็บหน้าตาเดียวกัน */
-  const grpCls = ft==='เบนซิน' ? 'g-b' : 'g-d';
-  const grpLbl = ft==='เบนซิน' ? '⛽ เบนซิน (ลิตร)' : '🛢️ ดีเซล (ลิตร)';
-  return statsHtml + `<div class="table-wrap"><table class="fhist-tbl">
-    <colgroup><col class="fh-col-month"></colgroup>
-    <thead>
-      <tr><th rowspan="2">เดือน</th><th class="grp ${grpCls} sep" colspan="4">${grpLbl}</th></tr>
-      <tr><th class="num sep">ยกมา</th><th class="num">รับเข้า</th><th class="num">จ่าย</th><th class="num">คงเหลือ</th></tr>
-    </thead>
-    <tbody>${rows}</tbody>
-  </table></div>`;
 }
 function fuelHistoryMonthsHtml(fy){
   const FTS = ['ดีเซล','เบนซิน'];
@@ -1991,6 +1949,17 @@ function fuelHistoryMonthsHtml(fy){
       ${cells}
     </tr>`;
   }).join('');
+  /* แถวรวมปีงบ: ยกมา = ต้นปีงบ (เดือนแรก) · รับเข้า/จ่าย = รวมทุกเดือน · คงเหลือ = เดือนล่าสุด */
+  const totCells = FTS.map(ft=>{
+    const sums = list.map(k=>fuelMonthSummary(ft, k));   // list เรียงล่าสุดก่อน
+    const tIn = sums.reduce((a,s)=>a+s.received,0);
+    const tOut = sums.reduce((a,s)=>a+s.issued,0);
+    const close = sums[0].closing;
+    return `<td class="num sep">${fmtNum(sums[sums.length-1].opening,1)}</td>
+      <td class="num" style="color:var(--success);">+${fmtNum(tIn,1)}</td>
+      <td class="num" style="color:var(--danger);">−${fmtNum(tOut,1)}</td>
+      <td class="num"${close<0?' style="color:var(--danger);"':''}>${fmtNum(close,1)}</td>`;
+  }).join('');
   const sub = `<th class="num sep">ยกมา</th><th class="num">รับเข้า</th><th class="num">จ่าย</th><th class="num">คงเหลือ</th>`;
   return `<div class="table-wrap"><table class="fhist-tbl fh-all">
     <colgroup><col class="fh-col-month"></colgroup>
@@ -1999,6 +1968,7 @@ function fuelHistoryMonthsHtml(fy){
       <tr>${sub}${sub}</tr>
     </thead>
     <tbody>${rows}</tbody>
+    <tfoot><tr class="fhist-row-total"><td>รวมปีงบ ${fy}</td>${totCells}</tr></tfoot>
   </table></div>`;
 }
 const FUEL_REF_PREFIX = '426/35/'; // คำนำหน้าเลขที่ใบเบิก เติมให้อัตโนมัติ (ต่อด้วย ปี/ลำดับ เช่น 69/1062)
@@ -2644,9 +2614,11 @@ function vehicleBoardHtml(list, key){
     ['⛽ น้ำมันเบนซิน', list.filter(v=>v.fuelType==='เบนซิน'), 'เบนซิน'],
     ['อื่น ๆ / ไม่ใช้เชื้อเพลิง', list.filter(v=>v.fuelType!=='ดีเซล' && v.fuelType!=='เบนซิน'), 'all']
   ].filter(g=>g[1].length && (fuelSel==='all' || fuelSel===g[2]));
+  // กลุ่มตามชนิดน้ำมัน แบบกล่องสีของหน้าพัสดุ (ดีเซล = ครีม, เบนซิน = เขียว) การ์ดเรียงแนวนอนในกล่อง
+  const fgCls = {'ดีเซล':'d','เบนซิน':'g'};
   const body = groups.length
-    ? groups.map(g=>g[1].map(vehicleCardHtml).join('')).join('<div class="vb-brk"></div>')   // คนละชนิดน้ำมัน → ขึ้นแถวใหม่ (ไม่มีหัวกลุ่ม)
-    : `<div class="vb-empty" style="grid-column:1/-1;">ไม่มีรายการน้ำมัน${fuelSel} ในสถานะ "${VEH_STATUS[key].label}"</div>`;
+    ? groups.map(g=>`<div class="vb-fg ${fgCls[g[2]]||'o'}"><h3>${g[0]}<span class="n">${g[1].length}</span></h3><div class="vb-fgrid">${g[1].map(vehicleCardHtml).join('')}</div></div>`).join('')
+    :`<div class="vb-empty" style="grid-column:1/-1;">ไม่มีรายการน้ำมัน${fuelSel} ในสถานะ "${VEH_STATUS[key].label}"</div>`;
   return bar + body;
 }
 function openVehDetail(id){

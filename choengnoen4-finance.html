@@ -195,15 +195,18 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   tr.util-month.row-latest:hover{background:rgba(242,169,48,.2);}
   .util-caret{display:inline-block;width:16px;color:var(--ink-400);font-size:10px;transition:transform .15s;}
   tr.util-month.open .util-caret{transform:rotate(90deg);}
-  tr.util-detail>td{background:var(--paper-50);padding:0 !important;}
-  .util-bill{display:grid;grid-template-columns:minmax(120px,1fr) minmax(90px,.6fr) minmax(150px,1fr) minmax(260px,2fr);gap:12px;align-items:center;padding:9px 20px 9px 38px;border-top:1px solid var(--paper-100);font-size:13px;}
-  .util-bill .ub-type{font-weight:600;color:var(--navy-900);}
-  .util-bill .ub-due{color:var(--ink-600);}
-  .util-bill .ub-act{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-  .util-bill-empty{padding:12px 20px 12px 38px;color:var(--ink-400);font-size:13px;border-top:1px solid var(--paper-100);}
+  tr.util-detail>td{background:var(--paper-50);vertical-align:top;font-size:12.5px;}
+  tr.util-detail .ub-lbl{color:var(--ink-400);padding-left:38px;white-space:nowrap;}
+  .ub-cell{display:flex;align-items:center;flex-wrap:wrap;gap:4px;}
+  .ub-cell+.ub-cell{margin-top:6px;}
+  .ub-btns{display:inline-flex;gap:2px;}
+  .ub-ic{border:1px solid var(--paper-100);background:#fff;border-radius:6px;padding:1px 5px;font-size:12px;line-height:1.4;cursor:pointer;}
+  .ub-ic:hover{border-color:var(--ink-400);}
+  .ub-ic.ub-del:hover{border-color:#e5a3a3;background:#fdeeee;}
+  .ub-note{flex-basis:100%;color:var(--ink-600);font-size:12px;}
+  .ub-none{color:var(--ink-400);}
   .util-unpaid-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
   .util-unpaid-list button{border:1px solid currentColor;background:#fff;color:inherit;border-radius:999px;padding:2px 10px;font:inherit;font-size:12.5px;cursor:pointer;}
-  @media (max-width:720px){ .util-bill{grid-template-columns:1fr 1fr;padding-left:20px;} .util-bill .ub-act{grid-column:1/-1;} }
 
   /* budget bars */
   .budget-row{padding:14px 20px;border-bottom:1px solid var(--paper-100);}
@@ -2055,25 +2058,16 @@ function toggleUtilMonth(cy){
   renderUtilReport();
 }
 function openUtilMonth(cy){ utilExpanded.add(cy); renderUtilReport(); }
-function utilDueBadge(b){
-  if(b.status==='จ่ายแล้ว') return '';
-  const dleft = daysUntil(b.due);
-  if(dleft<0) return `<span class="pill pill-danger">เลยกำหนด ${Math.abs(dleft)} วัน</span>`;
-  if(dleft<=5) return `<span class="pill pill-warn">อีก ${dleft} วันครบกำหนด</span>`;
-  return '';
-}
-// บิลรายใบของรอบบิลหนึ่ง แสดงเป็นแถวย่อยใต้แถวเดือนในตารางค่าสาธารณูปโภค
-function utilBillsDetailHtml(cy){
-  const bills = utilityBills.map((b,i)=>({b,i})).filter(({b})=>b.cycle===cy)
-    .sort((a,b)=>UTIL_TYPES.indexOf(a.b.type)-UTIL_TYPES.indexOf(b.b.type));
-  if(!bills.length) return `<div class="util-bill-empty">ยังไม่มีบิลบันทึกในเดือนนี้</div>`;
-  return bills.map(({b,i})=>`<div class="util-bill">
-      <div class="ub-type">${esc(b.type)}</div>
-      <div>${fmtMoney(b.amount)}</div>
-      <div class="ub-due">ครบกำหนด ${fmtDateTH(b.due)}</div>
-      <div class="ub-act">${statusPill(['จ่ายแล้ว','รอเบิกจ่าย'], b.status==='จ่ายแล้ว'?'จ่ายแล้ว':'รอเบิกจ่าย', b.status==='จ่ายแล้ว'?'pill-ok':'pill-neutral', isAdmin()?[
-          {label:'จ่ายแล้ว', cls:'pill-ok', js:`toggleUtilPaid(${i})`}, {label:'รอเบิกจ่าย', cls:'pill-neutral', js:`toggleUtilPaid(${i})`}]:null)} ${utilDueBadge(b)} ${isAdmin()?`<button class="btn btn-ghost btn-sm no-print" onclick="editUtility(${i})">✏️ แก้ไข</button> <button class="btn btn-danger btn-sm no-print" onclick="deleteUtility(${i})">🗑️ ลบ</button>`:''}</div>
-    </div>`).join('');
+// แถวย่อยใต้แถวเดือนในตารางค่าสาธารณูปโภค: สถานะ + ปุ่มของบิลแต่ละประเภท วางใต้คอลัมน์ของประเภทนั้น
+// ไม่แสดงยอดซ้ำกับแถวเดือน ยกเว้นค่าน้ำประปาที่แถวเดือนใช้ "ยอด สนง." จึงบอกยอดบิลเต็มไว้ให้เทียบ (วันครบกำหนดไปเตือนที่แท็บภาพรวมแทน)
+function utilBillsDetailRow(cy){
+  const billHtml = ({b,i})=>`<div class="ub-cell">${statusPill(['จ่ายแล้ว','รอเบิกจ่าย'], b.status==='จ่ายแล้ว'?'จ่ายแล้ว':'รอเบิกจ่าย', b.status==='จ่ายแล้ว'?'pill-ok':'pill-neutral', isAdmin()?[
+      {label:'จ่ายแล้ว', cls:'pill-ok', js:`toggleUtilPaid(${i})`}, {label:'รอเบิกจ่าย', cls:'pill-neutral', js:`toggleUtilPaid(${i})`}]:null)}${isAdmin()&&b.status!=='จ่ายแล้ว'?`<span class="ub-btns no-print"><button type="button" class="ub-ic" title="แก้ไขบิล" onclick="editUtility(${i})">✏️</button><button type="button" class="ub-ic ub-del" title="ลบบิล" onclick="deleteUtility(${i})">🗑️</button></span>`:''}${b.type==='ค่าน้ำประปา'?`<div class="ub-note">บิลเต็ม ${fmtMoney(b.amount)}</div>`:''}</div>`;
+  const cells = UTIL_TYPES.map(t=>{
+    const bills = utilityBills.map((b,i)=>({b,i})).filter(({b})=>b.cycle===cy && b.type===t);
+    return `<td>${bills.length ? bills.map(billHtml).join('') : '<span class="ub-none">ยังไม่บันทึก</span>'}</td>`;
+  }).join('');
+  return `<tr class="util-detail"><td class="ub-lbl">สถานะบิล</td>${cells}<td colspan="3"></td></tr>`;
 }
 // แถบเตือนบิลค้างชำระของปีงบที่เลือก (แทนแท็บ "ยังไม่ชำระ" เดิม) — แสดงเฉพาะตอนมีบิลค้าง กดชื่อบิลเพื่อเปิดเดือนนั้นในตาราง
 function renderUtility(){
@@ -2193,7 +2187,7 @@ function renderUtilReport(){
       <td>${r.paidCount===4?'<span class="pill pill-ok">ครบ 4 บิล</span>':`<span class="pill pill-warn">${r.paidCount}/4</span>`}</td>
       <td onclick="event.stopPropagation()">${statusPill(['รายงานแล้ว','ยังไม่รายงาน'], r.reported?'รายงานแล้ว':'ยังไม่รายงาน', r.reported?'pill-ok':'pill-neutral', isAdmin()?[
           {label:'รายงานแล้ว', cls:'pill-ok', js:`toggleDistrictReport('${jsArg(r.cy)}')`}, {label:'ยังไม่รายงาน', cls:'pill-neutral', js:`toggleDistrictReport('${jsArg(r.cy)}')`}]:null)}</td>
-    </tr>${open?`<tr class="util-detail"><td colspan="8">${utilBillsDetailHtml(r.cy)}</td></tr>`:''}`;
+    </tr>${open?utilBillsDetailRow(r.cy):''}`;
   }).join('');
   const totalElec = records.reduce((s,r)=>s+r.bt['ค่าไฟฟ้า'],0);
   const totalWater = records.reduce((s,r)=>s+r.bt['ค่าน้ำประปา'],0);
