@@ -594,7 +594,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div class="al-wrap" style="padding:20px;">
           <div class="al-hero"><div class="big" id="al-hero-big"></div></div>
           <div class="al-tl" id="alert-panel">
-            <div class="al-stage s-red"><h3>เร่งด่วนตอนนี้ <small>เลยกำหนด / เหตุฉุกเฉิน</small></h3><div id="al-red"></div></div>
+            <div class="al-stage s-red"><h3>เร่งด่วนตอนนี้ <small>เลยกำหนด / เหลือ ≤ 3 วัน / เหตุฉุกเฉิน</small></h3><div id="al-red"></div></div>
             <div class="al-stage s-leave" id="leave-approve-sec" style="display:none;"><h3>รอท่านอนุมัติ <small>ใบลา <span id="leave-approve-count"></span></small></h3><div id="leave-approve-list"></div></div>
             <div class="al-stage s-week"><h3>ภายใน 7 วัน <small>รายงานที่ต้องส่ง</small></h3><div id="al-week"></div></div>
             <div class="al-stage s-month"><h3>ภายใน 30 วัน และหลังจากนั้น</h3><div id="al-month"></div></div>
@@ -1106,7 +1106,13 @@ function computeAlerts(){
 function renderAlerts(){
   const a = computeAlerts();
   const empty = '<div class="al-empty">ไม่มีรายการ</div>';
-  const wk = a.yellow.filter(o=>o.dd<=7).sort((x,y)=>x.dd-y.dd), mo = a.yellow.filter(o=>o.dd>7).sort((x,y)=>x.dd-y.dd);
+  // งานประจำที่เหลือ ≤ 3 วันและยังไม่ติ๊กว่าทำแล้ว → ย้ายขึ้นไป "เร่งด่วนตอนนี้"
+  const isDone = o => (__alertState[o.id]||{}).doneFor === o.checkKey;
+  const urgent = a.yellow.filter(o=>o.dd<=3 && !isDone(o)).sort((x,y)=>x.dd-y.dd)
+    .map(o=>({...o, pillHTML:`<span class="pill pill-danger">${o.dd===0?'ครบกำหนดวันนี้':'อีก '+o.dd+' วัน'}</span>`}));
+  a.red = a.red.concat(urgent); // เลยกำหนด/ฉุกเฉินขึ้นก่อน ตามด้วยงานใกล้ครบ
+  const rest = a.yellow.filter(o=>!urgent.some(u=>u.id===o.id));
+  const wk = rest.filter(o=>o.dd<=7).sort((x,y)=>x.dd-y.dd), mo = rest.filter(o=>o.dd>7).sort((x,y)=>x.dd-y.dd);
   document.getElementById('al-red').innerHTML = a.red.map(alertRowHTML).join('') || '<div class="al-empty">ไม่มีรายการ 👍</div>';
   document.getElementById('al-week').innerHTML = wk.map(alertRowHTML).join('') || empty;
   document.getElementById('al-month').innerHTML = mo.map(alertRowHTML).join('') || empty;
@@ -1120,7 +1126,7 @@ function renderAlerts(){
   const badgeN = a.red.length + __pendingLeaves.length; // ด่วน + ใบลารออนุมัติ
   if(badgeN){ badge.textContent = badgeN; badge.classList.remove('hidden'); } else badge.classList.add('hidden');
   // สรุปย่อในหน้าภาพรวม: ด่วนทั้งหมด + งานประจำที่ยังไม่ติ๊กและเหลือ ≤ 7 วัน
-  const soon = a.yellow.filter(o=>{ const st=__alertState[o.id]||{}; return st.doneFor!==o.checkKey; }).filter(o=>/อีก [0-7] วัน|วันนี้/.test(o.pillHTML));
+  const soon = rest.filter(o=>!isDone(o) && o.dd<=7);
   const top = a.red.concat(soon).slice(0,6);
   const leaveRow = __pendingLeaves.length ? `<div class="today-item" style="cursor:pointer;" onclick="gotoTab('alerts')"><span>ใบลารออนุมัติ</span><span class="pill pill-warn">${__pendingLeaves.length} รายการ</span></div>` : '';
   document.getElementById('ov-alerts').innerHTML = (leaveRow || top.length) ? leaveRow + top.map(o=>`<div class="today-item"><span>${esc(o.task)}</span>${o.pillHTML}</div>`).join('') : '<div class="empty">ไม่มีงานเร่งด่วน 👍</div>';
