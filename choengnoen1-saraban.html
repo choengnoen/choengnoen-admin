@@ -568,6 +568,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div class="f-row"><label>ผู้ติดต่อฉุกเฉิน</label><input class="edit-input" id="as-emergency-contact" placeholder="ชื่อ-สกุล / ความสัมพันธ์"></div>
               <div class="f-row"><label>เบอร์โทรผู้ติดต่อฉุกเฉิน</label><input class="edit-input" id="as-emergency-phone"></div>
             </div>
+            <div class="f-row"><label>เลขบัญชีธนาคาร (ใช้พิมพ์หลักฐานการจ่ายเงินค่าจ้าง ง.3-26)</label><input class="edit-input" id="as-bank" placeholder="เช่น 218-0-12345-6"></div>
           </div>
           <div class="modal-foot">
             <button class="btn btn-ghost" id="as-cancel-btn" onclick="closeAddStaff()">ยกเลิก</button>
@@ -2013,7 +2014,8 @@ function __staffDetailViewHTML(s){
     f('เบอร์โทรศัพท์', s.phone ? esc(s.phone) : ''),
     f('ที่อยู่ปัจจุบัน', s.address ? esc(s.address) : '', true),
     f('ผู้ติดต่อฉุกเฉิน', s.emergencyContact ? esc(s.emergencyContact) : ''),
-    f('เบอร์โทรผู้ติดต่อฉุกเฉิน', s.emergencyPhone ? esc(s.emergencyPhone) : '')
+    f('เบอร์โทรผู้ติดต่อฉุกเฉิน', s.emergencyPhone ? esc(s.emergencyPhone) : ''),
+    f('เลขบัญชีธนาคาร', s.bankAcc ? esc(s.bankAcc) : '')
   ]);
   const health = grid([
     f('กรุ๊ปเลือด', s.bloodType ? esc(s.bloodType) : ''),
@@ -2098,6 +2100,7 @@ function renderStaffDetailModal(){
         <div class="f-row"><label>ผู้ติดต่อฉุกเฉิน</label><input class="edit-input" id="sd-emergency-contact" value="${esc(s.emergencyContact||'')}" placeholder="ชื่อ-สกุล / ความสัมพันธ์"></div>
         <div class="f-row"><label>เบอร์โทรผู้ติดต่อฉุกเฉิน</label><input class="edit-input" id="sd-emergency-phone" value="${esc(s.emergencyPhone||'')}"></div>
       </div>
+      <div class="f-row"><label>เลขบัญชีธนาคาร (ใช้พิมพ์หลักฐานการจ่ายเงินค่าจ้าง ง.3-26)</label><input class="edit-input" id="sd-bank" value="${esc(s.bankAcc||'')}" placeholder="เช่น 218-0-12345-6"></div>
     `;
     foot.style.justifyContent = 'flex-end';
     foot.innerHTML = `
@@ -2198,6 +2201,7 @@ async function saveStaffDetail(){
   s.address = document.getElementById('sd-address').value.trim() || null;
   s.emergencyContact = document.getElementById('sd-emergency-contact').value.trim() || null;
   s.emergencyPhone = document.getElementById('sd-emergency-phone').value.trim() || null;
+  s.bankAcc = document.getElementById('sd-bank').value.trim() || null;
   // ป้องกันการกดซ้ำระหว่างรอผลจากเซิร์ฟเวอร์ (ปุ่มถูกสร้างใหม่ทุกครั้งที่ renderStaffDetailModal ทำงาน จึงกลับมาใช้ได้เองทั้งกรณีสำเร็จและผิดพลาด)
   const saveBtn = document.getElementById('sd-save-btn'), cancelBtn = document.getElementById('sd-cancel-btn');
   if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'กำลังบันทึก...'; }
@@ -2219,7 +2223,7 @@ async function saveStaffDetail(){
 /* ---------- Add staff modal ---------- */
 function openAddStaff(){
   if(!isAdmin()){ alert('ต้องเข้าสู่ระบบด้วยสิทธิ์แก้ไข (หัวหน้าหมวด/ผู้ช่วยหัวหน้าหมวด) จึงจะเพิ่มข้อมูลได้'); return; }
-  ['as-name','as-nickname','as-role','as-duty','as-rate','as-shirt','as-med','as-birth','as-startdate','as-vaccarry','as-vaccarryfy','as-blood','as-phone','as-education','as-address','as-emergency-contact','as-emergency-phone'].forEach(id=>{ document.getElementById(id).value=''; });
+  ['as-name','as-nickname','as-role','as-duty','as-rate','as-shirt','as-med','as-birth','as-startdate','as-vaccarry','as-vaccarryfy','as-blood','as-phone','as-education','as-address','as-emergency-contact','as-emergency-phone','as-bank'].forEach(id=>{ document.getElementById(id).value=''; });
   document.getElementById('as-ptype').value = 'ลูกจ้างชั่วคราว';
   document.getElementById('as-status').value = 'ok';
   const saveBtn = document.getElementById('as-save-btn');
@@ -2249,6 +2253,7 @@ async function submitAddStaff(){
     address: document.getElementById('as-address').value.trim() || null,
     emergencyContact: document.getElementById('as-emergency-contact').value.trim() || null,
     emergencyPhone: document.getElementById('as-emergency-phone').value.trim() || null,
+    bankAcc: document.getElementById('as-bank').value.trim() || null,
     status: document.getElementById('as-status').value,
     startDate: document.getElementById('as-startdate').value || null,
     vacCarry: document.getElementById('as-vaccarry').value!=='' ? Number(document.getElementById('as-vaccarry').value) : null,

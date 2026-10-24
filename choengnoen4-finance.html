@@ -249,6 +249,31 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .att-table th.col-center,.att-table td.col-center{text-align:center;}
   .att-table td.name-col{max-width:150px;}
   th.idx-col,td.idx-col{width:34px;max-width:34px;padding-left:8px;padding-right:8px;}
+
+  /* บัญชีแรงงานรายวัน ง.3-12 — หน้าตาแบบฟอร์มราชการ (ขาวดำ เส้นตารางครบ) */
+  #labor-table-wrap{background:#e9ebe7;padding:18px;}
+  .gov-paper{background:#fff;min-width:1120px;margin:0 auto;padding:24px 26px 30px;box-shadow:0 2px 10px rgba(0,0,0,.08);color:#000;font-family:'Sarabun',sans-serif;}
+  .gov-hd{text-align:center;line-height:1.55;position:relative;}
+  .gov-hd .gov-code{position:absolute;right:0;top:0;font-size:13px;border:1px solid #000;padding:1px 8px;}
+  .gov-hd .gov-title{font-size:17px;font-weight:700;}
+  .gov-hd p{margin:0;font-size:14px;}
+  .gov-table{border-collapse:collapse;width:100%;margin-top:14px;}
+  .gov-table thead{position:sticky;top:0;z-index:2;}
+  .gov-table thead th{position:static;background:#fff;color:#000;border:1px solid #000;font-size:11.5px;font-weight:700;text-transform:none;letter-spacing:0;padding:3px;text-align:center;line-height:1.3;white-space:nowrap;}
+  .gov-table tbody td,.gov-table tfoot td{border:1px solid #000;font-size:12px;padding:3px 4px;color:#000;line-height:1.3;white-space:nowrap;}
+  .gov-table tbody tr:nth-child(even),.gov-table tbody tr:hover{background:transparent;}
+  .gov-table tbody tr:hover td{background:#f4f7fb;}
+  .gov-table th.gd,.gov-table td.gd{width:20px;min-width:20px;padding:2px 0;text-align:center;}
+  .gov-table .gd.off{background:#efefef;}
+  .gov-table .gd.hol{background:#f6f0dc;}
+  .gov-table td.gd.leave{font-weight:700;}
+  .gov-table td.gd.c-x{color:var(--danger);font-weight:700;}
+  .gov-table .num{text-align:right;}
+  .gov-table .ctr{text-align:center;}
+  .gov-table .sig-col{min-width:110px;}
+  .gov-table tfoot td{font-weight:700;}
+  .gov-words{margin-top:10px;font-size:14px;}
+  .gov-signs{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:36px;font-size:14px;text-align:center;line-height:2;}
   .labor-summary{display:flex;gap:14px;flex-wrap:wrap;padding:18px 20px 10px;}
   .labor-summary .ov-metric{
     flex:1 1 200px;
@@ -392,11 +417,20 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </h2>
             <div class="toolbar no-print">
               <select id="labor-cycle" onchange="renderLabor()"></select>
-              <span class="tb-sep"></span><button class="btn btn-primary" data-ic="print" onclick="printPaymentEvidence()">พิมพ์หลักฐานการจ่ายเงิน</button>
+              <span class="tb-sep"></span><button class="btn btn-ghost btn-ic" data-ic="pen" data-tip="แก้ไขชื่อ-ตำแหน่งผู้จ่ายเงิน" onclick="openPayerModal()"></button><button class="btn btn-primary" data-ic="print" onclick="printPaymentEvidence()">พิมพ์หลักฐานการจ่ายเงิน</button>
             </div>
           </div>
           <div class="table-wrap" id="labor-table-wrap">
-            <table class="att-table" id="labor-table"></table>
+            <div class="gov-paper">
+              <div class="gov-hd" id="labor-form-hd"></div>
+              <table class="gov-table" id="labor-table"></table>
+              <div class="gov-words" id="labor-form-words"></div>
+              <div class="gov-signs">
+                <div>ลงชื่อ ...................................... ผู้จ่ายเงิน<br>(......................................)<br>ตำแหน่ง ......................................</div>
+                <div>ลงชื่อ ...................................... ผู้ตรวจสอบ<br>(......................................)<br>ตำแหน่ง ......................................</div>
+                <div>ลงชื่อ ...................................... หัวหน้าหมวด<br>(......................................)<br>หัวหน้าหมวดทางหลวงเชิงเนิน</div>
+              </div>
+            </div>
           </div>
           <div class="labor-summary">
             <div class="ov-metric">
@@ -446,6 +480,30 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div class="legend-block" id="ot-note-block">
             <button type="button" class="legend-dot-btn no-print" id="ot-note-toggle" onclick="__toggleOtNote(this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
             <div class="foot-note" id="ot-note" style="display:none;background:transparent;border-top:none;">อนุมัติล่วงหน้าอย่างน้อย 2 วันทำการ (ยกเว้นเหตุฉุกเฉินขออนุมัติภายหลังได้)</div>
+          </div>
+        </div>
+        <div id="payer-modal-overlay" class="modal-overlay hidden no-print">
+          <div class="modal-box">
+            <div class="modal-head">
+              <div class="modal-head-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg></div>
+              <h3>ผู้จ่ายเงิน (หลักฐานการจ่ายเงิน ง.3-26)</h3>
+              <button type="button" class="modal-close" onclick="closePayerModal()">✕</button>
+            </div>
+            <div class="modal-body">
+              <div class="dw-group">
+                <div class="dw-group-title"><span class="dot"></span>ชื่อ-ตำแหน่งที่พิมพ์ใต้ "ลงชื่อ ... ผู้จ่ายเงิน"</div>
+                <div class="f-row"><label>ชื่อ-สกุล</label><input type="text" id="payer-name"></div>
+                <div class="f-row"><label>ตำแหน่ง</label><input type="text" id="payer-pos" placeholder="ชม.ขท.เชิงเนิน"></div>
+              </div>
+              <div class="stat-mini" id="payer-reg-hint"></div>
+            </div>
+            <div class="modal-foot">
+              <button class="btn btn-ghost" data-ic="undo" onclick="resetPayerModal()">ใช้ตามทะเบียน</button>
+              <div style="display:flex;gap:8px;margin-left:auto;">
+                <button class="btn btn-ghost" onclick="closePayerModal()">ยกเลิก</button>
+                <button class="btn btn-primary" onclick="savePayerModal()">บันทึก</button>
+              </div>
+            </div>
           </div>
         </div>
         <div id="ot-modal-overlay" class="modal-overlay hidden no-print">
@@ -675,7 +733,7 @@ const __SHARED_STAFF_KEY = 'saraban_shared_staff_v1';
 /* อ่านรายชื่อบุคลากรจาก Firestore โดยตรง (โหลดไว้ตอนเปิดหน้าใน __initApiData) — เดิมอ่าน localStorage ที่มีเฉพาะเครื่องที่เคยเปิดระบบที่ 1 */
 function loadRealStaffRoster(){
   if(!(window.FBL && FBL.rows)) return [];
-  return FBL.rows('staff').map(s=>({name:s.name, role:s.role||null, duty:s.duty||null, ptype:s.ptype, rate:(s.rate===''||s.rate==null)?null:Number(s.rate), status:s.status}));
+  return FBL.rows('staff').map(s=>({name:s.name, role:s.role||null, duty:s.duty||null, ptype:s.ptype, rate:(s.rate===''||s.rate==null)?null:Number(s.rate), status:s.status, bankAcc:s.bankAcc||''}));
 }
 // รายชื่อสำรอง ใช้เฉพาะกรณีที่ยังไม่เคยเปิด/บันทึกข้อมูลบุคลากรในระบบที่ 1 เลย (localStorage ที่ใช้ร่วมกันยังว่างอยู่)
 const FALLBACK_STAFF_ROSTER = [
@@ -716,7 +774,7 @@ function buildLaborRoster(){
   const source = __normalizeStaffSource(real.length ? real : FALLBACK_STAFF_ROSTER);
   return source
     .filter(s=>s.status==='ok' && s.role==='คนงาน')
-    .map(s=>({name:s.name, role:s.role, duty:s.duty||null, rate:s.rate||0}));
+    .map(s=>({name:s.name, role:s.role, duty:s.duty||null, rate:s.rate||0, bankAcc:s.bankAcc||''}));
 }
 let laborRoster = buildLaborRoster();
 function __refreshLaborRoster(){ laborRoster = buildLaborRoster(); }
@@ -1151,6 +1209,25 @@ __renderAvatar();
    HELPERS
    ============================================================ */
 function fmtMoney(n){ return (n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+// แปลงจำนวนเงินเป็นตัวอักษรภาษาไทย เช่น 135240.6 → "หนึ่งแสนสามหมื่นห้าพันสองร้อยสี่สิบบาทหกสิบสตางค์"
+function bahtText(num){
+  const N=['ศูนย์','หนึ่ง','สอง','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า'], P=['','สิบ','ร้อย','พัน','หมื่น','แสน'];
+  const read = s => {
+    if(s.length>6) return read(s.slice(0,-6))+'ล้าน'+read(s.slice(-6));
+    let o='';
+    for(let i=0;i<s.length;i++){
+      const d=+s[i], p=s.length-i-1;
+      if(!d) continue;
+      if(p===1&&d===1) o+='สิบ';
+      else if(p===1&&d===2) o+='ยี่สิบ';
+      else if(p===0&&d===1&&s.length>1&&+s.slice(0,-1)) o+='เอ็ด';
+      else o+=N[d]+P[p];
+    }
+    return o;
+  };
+  const [b,s] = (Math.round((num||0)*100)/100).toFixed(2).split('.');
+  return (+b?read(String(+b)):'ศูนย์')+'บาท'+(+s?read(String(+s))+'สตางค์':'ถ้วน');
+}
 function fmtDateTH(iso){
   if(!iso) return '—';
   const d=new Date(iso+'T00:00:00');
@@ -1288,16 +1365,24 @@ function renderLabor(){
     visibleDays.push(d);
   }
 
-  let thead = `<thead><tr><th class="idx-col col-center">ลำดับ</th><th class="name-col">ชื่อ-สกุล</th><th class="col-center">อัตรา/วัน</th>`;
-  visibleDays.forEach(d=>{
-    const dow = new Date(cy,cm-1,d).getDay();
-    const isHol = holidaySet.has(d);
-    const cls = isHol ? 'day-hol' : (dow===6) ? 'day-off' : '';
-    thead += `<th class="day-th ${cls}" ${isHol?`title="${esc(holidayNameOn(cyc,d))}"`:''}>${d}<div class="day-dow">${THAI_DOW_ABBR[dow]}</div></th>`;
-  });
-  thead += `<th class="col-center">วันทำงาน</th><th class="col-center">ยอดเงิน</th><th class="ss-col col-center">หักประกันสังคม<br>5%</th><th class="col-center">รับจริง</th></tr></thead>`;
+  // หน้าตาแบบฟอร์มราชการ ง.3-12: หัวกระดาษ + ตารางเส้นครบ + ช่องลายมือชื่อผู้รับเงิน + จำนวนเงินตัวอักษร + ช่องลงนาม
+  const dayCls = d => holidaySet.has(d) ? ' hol' : (new Date(cy,cm-1,d).getDay()===6) ? ' off' : '';
+  const MONTHS_FULL = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  document.getElementById('labor-form-hd').innerHTML = `
+    <span class="gov-code">แบบ ง.3-12</span>
+    <div class="gov-title">บัญชีแสดงรายชื่อลูกจ้างและหลักฐานการจ่ายค่าจ้างรายวัน</div>
+    <p>หมวดทางหลวงเชิงเนิน แขวงทางหลวงระยอง กรมทางหลวง</p>
+    <p>ประจำเดือน ${MONTHS_FULL[cm]} พ.ศ. ${cy+543} &nbsp;·&nbsp; เลขที่ บช-${String(cm).padStart(2,'0')}/${cy+543}</p>`;
 
-  let total=0, totalSS=0, totalNet=0;
+  let thead = `<thead><tr><th rowspan="2">ที่</th><th rowspan="2">ชื่อ - สกุล</th><th rowspan="2">อัตรา<br>ค่าจ้าง</th><th colspan="${visibleDays.length}">วันที่ปฏิบัติงาน</th>
+    <th rowspan="2">รวม<br>วัน</th><th rowspan="2">จำนวนเงิน</th><th rowspan="2">หัก<br>ปกส. 5%</th><th rowspan="2">คงจ่าย</th><th rowspan="2" class="sig-col">ลายมือชื่อ<br>ผู้รับเงิน</th><th rowspan="2">หมายเหตุ</th></tr><tr>`;
+  visibleDays.forEach(d=>{
+    const isHol = holidaySet.has(d);
+    thead += `<th class="gd${dayCls(d)}" title="${THAI_DOW_ABBR[new Date(cy,cm-1,d).getDay()]}${isHol?` — ${esc(holidayNameOn(cyc,d))}`:''}">${d}</th>`;
+  });
+  thead += `</tr></thead>`;
+
+  let total=0, totalSS=0, totalNet=0, totalDays=0;
   let tbody = '<tbody>';
   laborRoster.forEach((emp,idx)=>{
     const codes = att[emp.name];
@@ -1305,49 +1390,202 @@ function renderLabor(){
     const amount = workDays*emp.rate;
     const ss = Math.round(amount*0.05);
     const net = amount-ss;
-    total += amount; totalSS += ss; totalNet += net;
-    tbody += `<tr><td class="idx-col col-center">${idx+1}</td><td class="p-name name-col">${esc(emp.name)}<div class="p-sub">${esc(emp.role)}${emp.duty?` · ปฏิบัติหน้าที่${esc(emp.duty)}`:''}</div></td><td class="col-center">${fmtMoney(emp.rate)}</td>`;
+    total += amount; totalSS += ss; totalNet += net; totalDays += workDays;
+    tbody += `<tr><td class="ctr">${idx+1}</td><td>${esc(emp.name)}</td><td class="num">${fmtMoney(emp.rate)}</td>`;
     visibleDays.forEach(d=>{
       const c = codes[d-1];
       const isHol = holidaySet.has(d);
-      tbody += `<td class="att-cell ${isHol?'att-hol':''}" ${isHol?`title="${esc(holidayNameOn(cyc,d))} — จ่ายเสมือนมาปฏิบัติงาน"`:''}><button class="${codeClass(c)}" disabled>${c}</button></td>`;
+      const extra = c==='ข' ? ' c-x' : (c!=='1' && c!=='-') ? ' leave' : '';
+      tbody += `<td class="gd${dayCls(d)}${extra}" ${isHol?`title="${esc(holidayNameOn(cyc,d))} — จ่ายเสมือนมาปฏิบัติงาน"`:''}>${c==='-'?'':c}</td>`;
     });
-    tbody += `<td class="col-center"><b>${workDays}</b></td><td class="col-center"><b>${fmtMoney(amount)}</b></td><td class="ss-col col-center">${ss.toLocaleString('en-US')}</td><td class="col-center"><b>${fmtMoney(net)}</b></td></tr>`;
+    tbody += `<td class="ctr">${workDays}</td><td class="num">${fmtMoney(amount)}</td><td class="num">${ss.toLocaleString('en-US')}</td><td class="num">${fmtMoney(net)}</td><td class="sig-col"></td><td>${emp.duty?`ปฏิบัติหน้าที่${esc(emp.duty)}`:''}</td></tr>`;
   });
   tbody += '</tbody>';
-  document.getElementById('labor-table').innerHTML = thead+tbody;
+  const tfoot = `<tfoot><tr><td colspan="${3+visibleDays.length}" class="num">รวมเป็นเงินทั้งสิ้น</td><td class="ctr">${totalDays}</td><td class="num">${fmtMoney(total)}</td><td class="num">${totalSS.toLocaleString('en-US')}</td><td class="num">${fmtMoney(totalNet)}</td><td></td><td></td></tr></tfoot>`;
+  document.getElementById('labor-table').innerHTML = thead+tbody+tfoot;
+  document.getElementById('labor-form-words').innerHTML = `จำนวนเงินคงจ่าย (ตัวอักษร) &nbsp;<b>( ${bahtText(totalNet)} )</b>`;
   document.getElementById('labor-total').textContent = fmtMoney(total);
   document.getElementById('labor-total-ss').textContent = totalSS.toLocaleString('en-US');
   document.getElementById('labor-total-net').textContent = fmtMoney(totalNet);
 }
+/* ============================================================
+   หลักฐานการจ่ายเงินค่าจ้าง ง.3-26 (แบบ บท. - กจ.3) — ถอดแบบจากไฟล์ ใบฎีกา.pdf (A4 แนวนอน)
+   ความกว้างคอลัมน์วัดจากไฟล์ต้นฉบับ (หน่วย px ของภาพกว้าง 1300 → แปลงเป็น mm ด้วย GRF_MM)
+   ผู้จ่ายเงิน = หัวหน้าหมวดปัจจุบันจากทะเบียนผู้บริหารหมวด (exec_terms) ตำแหน่ง ชม.ขท.เชิงเนิน
+   แก้ชื่อ/ตำแหน่งเองได้ที่ปุ่มดินสอ (เก็บใน app_state/s4 ใช้ร่วมกันทุกเครื่อง; ล้างค่า = กลับไปใช้ทะเบียน)
+   ============================================================ */
+const PAYER_FALLBACK = {name:'นายอิศรินทร์  อรุณสวัสดิ์', pos:'ชม.ขท.เชิงเนิน'};
+let laborPayerOverride = null; // {name, pos} ที่แก้เอง หรือ null = ตามทะเบียน
+function laborPayerFromRegistry(){
+  if(!(window.FBL && FBL.rows)) return PAYER_FALLBACK;
+  const iso = TODAY.toISOString().slice(0,10);
+  const t = FBL.rows('exec_terms').find(x=>x.role==='head' && x.startDate<=iso && (!x.endDate || x.endDate>=iso));
+  if(!t) return PAYER_FALLBACK;
+  const s = FBL.rows('staff').find(x=>t.staffId ? x.id===t.staffId : x.name===t.staffName);
+  const name = s ? s.name : (t.staffName || '');
+  return name ? {name, pos:PAYER_FALLBACK.pos} : PAYER_FALLBACK;
+}
+function laborPayer(){
+  const reg = laborPayerFromRegistry();
+  const ov = laborPayerOverride || {};
+  return {name: ov.name || reg.name, pos: ov.pos || reg.pos};
+}
+function openPayerModal(){
+  const p = laborPayer(), reg = laborPayerFromRegistry();
+  document.getElementById('payer-name').value = p.name;
+  document.getElementById('payer-pos').value = p.pos;
+  document.getElementById('payer-reg-hint').textContent = `ค่าจากทะเบียนผู้บริหารหมวด: ${reg.name} (${reg.pos})`;
+  document.getElementById('payer-modal-overlay').classList.remove('hidden');
+}
+function closePayerModal(){ document.getElementById('payer-modal-overlay').classList.add('hidden'); }
+function savePayerModal(){
+  const reg = laborPayerFromRegistry();
+  const name = document.getElementById('payer-name').value.trim();
+  const pos = document.getElementById('payer-pos').value.trim();
+  // เก็บเฉพาะค่าที่ต่างจากทะเบียน — ถ้าตรงกับทะเบียนทั้งคู่ ถือว่าใช้ตามทะเบียน (เปลี่ยนหัวหน้าหมวดแล้วชื่อเปลี่ยนตาม)
+  const ov = {name: name && name!==reg.name ? name : '', pos: pos && pos!==reg.pos ? pos : ''};
+  laborPayerOverride = (ov.name || ov.pos) ? ov : null;
+  __saveState();
+  closePayerModal();
+}
+function resetPayerModal(){
+  const reg = laborPayerFromRegistry();
+  document.getElementById('payer-name').value = reg.name;
+  document.getElementById('payer-pos').value = reg.pos;
+}
+function thaiBahtText(num){
+  const numArr=['ศูนย์','หนึ่ง','สอง','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า'];
+  const posArr=['','สิบ','ร้อย','พัน','หมื่น','แสน'];
+  num = Math.round((Number(num)||0)*100)/100;
+  const intPart = Math.floor(num), dec = Math.round((num-intPart)*100);
+  function conv6(n){
+    const s=String(n); let out='';
+    for(let i=0;i<s.length;i++){
+      const d=+s[i], pos=s.length-i-1;
+      if(d===0) continue;
+      if(pos===0 && d===1 && s.length>1) out+='เอ็ด';
+      else if(pos===1 && d===2) out+='ยี่สิบ';
+      else if(pos===1 && d===1) out+='สิบ';
+      else out+=numArr[d]+posArr[pos];
+    }
+    return out;
+  }
+  function conv(n){ return n>=1000000 ? conv(Math.floor(n/1000000))+'ล้าน'+conv6(n%1000000) : conv6(n); }
+  return (intPart>0 ? conv(intPart)+'บาท' : 'ศูนย์บาท') + (dec>0 ? conv(dec)+'สตางค์' : 'ถ้วน');
+}
+function __hasThSarabun(){
+  try{
+    const c = document.createElement('canvas').getContext('2d'), t='หลักฐานการจ่ายเงินค่าจ้าง';
+    c.font='40px serif'; const a=c.measureText(t).width;
+    c.font='40px "TH SarabunPSK","TH Sarabun New","TH SarabunIT๙",serif';
+    return c.measureText(t).width!==a;
+  }catch(e){ return false; }
+}
+/* พิมพ์ผ่าน iframe แยก เพื่อตั้งกระดาษ A4 แนวนอนเฉพาะแบบนี้ (ไม่กระทบแบบฟอร์มอื่นที่พิมพ์แนวตั้ง) */
+function __printInFrame(title, css, body){
+  const old = document.getElementById('__print-frame'); if(old) old.remove();
+  const fr = document.createElement('iframe');
+  fr.id = '__print-frame';
+  fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+  document.body.appendChild(fr);
+  const d = fr.contentDocument;
+  d.open();
+  d.write(`<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>${esc(title)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+<style>${css}</style></head><body>${body}</body></html>`);
+  d.close();
+  // ข้อความที่ยาวเกินช่อง (ชื่อยาว/ยอดเงินหลักล้าน) ย่อตัวอักษรเฉพาะช่องนั้นจนพอดี แทนการถูกตัดหาย
+  const fit = ()=>d.querySelectorAll('td,th').forEach(el=>{
+    let fs = parseFloat(fr.contentWindow.getComputedStyle(el).fontSize), n = 0;
+    while(el.scrollWidth > el.clientWidth + 0.5 && n++ < 25){ fs *= 0.94; el.style.fontSize = fs + 'px'; }
+  });
+  const go = ()=>{ try{ fit(); fr.contentWindow.focus(); fr.contentWindow.print(); }catch(e){ console.error(e); } };
+  const ready = (d.fonts && d.fonts.ready) ? d.fonts.ready : Promise.resolve();
+  // รอฟอนต์โหลดครบก่อนพิมพ์ (สูงสุด 2.5 วินาที) ไม่งั้นตัวอักษรในกระดาษจะเป็นฟอนต์สำรอง
+  Promise.race([ready, new Promise(r=>setTimeout(r,2500))]).then(()=>setTimeout(go,150));
+}
+const GRF_MM = 281/1258; // ความกว้างตารางในต้นฉบับ 1258 px = 281 มม. (A4 แนวนอน ขอบซ้าย-ขวา 8 มม.)
 function printPaymentEvidence(){
   const cyc = document.getElementById('labor-cycle').value || currentCycle();
   const att = generateAttendance(cyc);
-  let rows='';
-  let total=0;
+  const [cy,cm] = cyc.split('-').map(Number);
+  const nDays = daysInCycle(cyc);
+  const DOW = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+  const MONTH_FULL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const dash = v => v ? fmtMoney(v) : '-';
+  const th = __hasThSarabun();
+
+  /* หัวตาราง 3 แถว: ชื่อคอลัมน์ / วันที่ 1-31 / ตัวย่อวัน */
+  const cols = [30,121,85,40,52].concat(Array(31).fill(480/31), [40,60,70,60,90,130]);
+  const colgroup = '<colgroup>' + cols.map(w=>`<col style="width:${(w*GRF_MM).toFixed(2)}mm">`).join('') + '</colgroup>';
+  let h1 = `<tr><th rowspan="3">ลำดับ</th><th rowspan="3">ชื่อ</th><th rowspan="3" class="h3">เลขบัญชี<br><br>ธนาคาร</th><th rowspan="3">ตำแหน่ง</th>
+    <th rowspan="3" class="h3">อัตราวันละ<br>หรือ<br>ชั่วโมงละ</th><th colspan="31" class="h-days">วันที่ปฏิบัติงาน</th>
+    <th rowspan="3" class="h3">รวม<br><br>ชั่วโมง</th><th rowspan="3">จำนวนเงิน</th><th rowspan="3" class="h3">หักประกัน<br>สังคม 5 %<br>(ผู้ประกันตน)</th>
+    <th rowspan="3">รับจริง</th><th rowspan="3" class="h3">วัน เดือน ปี<br><br>ที่รับเงิน</th><th rowspan="3">ลายมือชื่อ</th></tr>`;
+  let h2 = '<tr>', h3 = '<tr>';
+  for(let d=1; d<=31; d++){
+    h2 += `<th class="dn">${d<=nDays?d:''}</th>`;
+    h3 += `<th class="dn">${d<=nDays?DOW[new Date(cy,cm-1,d).getDay()]:''}</th>`;
+  }
+  h2 += '</tr>'; h3 += '</tr>';
+
+  /* แถวรายชื่อ — วันทำงาน/วันหยุดนักขัตฤกษ์ = 1, วันลา = รหัสลา, วันหยุดประจำสัปดาห์ = ว่าง */
+  let body = '', sumDays = 0, sumAmt = 0, sumSS = 0, sumNet = 0;
   laborRoster.forEach((emp,i)=>{
-    const workDays = att[emp.name].filter(c=>WORKDAY_CODES.has(c)).length;
-    const amount = workDays*emp.rate;
-    total+=amount;
-    rows += `<tr><td>${i+1}</td><td style="text-align:left;padding-left:6px;">${esc(emp.name)}</td><td>${workDays}</td><td>${fmtMoney(amount)}</td><td></td></tr>`;
+    const codes = att[emp.name] || [];
+    const workDays = codes.filter(c=>WORKDAY_CODES.has(c)).length;
+    const amount = workDays*emp.rate, ss = Math.round(amount*0.05), net = amount-ss;
+    sumDays += workDays; sumAmt += amount; sumSS += ss; sumNet += net;
+    let cells = '';
+    for(let d=1; d<=31; d++){ const c = codes[d-1]; cells += `<td class="dc">${c && c!=='-' ? esc(c) : ''}</td>`; }
+    body += `<tr><td class="c">${i+1}</td><td class="l">${esc(String(emp.name).replace(/^นางสาว/,'น.ส.'))}</td><td class="c">${esc(emp.bankAcc||'')}</td><td class="c">${esc(emp.duty||emp.role||'')}</td>
+      <td class="r">${fmtMoney(emp.rate)}</td>${cells}<td class="c">${workDays}</td><td class="r">${dash(amount)}</td><td class="r">${dash(ss)}</td><td class="r">${dash(net)}</td><td></td><td></td></tr>`;
   });
+  for(let k=0; k<3; k++){ // แถวว่างท้ายตาราง 3 แถว ตามต้นฉบับ
+    body += `<tr><td></td><td></td><td></td><td></td><td></td>${'<td class="dc"></td>'.repeat(31)}<td></td><td class="c">-</td><td class="c">-</td><td class="c">-</td><td></td><td></td></tr>`;
+  }
+  body += `<tr class="tot"><td colspan="3" class="c">รวมเงินจ่ายทั้งสิ้น</td><td colspan="9" class="c">${fmtMoney(sumNet)}</td><td colspan="16"></td><td colspan="8" class="c">รวม</td>
+    <td class="c">${sumDays}</td><td class="r">${dash(sumAmt)}</td><td class="r">${dash(sumSS)}</td><td class="r">${dash(sumNet)}</td><td></td><td></td></tr>`;
+  body += `<tr class="tot words"><td colspan="3" class="c">รวมเงินจ่ายทั้งสิ้น (ตัวอักษร)</td><td colspan="14" class="c">${thaiBahtText(sumNet)}</td><td colspan="25" class="nb"></td></tr>`;
+
+  const payer = laborPayer();
   const html = `
-    <div class="official-form">
-      <div class="form-code">ง.3-26</div>
-      <div class="form-title">หลักฐานการจ่ายเงินค่าจ้างลูกจ้างชั่วคราว</div>
-      <div class="form-org">หมวดทางหลวงเชิงเนิน แขวงทางหลวงระยอง</div>
-      <p>ประจำรอบบิล <span class="dotted">&nbsp;${cycleLabel(cyc)}&nbsp;</span></p>
-      <table class="of-table">
-        <thead><tr><th>ลำดับ</th><th>ชื่อ-สกุล</th><th>จำนวนวันทำงาน</th><th>จำนวนเงิน (บาท)</th><th>ลายมือชื่อผู้รับเงิน</th></tr></thead>
-        <tbody>${rows}<tr><td colspan="3" style="text-align:right;font-weight:600;">รวมทั้งสิ้น</td><td style="font-weight:600;">${fmtMoney(total)}</td><td></td></tr></tbody>
-      </table>
-      <div class="sig-block">
-        <p>ลงชื่อ .......................................... ผู้จ่ายเงิน</p>
-        <p>ลงชื่อ .......................................... หัวหน้าหมวดทางหลวงเชิงเนิน (ผู้อนุมัติ)</p>
-        <p>วันที่ ${fmtDateTH(TODAY.toISOString().slice(0,10))}</p>
-      </div>
+    <div class="code">ง.3-26<br>(แบบ บท. - กจ.3)<br><b>กรมทางหลวง</b></div>
+    <div class="head">
+      <div>หลักฐานการจ่ายเงินค่าจ้าง&nbsp;&nbsp;<span class="cb on"></span>ลูกจ้างชั่วคราว&nbsp;&nbsp;<span class="cb on"></span>รายวัน&nbsp;&nbsp;<span class="cb"></span>รายชั่วโมง</div>
+      <div>กรมทางหลวง&nbsp;&nbsp;แขวงทางหลวงระยอง&nbsp;&nbsp;หมวดทางหลวงเชิงเนิน&nbsp;&nbsp;ประจำเดือน&nbsp;&nbsp;${MONTH_FULL[cm-1]}&nbsp;&nbsp;พ.ศ. ${cy+543}</div>
+      <div>เบิกตามฎีกาที่ ...................................... ลงวันที่ ............................... เดือน .................................. พ.ศ...............................</div>
+    </div>
+    <table class="grid">${colgroup}<thead>${h1}${h2}${h3}</thead><tbody>${body}</tbody></table>
+    <div class="sig">
+      <div>ลงชื่อ.................................................................ผู้จ่ายเงิน</div>
+      <div>( ${esc(payer.name)} )</div>
+      <div>${esc(payer.pos)}</div>
     </div>`;
-  doPrint(html);
+  /* ฟอนต์: มี TH SarabunPSK ในเครื่อง → ใช้ขนาดตามต้นฉบับ (Excel) / ไม่มี → Sarabun (ตัวใหญ่กว่า) ย่อขนาดลงให้กว้างใกล้เคียง */
+  const F = th ? {fam:'"TH SarabunPSK","TH Sarabun New","TH SarabunIT๙"', base:'12pt', small:'9pt', head:'13pt'}
+               : {fam:'"Sarabun"', base:'7.5pt', small:'5.6pt', head:'8.8pt'};
+  const css = `
+    @page{size:A4 landscape;margin:0;}
+    *{box-sizing:border-box;}
+    html,body{margin:0;padding:0;}
+    body{font-family:${F.fam},sans-serif;font-size:${F.base};color:#000;padding:17mm 8mm 0;position:relative;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .code{position:absolute;top:18mm;right:10mm;text-align:center;line-height:1.35;font-size:${F.base};}
+    .head{text-align:center;font-size:${F.head};line-height:1.6;margin:2mm 0 3mm;}
+    .cb{display:inline-block;width:0.95em;height:0.95em;border:1px solid #000;vertical-align:-0.12em;margin-right:2px;position:relative;}
+    .cb.on::after{content:'';position:absolute;left:0.27em;top:0.02em;width:0.28em;height:0.58em;border:solid #000;border-width:0 0.13em 0.13em 0;transform:rotate(40deg);}
+    table.grid{border-collapse:collapse;table-layout:fixed;width:${(1258*GRF_MM).toFixed(2)}mm;}
+    table.grid th,table.grid td{border:0.6pt solid #000;padding:0 0.8mm;height:4.7mm;line-height:1.1;overflow:hidden;white-space:nowrap;font-weight:normal;}
+    table.grid thead th{height:3.2mm;text-align:center;vertical-align:middle;line-height:1;}
+    table.grid th.h3{line-height:1;}
+    table.grid th.dn,table.grid td.dc{padding:0;text-align:center;font-size:${F.small};}
+    table.grid thead{display:table-header-group;}
+    table.grid tr{page-break-inside:avoid;}
+    td.c{text-align:center;} td.r{text-align:right;} td.l{text-align:left;padding-left:1.2mm;}
+    tr.words td.nb{border:none;}
+    /* ลายมือชื่อผู้จ่ายเงิน วางในพื้นที่ว่างด้านขวาของแถว "ตัวอักษร" เพื่อให้จบในแผ่นเดียวแม้รายชื่อ 22-24 คน */
+    .sig{width:95mm;margin:-3mm 12mm 0 auto;text-align:center;line-height:1.6;font-size:${F.head};page-break-inside:avoid;}`;
+  __printInFrame('หลักฐานการจ่ายเงินค่าจ้าง ง.3-26 ' + cycleLabel(cyc), css, html);
 }
 
 /* ============================================================
@@ -2103,9 +2341,10 @@ function __collectState(){
     budgetSpentSnapshot[cat] = budgetSpentOf(cat, cyc);
     budgetAllocation[cat] = getBudgetAllocation(fy, cat);
   });
-  return { districtReports, budgetSpentSnapshot, budgetAllocation, laborSentStatus };
+  return { districtReports, budgetSpentSnapshot, budgetAllocation, laborSentStatus, laborPayer: laborPayerOverride };
 }
 function __applyState(saved){
+  if('laborPayer' in saved) laborPayerOverride = saved.laborPayer || null;
   if(saved.districtReports){ districtReports.length=0; districtReports.push(...saved.districtReports); }
   if(saved.laborSentStatus){ Object.keys(laborSentStatus).forEach(k=>delete laborSentStatus[k]); Object.assign(laborSentStatus, saved.laborSentStatus); }
 }
@@ -2211,6 +2450,8 @@ renderAll();
   // Firestore โหลดพร้อมกันได้ทุกตาราง (ไม่มีปัญหา quota แบบ Apps Script เดิม)
   // staff/leave_requests/public_holidays (ระบบ 1) ใช้คำนวณบัญชีแรงงานรายวัน ง.3-12
   try{ await apiGetMultiple(['staff','leave_requests','public_holidays']); }catch(e){ console.error('โหลดรายชื่อบุคลากร/การลา/วันหยุดจากระบบที่ 1 ไม่สำเร็จ', e); }
+  // ทะเบียนผู้บริหารหมวด — ใช้ชื่อหัวหน้าหมวดปัจจุบันเป็น "ผู้จ่ายเงิน" ในหลักฐานการจ่ายเงิน ง.3-26
+  try{ await apiGet('exec_terms'); }catch(e){ console.warn('โหลดทะเบียนผู้บริหารหมวดไม่สำเร็จ ใช้ชื่อสำรองแทน', e); }
   __refreshLaborRoster();
   if(typeof __clearAttendanceCache==='function') __clearAttendanceCache();
   // ค่าสถานะที่ใช้ร่วมกัน (สถานะรายงานแขวง / การส่งบัญชีแรงงาน) จาก Firestore — แทน localStorage เครื่องเดียว
