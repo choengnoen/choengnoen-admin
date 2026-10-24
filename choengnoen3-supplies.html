@@ -785,6 +785,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   #rep-fuel-grid-wrap td.daycell input[value]:not([value=""]){background:#f6faf7;font-weight:600;}
   #rep-fuel-grid-wrap tbody tr:hover td{background-color:#f7f9fb;}
   .fc-reorder-row{font-size:11.5px;color:rgba(255,255,255,.75);margin-top:10px;display:flex;align-items:center;gap:6px;}
+  .fc-minorder-row{margin-top:6px;}
   .fc-reorder-input{width:70px;padding:3px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;font-family:'Sarabun';font-size:12px;}
   .fc-reorder-input::placeholder{color:rgba(255,255,255,.5);}
   .fc-hist-btn{margin-top:12px;width:100%;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:8px;padding:8px 10px;font-family:'Sarabun';font-size:12.5px;font-weight:600;cursor:pointer;text-align:center;}
@@ -1802,6 +1803,21 @@ async function saveFuelReorderPoint(ft, rawValue){
   }
   renderMasterFuel();
 }
+/* ยอดเบิกขั้นต่ำต่อครั้ง (2569-10-25) — แสดงใต้จุดสั่งซื้อว่าเมื่อถึงจุดสั่งซื้อแล้วควรเบิกไม่น้อยกว่ากี่ลิตร */
+async function saveFuelMinOrder(ft, rawValue){
+  if(!isAdmin()) return;
+  const value = rawValue==='' ? 0 : Math.max(0, Number(rawValue)||0);
+  try{
+    const exists = fuelSettings[ft]!==undefined || fuelMinOrder[ft]!==undefined;
+    await apiPost(exists ? 'update' : 'add', 'fuel_settings', exists ? {fuelType:ft, minOrder:value} : {fuelType:ft, reorderPoint:0, minOrder:value});
+    if(fuelSettings[ft]===undefined) fuelSettings[ft] = 0;
+    fuelMinOrder[ft] = value;
+  }catch(err){
+    console.error('บันทึกยอดเบิกขั้นต่ำน้ำมันไปยังฐานข้อมูลกลางไม่สำเร็จ', err);
+    showAlertModal('บันทึกยอดเบิกขั้นต่ำน้ำมันไปยังฐานข้อมูลกลางไม่สำเร็จ: ' + err.message);
+  }
+  renderMasterFuel();
+}
 function renderMasterFuel(){
   const cardsEl = document.getElementById('master-fuel-cards');
   if(!cardsEl) return;
@@ -1820,6 +1836,10 @@ function renderMasterFuel(){
     const reorderCell = isAdmin()
       ? `<input type="number" min="0" step="1" class="fc-reorder-input" value="${reorder||''}" placeholder="ยังไม่ตั้ง" onblur="saveFuelReorderPoint('${ft}', this.value)" onkeydown="if(event.key==='Enter')this.blur()">`
       : `<span>${reorder ? fmtNum(reorder,0) : 'ยังไม่ตั้ง'}</span>`;
+    const minOrder = fuelMinOrder[ft] || 0;
+    const minOrderCell = isAdmin()
+      ? `<input type="number" min="0" step="1" class="fc-reorder-input" value="${minOrder||''}" placeholder="ยังไม่ตั้ง" onblur="saveFuelMinOrder('${ft}', this.value)" onkeydown="if(event.key==='Enter')this.blur()">`
+      : `<span>${minOrder ? fmtNum(minOrder,0) : 'ยังไม่ตั้ง'}</span>`;
     return `<div class="${cls}">
       <div class="fc-top">
         <div class="fc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icons[ft]}</svg></div>
@@ -1836,6 +1856,7 @@ function renderMasterFuel(){
       <div class="fc-bar-track"><div class="fc-bar-fill" style="width:${usedPct}%"></div></div>
       <div class="fc-bar-label">ใช้ไปแล้ว ${usedPct}% ของยอดยกมาในเดือนนี้</div>
       <div class="fc-reorder-row">จุดสั่งซื้อ ${reorderCell} ลิตร</div>
+      <div class="fc-reorder-row fc-minorder-row">เบิกครั้งถัดไปไม่น้อยกว่า ${minOrderCell} ลิตร</div>
     </div>`;
   }).join('');
 }
@@ -3419,9 +3440,10 @@ async function toggleLedgerLock(){
     });
 }
 let fuelSettings = {};            // fuelType -> จุดสั่งซื้อขั้นต่ำ (ลิตร)
+let fuelMinOrder = {};            // fuelType -> เบิกครั้งถัดไปไม่น้อยกว่า (ลิตร)
 async function loadFuelSettingsFromApi(){
   try{
-    (await apiGet('fuel_settings')).forEach(r=>{ fuelSettings[r.fuelType] = Number(r.reorderPoint)||0; });
+    (await apiGet('fuel_settings')).forEach(r=>{ fuelSettings[r.fuelType] = Number(r.reorderPoint)||0; fuelMinOrder[r.fuelType] = Number(r.minOrder)||0; });
   }catch(err){
     console.error('โหลดจุดสั่งซื้อน้ำมันจากฐานข้อมูลกลางไม่สำเร็จ', err);
   }
