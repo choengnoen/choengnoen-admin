@@ -408,6 +408,21 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .lv-ln{background:#000;}
   .lv-box{width:11.3pt;height:11.3pt;border:.75pt solid #000;box-sizing:border-box;}
   .lv-box svg{display:block;width:100%;height:100%;}
+  /* ทะเบียนการลาและการขาดราชการ จ.3-03 วางพิกัดตามไฟล์ "จ.3-03.pdf" (A4 แนวตั้ง 595 x 842 pt) — หน้าจอกับตอนพิมพ์ใช้ชุดเดียวกัน
+     ฟอนต์ TH SarabunPSK 12pt เหมือนต้นฉบับ ถ้าเครื่องไม่มีฟอนต์นี้ (.j303-sar) ใช้ Sarabun ขนาดเล็กลงให้ความกว้างใกล้เคียง */
+  .j303-desk{background:#e4e1d8;border-radius:12px;padding:14px;margin:14px 20px 20px;overflow:hidden;}
+  .j303-desk .j303-page+.j303-page{margin-top:14px;}
+  .j303-page{page:lvpage;position:relative;box-sizing:border-box;width:595.3pt;height:841pt;overflow:hidden;margin:0 auto;background:#fff;color:#000;
+    font-family:'TH SarabunPSK','THSarabunPSK','TH Sarabun New','THSarabunNew','Sarabun',sans-serif;font-size:12pt;line-height:12pt;
+    box-shadow:0 18px 40px -24px rgba(0,0,0,.45);-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .j303-page.j303-sar{font-family:'Sarabun',sans-serif;font-size:8.4pt;}
+  .j303-page .t{position:absolute;white-space:pre;line-height:12pt;}
+  .j303-page .c{position:absolute;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;white-space:nowrap;line-height:14.3pt;}
+  .j303-page .hl,.j303-page .vl{position:absolute;background:#000;}
+  .j303-page .dl{position:absolute;height:1pt;overflow:visible;}
+  .j303-page .ck{position:absolute;width:9.6pt;height:9.6pt;border:.75pt solid #000;box-sizing:border-box;}
+  .j303-page .ck svg{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;}
+  .j303-page .fy{font-family:'TH SarabunIT๙','THSarabunIT๙','TH SarabunPSK','Sarabun',sans-serif;font-weight:700;}
   @media print{
     .print-only{display:none;}
     .print-only.show-print{display:block;}
@@ -416,6 +431,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
     body > *:not(.show-print){display:none !important;}
     html,body{height:auto !important;min-height:0 !important;}
     .lv-page{height:830pt;break-after:avoid;page-break-after:avoid;}
+    /* จ.3-03: 1 แผ่นต่อ 29 ครั้งลา — เกินกว่านั้นขึ้นแผ่นใหม่ ; สูงต่ำกว่า A4 เล็กน้อยกันหน้าว่างตามหลัง (เนื้อหาจบที่ ~760pt) */
+    .j303-page{height:830pt;box-shadow:none;margin:0;break-after:page;page-break-after:always;}
+    .j303-page:last-child{break-after:auto;page-break-after:auto;}
     /* ใบลา (.lv-page) ต้องจบที่ 1 หน้า A4 เสมอ — ตัดส่วนที่ล้นทิ้ง ไม่ให้เกิดหน้าว่างตามหลัง (ไม่กระทบฟอร์มอื่นที่ต้องหลายหน้า) */
     html:has(.show-print .lv-page), body:has(.show-print .lv-page){height:830pt !important;max-height:830pt !important;overflow:hidden !important;}
     .show-print:has(.lv-page){height:830pt;overflow:hidden;}
@@ -3401,10 +3419,7 @@ function registryRecords(name, fy){
   return computeLeaveHistory().filter(r=>r.name===name && r.fy===fy).slice().sort((a,b)=>a.from.localeCompare(b.from));
 }
 function registryOnscreenHTML(name, fy){
-  const s = staff.find(x=>x.name===name) || {};
   const recs = registryRecords(name, fy);
-  const cell = (r,t)=> __registryLeaveType(r.type)===t ? daysBetween(r.from,r.to,r.name) : '-';
-  const cellPill = (v)=> v==='-' ? `<span style="color:var(--ink-400);">–</span>` : `<span class="pill pill-ok" style="min-width:24px;justify-content:center;">${v}</span>`;
   const statFor = (t) => {
     const list = recs.filter(r=>__registryLeaveType(r.type)===t);
     return { count: list.length, days: list.reduce((a,r)=>a+daysBetween(r.from,r.to,r.name),0) };
@@ -3412,30 +3427,8 @@ function registryOnscreenHTML(name, fy){
   const sickStat = statFor('ป่วย'), personalStat = statFor('กิจ'), vacStat = statFor('พักผ่อน');
   const totalCount = sickStat.count + personalStat.count + vacStat.count;
   const totalDays = sickStat.days + personalStat.days + vacStat.days;
-  let rows = recs.map((r,idx)=>{
-    const d = daysBetween(r.from,r.to,r.name);
-    return `<tr>
-      <td><span class="pill pill-neutral" style="min-width:22px;justify-content:center;">${idx+1}</span></td>
-      <td>${cellPill(cell(r,'ป่วย'))}</td>
-      <td>${cellPill(cell(r,'กิจ'))}</td>
-      <td>${cellPill(cell(r,'พักผ่อน'))}</td>
-      <td>${cellPill(cell(r,'คลอดบุตร'))}</td>
-      <td><b>${d}</b></td>
-      <td>${fmtDate(r.from)}</td>
-      <td>${fmtDate(r.to)}</td>
-    </tr>`;
-  }).join('');
-  if(!rows) rows = `<tr><td colspan="8" style="text-align:center;color:var(--ink-400);padding:26px 14px;">ไม่มีข้อมูลการลาในปีงบประมาณนี้</td></tr>`;
+  /* หน้าจอแสดงเป็นแบบฟอร์ม จ.3-03 ชุดเดียวกับที่พิมพ์ (เหมือนหน้า EC1-W) — มีแถบสรุปจำนวนครั้ง/วันไว้ด้านบน */
   return `
-    <div class="reg-summary">
-      <div class="person">
-        ${name ? ptypeBadge(s.ptype||'ลูกจ้างชั่วคราว') : ''}
-        <div>
-          <div class="p-name" style="font-size:15px;">${name ? esc(name) : 'ยังไม่ได้เลือกพนักงาน'}</div>
-          <div class="p-sub">${esc(s.ptype) || (name ? 'ไม่พบข้อมูลประเภทบุคลากร' : 'พิมพ์ชื่อด้านบนเพื่อค้นหา')}${s.status==='resigned' ? ' · ลาออกแล้ว' : ''}${s.status==='retired' ? ' · เกษียณอายุแล้ว' : ''}</div>
-        </div>
-      </div>
-    </div>
     ${name ? `
     <div class="lr-stat-panel" style="margin:14px 20px 0;">
       <div class="lr-stat-row">
@@ -3449,69 +3442,101 @@ function registryOnscreenHTML(name, fy){
         <span class="lr-stat-label">รวมทั้งหมด</span>
         <span class="lr-stat-chip" style="border-color:var(--orange-500);">รวม <b>${totalCount}</b> ครั้ง · <b>${totalDays}</b> วันทำการ</span>
       </div>
-    </div>` : ''}
-    <div class="table-wrap table-wrap-scroll" style="max-height:60vh;">
-      <table class="reg-table">
-        <thead>
-          <tr>
-            <th>ครั้งที่ลา</th>
-            <th>ป่วย</th><th>กิจ</th><th>พักผ่อน</th><th>คลอดบุตร</th>
-            <th>ขาดราชการ (วัน)</th>
-            <th>จากวันที่</th><th>ถึงวันที่</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
+    </div>` : `<div style="margin:14px 20px 0;color:var(--ink-400);font-size:13px;">ยังไม่ได้เลือกพนักงาน — พิมพ์ชื่อด้านบนเพื่อค้นหา</div>`}
+    <div class="j303-desk">${registrySheetsHTML(name, fy)}</div>`;
 }
-function registryPrintHTML(name, fy){
+/* ---- แบบฟอร์ม จ.3-03 (พิกัด pt วัดจากไฟล์ "จ.3-03.pdf" — วัดจากขอบบนกระดาษ) ----
+   ตาราง: เส้นตั้งตามขอบคอลัมน์ J303_X ; หัวตาราง 161.4–268.9 ; แถวข้อมูล 30 แถว (แถวแรก = ปีงบประมาณ) สูงแถวละ 15.36 ถึงเส้นล่าง 729.7 */
+const J303_X = [41.6,77.2,107.2,137.2,167.2,197.2,227.2,259.3,291.5,323.6,353.6,383.6,413.6,461.4,509.2,556.9];
+const J303_ROW0 = 269.6, J303_ROWH = 15.36, J303_ROWS = 30, J303_PER_PAGE = J303_ROWS - 1;
+/* คอลัมน์ประเภทการลา (3) ตามลำดับในฟอร์ม — คีย์ = ผลของ __registryLeaveType() ; ประเภทที่ระบบยังไม่มีแสดง "-" */
+const J303_TYPES = ['ป่วย','กิจ','พักผ่อน','คลอดบุตร','อุปสมบท','ตรวจเลือก','ศึกษา','ปฏิบัติงานองค์กรระหว่างประเทศ','ติดตามคู่สมรส'];
+function __j303Thai(n){ return String(n).replace(/\d/g, d=>'๐๑๒๓๔๕๖๗๘๙'[d]); }
+function j303T(x,y,s,o){   // ข้อความชิดซ้ายที่ x เส้นฐาน y
+  o=o||{};
+  return `<div class="t" style="left:${x}pt;top:${y-9.4}pt;${o.bold?'font-weight:700;':''}${o.size?`font-size:${o.size/12}em;line-height:${o.size}pt;top:${y-o.size*.78}pt;`:''}${o.css||''}">${s}</div>`;
+}
+function j303C(x0,x1,y0,y1,s,o){   // ข้อความกึ่งกลางกล่อง (หลายบรรทัดคั่นด้วย |)
+  o=o||{};
+  return `<div class="c${o.cls?' '+o.cls:''}" style="left:${x0}pt;width:${x1-x0}pt;top:${y0}pt;height:${y1-y0}pt;">${String(s).split('|').map(t=>`<div>${t}</div>`).join('')}</div>`;
+}
+const j303H = (x0,x1,y)=> `<div class="hl" style="left:${x0}pt;top:${y}pt;width:${x1-x0}pt;height:.72pt"></div>`;
+const j303V = (x,y0,y1)=> `<div class="vl" style="left:${x}pt;top:${y0}pt;width:.72pt;height:${y1-y0}pt"></div>`;
+const j303D = (x0,x1,y)=> `<svg class="dl" style="left:${x0}pt;top:${y}pt;width:${x1-x0}pt"><line x1="0" y1="50%" x2="100%" y2="50%" stroke="#000" stroke-width=".9" stroke-dasharray="1 1.6"/></svg>`;
+function j303Ck(x, base, on){
+  return `<div class="ck" style="left:${x}pt;top:${base-9.4}pt">${on?'<svg viewBox="0 0 18 18" preserveAspectRatio="none"><path d="M3.4 9.6 L7 13.6 L15.2 2.6" fill="none" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/></svg>':''}</div>`;
+}
+/* 1 แผ่นของ จ.3-03 — recs = ครั้งลาในแผ่นนี้ (ไม่เกิน 29), startNo = เลขครั้งที่ของรายการแรก */
+function j303PageHtml(name, fy, recs, startNo){
   const s = staff.find(x=>x.name===name) || {};
-  const recs = registryRecords(name, fy);
-  const cell = (r,t)=> __registryLeaveType(r.type)===t ? daysBetween(r.from,r.to,r.name) : '-';
-  const ptypeCk = (label)=> `${s.ptype===label?'☑':'☐'} ${label}`;
-  let rows = recs.map((r,idx)=>{
-    const d = daysBetween(r.from,r.to,r.name);
-    return `<tr>
-      <td>${idx+1}</td>
-      <td>${cell(r,'ป่วย')}</td><td>${cell(r,'กิจ')}</td><td>${cell(r,'พักผ่อน')}</td><td>${cell(r,'คลอดบุตร')}</td>
-      <td>${d}</td><td>${fmtDate(r.from)}</td><td>${fmtDate(r.to)}</td>
-    </tr>`;
-  }).join('');
-  if(!rows) rows = `<tr><td colspan="8" style="color:#888;">ไม่มีข้อมูลการลาในปีงบประมาณนี้</td></tr>`;
-  return `
-    <p>ชื่อ. <b>${esc(name)}</b> &nbsp;&nbsp; ${ptypeCk('ข้าราชการ')} &nbsp;&nbsp; ${ptypeCk('พนักงานราชการ')}<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${ptypeCk('ลูกจ้างประจำ')} &nbsp;&nbsp; ${ptypeCk('ลูกจ้างชั่วคราว')}</p>
-    <p>ปีงบประมาณ <b>${fy}</b></p>
-    <table class="of-table" style="font-size:11.5px;">
-      <tr>
-        <th rowspan="2">ครั้งที่<br>ลา</th>
-        <th colspan="4">จำนวนการลาตามประเภทการลา</th>
-        <th rowspan="2">จำนวนวันที่<br>ขาดราชการ</th>
-        <th colspan="2">วันที่ลา/ขาดราชการ</th>
-      </tr>
-      <tr>
-        <th>ป่วย</th><th>กิจ</th><th>พักผ่อน</th><th>คลอด<br>บุตร</th>
-        <th>จาก</th><th>ถึง</th>
-      </tr>
-      ${rows}
-    </table>`;
+  const X = J303_X, TOP = 161.4, HB = 268.9, BOT = 729.7;
+  let h = '';
+  /* หัวกระดาษ */
+  h += j303T(43,55,'เริ่มปฏิบัติงานตั้งแต่') + j303D(106,254,55.5);
+  if(s.startDate) h += `<div class="t" style="left:106pt;width:148pt;top:${55-11.4}pt;text-align:center">${esc(fmtDateFull(s.startDate))}</div>`;
+  h += j303T(513,55,'กรมทางหลวง') + j303T(523,69,'จ.3-03');
+  h += `<div class="t" style="left:0;width:595.3pt;top:${90-11.7}pt;text-align:center;font-weight:700;font-size:1.25em;line-height:15pt">ทะเบียนการลาและการขาดราชการ</div>`;
+  h += j303T(67,109,'(1)') + j303T(65,126,'ชื่อ. ' + esc(name||''));
+  [['ข้าราชการ',386,126],['พนักงานราชการ',464,126],['ลูกจ้างประจำ',386,141],['ลูกจ้างชั่วคราว',464,141]].forEach(([lb,x,y])=>{
+    h += j303Ck(x, y, s.ptype===lb) + j303T(x+16, y, lb);
+  });
+  /* เส้นตาราง */
+  h += j303H(42.4,557.7,TOP) + j303H(107.9,384.4,176.8) + j303H(414.4,509.9,222.9) + j303H(42.4,557.7,HB) + j303H(42.4,557.7,BOT);
+  for(let i=1;i<J303_ROWS;i++) h += j303D(42.4,557.7,J303_ROW0 + J303_ROWH*i - .9);
+  [0,1,2,11,12,14,15].forEach(i=> h += j303V(X[i],TOP,BOT+.72));
+  [3,4,5,6,7,8,9,10].forEach(i=> h += j303V(X[i],176.8,BOT+.72));
+  h += j303V(X[13],222.9,BOT+.72);
+  /* หัวตาราง */
+  h += j303C(X[0],X[1],TOP,HB,'ปี|งบ|ประมาณ|(2)') + j303C(X[1],X[2],TOP,HB,'ครั้งที่|ลา');
+  h += j303C(X[2],X[11],TOP,176.8,'(3) จำนวนการลาตามประเภทการลา');
+  ['ป่วย','กิจ','พักผ่อน','คลอด|บุตร','อุปสมบท|/พิธีฮัจย์','ตรวจ|เลือก/|เตรียม|พล','ศึกษา|ฝึกอบรม|ดูงาน','ปฏิบัติ|งาน|องค์กร|ระหว่าง|ประเทศ','ติดตาม|คู่สมรส']
+    .forEach((t,i)=> h += j303C(X[2+i],X[3+i],176.8,HB,t));
+  h += j303C(X[11],X[12],TOP,HB,'จำนวน|วันที่|ขาด|ราชการ|(4)');
+  h += j303C(X[12],X[14],TOP,222.9,'(5)|วันที่ลา/ขาดราชการ') + j303C(X[12],X[13],222.9,HB,'จาก') + j303C(X[13],X[14],222.9,HB,'ถึง');
+  h += j303C(X[14],X[15],TOP,HB,'หมายเหตุ');
+  /* แถวข้อมูล: แถวแรก = ปีงบประมาณ (เลขไทยตัวหนา) */
+  const row = i => [J303_ROW0 + J303_ROWH*i, J303_ROW0 + J303_ROWH*(i+1)];
+  if(name){ const [a,b] = row(0); h += j303C(X[0],X[1],a,b,__j303Thai(fy),{cls:'fy'}); }
+  recs.forEach((r,k)=>{
+    const [a,b] = row(k+1), d = daysBetween(r.from,r.to,r.name), t = __registryLeaveType(r.type);
+    const vals = [startNo+k, ...J303_TYPES.map(x=> x===t ? d : '-'), d, fmtDate(r.from), fmtDate(r.to)];
+    vals.forEach((v,j)=> h += j303C(X[1+j],X[2+j],a,b,esc(String(v))));
+  });
+  /* ท้ายกระดาษ */
+  h += j303T(43,757,'หมายเหตุ',{bold:1,css:'text-decoration:underline;text-underline-offset:1.5pt;'}) + j303T(80,757,'เริ่มใช้ ก.ค. 2520 ปรับปรุงครั้งที่ 2 เมื่อ พ.ศ.2535 มีจำนวน 1 แผ่น 2 หน้า');
+  return `<div class="j303-page${lvHasThFont()?'':' j303-sar'}">${h}</div>`;
+}
+/* ทั้งเล่ม: 29 ครั้งลาต่อแผ่น เกินกว่านั้นขึ้นแผ่นใหม่ (เลขครั้งที่ต่อเนื่อง) */
+function registrySheetsHTML(name, fy){
+  const recs = name ? registryRecords(name, fy) : [];
+  let out = '';
+  for(let i=0;i===0 || i<recs.length;i+=J303_PER_PAGE) out += j303PageHtml(name, fy, recs.slice(i, i+J303_PER_PAGE), i+1);
+  return out;
+}
+/* ย่อแผ่นฟอร์มบนจอให้พอดีความกว้าง (ไม่ขยายเกินขนาดจริง) — วิธีเดียวกับหน้า EC1-W */
+let __j303FitObs = null;
+function fitRegistrySheet(){
+  const wrap = document.getElementById('registry-onscreen');
+  if(!wrap) return;
+  if(!__j303FitObs && window.ResizeObserver){ __j303FitObs = new ResizeObserver(()=>fitRegistrySheet()); __j303FitObs.observe(wrap); }
+  const desk = wrap.querySelector('.j303-desk');
+  if(!desk) return;
+  const cs = getComputedStyle(desk);
+  const avail = desk.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  if(avail <= 0) return;
+  const z = Math.min(1, avail / (595.3*96/72));
+  desk.querySelectorAll('.j303-page').forEach(p=>{ const cur = parseFloat(p.style.zoom) || 1; if(Math.abs(cur - z) > 0.001) p.style.zoom = z < 1 ? String(z) : ''; });
 }
 function renderRegistry(){
   const name = document.getElementById('reg-name').value;
   const fy = parseInt(document.getElementById('reg-fy').value);
   document.getElementById('registry-onscreen').innerHTML = registryOnscreenHTML(name, fy);
+  fitRegistrySheet();
 }
 function printRegistry(){
   const name = document.getElementById('reg-name').value;
   const fy = parseInt(document.getElementById('reg-fy').value);
-  document.getElementById('print-registry').innerHTML = `
-    <div class="official-form">
-      <div style="display:flex;justify-content:space-between;"><span>เริ่มปฏิบัติงานตั้งแต่ .............................................................................</span><span>กรมทางหลวง</span></div>
-      <div class="form-code">จ.3-03</div>
-      <div class="form-title" style="margin-top:6px;">ทะเบียนการลาและการขาดราชการ</div>
-      ${registryPrintHTML(name, fy)}
-      <p style="margin-top:14px;font-size:12px;">หมายเหตุ เริ่มใช้ ก.ค. 2520 ปรับปรุงครั้งที่ 2 เมื่อ พ.ศ.2535 มีจำนวน 1 แผ่น 2 หน้า</p>
-    </div>`;
+  document.getElementById('print-registry').innerHTML = registrySheetsHTML(name, fy);
   printForm('print-registry');
 }
 
