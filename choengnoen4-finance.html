@@ -150,6 +150,22 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .pill-danger{background:var(--danger-bg);color:var(--danger);}
   .pill-warn{background:#fdf1de;color:#a3660a;}
   .pill-neutral{background:var(--paper-100);color:var(--ink-600);}
+  /* ป้ายสถานะที่เปลี่ยนได้ (มีเมนู ▾) — ทุกป้ายในหัวข้อเดียวกันกว้างเท่าข้อความที่ยาวที่สุดของหัวข้อนั้น */
+  .st-pill{justify-content:center;}
+  .st-lbl{display:inline-grid;}
+  .st-lbl>span{grid-area:1/1;visibility:hidden;text-align:center;}
+  .st-lbl>span.cur{visibility:visible;}
+  .st-menu{border:0;font-family:inherit;line-height:inherit;cursor:pointer;padding-right:8px;}
+  .st-menu .car{font-size:8px;opacity:.7;}
+  .st-menu:hover,.st-menu.open{box-shadow:inset 0 0 0 1px currentColor;}
+  #st-menu{position:fixed;z-index:9999;min-width:200px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 28px rgba(10,37,64,.16);padding:6px;}
+  #st-menu .mh{font-size:11px;color:var(--ink-400);padding:4px 8px;}
+  #st-menu button{display:flex;width:100%;align-items:center;gap:8px;border:0;background:none;text-align:left;padding:7px 8px;border-radius:7px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink-900);}
+  #st-menu button:hover:not(:disabled){background:var(--paper-50);}
+  #st-menu button:disabled{color:var(--ink-400);cursor:default;}
+  #st-menu .dot{width:8px;height:8px;border-radius:50%;flex:none;}
+  #st-menu .dot.pill-ok{background:var(--success);} #st-menu .dot.pill-danger{background:var(--danger);} #st-menu .dot.pill-neutral{background:var(--ink-400);}
+  @media print{ #st-menu{display:none;} .st-menu .car{display:none;} }
 
   .person{display:flex;align-items:center;gap:9px;}
   .p-name{font-weight:500;}
@@ -430,28 +446,13 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <button type="button" class="modal-close" onclick="closeLaborReport()">✕</button>
             </div>
             <div class="modal-body">
-          <div class="toolbar" style="margin-bottom:12px;">
+          <div class="toolbar" style="margin-bottom:12px;justify-content:flex-end;">
             <select id="labor-cycle" onchange="renderLabor()"></select>
-            <span class="tb-sep"></span><button class="btn btn-ghost" data-ic="pen" onclick="openPayerModal()">แก้ไขผู้จ่ายเงิน / หมายเหตุ</button><button class="btn btn-primary" data-ic="print" onclick="printPaymentEvidence()">พิมพ์</button>
+            <span class="tb-sep"></span><button class="btn btn-ghost" data-ic="pen" style="box-sizing:border-box;height:29px;padding:0 12px;" onclick="openPayerModal()">แก้ไขผู้จ่ายเงิน / หมายเหตุ</button><button class="btn btn-primary" data-ic="print" onclick="printPaymentEvidence()">พิมพ์</button>
           </div>
           <div class="table-wrap" id="labor-table-wrap">
             <!-- ฟอร์ม ง.3-26 แบบเดียวกับที่พิมพ์ (buildPaymentEvidenceSVG) -->
             <div class="gov-paper" id="labor-form"></div>
-          </div>
-          <div class="legend-block" id="labor-legend-block">
-            <button type="button" class="legend-dot-btn no-print" id="labor-legend-toggle" onclick="__toggleLaborLegend(this)" aria-expanded="false" title="แสดง/ซ่อนคำอธิบายตัวย่อ">⋮</button>
-            <div class="legend" id="labor-legend" style="display:none;">
-              <span><span class="att-chip c-1">1</span>มาปฏิบัติงานเต็มวัน</span>
-              <span><span class="att-chip c-p">ป</span>ลาป่วย</span>
-              <span><span class="att-chip c-k">ก</span>ลากิจ</span>
-              <span><span class="att-chip c-w">พ</span>ลาพักผ่อน</span>
-              <span><span class="att-chip c-c">ค</span>ลาคลอดบุตร</span>
-              <span><span class="att-chip c-r">ร</span>ไปราชการ</span>
-              <span><span class="att-chip c-x">ข</span>ขาดงาน</span>
-              <span><span class="att-chip c-off">-</span>วันหยุด</span>
-              <span><span class="dot" style="background:#f2a930"></span>ช่องพื้นสีทอง = วันหยุดนักขัตฤกษ์ (จ่ายเสมือนมาปฏิบัติงาน)</span>
-            </div>
-            <div class="foot-note" id="labor-footnote" style="display:none;">หมายเหตุ: ผู้ปฏิบัติหน้าที่ยาม (ในหมู่คนงาน) ปฏิบัติหน้าที่จ้างรวมวันเสาร์ , เอกสารแสดงเฉพาะพนักงานตำแหน่ง คนงาน ที่ปฏิบัติงานปัจจุบัน</div>
           </div>
             </div>
           </div>
@@ -1299,8 +1300,8 @@ function lastWorkdayOfCycle(cyc){
   return `${cyc}-01`; // กรณีสุดวิสัยที่ทั้งเดือนเป็นวันหยุดหมด (ไม่น่าเกิดขึ้นจริง)
 }
 // คำนวณสถานะการส่งบัญชีของแต่ละรอบเดือน มี 3 สถานะเท่านั้น: ส่งแล้ว / เกินกำหนดส่ง / รอรอบส่ง
-function laborSentInfo(cyc){
-  if(laborSentStatus[cyc]) return {label:'ส่งแล้ว', cls:'pill-ok'};
+function laborSentInfo(cyc, ignoreSent){
+  if(laborSentStatus[cyc] && !ignoreSent) return {label:'ส่งแล้ว', cls:'pill-ok'};
   if(cyc===currentCycle()){
     const daysLeft = daysUntil(lastWorkdayOfCycle(cyc));
     if(daysLeft < 0) return {label:'เกินกำหนดส่ง', cls:'pill-danger'};
@@ -1308,6 +1309,36 @@ function laborSentInfo(cyc){
   }
   return {label:'เกินกำหนดส่ง', cls:'pill-danger'}; // รอบเดือนเก่ากว่าปัจจุบันแล้วยังไม่ส่ง ถือว่าเกินกำหนดแน่นอน
 }
+// ป้ายสถานะที่เปลี่ยนได้ — กดแล้วเปิดเมนูให้เลือกสถานะ (ต้องกด 2 ครั้งจึงเปลี่ยน กันกดพลาด)
+// labels = สถานะทั้งหมดของหัวข้อนั้น ใช้กำหนดความกว้างป้ายให้เท่ากันทุกแถว / items = ตัวเลือกในเมนู {label, cls, js} (ไม่ส่ง = ป้ายดูอย่างเดียว)
+function statusPill(labels, cur, cls, items){
+  const sizer = `<span class="st-lbl">${labels.map(l=>`<span${l===cur?' class="cur"':''}>${esc(l)}</span>`).join('')}</span>`;
+  if(!items) return `<span class="pill st-pill ${cls}">${sizer}</span>`;
+  const menu = items.map(it=>`<button type="button" ${it.label===cur?'disabled':`onclick="closeStatusMenu();${it.js}"`}><i class="dot ${it.cls}"></i>${esc(it.label)}${it.label===cur?' (ปัจจุบัน)':''}</button>`).join('');
+  return `<button type="button" class="pill st-pill st-menu ${cls}" onclick="openStatusMenu(this,event)" title="คลิกเพื่อเปลี่ยนสถานะ">${sizer}<span class="car">▼</span></button><template>${menu}</template>`;
+}
+function openStatusMenu(btn, ev){
+  ev.stopPropagation();
+  let m = document.getElementById('st-menu');
+  if(m && m._owner===btn){ closeStatusMenu(); return; }
+  closeStatusMenu();
+  if(!m){ m = document.createElement('div'); m.id = 'st-menu'; document.body.appendChild(m); }
+  m.innerHTML = '<div class="mh">เปลี่ยนสถานะเป็น</div>' + btn.nextElementSibling.innerHTML;
+  m.hidden = false; m._owner = btn; btn.classList.add('open');
+  const r = btn.getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
+  m.style.left = Math.max(8, Math.min(r.left, innerWidth - mw - 8)) + 'px';
+  m.style.top = (r.bottom + 6 + mh > innerHeight ? r.top - mh - 6 : r.bottom + 6) + 'px';
+}
+function closeStatusMenu(){
+  const m = document.getElementById('st-menu');
+  if(!m || m.hidden) return;
+  if(m._owner) m._owner.classList.remove('open');
+  m.hidden = true; m._owner = null;
+}
+document.addEventListener('click', e=>{ if(!e.target.closest('#st-menu')) closeStatusMenu(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeStatusMenu(); });
+window.addEventListener('scroll', closeStatusMenu, true);
+window.addEventListener('resize', closeStatusMenu);
 function renderLaborSummary(){
   const fy = Number(document.getElementById('labor-fy').value) || currentFiscalYear();
   const rows = cyclesInFiscalYear(fy).slice().reverse().map(cyc=>{
@@ -1331,7 +1362,10 @@ function renderLaborSummary(){
       <td class="num">${r.ss.toLocaleString('en-US')}</td>
       <td class="num"><b>${fmtMoney(r.net)}</b></td>
       <td class="ctr">
-        <span class="pill ${r.info.cls}" style="cursor:pointer;" onclick="toggleLaborSentFor('${jsArg(r.cyc)}', ${!laborSentStatus[r.cyc]})" title="คลิกเพื่อ${laborSentStatus[r.cyc]?'ยกเลิกการทำเครื่องหมาย':'ทำเครื่องหมายว่าส่งแล้ว'}">${r.info.label}</span>
+        ${(()=>{ const un = laborSentInfo(r.cyc, true);
+          return statusPill(['ส่งแล้ว','เกินกำหนดส่ง','รอรอบส่ง'], r.info.label, r.info.cls, [
+            {label:'ส่งแล้ว', cls:'pill-ok', js:`toggleLaborSentFor('${jsArg(r.cyc)}', true)`},
+            {label:un.label, cls:un.cls, js:`toggleLaborSentFor('${jsArg(r.cyc)}', false)`}]); })()}
       </td>
       <td class="num no-print" style="white-space:nowrap;"><button class="btn btn-ghost btn-ic btn-sm" data-ic="eye" data-tip="ดูรายงาน" onclick="openLaborReport('${jsArg(r.cyc)}')"></button> <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์หลักฐานการจ่ายเงิน" onclick="printPaymentEvidence('${jsArg(r.cyc)}')"></button></td>
     </tr>`).join('');
@@ -2036,7 +2070,8 @@ function renderUtility(){
       <td>${fmtMoney(b.amount)}</td>
       <td>${fmtDateTH(b.due)}</td>
       <td>
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${isAdmin()?`<span class="pill ${b.status==='จ่ายแล้ว'?'pill-ok':'pill-neutral'}" style="cursor:pointer;" onclick="toggleUtilPaid(${i})">${b.status==='จ่ายแล้ว'?'จ่ายแล้ว':'รอเบิกจ่าย'}</span>`:(b.status==='จ่ายแล้ว'?'<span class="pill pill-ok">จ่ายแล้ว</span>':'<span class="pill pill-neutral">รอเบิกจ่าย</span>')} ${dueBadge} ${isAdmin()?`<button class="btn btn-ghost btn-sm no-print" onclick="editUtility(${i})">✏️ แก้ไข</button> <button class="btn btn-danger btn-sm no-print" onclick="deleteUtility(${i})">🗑️ ลบ</button>`:''}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${statusPill(['จ่ายแล้ว','รอเบิกจ่าย'], b.status==='จ่ายแล้ว'?'จ่ายแล้ว':'รอเบิกจ่าย', b.status==='จ่ายแล้ว'?'pill-ok':'pill-neutral', isAdmin()?[
+          {label:'จ่ายแล้ว', cls:'pill-ok', js:`toggleUtilPaid(${i})`}, {label:'รอเบิกจ่าย', cls:'pill-neutral', js:`toggleUtilPaid(${i})`}]:null)} ${dueBadge} ${isAdmin()?`<button class="btn btn-ghost btn-sm no-print" onclick="editUtility(${i})">✏️ แก้ไข</button> <button class="btn btn-danger btn-sm no-print" onclick="deleteUtility(${i})">🗑️ ลบ</button>`:''}</div>
       </td>
     </tr>`;
   }).join('');
@@ -2143,7 +2178,8 @@ function renderUtilReport(){
       <td>${fmtMoney(r.bt['ค่าโทรศัพท์'])}</td>
       <td><b>${fmtMoney(r.total)}</b></td>
       <td>${r.paidCount===4?'<span class="pill pill-ok">ครบ 4 บิล</span>':`<span class="pill pill-warn">${r.paidCount}/4</span>`}</td>
-      <td>${isAdmin()?`<span class="pill ${r.reported?'pill-ok':'pill-neutral'}" style="cursor:pointer;" onclick="toggleDistrictReport('${jsArg(r.cy)}')">${r.reported?'รายงานแล้ว':'ยังไม่รายงาน'}</span>`:(r.reported?'<span class="pill pill-ok">รายงานแล้ว</span>':'<span class="pill pill-neutral">ยังไม่รายงาน</span>')}</td>
+      <td>${statusPill(['รายงานแล้ว','ยังไม่รายงาน'], r.reported?'รายงานแล้ว':'ยังไม่รายงาน', r.reported?'pill-ok':'pill-neutral', isAdmin()?[
+          {label:'รายงานแล้ว', cls:'pill-ok', js:`toggleDistrictReport('${jsArg(r.cy)}')`}, {label:'ยังไม่รายงาน', cls:'pill-neutral', js:`toggleDistrictReport('${jsArg(r.cy)}')`}]:null)}</td>
     </tr>`).join('');
   const totalElec = records.reduce((s,r)=>s+r.bt['ค่าไฟฟ้า'],0);
   const totalWater = records.reduce((s,r)=>s+r.bt['ค่าน้ำประปา'],0);
@@ -2476,16 +2512,6 @@ window.addEventListener('storage', function(e){
 
 
 
-function __toggleLaborLegend(btn){
-  const legend = document.getElementById('labor-legend');
-  const foot = document.getElementById('labor-footnote');
-  if(!legend) return;
-  const show = legend.style.display === 'none';
-  legend.style.display = show ? 'flex' : 'none';
-  if(foot) foot.style.display = show ? 'block' : 'none';
-  btn.setAttribute('aria-expanded', String(show));
-  btn.classList.toggle('is-open', show);
-}
 
 function __toggleOtNote(btn){
   const note = document.getElementById('ot-note');
