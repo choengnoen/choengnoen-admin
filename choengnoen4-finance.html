@@ -142,6 +142,29 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   thead th.wtr-a{background:rgba(28,75,115,.12);box-shadow:inset 0 2px 0 var(--navy-700);}
   th.wtr-b,td.wtr-b{background:rgba(224,98,15,.055);}
   thead th.wtr-b{background:rgba(224,98,15,.12);box-shadow:inset 0 2px 0 var(--orange-600);}
+  /* ตารางค่าน้ำประปา — แถวเดือนแสดงเฉพาะยอดเงิน/สถานะเงินคืน กดแถวเพื่อดูเลขมิเตอร์และวันที่ชำระ */
+  #water-table .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  #water-table thead th.num{text-align:right;}
+  /* OT: แถวหัววันที่ (รายการจัดกลุ่มตามวันที่ปฏิบัติงาน) + รายชื่อผู้ปฏิบัติงานแบบเลือกได้หลายคน */
+  #ot-table tr.ot-date-row td{background:var(--paper-100);color:var(--navy-900);font-weight:700;padding:8px 14px;border-top:2px solid var(--line);}
+  #ot-table tr.ot-date-row .p-sub{display:inline;margin-left:10px;font-weight:500;}
+  .ot-people{border:1px solid var(--line);border-radius:10px;background:#fff;max-height:220px;overflow-y:auto;padding:6px;}
+  .f-row .ot-people label{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7px;cursor:pointer;font-weight:500;margin:0;}
+  .f-row .ot-people label:hover{background:var(--paper-50);}
+  .f-row .ot-people input[type=checkbox]{width:16px;height:16px;margin:0;padding:0;flex:none;}
+  .ot-people-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
+  #water-table tfoot td{padding:10px 14px;border-top:2px solid var(--line);background:var(--paper-50);font-weight:700;color:var(--navy-900);}
+  .wtr-sub{display:block;font-size:11.5px;font-weight:400;color:var(--ink-400);}
+  tr.wtr-detail>td{background:var(--paper-50);padding:12px 14px 14px 38px;}
+  .wtr-dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;}
+  .wtr-box{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12.5px;}
+  .wtr-box.a{box-shadow:inset 0 3px 0 var(--navy-700);}
+  .wtr-box.b{box-shadow:inset 0 3px 0 var(--orange-600);}
+  .wtr-box h4{margin:0 0 6px;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:6px;}
+  .wtr-kv{display:flex;justify-content:space-between;gap:10px;padding:2px 0;}
+  .wtr-kv>span:first-child{color:var(--ink-400);}
+  .wtr-kv>span:last-child{font-variant-numeric:tabular-nums;text-align:right;}
+  .wtr-note{margin-top:10px;font-size:12.5px;color:var(--ink-600);}
 
   .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap;}
   .pill-in{background:#e3edf6;color:var(--navy-700);}
@@ -536,19 +559,21 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div class="modal-body">
               <div class="dw-group">
                 <div class="dw-group-title"><span class="dot"></span>รายละเอียดการปฏิบัติงาน</div>
-                <div class="f-row">
-                  <label>ผู้ขอปฏิบัติงาน / ทีมงาน <span class="req">*</span></label>
-                  <select id="ot-name" onchange="checkOtGuard()"></select>
-                </div>
                 <div class="two-col">
                   <div class="f-row"><label>วันที่ปฏิบัติงาน <span class="req">*</span></label><input type="date" id="ot-date" onchange="checkOtGuard()"></div>
                   <div class="f-row"><label>ช่วงเวลา <span class="req">*</span></label><input type="text" id="ot-time" placeholder="เช่น 16.30 - 20.30 น." oninput="checkOtGuard()"></div>
                 </div>
+                <div class="f-row">
+                  <div class="ot-people-head">
+                    <label style="margin:0;">ผู้ปฏิบัติงาน (เลือกได้หลายคน) <span class="req">*</span> <span id="ot-people-count" class="p-sub" style="display:inline;"></span></label>
+                    <button type="button" class="btn btn-ghost btn-sm" id="ot-people-all" onclick="toggleAllOtPeople()">เลือกทั้งหมด</button>
+                  </div>
+                  <div class="ot-people" id="ot-people"></div>
+                </div>
                 <div class="f-row"><label>ลักษณะงานที่ทำ <span class="req">*</span></label><input type="text" id="ot-task" placeholder="เช่น งานซ่อมแซมไฟฟ้าแสงสว่างฉุกเฉิน"></div>
-                <div class="f-row"><label>จำนวนเงินค่าตอบแทน (บาท)</label><input type="number" id="ot-amount" placeholder="0.00"></div>
+                <div class="f-row"><label>จำนวนเงินค่าตอบแทน ต่อคน (บาท)</label><input type="number" id="ot-amount" placeholder="0.00"></div>
               </div>
-              <div id="ot-guard-warn" style="display:none;margin:0 0 12px;padding:10px 12px;border-radius:8px;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger);font-size:14px;line-height:1.6;"></div>
-              <div class="stat-mini">สถานะจะขึ้นเป็น "รออนุมัติ" ให้หัวหน้าหมวดพิจารณาก่อน จากนั้นเมื่อปฏิบัติงานเสร็จสิ้น ระบบจะนับถอยหลัง 5 วัน ให้รายงานผลและแนบหลักฐานการจ่ายเงิน</div>
+              <div id="ot-guard-warn" style="display:none;margin:0 0 12px;padding:10px 12px;border-radius:8px;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger);font-size:14px;line-height:1.6;white-space:pre-line;"></div>
             </div>
             <div class="modal-foot">
               <div style="display:flex;gap:8px;margin-left:auto;">
@@ -1121,6 +1146,7 @@ async function loadWaterMeterLogFromApi(){
 }
 const utilExpanded = new Set(); // รอบบิล (YYYY-MM) ที่เปิดดูบิลรายใบไว้ในตารางค่าสาธารณูปโภค
 let waterFilter = 'unpaid'; // all | unpaid | paid — มุมมองการเรียกดูตารางรายละเอียดค่าน้ำประปา
+const waterExpanded = new Set(); // รอบบิล (YYYY-MM) ที่เปิดดูเลขมิเตอร์/วันที่ชำระไว้ในตารางค่าน้ำประปา
 // การรายงานไปแขวงรายเดือน (แยกจากสถานะจ่ายเงิน) — เดือนย้อนหลังทั้งหมดที่มีบิลจริงถือว่ารายงานแขวงแล้ว ตามที่ผู้ใช้ยืนยัน
 const DISTRICT_REPORT_HISTORICAL_SEED = [...new Set(UTILITY_HISTORICAL_SEED.map(b=>b.cycle))].map(cycle=>({cycle, reported:true, reportedDate:`${cycle}-24`}));
 let districtReports = DISTRICT_REPORT_HISTORICAL_SEED.map(d=>({...d}));
@@ -1352,7 +1378,8 @@ window.addEventListener('scroll', closeStatusMenu, true);
 window.addEventListener('resize', closeStatusMenu);
 function renderLaborSummary(){
   const fy = Number(document.getElementById('labor-fy').value) || currentFiscalYear();
-  const rows = cyclesInFiscalYear(fy).slice().reverse().map(cyc=>{
+  // เรียงจากเดือนแรกของปีงบประมาณลงไปเดือนล่าสุด
+  const rows = cyclesInFiscalYear(fy).map(cyc=>{
     const att = generateAttendance(cyc);
     // ปัดเศษ ปกส. รายคนแล้วค่อยรวม ให้ยอดตรงกับฟอร์ม ง.3-12 ด้านล่าง (เดิมปัดจากยอดรวมทั้งก้อน ทำให้ต่างกันหลักบาท)
     let total=0, ss=0, days=0;
@@ -1713,22 +1740,49 @@ function renderOT(){
   FYPicker.fill(otFySel, Array.from(new Set(otRequests.map(otFyOf).filter(Boolean))).sort((a,b)=>b-a), {all:'ทุกปี', value:otFyKeep});
   otFySel.dataset.ready = '1';
   const otFy = otFySel.value;
-  let rows = otRequests.map((o,i)=>{
-    if(otFy && String(otFyOf(o))!==otFy) return '';
+  /* รายการอ้างอิงวันที่ปฏิบัติงานเป็นหลัก — เรียงวันที่ใหม่ไปเก่า แล้วจัดกลุ่มใต้แถวหัววันที่
+     (ยังใช้ index เดิมของ otRequests เป็น key ของปุ่มดำเนินการ) */
+  const list = otRequests.map((o,i)=>({o,i}))
+    .filter(({o})=>!otFy || String(otFyOf(o))===otFy)
+    .sort((a,b)=>String(b.o.date||'').localeCompare(String(a.o.date||'')) || String(a.o.no||'').localeCompare(String(b.o.no||'')) || String(a.o.name||'').localeCompare(String(b.o.name||''),'th'));
+  let rows = '', lastDate = null;
+  list.forEach(({o,i})=>{
+    if(o.date!==lastDate){
+      lastDate = o.date;
+      const sameDay = list.filter(x=>x.o.date===o.date);
+      const sum = sameDay.reduce((s,x)=>s+(x.o.amount||0),0);
+      rows += `<tr class="ot-date-row"><td colspan="5">วันที่ ${fmtDateTH(o.date)}<span class="p-sub">${sameDay.length} คน · รวม ${fmtMoney(sum)} บาท</span></td></tr>`;
+    }
     const overdue = o.status==='awaiting_report' && o.approvedOn && daysUntil(new Date(new Date(o.approvedOn).getTime()+5*86400000).toISOString().slice(0,10))<0;
-    return `<tr>
-      <td><b>${esc(o.no)}</b><div class="p-sub">${fmtDateTH(o.date)} · ${esc(o.time)}</div></td>
-      <td>${esc(o.name)}</td>
+    rows += `<tr>
+      <td><b>${esc(o.name)}</b><div class="p-sub">${esc(o.time)} · ${esc(o.no)}</div></td>
       <td style="max-width:220px;">${esc(o.task)}</td>
       <td>${fmtMoney(o.amount)}</td>
       <td>${otStatusPill(o.status)}${overdue?'<div class="p-sub" style="color:var(--danger);margin-top:4px;">เลยกำหนดรายงานผล 5 วัน</div>':''}${otSteps(o)}</td>
       <td class="no-print">${otActionButtons(o,i)}</td>
     </tr>`;
-  }).join('');
-  document.getElementById('ot-table').innerHTML = `<thead><tr><th>เลขที่เอกสาร</th><th>ผู้ขอปฏิบัติงาน</th><th>ลักษณะงาน</th><th>จำนวนเงิน</th><th>สถานะ / ขั้นตอน</th><th>การดำเนินการ</th></tr></thead><tbody>${rows}</tbody>`;
+  });
+  document.getElementById('ot-table').innerHTML = `<thead><tr><th>ผู้ปฏิบัติงาน / เวลา · เลขที่เอกสาร</th><th>ลักษณะงาน</th><th>จำนวนเงิน</th><th>สถานะ / ขั้นตอน</th><th class="no-print">การดำเนินการ</th></tr></thead><tbody>${rows}</tbody>`;
 
-  const sel = document.getElementById('ot-name');
-  sel.innerHTML = laborRoster.map(e=>`<option value="${esc(e.name)}">${esc(e.name)}</option>`).join('');
+  /* รายชื่อผู้ปฏิบัติงานในหน้าต่างยื่นคำขอ — คงค่าที่ติ๊กไว้เดิมถ้ามีการวาดใหม่ระหว่างเปิดหน้าต่าง */
+  const picked = new Set(getOtPeople());
+  document.getElementById('ot-people').innerHTML = laborRoster.map(e=>
+    `<label><input type="checkbox" value="${esc(e.name)}" ${picked.has(e.name)?'checked':''} onchange="checkOtGuard()">${esc(e.name)}</label>`).join('');
+  updateOtPeopleCount();
+}
+function getOtPeople(){
+  return [...document.querySelectorAll('#ot-people input:checked')].map(c=>c.value);
+}
+function updateOtPeopleCount(){
+  const total = document.querySelectorAll('#ot-people input').length, n = getOtPeople().length;
+  document.getElementById('ot-people-count').textContent = n ? `(เลือก ${n} คน)` : '';
+  document.getElementById('ot-people-all').textContent = total && n===total ? 'ล้างที่เลือก' : 'เลือกทั้งหมด';
+}
+function toggleAllOtPeople(){
+  const boxes = [...document.querySelectorAll('#ot-people input')];
+  const all = boxes.length && boxes.every(c=>c.checked);
+  boxes.forEach(c=>c.checked = !all);
+  checkOtGuard();
 }
 function otActionButtons(o,i){
   if(!isAdmin()) return '';
@@ -1765,6 +1819,7 @@ function openOTModal(){
   document.getElementById('ot-time').value='';
   document.getElementById('ot-task').value='';
   document.getElementById('ot-amount').value='';
+  document.querySelectorAll('#ot-people input').forEach(c=>c.checked=false);
   checkOtGuard();
   document.getElementById('ot-modal-overlay').classList.remove('hidden');
 }
@@ -1803,7 +1858,10 @@ function otGuardBlockReason(name, date, time){
   return '';
 }
 function checkOtGuard(){
-  const reason = otGuardBlockReason(document.getElementById('ot-name').value, document.getElementById('ot-date').value, document.getElementById('ot-time').value);
+  updateOtPeopleCount();
+  const date = document.getElementById('ot-date').value, time = document.getElementById('ot-time').value;
+  /* ตรวจทีละคนที่เลือก — ติดคนใดคนหนึ่งก็บันทึกไม่ได้ (ให้เอาชื่อนั้นออกก่อน) */
+  const reason = getOtPeople().map(n=>otGuardBlockReason(n, date, time)).filter(Boolean).join('\n\n⛔ ');
   const box = document.getElementById('ot-guard-warn'), btn = document.getElementById('ot-submit-btn');
   box.textContent = reason ? '⛔ ' + reason : '';
   box.style.display = reason ? '' : 'none';
@@ -1811,29 +1869,41 @@ function checkOtGuard(){
   return reason;
 }
 async function submitOT(){
-  const name = document.getElementById('ot-name').value;
+  const names = getOtPeople();
   const date = document.getElementById('ot-date').value;
   const time = document.getElementById('ot-time').value;
   const task = document.getElementById('ot-task').value;
   const amount = parseFloat(document.getElementById('ot-amount').value)||0;
-  if(!name||!date||!time||!task){ alert('กรุณากรอกข้อมูลให้ครบถ้วน'); return; }
+  if(!names.length||!date||!time||!task){ alert('กรุณากรอกข้อมูลให้ครบถ้วน และเลือกผู้ปฏิบัติงานอย่างน้อย 1 คน'); return; }
   const guardReason = checkOtGuard();
   if(guardReason){ alert(guardReason); return; }
-  const rec = {no:`บช.OT-0${otCounter++}/2569`, name, team:'', date, time, task, amount, status:'awaiting_work'};
+  /* ยื่นพร้อมกันหลายคน = เอกสารฉบับเดียว (เลขที่เดียวกัน) แต่เก็บเป็นแถวละคน เพื่อให้แต่ละคนเดินสถานะ/จ่ายเงินแยกกันได้ */
+  const no = `บช.OT-0${otCounter++}/2569`;
   const saveBtn = document.getElementById('ot-submit-btn');
   const cancelBtn = document.getElementById('ot-cancel-btn');
   const originalLabel = saveBtn ? saveBtn.textContent : '';
   // ป้องกันการกดซ้ำระหว่างรอผลจากเซิร์ฟเวอร์ (สาเหตุของแถวซ้ำที่เคยเกิดขึ้น) — ปิดปุ่มและแสดงสถานะกำลังบันทึกให้เห็นชัดเจน
   if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'กำลังบันทึก...'; }
   if(cancelBtn) cancelBtn.disabled = true;
-  try{
-    const saved = await apiPost('add', 'ot_requests', otToApi(rec));
-    otRequests.unshift(otFromApi(saved));
-  }catch(err){
-    otCounter--;
-    alert('บันทึกคำขอ OT ไปยังฐานข้อมูลกลางไม่สำเร็จ: ' + err.message);
+  const failed = [];
+  for(const name of names){
+    try{
+      const saved = await apiPost('add', 'ot_requests', otToApi({no, name, team:'', date, time, task, amount, status:'awaiting_work'}));
+      otRequests.unshift(otFromApi(saved));
+    }catch(err){
+      failed.push(`${name}: ${err.message}`);
+    }
+  }
+  if(failed.length){
+    if(failed.length===names.length) otCounter--;
+    alert('บันทึกคำขอ OT ไปยังฐานข้อมูลกลางไม่สำเร็จ ' + failed.length + ' คน:\n' + failed.join('\n') + (failed.length<names.length ? '\n\nคนอื่นบันทึกเรียบร้อยแล้ว — กรุณายื่นใหม่เฉพาะคนที่ไม่สำเร็จ' : ''));
     if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = originalLabel; }
     if(cancelBtn) cancelBtn.disabled = false;
+    // เอาชื่อที่บันทึกสำเร็จแล้วออกจากรายการที่เลือก กันยื่นซ้ำ
+    const ok = new Set(names.filter(n=>!failed.some(f=>f.startsWith(n+':'))));
+    document.querySelectorAll('#ot-people input').forEach(c=>{ if(ok.has(c.value)) c.checked=false; });
+    renderAll();
+    checkOtGuard();
     return;
   }
   if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = originalLabel; }
@@ -1847,6 +1917,9 @@ async function submitOT(){
 }
 function printOTApproval(i){
   const o = otRequests[i];
+  /* ยื่นพร้อมกันหลายคน (เลขที่เอกสารเดียวกัน) พิมพ์รวมในใบเดียว */
+  const group = otRequests.filter(x=>x.no===o.no && x.date===o.date).sort((a,b)=>String(a.name).localeCompare(String(b.name),'th'));
+  const who = group.length>1 ? `${esc(group[0].name)} และคณะ รวม ${group.length} คน` : esc(o.name);
   const html = `
     <div class="official-form">
       <div class="form-title">บันทึกข้อความ</div>
@@ -1854,10 +1927,11 @@ function printOTApproval(i){
       <p>ที่ ${esc(o.no)} &nbsp;&nbsp; วันที่ ${fmtDateTH(TODAY.toISOString().slice(0,10))}</p>
       <p>เรื่อง ขออนุมัติปฏิบัติงานนอกเวลาราชการ</p>
       <p>เรียน หัวหน้าหมวดทางหลวงเชิงเนิน</p>
-      <p>&nbsp;&nbsp;&nbsp;&nbsp;ด้วย ${esc(o.name)} มีความประสงค์ขออนุมัติปฏิบัติงานนอกเวลาราชการ ในวันที่ ${fmtDateTH(o.date)} เวลา ${esc(o.time)} เพื่อดำเนินการ${esc(o.task)} จึงเรียนมาเพื่อโปรดพิจารณาอนุมัติ</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;ด้วย ${who} มีความประสงค์ขออนุมัติปฏิบัติงานนอกเวลาราชการ ในวันที่ ${fmtDateTH(o.date)} เวลา ${esc(o.time)} เพื่อดำเนินการ${esc(o.task)} จึงเรียนมาเพื่อโปรดพิจารณาอนุมัติ</p>
       <table class="of-table">
         <thead><tr><th>ผู้ปฏิบัติงาน</th><th>วัน/เวลา</th><th>ลักษณะงาน</th><th>ค่าตอบแทน (บาท)</th></tr></thead>
-        <tbody><tr><td>${esc(o.name)}</td><td>${fmtDateTH(o.date)}<br>${esc(o.time)}</td><td>${esc(o.task)}</td><td>${fmtMoney(o.amount)}</td></tr></tbody>
+        <tbody>${group.map(x=>`<tr><td>${esc(x.name)}</td><td>${fmtDateTH(x.date)}<br>${esc(x.time)}</td><td>${esc(x.task)}</td><td>${fmtMoney(x.amount)}</td></tr>`).join('')}</tbody>
+        ${group.length>1 ? `<tfoot><tr><td colspan="3" style="text-align:right;"><b>รวม ${group.length} คน</b></td><td><b>${fmtMoney(group.reduce((s,x)=>s+(x.amount||0),0))}</b></td></tr></tfoot>` : ''}
       </table>
       <div class="sig-block">
         <p>ลงชื่อ .......................................... ผู้ขออนุมัติ</p>
@@ -2369,6 +2443,24 @@ function computeWaterRows(){
 // ตั้งใจใช้คำว่า "เก็บเงินคืน" แยกจาก "ชำระ" เพื่อไม่ให้สับสนกับสถานะจ่ายบิลของหมวด
 function isWaterRowPaid(r){ return !!(r.subAPaid && r.subBPaid); }
 function setWaterFilter(f){ waterFilter = f; renderWaterTable(); }
+function toggleWaterMonth(cycle){
+  if(waterExpanded.has(cycle)) waterExpanded.delete(cycle); else waterExpanded.add(cycle);
+  renderWaterTable();
+}
+// แถวย่อยใต้แถวเดือน: กล่องบิลรวม / T23787 / W23791 พร้อมเลขมิเตอร์ หน่วย และวันที่ชำระ
+function waterDetailRow(r){
+  const kv = (k,v)=>`<div class="wtr-kv"><span>${k}</span><span>${v}</span></div>`;
+  const usage = (u,ov)=>u!=null ? u.toLocaleString('th-TH')+(ov?' <span class="pill pill-neutral" title="กรอกหน่วยใช้น้ำเอง (ค่าจากบิลจริง/ตัวเลขที่ยืนยันแล้ว)">ปรับเอง</span>':'') : 'รอข้อมูล';
+  const paidPill = d=>d ? `<span class="pill pill-ok">คืนแล้ว</span>` : `<span class="pill pill-warn">ยังไม่คืน</span>`;
+  const sub = (cls,name,reading,u,ov,cost,paid)=>`<div class="wtr-box ${cls}"><h4>${name}${paidPill(paid)}</h4>
+      ${kv('เลขมิเตอร์', reading!=null?reading:'—')}${kv('หน่วยใช้น้ำ', usage(u,ov))}${kv('เงิน', cost!=null?fmtMoney(cost):'—')}${kv('วันที่ชำระ', paid?fmtDateShortTH(paid):'—')}</div>`;
+  const flag = (r.subADuplicate||r.subBDuplicate)?' <span class="pill pill-danger">⚠️ เลขมิเตอร์ซ้ำเดือนก่อน น่าจะยังไม่ได้อัปเดตค่าที่อ่านจริง</span>':(r.anomaly?' <span class="pill pill-danger">ตรวจสอบเลขมิเตอร์</span>':'');
+  return `<tr class="wtr-detail"><td colspan="8"><div class="wtr-dgrid">
+      <div class="wtr-box"><h4>บิลรวม (มิเตอร์ สนง.)</h4>${kv('เลขมิเตอร์', r.mainReading!=null?r.mainReading:'รอบิล')}${kv('หน่วยใช้น้ำ', r.mainUsage!=null?r.mainUsage.toLocaleString('th-TH'):'รอข้อมูล')}${kv('ราคาต่อหน่วย', r.unitPrice!=null?r.unitPrice.toFixed(2):'—')}${kv('ยอดชำระตามบิล', r.billAmount!=null?fmtMoney(r.billAmount):'—')}${kv('ยอด สนง.', r.officeCost!=null?fmtMoney(r.officeCost):'—')}</div>
+      ${sub('a','T23787',r.subA,r.subAUsage,r.subAOverridden,r.subACost,r.subAPaid)}
+      ${sub('b','W23791',r.subB,r.subBUsage,r.subBOverridden,r.subBCost,r.subBPaid)}
+    </div>${(r.note||flag)?`<div class="wtr-note">${r.note?'หมายเหตุ: '+esc(r.note):''}${flag}</div>`:''}</td></tr>`;
+}
 function renderWaterTable(){
   const allRowsFull = computeWaterRows();
   populateUtilFYSelect();
@@ -2384,24 +2476,28 @@ function renderWaterTable(){
     `<div class="tab${waterFilter===t.key?' active':''}" onclick="setWaterFilter('${t.key}')">${t.label} (${t.count})</div>`
   ).join('');
   const rows = allRows.filter(r=>waterFilter==='all' ? true : waterFilter==='paid' ? isWaterRowPaid(r) : !isWaterRowPaid(r));
-  const trs = rows.map(r=>`<tr>
-      <td>${cycleLabel(r.cycle)}</td>
-      <td>${r.mainReading!=null?r.mainReading:'<span class="pill pill-neutral">รอบิล</span>'}</td>
-      <td>${r.mainUsage!=null?r.mainUsage.toLocaleString('th-TH'):'<span class="pill pill-neutral">รอข้อมูล</span>'}</td>
-      <td>${r.unitPrice!=null?r.unitPrice.toFixed(2):'—'}</td>
-      <td>${r.billAmount!=null?fmtMoney(r.billAmount):'—'}</td>
-      <td>${r.officeCost!=null?fmtMoney(r.officeCost):'—'}</td>
-      <td class="wtr-a">${r.subA!=null?r.subA:'—'}</td>
-      <td class="wtr-a">${r.subAUsage!=null?r.subAUsage.toLocaleString('th-TH')+(r.subAOverridden?' <span class="pill pill-neutral" title="กรอกหน่วยใช้น้ำเอง (ค่าจากบิลจริง/ตัวเลขที่ยืนยันแล้ว)">ปรับเอง</span>':''):'<span class="pill pill-neutral">รอข้อมูล</span>'}</td>
-      <td class="wtr-a">${r.subACost!=null?fmtMoney(r.subACost):'—'}</td>
-      <td class="wtr-a">${r.subAPaid?fmtDateShortTH(r.subAPaid):'—'}</td>
-      <td class="wtr-b">${r.subB!=null?r.subB:'—'}</td>
-      <td class="wtr-b">${r.subBUsage!=null?r.subBUsage.toLocaleString('th-TH')+(r.subBOverridden?' <span class="pill pill-neutral" title="กรอกหน่วยใช้น้ำเอง (ค่าจากบิลจริง/ตัวเลขที่ยืนยันแล้ว)">ปรับเอง</span>':''):'<span class="pill pill-neutral">รอข้อมูล</span>'}</td>
-      <td class="wtr-b">${r.subBCost!=null?fmtMoney(r.subBCost):'—'}</td>
-      <td class="wtr-b">${r.subBPaid?fmtDateShortTH(r.subBPaid):'—'}</td>
-      <td>${esc(r.note||'')}${(r.subADuplicate||r.subBDuplicate)?' <span class="pill pill-danger" title="เลขมิเตอร์เท่ากับเดือนก่อนเป๊ะ น่าจะยังไม่ได้อัปเดตค่าที่อ่านจริงของเดือนนี้">⚠️ เลขซ้ำเดือนก่อน</span>':(r.anomaly?' <span class="pill pill-danger">ตรวจสอบเลขมิเตอร์</span>':'')}</td>
-      <td class="no-print">${isAdmin()?`<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="editWater('${jsArg(r.cycle)}')"></button> <button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบ" onclick="deleteWater('${jsArg(r.cycle)}')"></button>`:''}</td>
-    </tr>`).join('');
+  // แบบ "แถวสรุป + กดขยาย": แถวเดือนแสดงยอดเงินของแต่ละฝ่ายและสถานะเงินคืน รายละเอียดมิเตอร์อยู่ในแถวย่อย (waterDetailRow)
+  const usageSub = (u,ov)=>`<span class="wtr-sub">${u!=null?u.toLocaleString('th-TH')+' หน่วย'+(ov?' · ปรับเอง':''):'รอข้อมูล'}</span>`;
+  const refundCell = r=>{
+    if(isWaterRowPaid(r)) return '<span class="pill pill-ok">✓ คืนครบ</span>';
+    const due = [!r.subAPaid&&'T23787', !r.subBPaid&&'W23791'].filter(Boolean);
+    const dueAmt = (r.subAPaid?0:(r.subACost||0)) + (r.subBPaid?0:(r.subBCost||0));
+    return `<span class="pill pill-warn">ค้างคืน${dueAmt?' '+fmtMoney(dueAmt):''}</span>${due.length<2?`<span class="wtr-sub">${due[0]}</span>`:''}`;
+  };
+  const trs = rows.map(r=>{
+    const open = waterExpanded.has(r.cycle);
+    const flag = (r.subADuplicate||r.subBDuplicate)?' <span class="pill pill-danger" title="เลขมิเตอร์เท่ากับเดือนก่อนเป๊ะ น่าจะยังไม่ได้อัปเดตค่าที่อ่านจริงของเดือนนี้">⚠️ เลขซ้ำ</span>':(r.anomaly?' <span class="pill pill-danger" title="ตรวจสอบเลขมิเตอร์">⚠️</span>':'');
+    return `<tr class="util-month${open?' open':''}" onclick="toggleWaterMonth('${jsArg(r.cycle)}')" title="กดเพื่อ${open?'ซ่อน':'ดู'}เลขมิเตอร์และวันที่ชำระ">
+      <td><span class="util-caret no-print">▶</span>${cycleLabel(r.cycle)}${flag}</td>
+      <td class="num">${r.mainUsage!=null?r.mainUsage.toLocaleString('th-TH'):'<span class="pill pill-neutral">รอข้อมูล</span>'}</td>
+      <td class="num">${r.billAmount!=null?`<b>${fmtMoney(r.billAmount)}</b>`:'<span class="pill pill-neutral">รอบิล</span>'}${r.unitPrice!=null?`<span class="wtr-sub">${r.unitPrice.toFixed(2)} บ./หน่วย</span>`:''}</td>
+      <td class="num">${r.officeCost!=null?fmtMoney(r.officeCost):'—'}</td>
+      <td class="num wtr-a">${r.subACost!=null?fmtMoney(r.subACost):'—'}${usageSub(r.subAUsage,r.subAOverridden)}</td>
+      <td class="num wtr-b">${r.subBCost!=null?fmtMoney(r.subBCost):'—'}${usageSub(r.subBUsage,r.subBOverridden)}</td>
+      <td>${refundCell(r)}</td>
+      <td class="no-print" onclick="event.stopPropagation()">${isAdmin()?`<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="editWater('${jsArg(r.cycle)}')"></button> <button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบ" onclick="deleteWater('${jsArg(r.cycle)}')"></button>`:''}</td>
+    </tr>${open?waterDetailRow(r):''}`;
+  }).join('');
   const totalMainUsage = rows.reduce((s,r)=>s+(r.mainUsage||0),0);
   const totalSubAUsage = rows.reduce((s,r)=>s+(r.subAUsage||0),0);
   const totalSubACost = rows.reduce((s,r)=>s+(r.subACost||0),0);
@@ -2409,23 +2505,17 @@ function renderWaterTable(){
   const totalSubBCost = rows.reduce((s,r)=>s+(r.subBCost||0),0);
   const totalBill = rows.reduce((s,r)=>s+(r.billAmount||0),0);
   const totalOffice = rows.reduce((s,r)=>s+(r.officeCost||0),0);
-  const totalRow = rows.length ? `<tr style="font-weight:600;background:#fafafa;">
-      <td>รวม</td><td></td>
-      <td>${totalMainUsage.toLocaleString('th-TH')}</td>
-      <td></td>
-      <td>${fmtMoney(totalBill)}</td>
-      <td>${fmtMoney(totalOffice)}</td>
-      <td class="wtr-a"></td>
-      <td class="wtr-a">${totalSubAUsage.toLocaleString('th-TH')}</td>
-      <td class="wtr-a">${fmtMoney(totalSubACost)}</td>
-      <td class="wtr-a"></td>
-      <td class="wtr-b"></td>
-      <td class="wtr-b">${totalSubBUsage.toLocaleString('th-TH')}</td>
-      <td class="wtr-b">${fmtMoney(totalSubBCost)}</td>
-      <td class="wtr-b"></td>
-      <td></td><td class="no-print"></td>
-    </tr>` : '';
-  document.getElementById('water-table').innerHTML = `<thead><tr><th>เดือน</th><th>มิเตอร์ สนง.</th><th>หน่วยใช้น้ำ</th><th>ราคาต่อหน่วย</th><th>ยอดชำระตามบิล</th><th>ยอด สนง.</th><th class="wtr-a">มิเตอร์ T23787</th><th class="wtr-a">T23787 (หน่วย)</th><th class="wtr-a">T23787 (เงิน)</th><th class="wtr-a">T23787 (วันที่ชำระ)</th><th class="wtr-b">มิเตอร์ W23791</th><th class="wtr-b">W23791 (หน่วย)</th><th class="wtr-b">W23791 (เงิน)</th><th class="wtr-b">W23791 (วันที่ชำระ)</th><th>หมายเหตุ</th><th class="no-print">การดำเนินการ</th></tr></thead><tbody>${trs || `<tr><td colspan="16" style="text-align:center;color:var(--ink-400);padding:20px;">${allRows.length?'ไม่มีข้อมูลตามเงื่อนไขที่เลือก':'ยังไม่มีข้อมูล'}</td></tr>`}${totalRow}</tbody>`;
+  const totalDue = rows.reduce((s,r)=>s+(r.subAPaid?0:(r.subACost||0))+(r.subBPaid?0:(r.subBCost||0)),0);
+  const totalRow = rows.length ? `<tfoot><tr>
+      <td>รวม ${rows.length} เดือน</td>
+      <td class="num">${totalMainUsage.toLocaleString('th-TH')}</td>
+      <td class="num">${fmtMoney(totalBill)}</td>
+      <td class="num">${fmtMoney(totalOffice)}</td>
+      <td class="num">${fmtMoney(totalSubACost)}<span class="wtr-sub">${totalSubAUsage.toLocaleString('th-TH')} หน่วย</span></td>
+      <td class="num">${fmtMoney(totalSubBCost)}<span class="wtr-sub">${totalSubBUsage.toLocaleString('th-TH')} หน่วย</span></td>
+      <td>${totalDue?`ค้าง ${fmtMoney(totalDue)}`:''}</td><td class="no-print"></td>
+    </tr></tfoot>` : '';
+  document.getElementById('water-table').innerHTML = `<thead><tr><th>เดือน</th><th class="num">หน่วยใช้น้ำ</th><th class="num">ยอดชำระตามบิล</th><th class="num">ยอด สนง.</th><th class="num wtr-a">T23787</th><th class="num wtr-b">W23791</th><th>สถานะเงินคืน</th><th class="no-print">การดำเนินการ</th></tr></thead><tbody>${trs || `<tr><td colspan="8" style="text-align:center;color:var(--ink-400);padding:20px;">${allRows.length?'ไม่มีข้อมูลตามเงื่อนไขที่เลือก':'ยังไม่มีข้อมูล'}</td></tr>`}</tbody>${totalRow}`;
 }
 
 /* ============================================================
