@@ -1004,7 +1004,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </div>
             <span class="mc-sp"></span>
             <div class="search-box mc-search" id="mat-search-box">🔍 <input id="mat-search" oninput="renderMaterials()" placeholder="ค้นหาชื่อวัสดุ"></div>
-            <button type="button" class="btn btn-ghost btn-ic fuel-hist-btn-top hidden" id="fuel-hist-btn" data-ic="hist" onclick="openFuelHistoryModal('ดีเซล')" data-tip="สรุปยอดน้ำมันรายเดือน (ยกมา/รับเข้า/จ่าย/คงเหลือ)"></button>
+            <button type="button" class="btn btn-ghost btn-ic fuel-hist-btn-top hidden" id="fuel-hist-btn" data-ic="hist" onclick="openFuelHistoryModal()" data-tip="สรุปยอดน้ำมันรายเดือน (ภาพรวม / ดีเซล / เบนซิน)"></button>
           </div>
           <div class="mc-usagebar hidden" id="mat-usage-bar"></div>
           <div class="mc-cols" id="mat-cols"></div>
@@ -1845,7 +1845,6 @@ function renderMasterFuel(){
         <div class="fc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icons[ft]}</svg></div>
         <div class="fc-title">น้ำมัน${ft}</div>
         ${statusPill}
-        <button type="button" class="hist-icon-btn" style="margin-left:auto;" title="ดูประวัติเบิก-จ่าย" onclick="openItemHistoryModal('fuel','${ft}')">🕘</button>
       </div>
       <div class="fc-value-row"><span class="fc-value">${fmtNum(s.closing,1)}</span><span class="fc-unit">ลิตร คงเหลือ</span></div>
       <div class="fc-flow">
@@ -1865,19 +1864,67 @@ function renderMasterFuel(){
    แท็บ 1: สรุปยอดยกมา/รับเข้า/จ่าย/คงเหลือ รายเดือน (ข้อมูลชุดเดียวกับตาราง พ.1-03)
    แท็บ 2: รายการรับเข้าย้อนหลัง — แก้ไข/ลบได้ (แก้ปัญหาพิมพ์ยอดรับผิดแล้วแก้ไม่ได้)
    ============================================================ */
-function openFuelHistoryModal(fuelType){
+/* แท็บในโมดัล: 'all' = ภาพรวมทั้ง 2 ชนิด · 'ดีเซล'/'เบนซิน' = สรุปรายเดือนของชนิดนั้นตามปีงบประมาณ (ตัวเลขสรุปเท่านั้น ไม่แสดงรายการย่อย) */
+let __fuelHistTab = 'all';
+let __fuelHistFy = null;
+function openFuelHistoryModal(tab){
+  __fuelHistTab = tab || 'all';
+  __fuelHistFy = fyMonthOf(monthKeyOf(toLocalISODate(TODAY))).fy;
   document.getElementById('fuel-history-overlay').classList.remove('hidden');
   renderFuelHistoryModal();
 }
 function closeFuelHistoryModal(){
   document.getElementById('fuel-history-overlay').classList.add('hidden');
 }
+function setFuelHistTab(tab){
+  __fuelHistTab = tab;
+  renderFuelHistoryModal();
+}
+function onFuelHistFyChange(v){
+  __fuelHistFy = +v;
+  renderFuelHistoryModal();
+}
 function renderFuelHistoryModal(){
   const body = document.getElementById('fuel-history-body');
   const title = document.getElementById('fuel-history-title');
   if(!body || !title) return;
   title.textContent = 'สรุปยอดน้ำมันเชื้อเพลิงรายเดือน';
-  body.innerHTML = fuelHistoryMonthsHtml();
+  const tabs = [['all','ภาพรวม'],['ดีเซล','🛢️ ดีเซล'],['เบนซิน','⛽ เบนซิน']];
+  const tabsHtml = `<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+    <div class="seg-toggle">${tabs.map(([k,l])=>`<button type="button" class="seg-btn${__fuelHistTab===k?' active':''}" onclick="setFuelHistTab('${k}')">${l}</button>`).join('')}</div>
+    ${__fuelHistTab==='all' ? '' : `<select class="edit-input" data-fy="nolabel" style="width:170px;margin-left:auto;" onchange="onFuelHistFyChange(this.value)">${itemHistFyOptionsHtml(__fuelHistFy)}</select>`}
+  </div>`;
+  body.innerHTML = tabsHtml + (__fuelHistTab==='all' ? fuelHistoryMonthsHtml() : fuelHistoryFyHtml(__fuelHistTab, __fuelHistFy));
+}
+function fuelHistoryFyHtml(ft, fy){
+  const latest = [latestActivityMonthKey(), monthKeyOf(toLocalISODate(TODAY))].sort().pop();
+  const mks = fyMonthKeys(fy).filter(k=>k<=latest);
+  if(!mks.length) return '<div class="vb-empty">ยังไม่มีข้อมูลในปีงบประมาณนี้</div>';
+  const sums = mks.map(k=>({k, s:fuelMonthSummary(ft, k)}));
+  const first = sums[0].s, last = sums[sums.length-1].s;
+  const totalIn = sums.reduce((a,x)=>a+x.s.received,0);
+  const totalOut = sums.reduce((a,x)=>a+x.s.issued,0);
+  const statsHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;">
+    <div class="stat-card"><div class="bar"></div><div class="label">ยกมาต้นปีงบ</div><div class="val" style="font-size:16px;">${fmtNum(first.opening,1)} ลิตร</div></div>
+    <div class="stat-card"><div class="bar" style="background:var(--success);"></div><div class="label">รับเข้ารวม</div><div class="val" style="font-size:16px;color:var(--success);">+${fmtNum(totalIn,1)} ลิตร</div></div>
+    <div class="stat-card"><div class="bar" style="background:var(--danger);"></div><div class="label">จ่ายรวม</div><div class="val" style="font-size:16px;color:var(--danger);">−${fmtNum(totalOut,1)} ลิตร</div></div>
+    <div class="stat-card"><div class="bar"></div><div class="label">คงเหลือล่าสุด</div><div class="val" style="font-size:16px;${last.closing<0?'color:var(--danger);':''}">${fmtNum(last.closing,1)} ลิตร</div></div>
+  </div>`;
+  const rows = sums.slice().reverse().map(({k,s})=>{
+    const [y,m] = k.split('-').map(Number);
+    const isLatest = k===latest;
+    return `<tr${isLatest?' class="fhist-row-latest"':''}>
+      <td>${monthNamesTh[m-1]} ${y+543}${isLatest?'<span class="fhist-latest-tag">ล่าสุด</span>':''}</td>
+      <td class="num sep">${fmtNum(s.opening,1)}</td>
+      <td class="num" style="color:var(--success);">+${fmtNum(s.received,1)}</td>
+      <td class="num" style="color:var(--danger);">−${fmtNum(s.issued,1)}</td>
+      <td class="num" style="font-weight:700;${s.closing<0?'color:var(--danger);':''}">${fmtNum(s.closing,1)}</td>
+    </tr>`;
+  }).join('');
+  return statsHtml + `<div class="table-wrap"><table class="fhist-tbl">
+    <thead><tr><th>เดือน</th><th class="num sep">ยกมา</th><th class="num">รับเข้า</th><th class="num">จ่าย</th><th class="num">คงเหลือ</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
 }
 function fuelHistoryMonthsHtml(){
   const FTS = ['ดีเซล','เบนซิน'];
@@ -2366,7 +2413,7 @@ function updateMaterial(i, field, val){
 }
 /* ============================================================
    ITEM HISTORY TIMELINE MODAL — ไทม์ไลน์เบิก-จ่ายของพัสดุ/น้ำมันแต่ละรายการ ตามปีงบประมาณ
-   เปิดจากไอคอน 🕘 ท้ายแถวทะเบียนพัสดุ หรือมุมการ์ดน้ำมันแต่ละชนิด
+   เปิดจากไอคอน 🕘 ท้ายแถวทะเบียนพัสดุ (น้ำมันใช้โมดัลสรุปยอดรายเดือนแทน — openFuelHistoryModal)
    ใช้ materialMonthSummary/fuelMonthSummary (แหล่งความจริงเดียวกับรายงาน พ.1-02/พ.1-03) เป็นฐานคำนวณ
    เพื่อให้ยอดคงเหลือสะสมที่แสดงในไทม์ไลน์ตรงกับตัวเลขในรายงานเสมอ แม้จะเคยมีการแก้ไขยอดยกมา/รับเข้ากลางปีก็ตาม
    ============================================================ */
