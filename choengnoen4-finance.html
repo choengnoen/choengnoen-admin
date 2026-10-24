@@ -423,29 +423,18 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <table class="sum-table" id="labor-summary-table"></table>
           </div>
         </div>
-        <div class="section">
-          <div class="section-head">
-            <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><path d="M16 5a3 3 0 0 1 0 6M18 14c2 .8 3 2.8 3 5"/></svg></span>
-              บัญชีแรงงานรายวัน (ง.3-12)
-            </h2>
-            <div class="toolbar no-print">
-              <select id="labor-cycle" onchange="renderLabor()"></select>
-              <span class="tb-sep"></span><button class="btn btn-ghost btn-ic" data-ic="pen" data-tip="แก้ไขผู้จ่ายเงิน / หมายเหตุ" onclick="openPayerModal()"></button><button class="btn btn-primary" data-ic="print" onclick="printPaymentEvidence()">พิมพ์หลักฐานการจ่ายเงิน</button>
+        <!-- รายงานหลักฐานการจ่ายเงินรายเดือน — เปิดจากปุ่ม "ดูรายงาน" ในตารางสรุปด้านบน -->
+        <div id="labor-report-overlay" class="modal-overlay hidden no-print">
+          <div class="modal-box" style="max-width:1240px;">
+            <div class="modal-head">
+              <div class="modal-head-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><path d="M16 5a3 3 0 0 1 0 6M18 14c2 .8 3 2.8 3 5"/></svg></div>
+              <h3>หลักฐานการจ่ายเงินค่าจ้าง (ง.3-26)</h3>
+              <button type="button" class="modal-close" onclick="closeLaborReport()">✕</button>
             </div>
-          </div>
-          <div class="labor-summary">
-            <div class="ov-metric">
-              <div class="ov-metric-val" id="labor-total">—</div>
-              <div class="ov-metric-label">ยอดเงินรวมที่ต้องเบิกรอบนี้ (บาท)</div>
-            </div>
-            <div class="ov-metric warn">
-              <div class="ov-metric-val" id="labor-total-ss">—</div>
-              <div class="ov-metric-label">รวมหักประกันสังคม 5% (บาท)</div>
-            </div>
-            <div class="ov-metric ok">
-              <div class="ov-metric-val" id="labor-total-net">—</div>
-              <div class="ov-metric-label">รวมรับจริงทั้งหมด (บาท)</div>
-            </div>
+            <div class="modal-body">
+          <div class="toolbar" style="margin-bottom:12px;">
+            <select id="labor-cycle" onchange="renderLabor()"></select>
+            <span class="tb-sep"></span><button class="btn btn-ghost" data-ic="pen" onclick="openPayerModal()">แก้ไขผู้จ่ายเงิน / หมายเหตุ</button><button class="btn btn-primary" data-ic="print" onclick="printPaymentEvidence()">พิมพ์</button>
           </div>
           <div class="table-wrap" id="labor-table-wrap">
             <!-- ฟอร์ม ง.3-26 แบบเดียวกับที่พิมพ์ (buildPaymentEvidenceSVG) -->
@@ -466,27 +455,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </div>
             <div class="foot-note" id="labor-footnote" style="display:none;">หมายเหตุ: ผู้ปฏิบัติหน้าที่ยาม (ในหมู่คนงาน) ปฏิบัติหน้าที่จ้างรวมวันเสาร์ , เอกสารแสดงเฉพาะพนักงานตำแหน่ง คนงาน ที่ปฏิบัติงานปัจจุบัน</div>
           </div>
-        </div>
-      </div>
-
-      <!-- ============ OT ============ -->
-      <div class="panel" id="panel-ot">
-        <div class="section">
-          <div class="section-head">
-            <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
-              การปฏิบัติงานนอกเวลาราชการ
-            </h2>
-            <div class="toolbar no-print">
-              <select id="ot-fy" data-fy onchange="renderOT()"></select>
-              <span class="tb-sep"></span><button class="btn btn-primary no-print" data-ic="plus" onclick="openOTModal()">ยื่นขออนุมัติ</button>
             </div>
           </div>
-          <div class="table-wrap"><table id="ot-table"></table></div>
-          <div class="legend-block" id="ot-note-block">
-            <button type="button" class="legend-dot-btn no-print" id="ot-note-toggle" onclick="__toggleOtNote(this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="ot-note" style="display:none;background:transparent;border-top:none;">อนุมัติล่วงหน้าอย่างน้อย 2 วันทำการ (ยกเว้นเหตุฉุกเฉินขออนุมัติภายหลังได้)</div>
-          </div>
         </div>
+        <!-- อยู่ในแผงบัญชีแรงงาน (เดิมวางในแผง OT ซึ่งถูกซ่อน ทำให้กดปุ่มแล้วไม่แสดง) และวางหลังหน้าต่างรายงานเพื่อให้ซ้อนอยู่ด้านบน -->
         <div id="payer-modal-overlay" class="modal-overlay hidden no-print">
           <div class="modal-box">
             <div class="modal-head">
@@ -513,6 +485,26 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 <button class="btn btn-primary" onclick="savePayerModal()">บันทึก</button>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ OT ============ -->
+      <div class="panel" id="panel-ot">
+        <div class="section">
+          <div class="section-head">
+            <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+              การปฏิบัติงานนอกเวลาราชการ
+            </h2>
+            <div class="toolbar no-print">
+              <select id="ot-fy" data-fy onchange="renderOT()"></select>
+              <span class="tb-sep"></span><button class="btn btn-primary no-print" data-ic="plus" onclick="openOTModal()">ยื่นขออนุมัติ</button>
+            </div>
+          </div>
+          <div class="table-wrap"><table id="ot-table"></table></div>
+          <div class="legend-block" id="ot-note-block">
+            <button type="button" class="legend-dot-btn no-print" id="ot-note-toggle" onclick="__toggleOtNote(this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
+            <div class="foot-note" id="ot-note" style="display:none;background:transparent;border-top:none;">อนุมัติล่วงหน้าอย่างน้อย 2 วันทำการ (ยกเว้นเหตุฉุกเฉินขออนุมัติภายหลังได้)</div>
           </div>
         </div>
         <div id="ot-modal-overlay" class="modal-overlay hidden no-print">
@@ -1338,7 +1330,7 @@ function renderLaborSummary(){
       <td class="ctr">
         <span class="pill ${r.info.cls}" style="cursor:pointer;" onclick="toggleLaborSentFor('${jsArg(r.cyc)}', ${!laborSentStatus[r.cyc]})" title="คลิกเพื่อ${laborSentStatus[r.cyc]?'ยกเลิกการทำเครื่องหมาย':'ทำเครื่องหมายว่าส่งแล้ว'}">${r.info.label}</span>
       </td>
-      <td class="num no-print"><button class="btn btn-ghost btn-sm" onclick="jumpToLaborCycle('${jsArg(r.cyc)}')">ดูรายละเอียด</button></td>
+      <td class="num no-print" style="white-space:nowrap;"><button class="btn btn-ghost btn-ic btn-sm" data-ic="eye" data-tip="ดูรายงาน" onclick="openLaborReport('${jsArg(r.cyc)}')"></button> <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์หลักฐานการจ่ายเงิน" onclick="printPaymentEvidence('${jsArg(r.cyc)}')"></button></td>
     </tr>`).join('');
   // แถวรวมทั้งปีงบประมาณ — แสดงเมื่อมีมากกว่า 1 รอบเดือน
   const sum = k => rows.reduce((s,r)=>s+r[k],0);
@@ -1355,11 +1347,13 @@ function toggleLaborSentFor(cyc, checked){
   renderLaborSummary();
   if(document.getElementById('labor-cycle').value === cyc) renderLabor();
 }
-function jumpToLaborCycle(cyc){
+function openLaborReport(cyc){
   document.getElementById('labor-cycle').value = cyc;
   renderLabor();
-  document.getElementById('labor-cycle').closest('.section').scrollIntoView({behavior:'smooth', block:'start'});
+  document.getElementById('labor-report-overlay').classList.remove('hidden');
+  fitLaborForm();
 }
+function closeLaborReport(){ document.getElementById('labor-report-overlay').classList.add('hidden'); }
 function populateLaborCycles(){
   const sel = document.getElementById('labor-cycle');
   const fy = Number(document.getElementById('labor-fy').value) || currentFiscalYear();
@@ -1388,21 +1382,10 @@ function fitLaborForm(){
 })();
 function renderLabor(){
   const cyc = document.getElementById('labor-cycle').value || currentCycle();
-  const att = generateAttendance(cyc);
-
-  // ฟอร์มบนหน้าเว็บ = แบบ ง.3-26 เดียวกับที่พิมพ์ (ฎีกา ปรับใหม่.pdf) — วาดจากตัวสร้างเดียวกัน
-  let total=0, totalSS=0, totalNet=0;
-  laborRoster.forEach(emp=>{
-    const workDays = att[emp.name].filter(c=>WORKDAY_CODES.has(c)).length;
-    const amount = workDays*emp.rate, ss = Math.round(amount*0.05);
-    total += amount; totalSS += ss; totalNet += amount-ss;
-  });
+  // ฟอร์มในหน้าต่างรายงาน = แบบ ง.3-26 เดียวกับที่พิมพ์ (ฎีกา ปรับใหม่.pdf) — วาดจากตัวสร้างเดียวกัน
   const form = document.getElementById('labor-form');
   form.innerHTML = buildPaymentEvidenceSVG(cyc, 'screen');
   __fitSvgText(form);
-  document.getElementById('labor-total').textContent = fmtMoney(total);
-  document.getElementById('labor-total-ss').textContent = totalSS.toLocaleString('en-US');
-  document.getElementById('labor-total-net').textContent = fmtMoney(totalNet);
   markLaborSummaryViewing(cyc);
 }
 /* ============================================================
@@ -1638,8 +1621,9 @@ function __fitSvgText(root){
     if(el.getComputedTextLength() > w){ el.setAttribute('textLength', w); el.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
   });
 }
-function printPaymentEvidence(){
-  const cyc = document.getElementById('labor-cycle').value || currentCycle();
+// cyc ส่งมาจากปุ่มพิมพ์ในแถวตารางสรุป — ถ้าไม่ส่ง (ปุ่มในหน้าต่างรายงาน) ใช้รอบที่เลือกอยู่
+function printPaymentEvidence(cyc){
+  cyc = cyc || document.getElementById('labor-cycle').value || currentCycle();
   const css = `@page{size:A4 landscape;margin:0;} html,body{margin:0;padding:0;background:#fff;} svg{display:block;} ${GRF_CSS}`;
   __printInFrame('หลักฐานการจ่ายเงินค่าจ้าง ง.3-26 ' + cycleLabel(cyc), css, buildPaymentEvidenceSVG(cyc, 'print'));
 }
