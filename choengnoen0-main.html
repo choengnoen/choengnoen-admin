@@ -469,19 +469,30 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .um-pane-note{font-size:12.5px;color:var(--ink-400);margin:0 0 14px;}
   #um-body .role-card{padding:12px 10px;}
   #um-body .role-card .rc-e{font-size:26px;}
-  .um-trow{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
-  .um-trow-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;font-family:'Kanit';font-weight:600;font-size:14px;color:var(--navy-900);}
-  .um-acc{font-family:'Sarabun';font-size:11.5px;font-weight:600;padding:2px 10px;border-radius:999px;background:#8792a0;color:#fff;white-space:nowrap;}
-  .um-acc.edit{background:var(--success);}
-  .um-acc.view{background:#2563eb;}
-  .um-chips{display:flex;flex-wrap:wrap;gap:8px;}
-  .um-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border:1.5px solid var(--line);border-radius:999px;font-size:13px;cursor:pointer;background:var(--paper-50);color:var(--ink-400);text-decoration:line-through;user-select:none;}
-  .um-chip input{display:none;}
-  .um-chip::before{content:"✕";font-size:11px;}
-  .um-chip:has(input:checked){border-color:var(--success);background:var(--success-bg);color:var(--success);text-decoration:none;font-weight:600;}
-  .um-chip:has(input:checked)::before{content:"✓";}
-  .um-trow.off{background:var(--paper-50);}
-  .um-trow.off .um-chips{opacity:.4;pointer-events:none;}
+  .um-h{display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:'Kanit';font-size:14px;font-weight:600;color:var(--navy-900);margin:0 0 10px;}
+  /* การ์ดระบบ: หัว = ชื่อระบบ + ปุ่มสิทธิ์ 3 ช่อง / ตัว = ปุ่มแท็บเรียงเป็นตาราง */
+  .um-sys{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:var(--white);}
+  .um-sys.off{background:var(--paper-50);}
+  .um-sys-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-family:'Kanit';font-weight:600;font-size:14px;color:var(--navy-900);}
+  .um-sys-off{margin-top:8px;font-size:12.5px;color:var(--ink-400);}
+  .um-segc{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--white);}
+  .um-segc button{border:0;background:none;padding:6px 0;width:112px;font-family:'Sarabun';font-size:12.5px;font-weight:600;color:var(--ink-400);cursor:pointer;}
+  .um-segc button+button{border-left:1px solid var(--line);}
+  .um-segc button:hover:not(.on){background:var(--paper-50);color:var(--ink-900);}
+  .um-segc button.on{color:#fff;}
+  .um-segc button.edit.on{background:var(--success);}
+  .um-segc button.view.on{background:#2563eb;}
+  .um-segc button.none.on{background:#8792a0;}
+  .um-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--paper-100);}
+  .um-chip{border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--paper-50);color:var(--ink-400);font-family:'Sarabun';font-size:12.5px;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:line-through;}
+  .um-chip.on{border-color:var(--success);background:var(--success-bg);color:var(--success);font-weight:600;text-decoration:none;}
+  /* สิทธิ์พิเศษ: ปุ่มเต็มแถว + สวิตช์ แบบเดียวกับหน้ารายละเอียด */
+  .um-flags{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .um-fl{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--white);cursor:pointer;text-align:left;font-family:'Sarabun';}
+  .um-fl b{display:block;font-size:13.5px;font-weight:600;color:var(--ink-900);}
+  .um-fl small{display:block;font-size:11.5px;color:var(--ink-400);}
+  .um-fl.on{border-color:var(--success);background:#f6fbf8;}
+  @media(max-width:640px){.um-chips{grid-template-columns:1fr 1fr;}.um-flags{grid-template-columns:1fr;}.um-segc button{width:auto;padding:6px 10px;}}
   #um-body .role-card{display:flex;flex-direction:column;align-items:center;}
   #um-body .um-say li b{color:var(--navy-900);}
   @media(max-width:640px){#um-body .sec-check{grid-template-columns:1fr;}}
@@ -773,8 +784,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
     </div>
     <div class="um-steps" id="um-steps">
       <button type="button" data-pane="info" onclick="umStep('info')"><span class="n">1</span>ข้อมูลผู้ใช้</button>
-      <button type="button" data-pane="perm" onclick="umStep('perm')"><span class="n">2</span>บทบาทและสิทธิ์</button>
-      <button type="button" data-pane="tabs" onclick="umStep('tabs')"><span class="n">3</span>แท็บที่เห็น</button>
+      <button type="button" data-pane="perm" onclick="umStep('perm')"><span class="n">2</span>บทบาทและระบบ</button>
+      <button type="button" data-pane="flags" onclick="umStep('flags')"><span class="n">3</span>สิทธิ์พิเศษ</button>
     </div>
     <div class="modal-body" id="um-body"></div>
     <div class="modal-foot" id="um-foot"></div>
@@ -1591,39 +1602,26 @@ function openUserModal(uid){
       ${isOwnerRec ? `<div class="hint-box">👑 <b>เจ้าของระบบ</b> — สิทธิ์เต็มเสมอ ปรับไม่ได้</div>` : ''}
     </div>
     ${isOwnerRec ? '' : `
-    <!-- แท็บ 2: บทบาทและสิทธิ์ -->
+    <!-- แท็บ 2: บทบาท + สิทธิ์/แท็บของแต่ละระบบ (ทุกระบบใช้การ์ดหน้าตาเดียวกัน) -->
     <div class="um-pane" data-pane="perm">
-      <div class="form-sub" style="margin-top:0">เลือกบทบาท</div>
+      <div class="um-h">เลือกบทบาท</div>
       <div class="role-cards" id="um-roles">${roleCards}</div>
-      <div id="um-sections-wrap" style="${UM.role==='staff'?'':'display:none'}">
-        <div class="form-sub">ส่วนงานที่รับผิดชอบ <span class="um-opt">(แก้ไขได้เฉพาะที่ติ๊ก)</span></div>
-        <div class="sec-check">${FBL.SUB_KEYS.map(k=>`<label><input type="checkbox" class="um-sec" value="${k}" ${UM.sections.includes(k)?'checked':''} onchange="umSectionsChanged()"> ${k.slice(1)}. ${esc(umSecLabel(k))}</label>`).join('')}</div>
-      </div>
-      <div class="um-say"><h5>📋 สรุปสิทธิ์</h5><ul id="um-say"></ul></div>
-      <details class="um-adv"><summary>⚙️ ปรับสิทธิ์ละเอียด (ไม่จำเป็น)</summary><div class="um-adv-in" onchange="umRefreshSay()">
-      <div class="form-sub" style="display:flex;justify-content:space-between;align-items:center;">สิทธิ์รายระบบ <button type="button" class="btn btn-ghost btn-sm" onclick="umResetPreset()">↺ ค่าตั้งต้น</button></div>
-      <table class="perm-table"><thead><tr><th>ระบบ</th><th>✎ แก้ไข</th><th>👁 ดู</th><th>— ซ่อน</th></tr></thead>
-        <tbody>
-          <tr><td>• ระบบหลัก</td><td colspan="3"><label style="display:inline-flex;gap:6px;align-items:center;"><input type="checkbox" id="um-main"> เห็นระบบหลัก</label></td></tr>
-          ${FBL.SUB_KEYS.map(k=>`<tr><td>${k.slice(1)}. ${esc(umSecLabel(k))}</td>${['edit','view','none'].map(v=>`<td><input type="radio" name="um-${k}" value="${v}"></td>`).join('')}</tr>`).join('')}
-        </tbody></table>
-      <div class="form-sub">สิทธิ์พิเศษ</div>
-      <div class="flag-list">${FBL.FLAGS.map(f=>`<label class="flag-item"><input type="checkbox" class="um-flag" value="${f.key}"><span>${esc(umFlagLabel(f))}<small>${esc(umFlagDesc(f))}</small></span></label>`).join('')}</div>
-      </div></details>
+      <div class="um-h" style="margin-top:20px">สิทธิ์ในแต่ละระบบ <button type="button" class="btn btn-ghost btn-sm" onclick="umResetPreset()">↺ ค่าตั้งต้นตามบทบาท</button></div>
+      <p class="um-pane-note">เลือกว่าแก้ไขได้ / ดูอย่างเดียว / ไม่เห็น แล้วกดชื่อแท็บเพื่อเปิด-ปิดแท็บที่เห็น (สีเขียว = เห็น)</p>
+      <div id="um-sys"></div>
     </div>
-    <!-- แท็บ 3: แท็บที่เห็นในแต่ละระบบ -->
-    <div class="um-pane" data-pane="tabs" onchange="umRefreshSay()">
-      <p class="um-pane-note">กดที่ชื่อแท็บเพื่อสลับ — <b style="color:var(--success)">✓ สีเขียว = เห็น</b> · ✕ สีเทา = ซ่อน (ระบบที่ตั้งเป็น "ไม่เห็น" จะซ่อนทั้งระบบอยู่แล้ว)</p>
-      ${['main',...FBL.SUB_KEYS].map(k=>`<div class="um-trow" id="um-trow-${k}">
-        <div class="um-trow-h"><span>${k==='main'?'• ระบบหลัก (งานบริหารหมวด)':k.slice(1)+'. '+esc(FBL.SECTIONS[k].label)}</span><span class="um-acc" id="um-acc-${k}"></span></div>
-        <div class="um-chips">${FBL.PAGE_TABS[k].map(([s,l])=>`<label class="um-chip"><input type="checkbox" class="um-tab" value="${k}:${s}">${esc(l)}</label>`).join('')}</div></div>`).join('')}
+    <!-- แท็บ 3: สิทธิ์พิเศษ + สรุป -->
+    <div class="um-pane" data-pane="flags">
+      <div class="um-h">สิทธิ์พิเศษ <span class="um-opt">(กดเพื่อเปิด-ปิด)</span></div>
+      <div class="um-flags" id="um-flags"></div>
+      <div class="um-say"><h5>📋 สรุปสิทธิ์ก่อนบันทึก</h5><ul id="um-say"></ul></div>
     </div>
     `}`;
   document.getElementById('um-steps').classList.toggle('hidden', isOwnerRec);
   umStep('info');
   const delBtn = (u && !isOwnerRec) ? `<button class="btn btn-danger" style="margin-right:auto" onclick="umDelete()">ลบผู้ใช้งาน</button>` : '';
   document.getElementById('um-foot').innerHTML = `${delBtn}<button class="btn btn-ghost" onclick="closeUserModal()">ยกเลิก</button><button class="btn btn-primary" id="um-save" onclick="saveUserModal()">บันทึก</button>`;
-  if(!isOwnerRec) umFillPerm();
+  if(!isOwnerRec){ UM.perm.hideTabs = UM.perm.hideTabs || []; umRender(); }
   document.getElementById('user-modal').classList.remove('hidden');
 }
 function closeUserModal(){ document.getElementById('user-modal').classList.add('hidden'); UM = null; }
@@ -1632,15 +1630,42 @@ function umStep(p){
   document.querySelectorAll('#um-body .um-pane').forEach(x=>x.classList.toggle('on', x.dataset.pane===p));
   document.getElementById('um-body').scrollTop = 0;
 }
-function umFillPerm(){
-  document.getElementById('um-main').checked = !!UM.perm.main;
-  FBL.SUB_KEYS.forEach(k=>{ const el = document.querySelector(`input[name="um-${k}"][value="${UM.perm[k]}"]`); if(el) el.checked = true; });
-  document.querySelectorAll('.um-flag').forEach(el=>{ el.checked = !!UM.perm[el.value]; });
-  const hide = UM.perm.hideTabs || [];
-  document.querySelectorAll('.um-tab').forEach(el=>{ el.checked = !hide.includes(el.value); });
-  umRefreshSay();
+/* หน้าต่างผู้ใช้วาดจาก UM.perm อย่างเดียว — กดปุ่มใดก็แก้ UM.perm แล้ววาดใหม่ทั้งหมด */
+function umRender(){ umRenderSys(); umRenderFlags(); umRefreshSay(); }
+function umRenderSys(){
+  const el = document.getElementById('um-sys'); if(!el) return;
+  const p = UM.perm, hide = p.hideTabs;
+  el.innerHTML = ['main',...FBL.SUB_KEYS].map(k=>{
+    const v = k==='main' ? (p.main ? 'view' : 'none') : p[k];
+    const opts = k==='main' ? [['view','👁 เห็น'],['none','✕ ไม่เห็น']] : [['edit','✎ แก้ไข'],['view','👁 ดูอย่างเดียว'],['none','✕ ไม่เห็น']];
+    const seg = opts.map(([o,l])=>`<button type="button" class="${o}${v===o?' on':''}" onclick="umSetAcc('${k}','${o}')">${l}</button>`).join('');
+    const tabs = v==='none' ? `<div class="um-sys-off">ไม่เห็นระบบนี้ — ไม่ต้องเลือกแท็บ</div>`
+      : `<div class="um-chips">${FBL.PAGE_TABS[k].map(([s,l])=>{ const on = !hide.includes(k+':'+s);
+          return `<button type="button" class="um-chip${on?' on':''}" onclick="umToggleTab('${k}','${s}')">${on?'✓':'✕'} ${esc(l)}</button>`; }).join('')}</div>`;
+    return `<div class="um-sys${v==='none'?' off':''}"><div class="um-sys-h"><span>${k==='main'?'• ระบบหลัก (งานบริหารหมวด)':k.slice(1)+'. '+esc(FBL.SECTIONS[k].label)}</span><span class="um-segc">${seg}</span></div>${tabs}</div>`;
+  }).join('');
 }
-// กล่องสรุปเป็นภาษาคน — อ่านจากช่องสิทธิ์ที่ติ๊กอยู่จริง
+function umRenderFlags(){
+  const el = document.getElementById('um-flags'); if(!el) return;
+  el.innerHTML = FBL.FLAGS.map(f=>{ const on = !!UM.perm[f.key];
+    return `<button type="button" class="um-fl${on?' on':''}" onclick="umToggleFlag('${f.key}')"><span><b>${esc(umFlagLabel(f))}</b><small>${esc(umFlagDesc(f))}</small></span><span class="um-sw${on?' on':''}"></span></button>`; }).join('');
+}
+function umSetAcc(k,v){
+  if(k==='main') UM.perm.main = v!=='none'; else UM.perm[k] = v;
+  if(UM.role==='staff') UM.sections = FBL.SUB_KEYS.filter(x=>UM.perm[x]==='edit'); // เจ้าหน้าที่: ระบบที่แก้ไขได้ = ส่วนงานที่รับผิดชอบ
+  umRender();
+}
+function umToggleTab(k,s){
+  const t = k+':'+s, hide = UM.perm.hideTabs, i = hide.indexOf(t);
+  if(i!==-1) hide.splice(i,1);
+  else {
+    if(FBL.PAGE_TABS[k].filter(([x])=>!hide.includes(k+':'+x)).length<=1){ alert('ต้องเห็นอย่างน้อย 1 แท็บ — ถ้าไม่ให้เห็นทั้งระบบ ให้กด "✕ ไม่เห็น" แทน'); return; }
+    hide.push(t);
+  }
+  umRender();
+}
+function umToggleFlag(f){ UM.perm[f] = !UM.perm[f]; umRender(); }
+// กล่องสรุปเป็นภาษาคน — อ่านจาก UM.perm
 function umRefreshSay(){
   const box = document.getElementById('um-say'); if(!box || !UM) return;
   const p = umReadPerm();
@@ -1660,36 +1685,17 @@ function umRefreshSay(){
   const ht = ['main',...FBL.SUB_KEYS].map(k=>{ const h = umHiddenOf(p.hideTabs,k); return h.length ? (k==='main'?'ระบบหลัก':'ระบบ '+lab(k))+' ('+h.map(esc).join(', ')+')' : ''; }).filter(Boolean);
   if(ht.length) L.push('<b>ซ่อนแท็บ:</b> '+ht.join(' · '));
   box.innerHTML = L.map(x=>'<li>'+x+'</li>').join('');
-  // ป้ายสิทธิ์ของแต่ละระบบในแท็บ "แท็บที่เห็น" (ระบบที่ไม่เห็น → จางลง กดไม่ได้)
-  ['main',...FBL.SUB_KEYS].forEach(k=>{
-    const v = k==='main' ? (p.main ? 'view' : 'none') : p[k];
-    const acc = document.getElementById('um-acc-'+k); if(!acc) return;
-    acc.className = 'um-acc '+v;
-    acc.textContent = k==='main' ? (p.main ? 'เห็นระบบหลัก' : 'ไม่เห็นระบบนี้') : ({edit:'✎ แก้ไขได้', view:'👁 ดูอย่างเดียว', none:'ไม่เห็นระบบนี้'})[v];
-    document.getElementById('um-trow-'+k).classList.toggle('off', v==='none');
-  });
 }
-function umReadPerm(){
-  const p = { main: document.getElementById('um-main').checked };
-  FBL.SUB_KEYS.forEach(k=>{ const el = document.querySelector(`input[name="um-${k}"]:checked`); p[k] = el ? el.value : 'none'; });
-  document.querySelectorAll('.um-flag').forEach(el=>{ p[el.value] = el.checked; });
-  p.hideTabs = Array.from(document.querySelectorAll('.um-tab:not(:checked)')).map(el=>el.value);
-  return p;
-}
+function umReadPerm(){ return JSON.parse(JSON.stringify(UM.perm)); }
 function umPickRole(r){
   UM.role = r;
   document.querySelectorAll('#um-roles .role-card').forEach(c=>c.classList.toggle('active', c.dataset.role===r));
-  document.getElementById('um-sections-wrap').style.display = r==='staff' ? '' : 'none';
   umResetPreset();
 }
-function umSectionsChanged(){
-  UM.sections = Array.from(document.querySelectorAll('.um-sec:checked')).map(x=>x.value);
-  if(UM.role==='staff') umResetPreset();
-}
-// ค่าตั้งต้นตามบทบาท — แท็บที่ซ่อนไว้ไม่ขึ้นกับบทบาท จึงคงไว้ตามที่ติ๊กอยู่
+// ค่าตั้งต้นตามบทบาท (เจ้าหน้าที่: แก้ไขได้เฉพาะส่วนงานของตัวเอง) — แท็บที่ซ่อนไว้ไม่ขึ้นกับบทบาท จึงคงไว้
 function umResetPreset(){
-  const keepTabs = document.querySelector('.um-tab') ? umReadPerm().hideTabs : (UM.perm.hideTabs || []);
-  UM.perm = FBL.presetPerm(UM.role, UM.sections); UM.perm.hideTabs = keepTabs; umFillPerm();
+  const keepTabs = UM.perm.hideTabs || [];
+  UM.perm = FBL.presetPerm(UM.role, UM.sections); UM.perm.hideTabs = keepTabs; umRender();
 }
 async function saveUserModal(){
   const btn = document.getElementById('um-save');
@@ -1697,9 +1703,10 @@ async function saveUserModal(){
   const position = document.getElementById('um-position').value.trim();
   if(!name){ umStep('info'); alert('กรุณากรอกชื่อ-สกุล'); return; }
   const payload = { name, position };
-  if(!UM.isOwnerRec){ payload.role = UM.role; payload.sections = UM.role==='staff' ? UM.sections : []; payload.perm = umReadPerm();
+  if(!UM.isOwnerRec){ payload.role = UM.role; payload.perm = umReadPerm();
+    payload.sections = UM.role==='staff' ? FBL.SUB_KEYS.filter(k=>payload.perm[k]==='edit') : [];
     const allOff = ['main',...FBL.SUB_KEYS].find(k=>FBL.PAGE_TABS[k].every(([s])=>payload.perm.hideTabs.includes(k+':'+s)));
-    if(allOff){ umStep('tabs'); alert('ซ่อนทุกแท็บของ'+(allOff==='main'?'ระบบหลัก':'ระบบ '+allOff.slice(1))+'ไม่ได้ — ถ้าไม่ให้เห็นระบบนั้น ให้ตั้งเป็น "ซ่อน" ในสิทธิ์รายระบบแทน'); return; }
+    if(allOff){ umStep('perm'); alert('ซ่อนทุกแท็บของ'+(allOff==='main'?'ระบบหลัก':'ระบบ '+allOff.slice(1))+'ไม่ได้ — ถ้าไม่ให้เห็นระบบนั้น ให้ตั้งเป็น "ซ่อน" ในสิทธิ์รายระบบแทน'); return; }
   }
   btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
   try{
