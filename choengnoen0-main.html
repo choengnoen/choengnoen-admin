@@ -953,8 +953,8 @@ function renderLeaveApprovals(){
     <div class="al-ev">
       <span class="al-date">${esc(String(fmtDate(r.from)).split(' ').slice(0,2).join(' '))}</span>
       <div class="al-main">
-        <b>${esc(r.name)}</b> <span class="pill pill-warn">${esc(r.type)}</span>
-        <div class="muted small">${fmtDate(r.from)}${r.to&&r.to!==r.from?' – '+fmtDate(r.to):''} · ${esc(r.days)} วัน${r.cover?' · ผู้ปฏิบัติงานแทน '+esc(r.cover):''}${r.reason?' · '+esc(r.reason):''}</div>
+        <b>${esc(r.name)}</b> <span class="pill pill-warn">${esc(/^ลา/.test(r.type||'')?r.type:'ลา'+(r.type||''))}</span> <span class="pill pill-danger" style="font-size:13px;font-weight:700;">${esc(r.days)} วัน</span>
+        <div class="muted small">${fmtDate(r.from)}${r.to&&r.to!==r.from?' – '+fmtDate(r.to):''}${r.cover?' · ผู้ปฏิบัติงานแทน '+esc(r.cover):''}${r.reason?' · '+esc(r.reason):''}</div>
       </div>
       <div class="al-act">
         <button type="button" class="btn btn-ok btn-sm" data-ic="check" onclick="decideLeave(${i},'approved')">อนุมัติ</button>
