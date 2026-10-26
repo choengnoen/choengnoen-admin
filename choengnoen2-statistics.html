@@ -1057,24 +1057,41 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                   <div class="f-row"><label>ชื่อโครงการ</label><input id="ct-name" placeholder="เช่น ซ่อมผิวทางแอสฟัลต์ ทล.3 ตอน ระยอง - กะเฉด"></div>
                   <div class="two-col">
                     <div class="f-row"><label>เลขที่สัญญา</label><input id="ct-no" placeholder="เช่น 12/2569"></div>
-                    <div class="f-row"><label>ปีงบประมาณ (พ.ศ.)</label><input type="number" id="ct-fy" placeholder="เช่น 2569"></div>
+                    <div class="f-row"><label>ปีงบประมาณ (พ.ศ.)</label><input type="number" id="ct-f-fy" placeholder="เช่น 2569"></div>
                   </div>
                   <div class="two-col">
                     <div class="f-row"><label>ผู้รับจ้าง</label><input id="ct-by" placeholder="ชื่อบริษัท / ห้างหุ้นส่วน"></div>
-                    <div class="f-row"><label>วงเงินสัญญา (บาท)</label><input type="number" step="0.01" id="ct-amount" placeholder="เช่น 4500000"></div>
+                    <div class="f-row"><label>เงินค่างาน (บาท)</label><input type="number" step="0.01" id="ct-amount" placeholder="เช่น 4500000"></div>
                   </div>
-                  <div class="f-row"><label>ผู้ควบคุมงาน</label><input id="ct-sup" placeholder="ชื่อ-สกุล (ถ้ามี)"></div>
+                  <div class="two-col">
+                    <div class="f-row"><label>ปริมาณงาน</label><input id="ct-qty" placeholder="เช่น 12,500 ตร.ม. / โคมไฟ 40 ต้น"></div>
+                    <div class="f-row"><label>ผู้ควบคุมงาน</label><input id="ct-sup" placeholder="ชื่อ-สกุล (ถ้ามี)"></div>
+                  </div>
                 </div>
                 <div class="dw-group">
-                  <div class="dw-group-title"><span class="dot"></span>ระยะเวลา</div>
-                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                  <div class="dw-group-title"><span class="dot"></span>ระยะเวลา ส่งงาน และตรวจรับ</div>
+                  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
                     <div class="f-row"><label>วันเริ่มสัญญา</label>
                       <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-start" class="thdate-native" onchange="thdateSync(this)"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
                     <div class="f-row"><label>วันสิ้นสุดสัญญา</label>
                       <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-end" class="thdate-native" onchange="thdateSync(this)"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
-                    <div class="f-row"><label>ค้ำประกันถึง</label>
-                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-warr" class="thdate-native" onchange="thdateSync(this)"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
+                    <div class="f-row"><label>วันที่ส่งงาน</label>
+                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-deliver" class="thdate-native" onchange="thdateSync(this);ctAutoDates()"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
+                    <div class="f-row"><label>วันที่ตรวจรับงาน</label>
+                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-accept" class="thdate-native" onchange="thdateSync(this);ctAutoDates()"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
                   </div>
+                </div>
+                <div class="dw-group">
+                  <div class="dw-group-title"><span class="dot"></span>ค้ำประกัน และวัดค่าสะท้อนแสง</div>
+                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                    <div class="f-row"><label>ประเภทงาน</label>
+                      <select id="ct-type" onchange="ctTypeChanged()"><option value="">— เลือก —</option><option value="ไฟฟ้า">งานไฟฟ้า (ค้ำ 3 ปี)</option><option value="ผิวทาง">งานผิวทาง (ค้ำ 2 ปี)</option><option value="อื่น ๆ">อื่น ๆ</option></select></div>
+                    <div class="f-row"><label>กำหนดค้ำประกัน (ปี)</label><input type="number" min="0" step="1" id="ct-wyears" placeholder="เช่น 2" oninput="ctAutoDates()"></div>
+                    <div class="f-row"><label>วันที่ครบกำหนดคืนค้ำประกัน</label>
+                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-warr" class="thdate-native" onchange="thdateSync(this);this.dataset.manual='1'"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
+                  </div>
+                  <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0 8px;"><input type="checkbox" id="ct-refl" onchange="ctAutoDates()"> ต้องวัดค่าสะท้อนแสง (รอบ 12 เดือน และ 24 เดือน ถัดจากวันส่งงาน)</label>
+                  <div id="ct-auto-msg" style="font-size:12px;color:var(--ink-500);line-height:1.7;"></div>
                 </div>
                 <div class="dw-group">
                   <div class="dw-group-title"><span class="dot"></span>ช่วงทางหลวงที่สัญญาครอบคลุม</div>
@@ -1104,7 +1121,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div class="tab" data-cttab="done">สิ้นสุดแล้ว</div>
           </div>
           <div class="table-wrap"><table>
-            <thead><tr><th>เลขที่สัญญา</th><th>โครงการ / ผู้รับจ้าง</th><th>ปีงบ</th><th>ช่วงทางหลวง</th><th>วงเงิน (บาท)</th><th>ระยะสัญญา</th><th>ค้ำประกันถึง</th><th>สถานะ</th><th></th></tr></thead>
+            <thead><tr><th>เลขที่สัญญา</th><th>โครงการ / ผู้รับจ้าง</th><th>ปีงบ</th><th>ช่วงทางหลวง</th><th>เงินค่างาน (บาท)</th><th>เริ่ม – สิ้นสุดสัญญา</th><th>ส่งงาน / ตรวจรับ</th><th>คืนค้ำประกัน</th><th>วัดค่าสะท้อนแสง</th><th>สถานะ</th><th></th></tr></thead>
             <tbody id="ct-body"></tbody>
           </table></div>
           <div class="legend-block">
@@ -2908,12 +2925,43 @@ function ctFromApi(row){
   return { id:row.id, fiscalYear:Number(row.fiscalYear)||'', contractNo:row.contractNo||'', name:row.name||'', contractor:row.contractor||'',
     amount:Number(row.amount)||0, startDate:String(row.startDate||'').slice(0,10), endDate:String(row.endDate||'').slice(0,10),
     warrantyEnd:String(row.warrantyEnd||'').slice(0,10), supervisor:row.supervisor||'', status:row.status||'', note:row.note||'',
+    workQty:row.workQty||'', deliveryDate:String(row.deliveryDate||'').slice(0,10), acceptDate:String(row.acceptDate||'').slice(0,10),
+    workType:row.workType||'', warrantyYears:Number(row.warrantyYears)||'', reflectNeeded:row.reflectNeeded===true || row.reflectNeeded==='true',
     ranges: ranges.map(r=>({route:String(r.route==null?'':r.route), k1:Number(r.k1)||0, k2:Number(r.k2)||0})) };
 }
 function ctToApi(c){
   return { id:c.id, fiscalYear:c.fiscalYear===''?'':c.fiscalYear, contractNo:c.contractNo, name:c.name, contractor:c.contractor, amount:c.amount||0,
     startDate:c.startDate||'', endDate:c.endDate||'', warrantyEnd:c.warrantyEnd||'', supervisor:c.supervisor||'', status:c.status||'', note:c.note||'',
+    workQty:c.workQty||'', deliveryDate:c.deliveryDate||'', acceptDate:c.acceptDate||'', workType:c.workType||'',
+    warrantyYears:c.warrantyYears===''?'':c.warrantyYears, reflectNeeded:!!c.reflectNeeded,
     rangesJson:c.ranges };
+}
+/* บวกเดือนแบบปฏิทิน (31 ม.ค. + 1 เดือน = 28/29 ก.พ.) */
+function ctAddMonths(iso, n){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-').map(Number);
+  const last = new Date(y, m-1+n+1, 0).getDate();
+  const r = new Date(y, m-1+n, Math.min(d,last));
+  return r.getFullYear()+'-'+String(r.getMonth()+1).padStart(2,'0')+'-'+String(r.getDate()).padStart(2,'0');
+}
+/* วันนับค้ำประกัน = วันตรวจรับงาน (ถ้ายังไม่มี ใช้วันส่งงาน) */
+function ctWarrantyBase(c){ return c.acceptDate || c.deliveryDate || ''; }
+/* แจ้งเตือนคืนค้ำประกันล่วงหน้า 3 / 2 / 1 เดือน → {months, days} หรือ null */
+function ctWarrAlert(c){
+  if(!c.warrantyEnd || c.status==='ยกเลิกสัญญา') return null;
+  const t = ctTodayIso(); if(t > c.warrantyEnd) return null;
+  for(const m of [1,2,3]) if(t >= ctAddMonths(c.warrantyEnd, -m)) return {months:m, days:ctDaysTo(c.warrantyEnd)};
+  return null;
+}
+/* กำหนดวัดค่าสะท้อนแสง รอบ 12 / 24 เดือน ถัดจากวันส่งงาน */
+function ctReflDates(c){
+  if(!c.reflectNeeded || !c.deliveryDate) return [];
+  return [12,24].map(m=>({months:m, date:ctAddMonths(c.deliveryDate, m)}));
+}
+function ctNextRefl(c){
+  const t = ctTodayIso();
+  const n = ctReflDates(c).find(r=>r.date >= t);
+  return n ? {...n, days:ctDaysTo(n.date)} : null;
 }
 async function loadContractsFromApi(){
   try{
@@ -2931,6 +2979,13 @@ function ctStatus(c){
   if(c.status==='ยกเลิกสัญญา') return {key:'cancel', label:'ยกเลิกสัญญา', cls:'pill-neutral'};
   const t = ctTodayIso();
   if(c.startDate && t < c.startDate) return {key:'pending', label:'ยังไม่เริ่ม', cls:'pill-neutral'};
+  // ส่งงาน/ตรวจรับแล้ว → เข้าระยะค้ำประกันทันที (แม้ยังไม่ถึงวันสิ้นสุดสัญญา)
+  const base = ctWarrantyBase(c);
+  if(base && t >= base){
+    if(c.warrantyEnd && t <= c.warrantyEnd) return {key:'warranty', label:'ในระยะค้ำประกัน', cls:'pill-warn'};
+    if(!c.warrantyEnd) return {key:'warranty', label:'ส่งงานแล้ว (ยังไม่ระบุวันคืนค้ำ)', cls:'pill-warn'};
+    return {key:'done', label:'สิ้นสุดแล้ว', cls:'pill-neutral'};
+  }
   if(!c.endDate) return c.startDate ? {key:'running', label:'กำลังดำเนินการ', cls:'pill-ok'} : {key:'unknown', label:'ยังไม่ระบุวันที่', cls:'pill-neutral'};
   if(t <= c.endDate) return {key:'running', label:'กำลังดำเนินการ', cls:'pill-ok'};
   if(c.warrantyEnd && t <= c.warrantyEnd) return {key:'warranty', label:'ในระยะค้ำประกัน', cls:'pill-warn'};
@@ -2947,14 +3002,16 @@ function renderContracts(){
   // สรุปด้านบน
   const running = withSt.filter(x=>x.st.key==='running'), warranty = withSt.filter(x=>x.st.key==='warranty');
   const endSoon = running.filter(x=>{ const d=ctDaysTo(x.c.endDate); return d!==null && d<=60; });
-  const warrSoon = warranty.filter(x=>{ const d=ctDaysTo(x.c.warrantyEnd); return d!==null && d<=60; });
+  const warrSoon = withSt.filter(x=>ctWarrAlert(x.c)).sort((a,b)=>a.c.warrantyEnd.localeCompare(b.c.warrantyEnd));
+  const reflSoon = withSt.filter(x=>x.st.key!=='cancel' && (ctNextRefl(x.c)||{days:99}).days<=30);
   const sumAmt = running.reduce((s,x)=>s+(x.c.amount||0),0);
   const kpi = (label,val,sub)=>`<div class="routine-kpi-item"><div class="kpi-label">${label}</div><div class="kpi-val">${val}</div><div class="kpi-sub">${sub}</div></div>`;
   document.getElementById('ct-kpi').innerHTML =
     kpi('กำลังดำเนินการ', running.length+' สัญญา', 'วงเงินรวม '+fmtNum(sumAmt,0)+' บาท') + '<div class="routine-kpi-div"></div>' +
     kpi('ในระยะค้ำประกัน', warranty.length+' สัญญา', 'พ้นสัญญาแล้ว ยังอยู่ในค้ำประกัน') + '<div class="routine-kpi-div"></div>' +
     kpi('สิ้นสุดสัญญาภายใน 60 วัน', endSoon.length+' สัญญา', endSoon.length?esc(endSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี') + '<div class="routine-kpi-div"></div>' +
-    kpi('ค้ำประกันหมดภายใน 60 วัน', warrSoon.length+' สัญญา', warrSoon.length?esc(warrSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี');
+    kpi('คืนค้ำประกันภายใน 3 เดือน', warrSoon.length+' สัญญา', warrSoon.length?esc(warrSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี') + '<div class="routine-kpi-div"></div>' +
+    kpi('วัดค่าสะท้อนแสงภายใน 30 วัน', reflSoon.length+' สัญญา', reflSoon.length?esc(reflSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี');
   const ctKey = c=> Number(c.fiscalYear) || fyKey(c.startDate);
   const ctFy = statFyFilter('ct-fy', contractsList.map(ctKey));
   let rows = withSt.filter(x=>{
@@ -2964,26 +3021,35 @@ function renderContracts(){
     if(filter==='done') return x.st.key==='done' || x.st.key==='cancel';
     return true;
   });
-  if(q) rows = rows.filter(x=> (x.c.contractNo+' '+x.c.name+' '+x.c.contractor+' '+x.c.supervisor).toLowerCase().includes(q));
+  if(q) rows = rows.filter(x=> (x.c.contractNo+' '+x.c.name+' '+x.c.contractor+' '+x.c.supervisor+' '+x.c.workQty).toLowerCase().includes(q));
   rows.sort((a,b)=> String(b.c.startDate||'').localeCompare(String(a.c.startDate||'')) || String(b.c.contractNo).localeCompare(String(a.c.contractNo)));
   const can = isAdmin();
   body.innerHTML = rows.length ? rows.map(({c,st})=>{
-    const dEnd = ctDaysTo(c.endDate), dW = ctDaysTo(c.warrantyEnd);
+    const dEnd = ctDaysTo(c.endDate);
     const endHint = (st.key==='running' && dEnd!==null && dEnd<=60) ? `<div style="font-size:11px;color:var(--danger);">เหลือ ${dEnd} วัน</div>` : '';
-    const wHint = (st.key==='warranty' && dW!==null && dW<=60) ? `<div style="font-size:11px;color:var(--danger);">เหลือ ${dW} วัน</div>` : '';
+    const wa = ctWarrAlert(c);
+    const wHint = wa ? `<div style="font-size:11px;color:${wa.months===1?'var(--danger)':'var(--warn,#b7791f)'};">⚠ ภายใน ${wa.months} เดือน (เหลือ ${wa.days} วัน)</div>` : '';
+    const wSub = (c.workType||c.warrantyYears) ? `<div style="font-size:11px;color:var(--ink-400);">${c.workType?'งาน'+esc(c.workType.replace(' ๆ','')):''}${c.workType&&c.warrantyYears?' · ':''}${c.warrantyYears?'ค้ำ '+c.warrantyYears+' ปี':''}</div>` : '';
+    const nr = ctNextRefl(c);
+    const reflCell = c.reflectNeeded ? (c.deliveryDate ? ctReflDates(c).map(r=>{
+      const due = nr && nr.date===r.date && nr.days<=30;
+      return `<div style="white-space:nowrap;${due?'color:var(--danger);font-weight:600;':(r.date<ctTodayIso()?'color:var(--ink-400);':'')}">รอบ ${r.months} ด. ${fmtDateShort(r.date)}${due?` (อีก ${nr.days} วัน)`:''}</div>`;
+    }).join('') : '<span style="color:var(--ink-400);font-size:12px;">รอวันส่งงาน</span>') : '<span style="color:var(--ink-400);">—</span>';
     return `<tr>
       <td>${esc(c.contractNo)||'—'}</td>
-      <td><div style="font-weight:600;">${esc(c.name)||'—'}</div><div style="font-size:12px;color:var(--ink-400);">${esc(c.contractor)}${c.supervisor?' · ผู้ควบคุมงาน '+esc(c.supervisor):''}</div></td>
+      <td><div style="font-weight:600;">${esc(c.name)||'—'}</div><div style="font-size:12px;color:var(--ink-400);">${esc(c.contractor)}${c.supervisor?' · ผู้ควบคุมงาน '+esc(c.supervisor):''}</div>${c.workQty?`<div style="font-size:12px;color:var(--ink-400);">ปริมาณงาน: ${esc(c.workQty)}</div>`:''}</td>
       <td>${esc(c.fiscalYear)}</td>
       <td style="font-size:12.5px;">${ctRangeText(c)}</td>
       <td class="num">${c.amount?fmtNum(c.amount,2):'—'}</td>
       <td>${fmtDateShort(c.startDate)} – ${fmtDateShort(c.endDate)}${endHint}</td>
-      <td>${fmtDateShort(c.warrantyEnd)}${wHint}</td>
+      <td style="font-size:12.5px;white-space:nowrap;">ส่ง ${fmtDateShort(c.deliveryDate)}<br>ตรวจรับ ${fmtDateShort(c.acceptDate)}</td>
+      <td>${fmtDateShort(c.warrantyEnd)}${wSub}${wHint}</td>
+      <td style="font-size:12.5px;">${reflCell}</td>
       <td><span class="pill ${st.cls}">${st.label}</span></td>
       <td style="white-space:nowrap;">${can?`<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="openContractForm('${jsArg(c.id)}')"></button> <button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบ" onclick="deleteContract('${jsArg(c.id)}')"></button>`:''}</td>
     </tr>`;
-  }).join('') : `<tr><td colspan="9" style="text-align:center;color:var(--ink-400);padding:22px;">${contractsList.length?'ไม่พบรายการตามเงื่อนไข':'ยังไม่มีข้อมูลสัญญา'+(can?' — กด "+ เพิ่มสัญญา" เพื่อเริ่มบันทึก':'')}</td></tr>`;
-  document.getElementById('ct-foot').textContent = `ทั้งหมด ${contractsList.length} สัญญา · สถานะคำนวณจากวันที่ (กำลังดำเนินการ = ยังไม่พ้นวันสิ้นสุดสัญญา, ในระยะค้ำประกัน = พ้นสัญญาแล้วแต่ยังไม่ถึงวันค้ำประกันถึง) · ใช้สิทธิ์ส่วนงานที่ 2 (ผู้มีสิทธิ์แก้ไขเท่านั้นที่เพิ่ม/แก้/ลบได้)`;
+  }).join('') : `<tr><td colspan="11" style="text-align:center;color:var(--ink-400);padding:22px;">${contractsList.length?'ไม่พบรายการตามเงื่อนไข':'ยังไม่มีข้อมูลสัญญา'+(can?' — กด "+ เพิ่มสัญญา" เพื่อเริ่มบันทึก':'')}</td></tr>`;
+  document.getElementById('ct-foot').textContent = `ทั้งหมด ${contractsList.length} สัญญา · สถานะคำนวณจากวันที่ (กำลังดำเนินการ = ยังไม่ส่งงานและยังไม่พ้นวันสิ้นสุดสัญญา, ในระยะค้ำประกัน = ส่งงาน/ตรวจรับแล้วแต่ยังไม่ถึงวันคืนค้ำประกัน) · แจ้งเตือนคืนค้ำประกันล่วงหน้า 3 / 2 / 1 เดือน · วัดค่าสะท้อนแสงรอบ 12 และ 24 เดือนถัดจากวันส่งงาน · ใช้สิทธิ์ส่วนงานที่ 2 (ผู้มีสิทธิ์แก้ไขเท่านั้นที่เพิ่ม/แก้/ลบได้)`;
 }
 /* ---- ช่วงทางหลวงในฟอร์ม ---- */
 function ctRouteOptions(sel){
@@ -3029,6 +3095,32 @@ function validateContractRanges(){
   msg.innerHTML = h;
 }
 function closeContractForm(){ document.getElementById('ct-form-overlay').classList.add('hidden'); }
+function ctCalcWarrEnd(base, years){ return base && Number(years)>0 ? ctAddMonths(base, Number(years)*12) : ''; }
+/* เลือกประเภทงาน → ตั้งปีค้ำประกัน (ไฟฟ้า 3 ปี / ผิวทาง 2 ปี) และติ๊กวัดค่าสะท้อนแสงให้งานผิวทาง */
+function ctTypeChanged(){
+  const t = document.getElementById('ct-type').value;
+  const yrs = {'ไฟฟ้า':3, 'ผิวทาง':2}[t];
+  if(yrs) document.getElementById('ct-wyears').value = yrs;
+  if(t==='ผิวทาง') document.getElementById('ct-refl').checked = true;
+  if(t==='ไฟฟ้า') document.getElementById('ct-refl').checked = false;
+  document.getElementById('ct-warr').dataset.manual = '';
+  ctAutoDates();
+}
+/* คำนวณวันคืนค้ำประกัน (วันตรวจรับ + ปี; ยังไม่ตรวจรับใช้วันส่งงาน) และแสดงกำหนดวัดค่าสะท้อนแสง */
+function ctAutoDates(){
+  const v = id => document.getElementById(id).value;
+  const c = {deliveryDate:v('ct-deliver'), acceptDate:v('ct-accept'), reflectNeeded:document.getElementById('ct-refl').checked};
+  const base = ctWarrantyBase(c), yrs = v('ct-wyears');
+  const warrEl = document.getElementById('ct-warr');
+  const calc = ctCalcWarrEnd(base, yrs);
+  if(calc && !warrEl.dataset.manual){ warrEl.value = calc; thdateSync(warrEl); }
+  const msg = [];
+  if(calc) msg.push(`วันคืนค้ำประกันตามสูตร: <b>${fmtDateShort(calc)}</b> (${c.acceptDate?'วันตรวจรับ':'วันส่งงาน'} + ${yrs} ปี)${warrEl.dataset.manual && warrEl.value!==calc?` · <a href="#" onclick="document.getElementById('ct-warr').dataset.manual='';ctAutoDates();return false;">ใช้วันที่ตามสูตร</a>`:''}`);
+  else if(Number(yrs)>0) msg.push('กรอกวันส่งงานหรือวันตรวจรับ เพื่อคำนวณวันคืนค้ำประกันอัตโนมัติ');
+  if(warrEl.value) msg.push(`แจ้งเตือนคืนค้ำประกัน: ${[3,2,1].map(m=>fmtDateShort(ctAddMonths(warrEl.value,-m))+' ('+m+' ด.)').join(' · ')}`);
+  if(c.reflectNeeded) msg.push(c.deliveryDate ? 'วัดค่าสะท้อนแสง: ' + ctReflDates(c).map(r=>`รอบ ${r.months} เดือน ${fmtDateShort(r.date)}`).join(' · ') : 'วัดค่าสะท้อนแสง: กรอกวันส่งงานเพื่อคำนวณกำหนด');
+  document.getElementById('ct-auto-msg').innerHTML = msg.join('<br>');
+}
 function openContractForm(id){
   if(!requireAdmin()) return;
   const c = id ? contractsList.find(x=>String(x.id)===String(id)) : null;
@@ -3037,14 +3129,24 @@ function openContractForm(id){
   document.getElementById('ct-id').value = c ? c.id : '';
   document.getElementById('ct-name').value = c ? c.name : '';
   document.getElementById('ct-no').value = c ? c.contractNo : '';
-  document.getElementById('ct-fy').value = c ? c.fiscalYear : (TODAY.getMonth()>=9 ? TODAY.getFullYear()+544 : TODAY.getFullYear()+543);
+  document.getElementById('ct-f-fy').value = c ? c.fiscalYear : (TODAY.getMonth()>=9 ? TODAY.getFullYear()+544 : TODAY.getFullYear()+543);
   document.getElementById('ct-by').value = c ? c.contractor : '';
   document.getElementById('ct-amount').value = c && c.amount ? c.amount : '';
+  document.getElementById('ct-qty').value = c ? c.workQty : '';
   document.getElementById('ct-sup').value = c ? c.supervisor : '';
   document.getElementById('ct-start').value = c ? c.startDate : '';
   document.getElementById('ct-end').value = c ? c.endDate : '';
-  document.getElementById('ct-warr').value = c ? c.warrantyEnd : '';
-  ['ct-start','ct-end','ct-warr'].forEach(i=>thdateSync(document.getElementById(i)));
+  document.getElementById('ct-deliver').value = c ? c.deliveryDate : '';
+  document.getElementById('ct-accept').value = c ? c.acceptDate : '';
+  document.getElementById('ct-type').value = c ? c.workType : '';
+  document.getElementById('ct-wyears').value = c ? c.warrantyYears : '';
+  document.getElementById('ct-refl').checked = c ? c.reflectNeeded : false;
+  const warrEl = document.getElementById('ct-warr');
+  warrEl.value = c ? c.warrantyEnd : '';
+  // วันคืนค้ำที่ไม่ตรงกับสูตร (กรอกเองไว้เดิม) → ถือว่ากรอกเอง ไม่คำนวณทับ
+  warrEl.dataset.manual = (c && c.warrantyEnd && c.warrantyEnd !== ctCalcWarrEnd(ctWarrantyBase(c), c.warrantyYears)) ? '1' : '';
+  ['ct-start','ct-end','ct-deliver','ct-accept','ct-warr'].forEach(i=>thdateSync(document.getElementById(i)));
+  ctAutoDates();
   document.getElementById('ct-status').value = c ? c.status : '';
   document.getElementById('ct-note').value = c ? c.note : '';
   document.getElementById('ct-ranges').innerHTML = '';
@@ -3061,14 +3163,20 @@ async function saveContract(){
   if(!ranges.length){ alert('กรุณาเพิ่มช่วงทางหลวงที่สัญญาครอบคลุมอย่างน้อย 1 ช่วง'); return; }
   const start = g('ct-start'), end = g('ct-end'), warr = g('ct-warr');
   if(start && end && end < start){ alert('วันสิ้นสุดสัญญาต้องไม่ก่อนวันเริ่มสัญญา'); return; }
-  if(end && warr && warr < end){ alert('วันที่ค้ำประกันถึง ต้องไม่ก่อนวันสิ้นสุดสัญญา'); return; }
+  const deliver = g('ct-deliver'), accept = g('ct-accept');
+  if(start && deliver && deliver < start){ alert('วันที่ส่งงานต้องไม่ก่อนวันเริ่มสัญญา'); return; }
+  if(deliver && accept && accept < deliver){ alert('วันที่ตรวจรับงานต้องไม่ก่อนวันที่ส่งงาน'); return; }
+  if(warr && warr < (accept || deliver || end || '')){ alert('วันที่ครบกำหนดคืนค้ำประกัน ต้องไม่ก่อน'+(accept?'วันตรวจรับงาน':deliver?'วันส่งงาน':'วันสิ้นสุดสัญญา')); return; }
+  if(deliver && end && deliver > end && !confirm('วันที่ส่งงานเลยวันสิ้นสุดสัญญา (ส่งงานล่าช้า)\nต้องการบันทึกต่อหรือไม่?')) return;
   if(warns.length && !confirm('ระบบตรวจพบว่าบางช่วง กม. อยู่นอกขอบเขตที่หมวดควบคุม:\n• ' + warns.join('\n• ') + '\n\nต้องการบันทึกต่อหรือไม่?')) return;
   const id = g('ct-id');
   const dupNo = no && contractsList.find(x=>String(x.contractNo).trim()===no && String(x.id)!==String(id));
   if(dupNo && !confirm('เลขที่สัญญา "'+no+'" มีอยู่แล้ว ('+(dupNo.name||'ไม่มีชื่อ')+')\nต้องการบันทึกซ้ำหรือไม่?')) return;
   const c = {
-    id: id || undefined, fiscalYear: g('ct-fy') ? Number(g('ct-fy')) : '', contractNo:no, name, contractor:g('ct-by'),
+    id: id || undefined, fiscalYear: g('ct-f-fy') ? Number(g('ct-f-fy')) : '', contractNo:no, name, contractor:g('ct-by'),
     amount: parseFloat(g('ct-amount'))||0, startDate:start, endDate:end, warrantyEnd:warr, supervisor:g('ct-sup'),
+    workQty:g('ct-qty'), deliveryDate:deliver, acceptDate:accept, workType:g('ct-type'),
+    warrantyYears: g('ct-wyears') ? Number(g('ct-wyears')) : '', reflectNeeded:document.getElementById('ct-refl').checked,
     status:document.getElementById('ct-status').value, note:g('ct-note'), ranges
   };
   const saveBtn = document.getElementById('ct-save-btn'), cancelBtn = document.getElementById('ct-cancel-btn');
@@ -3106,13 +3214,14 @@ function deleteContract(id){
 function exportContractsCsv(){
   if(!contractsList.length){ alert('ยังไม่มีข้อมูลสัญญา'); return; }
   const cell = v => { v = v==null?'':String(v); return /[",\r\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
-  const rows = [['ชื่อโครงการ','เลขที่สัญญา','ผู้รับจ้าง','ปีงบ','ทล.','ตอน','กม.เริ่ม','กม.สิ้นสุด','วันเริ่มสัญญา','วันสิ้นสุดสัญญา','ค้ำประกันถึง','สถานะ','หมายเหตุ']];
+  const rows = [['ชื่อโครงการ','เลขที่สัญญา','ผู้รับจ้าง','ปีงบ','ทล.','ตอน','กม.เริ่ม','กม.สิ้นสุด','วันเริ่มสัญญา','วันสิ้นสุดสัญญา','ค้ำประกันถึง','สถานะ','หมายเหตุ','ปริมาณงาน','วันส่งงาน','วันตรวจรับงาน','ประเภทงาน','ค้ำประกัน(ปี)','วัดค่าสะท้อนแสง 12 ด.','วัดค่าสะท้อนแสง 24 ด.']];
   contractsList.forEach(c=>{
     const st = ctStatus(c).label;
     const rs = c.ranges.length ? c.ranges : [{route:'',k1:0,k2:0}];
     rs.forEach(r=>{
       const rt = findRoute(r.route);
-      rows.push([c.name, c.contractNo, c.contractor, c.fiscalYear, r.route, rt?rt.controlNo||'':'', c.ranges.length?kmFmt(r.k1):'', c.ranges.length?kmFmt(r.k2):'', c.startDate, c.endDate, c.warrantyEnd, st, c.note]);
+      rows.push([c.name, c.contractNo, c.contractor, c.fiscalYear, r.route, rt?rt.controlNo||'':'', c.ranges.length?kmFmt(r.k1):'', c.ranges.length?kmFmt(r.k2):'', c.startDate, c.endDate, c.warrantyEnd, st, c.note,
+        c.workQty, c.deliveryDate, c.acceptDate, c.workType, c.warrantyYears, ...[0,1].map(i=>(ctReflDates(c)[i]||{}).date||'')]);
     });
   });
   const csv = '﻿' + rows.map(r=>r.map(cell).join(',')).join('\r\n');

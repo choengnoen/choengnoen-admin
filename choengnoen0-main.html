@@ -1280,14 +1280,27 @@ function computeAlerts(){
   const ctIso = v => String(v||'').slice(0,10);
   const ctName = c => esc(((c.contractNo||'')+' '+(c.name||'(ไม่ระบุชื่อ)')).trim());
   const ctList = (arr, key) => arr.slice(0,5).map(x=>`• ${ctName(x.c)} (เหลือ ${x[key]} วัน)`).join('<br>') + (arr.length>5?`<br>และอีก ${arr.length-5} สัญญา`:'');
-  const inWarranty = cts.filter(c=>ctIso(c.endDate) && ctIso(c.warrantyEnd) && daysUntil(ctIso(c.endDate))<0 && daysUntil(ctIso(c.warrantyEnd))>=0)
-    .map(c=>({c, d:daysUntil(ctIso(c.warrantyEnd))})).sort((a,b)=>a.d-b.d);
-  const w30 = inWarranty.filter(x=>x.d<=30), w90 = inWarranty.filter(x=>x.d>30 && x.d<=90);
-  const endSoon = cts.filter(c=>c.status!=='ระงับงาน' && ctIso(c.endDate) && (!ctIso(c.startDate) || daysUntil(ctIso(c.startDate))<=0) && daysUntil(ctIso(c.endDate))>=0 && daysUntil(ctIso(c.endDate))<=60)
+  // บวกเดือนแบบปฏิทิน (เหมือน ctAddMonths ในระบบที่ 2)
+  const ctAddM = (iso, n) => { const [y,m,d] = iso.split('-').map(Number); const r = new Date(y, m-1+n, Math.min(d, new Date(y, m-1+n+1, 0).getDate())); return r.getFullYear()+'-'+String(r.getMonth()+1).padStart(2,'0')+'-'+String(r.getDate()).padStart(2,'0'); };
+  const todayIso = todayISO();
+  // คืนค้ำประกัน: แจ้งเตือนล่วงหน้า 3 / 2 / 1 เดือน ก่อนวันครบกำหนดคืนค้ำประกัน
+  const warrLv = cts.map(c=>{
+    const w = ctIso(c.warrantyEnd); if(!w || todayIso > w) return null;
+    const m = [1,2,3].find(m=>todayIso >= ctAddM(w,-m)); return m ? {c, m, d:daysUntil(w)} : null;
+  }).filter(Boolean).sort((a,b)=>a.d-b.d);
+  const w30 = warrLv.filter(x=>x.m===1), w90 = warrLv.filter(x=>x.m>1);
+  // วัดค่าสะท้อนแสง รอบ 12 / 24 เดือน ถัดจากวันส่งงาน — เตือนก่อน 30 วัน
+  const reflDue = cts.filter(c=>(c.reflectNeeded===true||c.reflectNeeded==='true') && ctIso(c.deliveryDate)).map(c=>{
+    const r = [12,24].map(m=>({m, date:ctAddM(ctIso(c.deliveryDate), m)})).find(r=>r.date >= todayIso);
+    return r ? {c, m:r.m, d:daysUntil(r.date)} : null;
+  }).filter(x=>x && x.d<=30).sort((a,b)=>a.d-b.d);
+  const endSoon = cts.filter(c=>c.status!=='ระงับงาน' && !ctIso(c.deliveryDate) && ctIso(c.endDate) && (!ctIso(c.startDate) || daysUntil(ctIso(c.startDate))<=0) && daysUntil(ctIso(c.endDate))>=0 && daysUntil(ctIso(c.endDate))<=60)
     .map(c=>({c, d:daysUntil(ctIso(c.endDate))})).sort((a,b)=>a.d-b.d);
-  if(w30.length) out.red.push({id:'ct-warr-30', noAssign:true, task:'ค้ำประกันสัญญาใกล้หมด (ภายใน 30 วัน) — ควรตรวจความเสียหายก่อนพ้นค้ำประกัน', detailHTML:ctList(w30,'d'), pillHTML:`<span class="pill pill-danger">${w30.length} สัญญา</span>`});
+  const wList = arr => arr.slice(0,5).map(x=>`• ${ctName(x.c)} — คืนค้ำ ${fmtDate(ctIso(x.c.warrantyEnd))} (ภายใน ${x.m} เดือน · เหลือ ${x.d} วัน)`).join('<br>') + (arr.length>5?`<br>และอีก ${arr.length-5} สัญญา`:'');
+  if(w30.length) out.red.push({id:'ct-warr-30', noAssign:true, task:'ครบกำหนดคืนค้ำประกันภายใน 1 เดือน — ควรตรวจความเสียหายก่อนคืนค้ำประกัน', detailHTML:wList(w30), pillHTML:`<span class="pill pill-danger">${w30.length} สัญญา</span>`});
   if(endSoon.length) out.blue.push({id:'ct-end-60', noAssign:true, task:'สัญญาใกล้สิ้นสุด (ภายใน 60 วัน)', detailHTML:ctList(endSoon,'d'), pillHTML:`<span class="pill pill-neutral">${endSoon.length} สัญญา</span>`});
-  if(w90.length) out.blue.push({id:'ct-warr-90', noAssign:true, task:'ค้ำประกันสัญญาจะหมดภายใน 90 วัน', detailHTML:ctList(w90,'d'), pillHTML:`<span class="pill pill-neutral">${w90.length} สัญญา</span>`});
+  if(w90.length) out.blue.push({id:'ct-warr-90', noAssign:true, task:'ใกล้ครบกำหนดคืนค้ำประกัน (ภายใน 3 / 2 เดือน)', detailHTML:wList(w90), pillHTML:`<span class="pill pill-warn">${w90.length} สัญญา</span>`});
+  if(reflDue.length) out.blue.push({id:'ct-refl-30', noAssign:true, task:'ครบกำหนดวัดค่าสะท้อนแสง (ภายใน 30 วัน)', detailHTML: reflDue.slice(0,5).map(x=>`• ${ctName(x.c)} — รอบ ${x.m} เดือน (เหลือ ${x.d} วัน)`).join('<br>') + (reflDue.length>5?`<br>และอีก ${reflDue.length-5} สัญญา`:''), pillHTML:`<span class="pill pill-neutral">${reflDue.length} สัญญา</span>`});
   return out;
 }
 function renderAlerts(){
