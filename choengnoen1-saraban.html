@@ -1342,7 +1342,7 @@ function __staffFormHTML(p, s, isAdd){
         <div class="f-row c1"><label>ประเภทบุคลากร</label><select class="edit-input" id="${p}-ptype" onchange="__staffFormUpd('${p}')">
           ${['ข้าราชการ','ลูกจ้างประจำ','พนักงานราชการ','ลูกจ้างชั่วคราว'].map(x=>`<option ${x===ptype?'selected':''}>${x}</option>`).join('')}
         </select></div>
-        <div class="f-row c1"><label>สถานะ</label><select class="edit-input" id="${p}-status">
+        <div class="f-row c1"><label>สถานะ</label><select class="edit-input" id="${p}-status" onchange="__staffFormUpd('${p}')">
           ${stOpts.map(([k,t])=>`<option value="${k}" ${k===st?'selected':''}>${t}</option>`).join('')}
         </select></div>
         <div class="f-row c2"><label>หน้าที่พิเศษ</label><div class="sf-seg">
@@ -1351,6 +1351,7 @@ function __staffFormHTML(p, s, isAdd){
         </div></div>
         <div class="f-row c2"><label>เริ่มปฏิบัติหน้าที่ยามตั้งแต่วันที่</label><input type="date" class="edit-input" id="${p}-dutystart" value="${v(s.dutyStart)}" ${g?'':'disabled'}></div>
         <div class="f-row c2" id="${p}-w-start"><label>วันที่เริ่มงาน</label><input type="date" class="edit-input" id="${p}-startdate" value="${v(s.startDate)}"></div>
+        <div class="f-row c2" id="${p}-w-resign"><label>วันที่ลาออก (มีผลตั้งแต่วันที่)</label><input type="date" class="edit-input" id="${p}-resigndate" value="${v(s.resignedDate)}"></div>
         <div class="f-row c2" id="${p}-w-rate"><label>อัตราค่าจ้าง/วัน (บาท)</label><input type="number" class="edit-input" id="${p}-rate" value="${v(s.rate)}" placeholder="เช่น 400"></div>
       </div>
     </div>
@@ -1384,6 +1385,7 @@ function __staffFormUpd(p){
   const worker = document.getElementById(p+'-role').value.trim()==='คนงาน';
   const temp = document.getElementById(p+'-ptype').value==='ลูกจ้างชั่วคราว';
   document.getElementById(p+'-w-start').classList.toggle('hidden', !worker);
+  document.getElementById(p+'-w-resign').classList.toggle('hidden', document.getElementById(p+'-status').value!=='resigned');
   document.getElementById(p+'-w-rate').classList.toggle('hidden', !temp);
   document.getElementById(p+'-sec-leave').classList.toggle('hidden', temp);
   document.getElementById(p+'-n4').textContent = temp ? 3 : 4;
@@ -2085,7 +2087,7 @@ function __staffDetailViewHTML(s){
     f('ชื่อเล่น', s.nickname ? esc(s.nickname) : ''),
     f('ตำแหน่งทางราชการ', posVal),
     f('ประเภทบุคลากร', esc(s.ptype)),
-    f('สถานะ', __staffStatusPill(s) + (s.status==='retired' && s.retiredDate ? ` <span style="font-size:12.5px;color:var(--ink-400);">เมื่อ ${fmtDate(s.retiredDate)}</span>` : '')),
+    f('สถานะ', __staffStatusPill(s) + (s.status==='retired' && s.retiredDate ? ` <span style="font-size:12.5px;color:var(--ink-400);">เมื่อ ${fmtDate(s.retiredDate)}</span>` : '') + (s.status==='resigned' && s.resignedDate ? ` <span style="font-size:12.5px;color:var(--ink-400);">มีผลตั้งแต่ ${fmtDate(s.resignedDate)}</span>` : '')),
     f('วันเกิด / อายุ', s.birth ? fmtDateFull(s.birth)+' ('+age+' ปี)' : ''),
     f('วันที่เริ่มงาน', startVal),
     f('วุฒิการศึกษา', s.education ? esc(s.education) : ''),
@@ -2230,6 +2232,7 @@ async function saveStaffDetail(){
   s.status = document.getElementById('sd-status').value;
   if(s.status==='retired'){ if(!s.retiredDate) s.retiredDate = (__retirementDate(s) || TODAY.toISOString().slice(0,10)); }
   else s.retiredDate = null;
+  s.resignedDate = s.status==='resigned' ? (document.getElementById('sd-resigndate').value || null) : null;
   s.birth = document.getElementById('sd-birth').value || null;
   s.startDate = document.getElementById('sd-startdate').value || null;
   const vcVal = document.getElementById('sd-vaccarry').value, vcFy = document.getElementById('sd-vaccarryfy').value;
@@ -2299,6 +2302,7 @@ async function submitAddStaff(){
     emergencyPhone: document.getElementById('as-emergency-phone').value.trim() || null,
     bankAcc: document.getElementById('as-bank').value.trim() || null,
     status: document.getElementById('as-status').value,
+    resignedDate: document.getElementById('as-status').value==='resigned' ? (document.getElementById('as-resigndate').value || null) : null,
     startDate: document.getElementById('as-startdate').value || null,
     vacCarry: document.getElementById('as-vaccarry').value!=='' ? Number(document.getElementById('as-vaccarry').value) : null,
     vacCarryFy: document.getElementById('as-vaccarry').value!=='' && document.getElementById('as-vaccarryfy').value ? Number(document.getElementById('as-vaccarryfy').value) : null

@@ -1018,9 +1018,8 @@ function budgetSpentOf(cat, cycles){
   if(cat==='ค่าวัสดุ') return D.matTx.filter(t=>t.type==='receive' && inFy(t.date)).reduce((s,t)=>s+(Number(t.totalPrice)||0),0);
   if(cat==='ค่าสาธารณูปโภค') return D.util.filter(b=>cycles.indexOf(b.cycle)!==-1).reduce((s,b)=>s+(Number(b.billAmount)||0),0);
   if(cat==='งบซ่อมบำรุง'){
-    const roster = LaborCalc.rosterFrom(D.staff);
     return cycles.reduce((s,c)=>{
-      if(!(c in __laborSpendCache)) __laborSpendCache[c] = LaborCalc.spendOf(c, roster, D.leave, D.holidays);
+      if(!(c in __laborSpendCache)) __laborSpendCache[c] = LaborCalc.spendOf(c, LaborCalc.rosterFrom(D.staff, c), D.leave, D.holidays); // รายชื่อตามช่วงเวลาที่ปฏิบัติงานจริงของแต่ละเดือน
       return s + __laborSpendCache[c];
     },0);
   }

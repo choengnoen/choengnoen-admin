@@ -540,7 +540,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div class="table-wrap"><table id="ot-table"></table></div>
           <div class="legend-block" id="ot-note-block">
             <button type="button" class="legend-dot-btn no-print" id="ot-note-toggle" onclick="__toggleOtNote(this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="ot-note" style="display:none;background:transparent;border-top:none;">อนุมัติล่วงหน้าอย่างน้อย 2 วันทำการ (ยกเว้นเหตุฉุกเฉินขออนุมัติภายหลังได้) · อัตราค่าตอบแทน: ลูกจ้าง ตอนเย็นวันทำงาน ชั่วโมงละ 50 บาท ไม่เกิน 200 บาท/วัน · วันเสาร์-อาทิตย์และวันหยุดนักขัตฤกษ์ 377.85 บาท/วัน · ข้าราชการ / พนักงานราชการ / ลูกจ้างประจำ 200 บาท/วัน</div>
+            <div class="foot-note" id="ot-note" style="display:none;background:transparent;border-top:none;">อนุมัติล่วงหน้าอย่างน้อย 2 วันทำการ (ยกเว้นเหตุฉุกเฉินขออนุมัติภายหลังได้) · อัตราค่าตอบแทน: ลูกจ้าง ตอนเย็นวันทำงาน ชั่วโมงละ 50 บาท ไม่เกิน 200 บาท/วัน · วันเสาร์-อาทิตย์และวันหยุดนักขัตฤกษ์ 377.85 บาท/วัน · ข้าราชการ / พนักงานราชการ เหมาจ่าย 200 บาท/วัน · ลูกจ้างประจำ นอกเวลาทำงานปกติ ชั่วโมงละ 50 บาท ไม่เกิน 4 ชม. (200 บาท/วัน)</div>
           </div>
         </div>
         <div id="ot-modal-overlay" class="modal-overlay hidden no-print">
@@ -732,7 +732,7 @@ const __SHARED_STAFF_KEY = 'saraban_shared_staff_v1';
 /* อ่านรายชื่อบุคลากรจาก Firestore โดยตรง (โหลดไว้ตอนเปิดหน้าใน __initApiData) — เดิมอ่าน localStorage ที่มีเฉพาะเครื่องที่เคยเปิดระบบที่ 1 */
 function loadRealStaffRoster(){
   if(!(window.FBL && FBL.rows)) return [];
-  return FBL.rows('staff').map(s=>({name:s.name, role:s.role||null, duty:s.duty||null, dutyStart:s.dutyStart||null, ptype:s.ptype, rate:(s.rate===''||s.rate==null)?null:Number(s.rate), status:s.status, bankAcc:s.bankAcc||''}));
+  return FBL.rows('staff').map(s=>({name:s.name, role:s.role||null, duty:s.duty||null, dutyStart:s.dutyStart||null, ptype:s.ptype, rate:(s.rate===''||s.rate==null)?null:Number(s.rate), status:s.status, bankAcc:s.bankAcc||'', startDate:s.startDate||null, retiredDate:s.retiredDate||null, resignedDate:s.resignedDate||null}));
 }
 // รายชื่อสำรอง ใช้เฉพาะกรณีที่ยังไม่เคยเปิด/บันทึกข้อมูลบุคลากรในระบบที่ 1 เลย (localStorage ที่ใช้ร่วมกันยังว่างอยู่)
 const FALLBACK_STAFF_ROSTER = [
@@ -768,8 +768,17 @@ function buildLaborRoster(){
    ตั้งค่าได้ที่ระบบที่ 1 → ข้อมูลบุคลากร → "ปฏิบัติหน้าที่ยาม (จ้างรวมวันเสาร์)" — ระบบที่ 1 ใช้เงื่อนไขเดียวกันนับวันลา */
 const isGuard = LaborCalc.isGuard;
 const worksSaturday = LaborCalc.worksSaturday;
-let laborRoster = buildLaborRoster();
-function __refreshLaborRoster(){ laborRoster = buildLaborRoster(); }
+let laborRoster = buildLaborRoster(); // ผู้ที่ยังปฏิบัติงานอยู่ปัจจุบัน (ใช้กับ OT)
+/* รายชื่อในบัญชีแรงงานของรอบเดือนนั้น ๆ ตามช่วงเวลาที่ปฏิบัติงานจริง — ผู้เกษียณอายุแล้วยังแสดงในเดือนก่อนวันเกษียณ */
+let laborRosterCache = {};
+function laborRosterOf(cyc){
+  if(!laborRosterCache[cyc]){
+    const real = loadRealStaffRoster();
+    laborRosterCache[cyc] = LaborCalc.rosterFrom(real.length ? real : FALLBACK_STAFF_ROSTER, cyc);
+  }
+  return laborRosterCache[cyc];
+}
+function __refreshLaborRoster(){ laborRoster = buildLaborRoster(); laborRosterCache = {}; }
 
 /* วันหยุดนักขัตฤกษ์ต่อรอบบิล = รายการตั้งต้นใน labor-calc.js + ตาราง public_holidays (จัดการได้ที่ระบบที่ 1 → การลา → วันหยุดนักขัตฤกษ์)
    จ่ายค่าจ้างเสมือนมาปฏิบัติงาน */
@@ -790,7 +799,7 @@ let attendanceCache = {}; // cycleKey -> {name -> [codes...]} — แคชใ�
 const daysInCycle = LaborCalc.daysInCycle;
 function generateAttendance(cycleKey){
   if(attendanceCache[cycleKey]) return attendanceCache[cycleKey];
-  const map = LaborCalc.attendanceOf(cycleKey, laborRoster, loadRealLeaveRequests(), (window.FBL && FBL.rows) ? FBL.rows('public_holidays') : []);
+  const map = LaborCalc.attendanceOf(cycleKey, laborRosterOf(cycleKey),loadRealLeaveRequests(), (window.FBL && FBL.rows) ? FBL.rows('public_holidays') : []);
   attendanceCache[cycleKey] = map;
   return map;
 }
@@ -1206,19 +1215,20 @@ function renderLaborSummary(){
     const att = generateAttendance(cyc);
     // ปัดเศษ ปกส. รายคนแล้วค่อยรวม ให้ยอดตรงกับฟอร์ม ง.3-12 ด้านล่าง (เดิมปัดจากยอดรวมทั้งก้อน ทำให้ต่างกันหลักบาท)
     let total=0, ss=0, days=0;
-    laborRoster.forEach(emp=>{
+    const roster = laborRosterOf(cyc);
+    roster.forEach(emp=>{
       const wd = (att[emp.name]||[]).filter(c=>WORKDAY_CODES.has(c)).length;
       const amount = wd*emp.rate;
       total += amount; ss += Math.round(amount*0.05); days += wd;
     });
     const info = laborSentInfo(cyc);
-    return {cyc, total, ss, net: total-ss, days, info};
+    return {cyc, total, ss, net: total-ss, days, people: roster.length, info};
   });
   const viewing = document.getElementById('labor-cycle').value;
   const thead = `<thead><tr><th>รอบเดือน</th><th class="ctr">คน / วันทำงาน</th><th class="num">ยอดเงินรวม</th><th class="num">หัก ปกส. 5%</th><th class="num">ยอดรับจริงรวม</th><th class="ctr">สถานะการส่ง</th><th class="no-print"></th></tr></thead>`;
   const tbody = rows.map(r=>`<tr data-cyc="${esc(r.cyc)}"${r.cyc===viewing?' class="is-viewing"':''}>
       <td><b>${cycleLabel(r.cyc)}</b></td>
-      <td class="ctr">${laborRoster.length} คน / ${r.days} วัน</td>
+      <td class="ctr">${r.people} คน / ${r.days} วัน</td>
       <td class="num">${fmtMoney(r.total)}</td>
       <td class="num">${r.ss.toLocaleString('en-US')}</td>
       <td class="num"><b>${fmtMoney(r.net)}</b></td>
@@ -1415,7 +1425,8 @@ function buildPaymentEvidenceSVG(cyc, mode){
   const shortName = n => String(n||'').replace(/^นางสาว/,'น.ส.').replace(/\s+/g,' ');
 
   /* จำนวนแถว: เท่าต้นฉบับ 25 แถวเสมอ (คนไม่ครบ = แถวว่าง) ถ้าคนเกิน 22 คน เพิ่มแถวและลดความสูงแถวให้ตารางจบที่ขอบล่างเดิม */
-  const nRows = Math.max(G.ROWS, laborRoster.length + 3);
+  const roster = laborRosterOf(cyc);
+  const nRows = Math.max(G.ROWS, roster.length + 3);
   const rh = Math.min(G.ROW, (G.BOTTOM - G.HB) / (nRows + 2));
   const bodyBot = G.HB + nRows*rh, totBot = bodyBot + rh, wordsBot = totBot + rh;
   const base = top => top + rh*0.748;                                  // เส้นฐานตัวอักษรในแถว (ต้นฉบับ 9.07 จาก 12.125)
@@ -1451,7 +1462,7 @@ function buildPaymentEvidenceSVG(cyc, mode){
   let sumDays = 0, sumAmt = 0, sumSS = 0, sumNet = 0;
   const guards = [];
   for(let i=0; i<nRows; i++){
-    const y = base(G.HB + i*rh), emp = laborRoster[i];
+    const y = base(G.HB + i*rh), emp = roster[i];
     if(!emp){ // แถวว่าง: ต้นฉบับแสดง 0 และ -
       s += T(mid(R[0],R[1]), y, '0', {a:'middle'}) + money(y,0,R[1],R[2]) + money(y,0,R[2],R[3]) + money(y,0,R[3],R[4]);
       continue;
@@ -1605,25 +1616,34 @@ function buildOtRoster(){
     .map(s=>({...s, ptype: s.ptype || (s.role==='คนงาน' ? 'ลูกจ้างชั่วคราว' : '')}))
     .sort((a,b)=>rank(a)-rank(b));
 }
-/* อัตราค่าตอบแทนนอกเวลาราชการ (ต่อคนต่อวัน)
-   - ข้าราชการ / พนักงานราชการ / ลูกจ้างประจำ: เหมาจ่ายวันละ 200 บาท
-   - ลูกจ้าง: วันทำงานของผู้นั้น (ตอนเย็น) ชั่วโมงละ 50 บาท ไม่เกิน 200 บาท (นับเต็มชั่วโมง)
+/* อัตราค่าตอบแทนนอกเวลาราชการ (ต่อคนต่อวัน) — นับเต็มชั่วโมง
+   - ข้าราชการ / พนักงานราชการ: เหมาจ่ายวันละ 200 บาท
+   - ลูกจ้างประจำ: นอกเวลาทำงานปกติ ชั่วโมงละ 50 บาท ไม่เกิน 4 ชม. (200 บาท/วัน)
+   - ลูกจ้าง: วันทำงานของผู้นั้น (ตอนเย็น) ชั่วโมงละ 50 บาท ไม่เกิน 200 บาท
               วันเสาร์-อาทิตย์ / วันหยุดนักขัตฤกษ์ เหมาจ่ายวันละ 377.85 บาท
    วันเสาร์ของผู้ปฏิบัติหน้าที่ยามนับเป็นวันทำงาน (เหมือนตัวตรวจช่วงเวลาราชการ) */
-const OT_RATE_HOUR = 50, OT_EVENING_CAP = 200, OT_HOLIDAY_DAY = 377.85, OT_OFFICIAL_DAY = 200;
-function isOtOfficial(emp){ return ['ข้าราชการ','พนักงานราชการ','ลูกจ้างประจำ'].includes(emp && emp.ptype); }
+const OT_RATE_HOUR = 50, OT_DAY_CAP = 200, OT_HOLIDAY_DAY = 377.85, OT_OFFICIAL_DAY = 200;
+function isOtOfficial(emp){ return ['ข้าราชการ','พนักงานราชการ'].includes(emp && emp.ptype); }
+function isOtPermanent(emp){ return (emp && emp.ptype)==='ลูกจ้างประจำ'; }
+/* วันทำงานปกติของผู้นั้น = จันทร์-ศุกร์ที่ไม่ใช่วันหยุดนักขัตฤกษ์ + วันเสาร์ของผู้ปฏิบัติหน้าที่ยาม */
+function otIsWorkday(emp, date){
+  const dow = new Date(date+'T00:00:00').getDay();
+  return (dow===6 && worksSaturday(emp, date)) || (dow>=1 && dow<=5 && !holidayNameOn(date.slice(0,7), +date.slice(8,10)));
+}
 function calcOtAmount(name, date, time){
   const emp = otRoster.find(e=>e.name===name);
   if(!emp || !date) return {amount:0, note:'เลือกวันที่เพื่อคำนวณ'};
   if(isOtOfficial(emp)) return {amount:OT_OFFICIAL_DAY, note:`${emp.ptype} เหมาจ่ายวันละ 200 บาท`};
-  const dow = new Date(date+'T00:00:00').getDay();
-  const holiday = holidayNameOn(date.slice(0,7), +date.slice(8,10));
-  const workday = (dow===6 && worksSaturday(emp, date)) || (dow>=1 && dow<=5 && !holiday);
-  if(!workday) return {amount:OT_HOLIDAY_DAY, note:(holiday && dow>=1 && dow<=5 ? 'วันหยุดนักขัตฤกษ์' : 'วันเสาร์-อาทิตย์')+' เหมาจ่ายวันละ 377.85 บาท'};
+  const permanent = isOtPermanent(emp);
+  if(!permanent && !otIsWorkday(emp, date)){
+    const dow = new Date(date+'T00:00:00').getDay();
+    return {amount:OT_HOLIDAY_DAY, note:(dow>=1 && dow<=5 ? 'วันหยุดนักขัตฤกษ์' : 'วันเสาร์-อาทิตย์')+' เหมาจ่ายวันละ 377.85 บาท'};
+  }
   const r = parseOtTimeRange(time);
   if(!r) return {amount:0, note:'ระบุช่วงเวลาเพื่อคำนวณ'};
   const hrs = Math.floor((r.end-r.start)/60);
-  return {amount:Math.min(hrs*OT_RATE_HOUR, OT_EVENING_CAP), note:`ตอนเย็น ${hrs} ชม. × 50 บาท`+(hrs*OT_RATE_HOUR>OT_EVENING_CAP ? ' (ไม่เกิน 200 บาท)' : '')};
+  const label = permanent ? 'ลูกจ้างประจำ' : 'ตอนเย็น';
+  return {amount:Math.min(hrs*OT_RATE_HOUR, OT_DAY_CAP), note:`${label} ${hrs} ชม. × 50 บาท`+(hrs*OT_RATE_HOUR>OT_DAY_CAP ? (permanent ? ' (ไม่เกิน 4 ชม. / 200 บาท)' : ' (ไม่เกิน 200 บาท)') : '')};
 }
 function renderOtCalc(){
   const names = getOtPeople(), date = document.getElementById('ot-date').value, time = document.getElementById('ot-time').value;

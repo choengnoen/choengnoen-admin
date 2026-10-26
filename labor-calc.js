@@ -58,11 +58,33 @@
   function normalizeStaff(staffRows) {
     return (staffRows || []).map(s => (s.name === 'นายสุรศักดิ์  สุขคุ้ม' && s.role === 'ยาม') ? Object.assign({}, s, { role: 'คนงาน', duty: s.duty || 'ยาม' }) : s);
   }
-  // รายชื่อในบัญชีแรงงาน: เฉพาะพนักงานที่ยังปฏิบัติงานอยู่และตำแหน่ง "คนงาน"
-  function rosterFrom(staffRows) {
+  /* วันสุดท้ายที่ปฏิบัติงาน: ผู้เกษียณอายุ = retiredDate, ผู้ลาออก = วันก่อน resignedDate (วันที่ลาออกมีผล)
+     ผู้ลาออก/เกษียณที่ไม่ได้ระบุวันที่ = null (ไม่ทราบช่วงเวลา) */
+  function lastDayOf(s) {
+    if (s.status === 'retired') return s.retiredDate || null;
+    if (s.status === 'resigned' && s.resignedDate) {
+      const d = new Date(s.resignedDate + 'T00:00:00');
+      d.setDate(d.getDate() - 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+    return null;
+  }
+  // ช่วงเวลาที่ปฏิบัติงานจริง: ตั้งแต่ startDate (ว่าง = ไม่จำกัด) ถึงวันสุดท้ายที่ปฏิบัติงาน
+  function servedIn(s, from, to) {
+    if (s.startDate && s.startDate > to) return false;
+    if (s.status === 'ok') return true;
+    const last = lastDayOf(s);
+    return !!last && last >= from;
+  }
+  // รายชื่อในบัญชีแรงงาน: ตำแหน่ง "คนงาน" ที่ปฏิบัติงานอยู่ในรอบเดือน cycleKey (YYYY-MM)
+  // ไม่ระบุ cycleKey = เฉพาะผู้ที่ยังปฏิบัติงานอยู่ปัจจุบัน
+  function rosterFrom(staffRows, cycleKey) {
+    const from = cycleKey ? cycleKey + '-01' : '';
+    const to = cycleKey ? cycleKey + '-' + String(daysInCycle(cycleKey)).padStart(2, '0') : '';
     return normalizeStaff(staffRows)
-      .filter(s => s.status === 'ok' && s.role === 'คนงาน')
-      .map(s => ({ name: s.name, role: s.role, duty: s.duty || null, dutyStart: s.dutyStart || null, rate: (s.rate === '' || s.rate == null) ? 0 : (Number(s.rate) || 0), bankAcc: s.bankAcc || '' }));
+      .filter(s => s.role === 'คนงาน' && (cycleKey ? servedIn(s, from, to) : s.status === 'ok'))
+      .map(s => ({ name: s.name, role: s.role, duty: s.duty || null, dutyStart: s.dutyStart || null, rate: (s.rate === '' || s.rate == null) ? 0 : (Number(s.rate) || 0), bankAcc: s.bankAcc || '',
+        startDate: s.startDate || null, endDate: s.status === 'ok' ? null : lastDayOf(s) }));
   }
 
   // รหัสลงเวลารายวันของแต่ละคนในรอบเดือน → { name: ['1','-','ป',...] }
@@ -77,6 +99,7 @@
       for (let d = 1; d <= nDays; d++) {
         const dateISO = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const dow = new Date(y, m - 1, d).getDay();
+        if ((emp.startDate && dateISO < emp.startDate) || (emp.endDate && dateISO > emp.endDate)) { codes.push('-'); continue; } // นอกช่วงที่ปฏิบัติงานจริง ไม่จ่ายค่าจ้าง
         if (holidays.has(d)) { codes.push('1'); continue; } // วันหยุดนักขัตฤกษ์ จ่ายค่าจ้างเสมือนมาปฏิบัติงาน
         if (dow === 0) { codes.push('-'); continue; } // อาทิตย์หยุดทุกตำแหน่ง
         if (dow === 6 && !worksSaturday(emp, dateISO)) { codes.push('-'); continue; } // เสาร์หยุด ยกเว้นผู้ปฏิบัติหน้าที่ยาม
