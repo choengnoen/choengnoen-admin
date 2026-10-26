@@ -177,7 +177,7 @@
     encroachments: { section: 's2', label: 'งานรุกล้ำ', idField: 'code', idPrefix: null, columns: ['code', 'name', 'km', 'dist', 'structure', 'stage', 'stageDate', 'cleared', 'clearedDate', 'lastUpdated'], numericFields: ['dist', 'stage'] },
     emergencies: { section: 's2', label: 'เหตุฉุกเฉิน', idField: 'no', idPrefix: null, columns: ['no', 'type', 'loc', 'start', 'lastUpdate', 'status', 'lastUpdated'], numericFields: ['no'] },
     // งานสัญญา (17 ต.ค. 2569): 1 สัญญา = 1 รายการ, ช่วงทางหลวงหลายช่วงเก็บใน rangesJson = [{route, k1, k2}] (กม. เป็นกิโลเมตร ทศนิยม) / status = สถานะพิเศษ (ระงับงาน, ยกเลิกสัญญา) ว่าง = คำนวณจากวันที่
-    contracts: { section: 's2', label: 'สัญญา', idField: 'id', idPrefix: 'CON', columns: ['id', 'fiscalYear', 'contractNo', 'name', 'contractor', 'amount', 'startDate', 'endDate', 'warrantyEnd', 'supervisor', 'status', 'note', 'rangesJson', 'lastUpdated'], numericFields: ['fiscalYear', 'amount'], jsonFields: ['rangesJson'] },
+    contracts: { section: 's2', label: 'สัญญา', idField: 'id', idPrefix: 'CON', columns: ['id', 'fiscalYear', 'contractNo', 'name', 'contractor', 'amount', 'startDate', 'endDate', 'warrantyEnd', 'supervisor', 'status', 'note', 'rangesJson', 'lastUpdated', 'workQty', 'deliveryDate', 'acceptDate', 'workType', 'warrantyYears', 'reflectNeeded'], numericFields: ['fiscalYear', 'amount', 'warrantyYears'], jsonFields: ['rangesJson'] },
 
     materials: { section: 's3', label: 'ทะเบียนพัสดุ', idField: 'code', idPrefix: null, columns: ['code', 'itemName', 'category', 'unit', 'openingStock', 'reorderPoint', 'status', 'lastUpdated', 'unitPrice', 'usage'], numericFields: ['openingStock', 'reorderPoint', 'unitPrice'] },
     material_transactions: { section: 's3', label: 'รับ-จ่ายวัสดุ', idField: 'id', idPrefix: 'MTX', columns: ['id', 'materialId', 'type', 'qty', 'unitPrice', 'totalPrice', 'refNo', 'date', 'note', 'relatedDailyWorkOrderId', 'lastUpdated'], numericFields: ['qty', 'unitPrice', 'totalPrice'] },
@@ -1394,12 +1394,19 @@
         if (!canDeleteRow(table)) throw new Error(table === 'ledger_locks' ? 'บัญชีของคุณไม่มีสิทธิ์ปลดล็อกเดือนบัญชี' : 'บัญชีของคุณไม่มีสิทธิ์ลบข้อมูล (ติดต่อเจ้าของระบบ)');
         const key = docKey(id);
         const ref = db.collection(table).doc(key);
+        const wantTrash = cfg.trash !== false && options.trash !== false;
         let before = null, created = 0;
-        try {
-          const cachedRow = subs[table] && subs[table].rows.find(function (r) { return String(r[cfg.idField]) === String(id); });
-          if (cachedRow) { before = cachedRow; created = (subs[table].created || {})[key] || 0; }
-          else { const snap = await ref.get(); before = snap.exists ? toRow(table, snap.data()) : null; created = snap.exists ? (snap.get('_c') || 0) : 0; }
-        } catch (e) { before = null; }
+        const cachedRow = subs[table] && subs[table].rows.find(function (r) { return String(r[cfg.idField]) === String(id); });
+        if (cachedRow) { before = cachedRow; created = (subs[table].created || {})[key] || 0; }
+        else {
+          // ต้องรู้ข้อมูลก่อนลบเพื่อเก็บลงถังขยะ — อ่านไม่ได้ให้หยุด (ห้ามลบทิ้งถาวรเงียบๆ)
+          let snap = null;
+          try { snap = await ref.get(); } catch (e) {
+            if (wantTrash) throw new Error('ลบไม่สำเร็จ: อ่านข้อมูลเดิมเพื่อเก็บลงถังขยะไม่ได้ (อินเทอร์เน็ตอาจขัดข้อง) — รายการยังอยู่ครบ กรุณาลองลบใหม่อีกครั้ง');
+          }
+          if (snap && snap.exists) { before = toRow(table, snap.data()); created = snap.get('_c') || 0; }
+          else if (snap && wantTrash) return { deleted: false, key: id, notFound: true }; // ถูกลบไปแล้ว ไม่มีอะไรต้องทำ (แบบเดียวกับ apiBatch)
+        }
         const batch = db.batch();
         batch.delete(ref);
         // บุคลากร: ลบข้อมูลส่วนตัวไปพร้อมกัน และเก็บเข้าถังขยะในรายการเดียวกัน (กู้คืนแล้วได้ครบ)
@@ -1414,7 +1421,7 @@
           });
           batch.delete(pref);
         }
-        const useTrash = cfg.trash !== false && options.trash !== false && before;
+        const useTrash = wantTrash && before;
         // ตารางลับไม่ใส่ในถังขยะ (ผู้มีสิทธิ์กู้คืนอาจไม่มีสิทธิ์เห็น; เลขบัญชีในถังขยะเป็นแบบปิดบัง) — ลบเข้าถังขยะ: เก็บเอกสารไว้ให้กู้คืนแล้วจับคู่กลับ / ลบจริง: ลบทิ้ง
         if (!useTrash) (cfg.secrets || []).forEach(function (s) { if (secretCan(s, 'write')) batch.delete(db.collection(s.table).doc(key)); });
         if (useTrash) {
