@@ -1319,6 +1319,24 @@ function __sfOpts(list, cur){
   const all = (c && !list.includes(c)) ? [c, ...list] : list; // ค่าเก่าที่ไม่อยู่ในรายการ ยังเลือกค้างไว้ได้
   return `<option value="">— เลือก —</option>` + all.map(v=>`<option ${v===c?'selected':''}>${esc(v)}</option>`).join('');
 }
+/* เลขบัตรประชาชน: เก็บแยกตาราง staff_secret — เห็น/แก้ได้เฉพาะเจ้าของระบบ และผู้ที่แท็บ "บุคลากร" เป็น "แก้ไข" (บังคับจริงที่ firestore.rules)
+   คนอื่นไม่ได้รับค่านี้จากฐานข้อมูลเลย จึงแสดงเป็น * แทน */
+function __canSeeIdCard(){ return !!(window.FBL && FBL.canReadStaffSecret && FBL.canReadStaffSecret()); }
+function __fmtIdCard(x){
+  const d = String(x ?? '').replace(/\D/g,'');
+  return d.length===13 ? `${d[0]}-${d.slice(1,5)}-${d.slice(5,10)}-${d.slice(10,12)}-${d[12]}` : String(x ?? '');
+}
+// อ่านช่องเลขบัตรจากฟอร์ม → {val} (ตัวเลข 13 หลัก หรือ null) หรือ {error}; ไม่มีช่อง (ไม่มีสิทธิ์) → {skip:true}
+function __idCardCollect(p){
+  const el = document.getElementById(p+'-idcard');
+  if(!el || el.value === el.defaultValue) return {skip:true}; // ไม่ได้แก้ช่องนี้ → ไม่แตะค่าในฐานข้อมูล (กันเขียนทับเป็นค่าว่างถ้ายังโหลดเลขเดิมไม่ได้)
+  const d = el.value.replace(/[\s-]/g,'');
+  if(!d) return {val:null};
+  if(!/^\d{13}$/.test(d)) return {error:'เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก'};
+  let sum = 0; for(let i=0;i<12;i++) sum += Number(d[i])*(13-i);
+  if((11 - sum%11)%10 !== Number(d[12])) return {error:'เลขบัตรประชาชนไม่ถูกต้อง (หลักสุดท้ายไม่ตรงกับเลขตรวจสอบ) กรุณาตรวจสอบอีกครั้ง'};
+  return {val:d};
+}
 function __staffFormHTML(p, s, isAdd){
   s = s || {};
   const v = x => esc(x ?? '');
@@ -1332,6 +1350,7 @@ function __staffFormHTML(p, s, isAdd){
       <h4><span class="n">1</span>ข้อมูลส่วนตัว</h4>
       <div class="sf-grid">
         <div class="f-row c2"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="edit-input" id="${p}-name" value="${v(s.name)}" placeholder="ชื่อ นามสกุล"></div>
+        ${__canSeeIdCard() ? `<div class="f-row c2"><label>เลขบัตรประชาชน <span class="rh-hint">— เห็นเฉพาะผู้มีสิทธิ์แก้ไขแท็บบุคลากร</span></label><input class="edit-input" id="${p}-idcard" value="${v(__fmtIdCard(s.idCard))}" inputmode="numeric" maxlength="17" placeholder="เช่น 1-2345-67890-12-3"></div>` : ''}
         <div class="f-row c1"><label>ชื่อเล่น</label><input class="edit-input" id="${p}-nickname" value="${v(s.nickname)}"></div>
         <div class="f-row c1"><label>วันเกิด</label><input type="date" class="edit-input" id="${p}-birth" value="${v(s.birth)}"></div>
         <div class="f-row c1"><label>กรุ๊ปเลือด</label><select class="edit-input" id="${p}-blood">${__sfOpts(__SF_BLOOD, s.bloodType)}</select></div>
@@ -2121,7 +2140,11 @@ function __staffDetailViewHTML(s){
   const rh = LaborCalc.rateHistoryOf(s), rateNow = LaborCalc.rateOn(s, TODAY.toISOString().slice(0,10));
   const rateVal = rateNow ? fmtMoney(rateNow)+' บาท' + (rh.some(r=>r.from) ? rh.map(r=>`<div style="font-size:12.5px;color:var(--ink-400);">${r.from ? 'ตั้งแต่ '+fmtDate(r.from) : 'อัตราแรกเริ่ม'} · ${fmtMoney(r.rate)} บาท${r.note ? ' · '+esc(r.note) : ''}</div>`).join('') : '') : '';
   const vacVal = (s.vacCarry!=null && s.vacCarry!=='') ? esc(s.vacCarry)+' วันทำการ'+(s.vacCarryFy?' (ปีงบ '+esc(s.vacCarryFy)+')':'') : '';
+  const idCardVal = __canSeeIdCard()
+    ? (s.idCard ? esc(__fmtIdCard(s.idCard)) : '')
+    : '<span title="เห็นเฉพาะผู้มีสิทธิ์แก้ไขแท็บบุคลากร" style="letter-spacing:1px;color:var(--ink-400);">*-****-*****-**-*</span>';
   const general = grid([
+    f('เลขบัตรประชาชน', idCardVal),
     f('ชื่อเล่น', s.nickname ? esc(s.nickname) : ''),
     f('ตำแหน่งทางราชการ', posVal),
     f('ประเภทบุคลากร', esc(s.ptype)),
@@ -2138,7 +2161,8 @@ function __staffDetailViewHTML(s){
     f('ที่อยู่ปัจจุบัน', s.address ? esc(s.address) : '', true),
     f('ผู้ติดต่อฉุกเฉิน', s.emergencyContact ? esc(s.emergencyContact) : ''),
     f('เบอร์โทรผู้ติดต่อฉุกเฉิน', s.emergencyPhone ? esc(s.emergencyPhone) : ''),
-    f('เลขบัญชีธนาคาร', s.bankAcc ? esc(s.bankAcc) : '')
+    // ผู้ดูอย่างเดียวได้ค่าที่ปิดบังจากฐานข้อมูล (เห็น 4 ตัวท้าย) — ค่าเต็มเฉพาะผู้มีสิทธิ์แก้ไขแท็บบุคลากร
+    f('เลขบัญชีธนาคาร', s.bankAcc ? (String(s.bankAcc).includes('*') ? `<span title="เห็นเลขเต็มเฉพาะผู้มีสิทธิ์แก้ไขแท็บบุคลากร" style="letter-spacing:1px;">${esc(s.bankAcc)}</span>` : esc(s.bankAcc)) : '')
   ]);
   const health = grid([
     f('กรุ๊ปเลือด', s.bloodType ? esc(s.bloodType) : ''),
@@ -2260,7 +2284,10 @@ async function saveStaffDetail(){
   const s = staff[staffDetailIndex];
   const rc = __rhCollect('sd');
   if(rc.error){ alert(rc.error); return; }
+  const ic = __idCardCollect('sd');
+  if(ic.error){ alert(ic.error); return; }
   const before = Object.assign({}, s);
+  if(!ic.skip) s.idCard = ic.val;
   const newName = document.getElementById('sd-name').value.trim();
   s.name = newName || s.name;
   s.nickname = document.getElementById('sd-nickname').value.trim() || null;
@@ -2324,8 +2351,11 @@ async function submitAddStaff(){
   if(!name){ alert('กรุณากรอกชื่อ-สกุล'); return; }
   const rc = __rhCollect('as');
   if(rc.error){ alert(rc.error); return; }
+  const ic = __idCardCollect('as');
+  if(ic.error){ alert(ic.error); return; }
   const newStaff = {
     name,
+    ...(ic.skip ? {} : {idCard: ic.val}),
     nickname: document.getElementById('as-nickname').value.trim() || null,
     birth: document.getElementById('as-birth').value || null,
     role: document.getElementById('as-role').value.trim(),
@@ -3646,10 +3676,15 @@ function __saveSharedStaff(){
 }
 
 function __collectState(){
-  return { staff, docs, leaveRequests, accessLog, publicHolidays };
+  // ไม่เก็บเลขบัตรประชาชน/เลขบัญชีลงเครื่อง (คนถัดไปที่ใช้เครื่องเดียวกันอาจไม่มีสิทธิ์เห็น)
+  return { staff: staff.map(({idCard, bankAcc, ...r})=>r), docs, leaveRequests, accessLog, publicHolidays };
 }
 function __applyState(saved){
-  if(saved.staff){ staff.length=0; staff.push(...saved.staff); }
+  if(saved.staff){
+    // ข้อมูลในเครื่องไม่มีเลขบัตรประชาชน/เลขบัญชี — คงค่าที่โหลดจากฐานข้อมูลไว้ ไม่ให้หายแล้วถูกบันทึกทับเป็นค่าว่าง
+    const keep = {}; staff.forEach(s=>{ if(s.idCard || s.bankAcc) keep[s.id] = {idCard: s.idCard, bankAcc: s.bankAcc}; });
+    staff.length=0; staff.push(...saved.staff.map(s=>keep[s.id] ? Object.assign({}, s, keep[s.id]) : s));
+  }
   if(saved.docs){ docs.length=0; docs.push(...saved.docs); }
   if(saved.leaveRequests){ leaveRequests.length=0; leaveRequests.push(...saved.leaveRequests); }
   if(saved.accessLog){ accessLog.length=0; accessLog.push(...saved.accessLog); }

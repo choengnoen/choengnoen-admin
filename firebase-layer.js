@@ -147,8 +147,19 @@
   const TABLES = {
     // แผน 4: ข้อมูลส่วนตัว (privateCols) เก็บแยกในตาราง staff_private (อ่านได้เฉพาะเจ้าของ/หมวด/ผู้ช่วย/ผู้มีสิทธิ์ระบบ 1 แก้ไข-ดู)
     // หน้าเว็บยังเรียก apiGet/apiPost('staff') เหมือนเดิม — ชั้นนี้แยก/รวมให้เอง; columns = เฉพาะส่วนที่อ่านข้ามระบบได้
-    staff: { section: 's1', label: 'บุคลากร', idField: 'id', idPrefix: 'STF', columns: ['id', 'name', 'role', 'duty', 'dutyStart', 'ptype', 'rate', 'status', 'startDate', 'lastUpdated', 'nickname', 'shirt', 'vacCarry', 'vacCarryFy', 'retiredDate', 'resignedDate', 'rateHistory'], numericFields: ['rate', 'vacCarry', 'vacCarryFy'], jsonFields: ['rateHistory'], privateTable: 'staff_private', privateCols: ['birth', 'med', 'phone', 'address', 'education', 'emergencyContact', 'emergencyPhone', 'bloodType', 'bankAcc'] },
+    staff: { section: 's1', label: 'บุคลากร', idField: 'id', idPrefix: 'STF', columns: ['id', 'name', 'role', 'duty', 'dutyStart', 'ptype', 'rate', 'status', 'startDate', 'lastUpdated', 'nickname', 'shirt', 'vacCarry', 'vacCarryFy', 'retiredDate', 'resignedDate', 'rateHistory'], numericFields: ['rate', 'vacCarry', 'vacCarryFy'], jsonFields: ['rateHistory'], privateTable: 'staff_private', privateCols: ['birth', 'med', 'phone', 'address', 'education', 'emergencyContact', 'emergencyPhone', 'bloodType', 'bankAcc'],
+      // ตารางลับ: อ่าน/เขียนตามสิทธิ์ (read/write = ชื่อฟังก์ชันใน FBL) — masked = คอลัมน์นี้ใน staff_private เก็บแบบปิดบัง (เห็น 4 ตัวท้าย) ค่าเต็มอยู่ตารางลับ
+      secrets: [
+        { table: 'staff_secret', cols: ['idCard'], read: 'canReadStaffSecret', write: 'canReadStaffSecret' },
+        { table: 'staff_bank', cols: ['bankAcc'], read: 'canReadStaffBank', write: 'canReadStaffSecret', masked: true }
+      ] },
     staff_private: { section: 's1', label: 'ข้อมูลส่วนตัวบุคลากร', idField: 'id', idPrefix: null, columns: ['id', 'birth', 'med', 'phone', 'address', 'education', 'emergencyContact', 'emergencyPhone', 'bloodType', 'bankAcc', 'lastUpdated'], numericFields: [], trash: false },
+    // เลขบัตรประชาชน: แยกอีกตาราง อ่าน/เขียนได้เฉพาะเจ้าของระบบ และผู้ที่แท็บ "บุคลากร" ระบบ 1 เป็น "แก้ไข" (FBL.canReadStaffSecret)
+    // ไม่เก็บลงถังขยะ — ลบบุคลากรแล้วเอกสารนี้ยังอยู่ กู้คืนจากถังขยะแล้วจับคู่กลับด้วยรหัสเดิมเอง
+    staff_secret: { section: 's1', label: 'เลขบัตรประชาชนบุคลากร', idField: 'id', idPrefix: null, columns: ['id', 'idCard', 'lastUpdated'], numericFields: [], trash: false },
+    // เลขบัญชีธนาคารแบบเต็ม: อ่านได้เฉพาะเจ้าของระบบ ผู้ที่แท็บ "บุคลากร" เป็น "แก้ไข" และผู้แก้ไขระบบ 4 ที่อ่านข้อมูลส่วนตัวได้ (ทำ ง.3-26) — FBL.canReadStaffBank
+    // คนอื่นเห็นค่าใน staff_private ที่ปิดบังไว้ เช่น ***-*-**345-6 /เก็บกู้คืนแบบเดียวกับ staff_secret
+    staff_bank: { section: 's1', label: 'เลขบัญชีธนาคารบุคลากร', idField: 'id', idPrefix: null, columns: ['id', 'bankAcc', 'lastUpdated'], numericFields: [], trash: false },
     // ทะเบียนผู้บริหารหมวด (หัวหน้าหมวด/ผู้ช่วยหมวด): 1 วาระ = 1 รายการ, role = 'head' | 'assist', startDate/endDate = 'YYYY-MM-DD' (endDate ว่าง = ยังดำรงตำแหน่งอยู่)
     // ระบบอื่น (เช่น ใบลา) อ้างอิงว่า ณ วันที่หนึ่งใครเป็นหัวหน้า/ผู้ช่วยหมวด จากตารางนี้ที่เดียว — ต้องตรงกับ sectionOf ใน firestore.rules
     exec_terms: { section: 's1', label: 'ทะเบียนผู้บริหารหมวด', idField: 'id', idPrefix: 'EXT', columns: ['id', 'role', 'staffId', 'staffName', 'startDate', 'endDate', 'ref', 'lastUpdated'], numericFields: [], trash: false },
@@ -192,12 +203,42 @@
   const CROSS_WRITE = { material_transactions: ['s2'], fuel_transactions: ['s2'] };
   FBL.TABLES = TABLES;
   // คอลัมน์ทั้งหมดของตารางเมื่อรวมส่วนที่แยกไปเก็บที่ตารางข้อมูลส่วนตัว (ใช้ส่งออก Excel)
-  FBL.allColumns = function (table) { const c = TABLES[table]; return c ? c.columns.concat(c.privateCols || []) : []; };
+  FBL.allColumns = function (table) {
+    const c = TABLES[table];
+    if (!c) return [];
+    const cols = c.columns.concat(c.privateCols || []);
+    (c.secrets || []).forEach(function (s) { if (secretCan(s, 'read')) s.cols.forEach(function (k) { if (cols.indexOf(k) === -1) cols.push(k); }); });
+    return cols;
+  };
+  // สิทธิ์ของตารางลับ (kind = 'read' | 'write')
+  function secretCan(s, kind) { const f = FBL[s[kind]]; return !!(f && f()); }
+  // ปิดบังตัวเลข เหลือ 4 ตัวท้าย คงขีด/ช่องว่างไว้ เช่น 218-0-12345-6 → ***-*-**345-6
+  function maskDigits(v) {
+    const s = String(v === undefined || v === null ? '' : v);
+    const n = (s.match(/\d/g) || []).length;
+    let i = 0;
+    return s.replace(/\d/g, function (d) { return ++i <= n - 4 ? '*' : d; });
+  }
+  FBL.maskDigits = maskDigits;
+  // ข้อมูลส่วนตัวที่จะเขียนลง staff_private: คอลัมน์ masked เก็บแบบปิดบังเสมอ (ค่าเต็มไปตารางลับ)
+  function maskPrivate(cfg, pd) {
+    if (pd) (cfg.secrets || []).forEach(function (s) {
+      if (s.masked) s.cols.forEach(function (c) { if (pd[c]) pd[c] = maskDigits(pd[c]); });
+    });
+    return pd;
+  }
+  // ค่าที่จะเขียนลงตารางลับ s — ไม่เขียนค่าที่ถูกปิดบังอยู่แล้ว (มี *) ทับค่าเต็ม
+  function pickSecret(cfg, s, d, fill) {
+    const sd = pickPrivate(cfg, d, fill, s.cols);
+    if (sd && s.masked) s.cols.forEach(function (c) { if (String(sd[c] || '').indexOf('*') !== -1) delete sd[c]; });
+    return sd && Object.keys(sd).length ? sd : null;
+  }
   // รวมแถว staff กับ staff_private (ถ้ามีเอกสารส่วนตัวของคนนั้น ถือเป็นค่าจริง; ไม่มี → ใช้ค่าเดิมที่ค้างอยู่ใน staff จนกว่าจะล้าง)
-  function mergeStaffPrivate(rows, privRows) {
+  // cols = คอลัมน์ที่จะรวม (ค่าเริ่มต้น privateCols; ใช้ cols ของตารางลับเมื่อรวมกับ staff_secret / staff_bank)
+  function mergeStaffPrivate(rows, privRows, cols) {
     const by = {};
     (privRows || []).forEach(function (p) { by[String(p.id)] = p; });
-    const cols = TABLES.staff.privateCols;
+    cols = cols || TABLES.staff.privateCols;
     return rows.map(function (r) {
       const p = by[String(r.id)];
       if (p) cols.forEach(function (c) { r[c] = p[c]; });
@@ -205,10 +246,10 @@
     });
   }
   // แยกค่าส่วนตัวออกจากข้อมูลที่หน้าเว็บส่งมา — undefined = ไม่แตะ; fill = เติมค่าว่างให้คอลัมน์ที่ไม่ได้ส่ง (ตอนเพิ่มคนใหม่)
-  function pickPrivate(cfg, d, fill) {
+  function pickPrivate(cfg, d, fill, cols) {
     const out = {};
     let any = false;
-    cfg.privateCols.forEach(function (c) {
+    (cols || cfg.privateCols).forEach(function (c) {
       if (d[c] !== undefined) { out[c] = d[c]; any = true; } else if (fill) out[c] = '';
     });
     return (any || fill) ? out : null;
@@ -641,6 +682,18 @@
   FBL.canReadStaffPrivate = function () {
     const u = FBL.user;
     return !!(u && (u.role === 'owner' || u.role === 'chief' || u.role === 'assistant' || u.perm.s1 === 'edit' || u.perm.s1 === 'view'));
+  };
+  // เห็น/แก้เลขบัตรประชาชนได้ไหม — เจ้าของระบบ หรือแท็บ "บุคลากร" ระบบ 1 เป็น "แก้ไข" (ไม่ขึ้นกับแท็บที่เปิดอยู่)
+  // ต้องตรงกับ canEditStaffTab() ใน firestore.rules
+  FBL.canReadStaffSecret = function () {
+    const u = FBL.user;
+    return !!(u && (u.role === 'owner' || tabAccess(u.perm, 's1', 'staff') === 'edit'));
+  };
+  // เห็นเลขบัญชีธนาคารเต็มได้ไหม — ผู้ที่เห็นเลขบัตรได้ + ผู้แก้ไขระบบ 4 ที่อ่านข้อมูลส่วนตัวได้ (พิมพ์หลักฐานจ่ายเงิน ง.3-26)
+  // ต้องตรงกับ canReadStaffBank() ใน firestore.rules
+  FBL.canReadStaffBank = function () {
+    const u = FBL.user;
+    return FBL.canReadStaffSecret() || !!(u && u.perm.s4 === 'edit' && FBL.canReadStaffPrivate());
   };
   // สิทธิ์พิเศษ: delete / restore / purge / viewLog / unlockLedger / export
   FBL.can =function (flag) { return !!(FBL.user && (FBL.user.role === 'owner' || FBL.user.perm[flag] === true)); };
@@ -1323,9 +1376,15 @@
         if (action === 'add') batch.set(ref, Object.assign(toDoc(cfg, d, true), { _c: Date.now() }));
         else batch.set(ref, toDoc(cfg, d, false), { merge: true });
         if (cfg.privateTable) { // ข้อมูลส่วนตัวไปอีกตาราง ในชุดเดียวกัน
-          const pd = pickPrivate(cfg, d, action === 'add');
+          const pd = maskPrivate(cfg, pickPrivate(cfg, d, action === 'add'));
           if (pd) batch.set(db.collection(cfg.privateTable).doc(docKey(d[cfg.idField])), Object.assign({ id: d[cfg.idField], lastUpdated: d.lastUpdated }, pd), { merge: true });
         }
+        // ตารางลับ (เลขบัตร/เลขบัญชีเต็ม) — เขียนเฉพาะผู้มีสิทธิ์ (คนอื่นไม่แตะ ไม่งั้นทั้งชุดถูกปฏิเสธ)
+        (cfg.secrets || []).forEach(function (s) {
+          if (!secretCan(s, 'write')) return;
+          const sd = pickSecret(cfg, s, d, action === 'add');
+          if (sd) batch.set(db.collection(s.table).doc(docKey(d[cfg.idField])), Object.assign({ id: d[cfg.idField], lastUpdated: d.lastUpdated }, sd), { merge: true });
+        });
         batch.set(logRef(), logEntry(action, table, d[cfg.idField], summaryOf(action, table, d[cfg.idField], d)));
         await batch.commit();
         return d;
@@ -1356,6 +1415,8 @@
           batch.delete(pref);
         }
         const useTrash = cfg.trash !== false && options.trash !== false && before;
+        // ตารางลับไม่ใส่ในถังขยะ (ผู้มีสิทธิ์กู้คืนอาจไม่มีสิทธิ์เห็น; เลขบัญชีในถังขยะเป็นแบบปิดบัง) — ลบเข้าถังขยะ: เก็บเอกสารไว้ให้กู้คืนแล้วจับคู่กลับ / ลบจริง: ลบทิ้ง
+        if (!useTrash) (cfg.secrets || []).forEach(function (s) { if (secretCan(s, 'write')) batch.delete(db.collection(s.table).doc(key)); });
         if (useTrash) {
           batch.set(db.collection('trash').doc(), {
             table: table, docKey: key, rowId: String(id), section: cfg.section,
@@ -1563,7 +1624,7 @@
         try { data = JSON.parse(it.data || '{}'); } catch (e) { data = {}; }
         batch.set(db.collection(it.table).doc(it.docKey), Object.assign(toDoc(cfg, data, true), { _c: it.created || Date.now() }));
         if (cfg.privateTable) {
-          const pd = pickPrivate(cfg, data, true);
+          const pd = maskPrivate(cfg, pickPrivate(cfg, data, true));
           batch.set(db.collection(cfg.privateTable).doc(it.docKey), Object.assign({ id: data[cfg.idField], lastUpdated: nowIso() }, pd), { merge: true });
         }
         batch.delete(db.collection('trash').doc(it.__id));
@@ -1664,12 +1725,18 @@
      ====================================================================== */
   FBL.exportAll = async function () {
     if (!FBL.can('export')) throw new Error('บัญชีของคุณไม่มีสิทธิ์ส่งออกข้อมูล');
-    const names = Object.keys(TABLES).filter(function (t) { return t !== 'staff_private'; }); // รวมเข้ากับ staff (ส่งออกครบทุกคอลัมน์)
+    const SEC = (TABLES.staff.secrets || []);
+    const names = Object.keys(TABLES).filter(function (t) { return t !== 'staff_private' && !SEC.some(function (s) { return s.table === t; }); }); // รวมเข้ากับ staff (ส่งออกครบทุกคอลัมน์)
     const out = {};
     await Promise.all(names.map(watch));
     names.forEach(function (t) { out[t] = clone(subs[t].rows); });
     if (FBL.canReadStaffPrivate()) {
       try { await watch('staff_private'); out.staff = mergeStaffPrivate(out.staff, clone(subs.staff_private.rows)); } catch (e) { console.warn('export: อ่านข้อมูลส่วนตัวบุคลากรไม่ได้', e); }
+    }
+    // ตารางลับ: ส่งออกค่าเต็มเฉพาะผู้ที่เห็นได้ (คนอื่น: ไม่มีคอลัมน์ idCard / เลขบัญชีแบบปิดบัง — ดู FBL.allColumns)
+    for (const s of SEC) {
+      if (!secretCan(s, 'read')) continue;
+      try { await watch(s.table); out.staff = mergeStaffPrivate(out.staff, clone(subs[s.table].rows), s.cols); } catch (e) { console.warn('export: อ่าน ' + s.table + ' ไม่ได้', e); }
     }
     return out;
   };
@@ -1706,14 +1773,17 @@
         if (!d.lastUpdated) d.lastUpdated = nowIso();
         // _c = ลำดับแถวเดิมในชีต (ให้หน้าเว็บเรียงรายการเหมือนเดิม)
         const w = { ref: db.collection(table).doc(docKey(d[cfg.idField])), data: Object.assign(toDoc(cfg, d, true), { _c: importBase + writes.length }) };
-        if (cfg.privateTable) w.priv = { ref: db.collection(cfg.privateTable).doc(docKey(d[cfg.idField])), data: Object.assign({ id: d[cfg.idField], lastUpdated: d.lastUpdated }, pickPrivate(cfg, d, true)) };
+        if (cfg.privateTable) w.priv = { ref: db.collection(cfg.privateTable).doc(docKey(d[cfg.idField])), data: Object.assign({ id: d[cfg.idField], lastUpdated: d.lastUpdated }, maskPrivate(cfg, pickPrivate(cfg, d, true))) };
+        w.sec = [];
+        (cfg.secrets || []).forEach(function (s) { const sd = pickSecret(cfg, s, d, false); if (sd) w.sec.push({ ref: db.collection(s.table).doc(docKey(d[cfg.idField])), data: Object.assign({ id: d[cfg.idField], lastUpdated: d.lastUpdated }, sd) }); });
         writes.push(w);
       });
-      for (let i = 0; i < writes.length; i += 400) {
+      const per = cfg.privateTable ? 120 : 400; // บุคลากร: แถวละไม่เกิน 4 เอกสาร (staff + ส่วนตัว + ตารางลับ 2) → ชุดละไม่เกิน 500 ตามข้อจำกัด Firestore
+      for (let i = 0; i < writes.length; i += per) {
         const batch = db.batch();
-        writes.slice(i, i + 400).forEach(function (w) { batch.set(w.ref, w.data); if (w.priv) batch.set(w.priv.ref, w.priv.data, { merge: true }); });
+        writes.slice(i, i + per).forEach(function (w) { batch.set(w.ref, w.data); if (w.priv) batch.set(w.priv.ref, w.priv.data, { merge: true }); w.sec.forEach(function (x) { batch.set(x.ref, x.data, { merge: true }); }); });
         try { await batch.commit(); } catch (e) { throw new Error(thErr(e)); }
-        if (progress) progress(cfg.label + ': ' + Math.min(i + 400, writes.length) + '/' + writes.length);
+        if (progress) progress(cfg.label + ': ' + Math.min(i + per, writes.length) + '/' + writes.length);
       }
       if (writes.length) report.push(cfg.label + ' (' + table + ') ' + writes.length + ' รายการ');
     }
@@ -1841,7 +1911,53 @@
     if (staffPrivDenied || !FBL.canReadStaffPrivate()) return false;
     try { await baseApiGet(STAFF_PRIV); return true; } catch (e) { staffPrivDenied = true; console.warn('อ่านข้อมูลส่วนตัวบุคลากรไม่ได้ (ไม่มีสิทธิ์)', e); return false; }
   }
-  async function withPrivate(rows) { return (await loadStaffPrivate()) ? mergeStaffPrivate(rows, baseRows(STAFF_PRIV)) : rows; }
+  // ตารางลับ (staff_secret = เลขบัตร, staff_bank = เลขบัญชีเต็ม): โหลดเฉพาะผู้มีสิทธิ์อ่าน — คนอื่นไม่มี idCard และเห็นเลขบัญชีแบบปิดบังจาก staff_private
+  const SECRETS = TABLES.staff.secrets;
+  const secDenied = {};
+  async function loadSecret(s) {
+    if (secDenied[s.table] || !secretCan(s, 'read')) return false;
+    try { await baseApiGet(s.table); return true; } catch (e) { secDenied[s.table] = true; console.warn('อ่าน ' + s.table + ' ไม่ได้ (ไม่มีสิทธิ์)', e); return false; }
+  }
+  function mergeSecret(rows) {
+    SECRETS.forEach(function (s) { if (secretCan(s, 'read') && baseLoaded(s.table)) rows = mergeStaffPrivate(rows, baseRows(s.table), s.cols); });
+    return rows;
+  }
+  // ย้ายเลขบัญชีเดิม (ค่าเต็มที่ค้างใน staff_private / ตาราง staff เก่า) → staff_bank แล้วเหลือแบบปิดบังใน staff_private
+  // รันเองครั้งเดียวต่อการเปิดหน้า โดยผู้ที่เขียน staff_bank ได้ (เจ้าของระบบ / แท็บบุคลากร = แก้ไข) — ไม่มีอะไรต้องย้ายก็ไม่เขียน
+  let bankMigrated = false;
+  async function migrateBankOnce() {
+    const s = SECRETS.find(function (x) { return x.table === 'staff_bank'; });
+    if (bankMigrated || !s || !secretCan(s, 'write') || !baseLoaded(STAFF_PRIV) || !baseLoaded(s.table)) return;
+    bankMigrated = true;
+    const priv = {}, bank = {};
+    baseRows(STAFF_PRIV).forEach(function (p) { priv[String(p.id)] = p; });
+    baseRows(s.table).forEach(function (b) { bank[String(b.id)] = b; });
+    const clean = function (v) { return hasVal(v) && String(v).indexOf('*') === -1 ? String(v) : ''; };
+    const writes = [];
+    baseRows(STAFF).forEach(function (r) {
+      const id = String(r.id), key = docKey(r.id), p = priv[id];
+      const legacy = hasVal(r.bankAcc), full = clean(p && p.bankAcc) || clean(r.bankAcc);
+      if (full && !hasVal(bank[id] && bank[id].bankAcc)) writes.push(function (b) { b.set(db.collection(s.table).doc(key), { id: r.id, bankAcc: full, lastUpdated: nowIso() }, { merge: true }); });
+      const cur = p ? p.bankAcc : '';
+      if ((p && hasVal(cur) && cur !== maskDigits(cur)) || (!p && full)) writes.push(function (b) { b.set(db.collection(STAFF_PRIV).doc(key), { id: r.id, bankAcc: maskDigits(full || cur) }, { merge: true }); });
+      if (legacy) writes.push(function (b) { b.update(db.collection(STAFF).doc(key), { bankAcc: firebase.firestore.FieldValue.delete() }); });
+    });
+    if (!writes.length) return;
+    try {
+      for (let i = 0; i < writes.length; i += 400) {
+        const batch = db.batch();
+        writes.slice(i, i + 400).forEach(function (w) { w(batch); });
+        await batch.commit();
+      }
+      await db.collection('activity_log').add(logEntry('update', s.table, '', 'ย้ายเลขบัญชีธนาคารบุคลากรไปตารางแยก (คนที่ดูอย่างเดียวเห็นเฉพาะ 4 ตัวท้าย)'));
+    } catch (e) { console.warn('ย้ายเลขบัญชีธนาคารไปตารางแยกไม่สำเร็จ', e); bankMigrated = false; }
+  }
+  async function withPrivate(rows) {
+    if (await loadStaffPrivate()) rows = mergeStaffPrivate(rows, baseRows(STAFF_PRIV));
+    for (const s of SECRETS) await loadSecret(s);
+    migrateBankOnce();
+    return mergeSecret(rows);
+  }
   FBL.apiGet = async function (table) {
     if (table === MASTER_TABLE && await masterReady()) return clone(masterRouteRows);
     if (table === JOB_TABLE && await masterJobsReady()) return masterJobRows();
@@ -1860,7 +1976,7 @@
   FBL.rows = function (table) {
     if (table === MASTER_TABLE && masterRouteRows) return clone(masterRouteRows);
     if (table === JOB_TABLE && masterWorkCodes) return toAdminJobRows(masterWorkCodes, baseRows(JOB_TABLE));
-    if (table === STAFF) return baseLoaded(STAFF_PRIV) ? mergeStaffPrivate(baseRows(STAFF), baseRows(STAFF_PRIV)) : baseRows(STAFF);
+    if (table === STAFF) return mergeSecret(baseLoaded(STAFF_PRIV) ? mergeStaffPrivate(baseRows(STAFF), baseRows(STAFF_PRIV)) : baseRows(STAFF));
     return baseRows(table);
   };
 
@@ -1901,7 +2017,7 @@
       if (!Object.keys(add).length) return;
       add.id = hasVal(s.id) ? s.id : d.id;
       add.lastUpdated = nowIso();
-      writes.push({ ref: db.collection(STAFF_PRIV).doc(d.id), data: add });
+      writes.push({ ref: db.collection(STAFF_PRIV).doc(d.id), data: maskPrivate(TABLES.staff, add) }); // เลขบัญชีเก็บแบบปิดบัง (ค่าเต็มย้ายไป staff_bank ตอนผู้แก้ไขแท็บบุคลากรเปิดหน้า)
       if (cur) filled++; else created++;
     });
     try {
@@ -1917,12 +2033,16 @@
   // ขั้น 3 (หลังยืนยันว่าใช้งานได้): ลบฟิลด์ส่วนตัวออกจากตาราง staff — ตรวจก่อนว่าทุกค่าที่จะลบมีที่เก็บใน staff_private แล้ว ถ้าไม่ครบจะไม่ลบอะไรเลย
   FBL.cleanupStaffLegacy = async function () {
     const x = await readStaffBoth();
+    // เลขบัญชีเต็มต้องย้ายไป staff_bank แล้ว (staff_private เก็บแค่แบบปิดบัง) — ไม่งั้นลบแล้วหาย
+    const bank = {};
+    try { (await db.collection('staff_bank').get({ source: 'server' })).docs.forEach(function (d) { bank[d.id] = d.data(); }); } catch (e) { throw new Error(thErr(e)); }
     const problems = [];
     x.staff.forEach(function (d) {
       const s = d.data(), cur = x.priv[d.id];
-      if (PRIV_COLS.some(function (c) { return hasVal(s[c]) && !(cur && c in cur); })) problems.push(s.name || d.id);
+      if (PRIV_COLS.some(function (c) { return hasVal(s[c]) && !(cur && c in cur); })
+          || (hasVal(s.bankAcc) && !hasVal(bank[d.id] && bank[d.id].bankAcc))) problems.push(s.name || d.id);
     });
-    if (problems.length) throw new Error('ยังย้ายไม่ครบ ไม่ได้ลบอะไร — กดปุ่ม "ย้ายข้อมูลส่วนตัว" อีกครั้งก่อน (' + problems.slice(0, 5).join(', ') + (problems.length > 5 ? ' ฯลฯ' : '') + ')');
+    if (problems.length) throw new Error('ยังย้ายไม่ครบ ไม่ได้ลบอะไร — กดปุ่ม "ย้ายข้อมูลส่วนตัว" อีกครั้ง แล้วเปิดหน้างานสารบรรณ 1 ครั้ง (ย้ายเลขบัญชีเต็มไปตารางแยก) ก่อน (' + problems.slice(0, 5).join(', ') + (problems.length > 5 ? ' ฯลฯ' : '') + ')');
     const del = firebase.firestore.FieldValue.delete();
     const targets = x.staff.filter(function (d) { const s = d.data(); return PRIV_COLS.some(function (c) { return c in s; }); });
     try {
