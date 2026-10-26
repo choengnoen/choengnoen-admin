@@ -1124,8 +1124,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <thead><tr><th>เลขที่สัญญา</th><th>โครงการ / ผู้รับจ้าง</th><th>ปีงบ</th><th>ช่วงทางหลวง</th><th>เงินค่างาน (บาท)</th><th>เริ่ม – สิ้นสุดสัญญา</th><th>ส่งงาน / ตรวจรับ</th><th>คืนค้ำประกัน</th><th>วัดค่าสะท้อนแสง</th><th>สถานะ</th><th></th></tr></thead>
             <tbody id="ct-body"></tbody>
           </table></div>
-          <div class="legend-block">
-            <div class="foot-note" id="ct-foot" style="background:transparent;border-top:none;"></div>
+          <div class="legend-block" id="ct-foot-block">
+            <button type="button" class="legend-dot-btn no-print" id="ct-foot-toggle" onclick="__toggleNote('ct-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
+            <div class="foot-note" id="ct-foot" style="display:none;background:transparent;border-top:none;"></div>
           </div>
         </div>
       </div>
@@ -3049,7 +3050,13 @@ function renderContracts(){
       <td style="white-space:nowrap;">${can?`<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="openContractForm('${jsArg(c.id)}')"></button> <button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบ" onclick="deleteContract('${jsArg(c.id)}')"></button>`:''}</td>
     </tr>`;
   }).join('') : `<tr><td colspan="11" style="text-align:center;color:var(--ink-400);padding:22px;">${contractsList.length?'ไม่พบรายการตามเงื่อนไข':'ยังไม่มีข้อมูลสัญญา'+(can?' — กด "+ เพิ่มสัญญา" เพื่อเริ่มบันทึก':'')}</td></tr>`;
-  document.getElementById('ct-foot').textContent = `ทั้งหมด ${contractsList.length} สัญญา · สถานะคำนวณจากวันที่ (กำลังดำเนินการ = ยังไม่ส่งงานและยังไม่พ้นวันสิ้นสุดสัญญา, ในระยะค้ำประกัน = ส่งงาน/ตรวจรับแล้วแต่ยังไม่ถึงวันคืนค้ำประกัน) · แจ้งเตือนคืนค้ำประกันล่วงหน้า 3 / 2 / 1 เดือน · วัดค่าสะท้อนแสงรอบ 12 และ 24 เดือนถัดจากวันส่งงาน · ใช้สิทธิ์ส่วนงานที่ 2 (ผู้มีสิทธิ์แก้ไขเท่านั้นที่เพิ่ม/แก้/ลบได้)`;
+  document.getElementById('ct-foot').innerHTML = `<ol style="margin:0;padding-left:20px;line-height:1.7;">
+      <li>กำลังดำเนินการ = ยังไม่ส่งงาน และยังไม่พ้นวันสิ้นสุดสัญญา</li>
+      <li>ในระยะค้ำประกัน = ส่งงาน/ตรวจรับแล้ว แต่ยังไม่ถึงวันคืนค้ำประกัน</li>
+      <li>แจ้งเตือนคืนค้ำประกันล่วงหน้า 3 / 2 / 1 เดือน</li>
+      <li>วัดค่าสะท้อนแสง 12 และ 24 เดือน นับจากวันส่งงาน</li>
+      <li>เพิ่ม/แก้/ลบได้เฉพาะผู้มีสิทธิ์แก้ไขส่วนงานที่ 2</li>
+    </ol>`;
 }
 /* ---- ช่วงทางหลวงในฟอร์ม ---- */
 function ctRouteOptions(sel){
