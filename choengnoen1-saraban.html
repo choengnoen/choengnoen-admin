@@ -314,6 +314,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .sf-sec h4 .n{width:22px;height:22px;border-radius:50%;background:#fdefe3;color:var(--orange-600);display:inline-flex;align-items:center;justify-content:center;font-size:12px;}
   .sf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0 12px;}
   .sf-grid .c1{grid-column:span 1;} .sf-grid .c2{grid-column:span 2;} .sf-grid .c4{grid-column:span 4;}
+  .rh-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px;} .rh-row .rh-from{flex:0 1 160px;} .rh-row .rh-rate{flex:0 1 130px;} .rh-row .rh-note{flex:1 1 180px;}
+  .rh-hint{font-weight:400;color:var(--ink-400);}
   .sf-grid .edit-input{height:36px;font-size:13.5px;}
   .sf-grid select.edit-input{padding:0 6px 0 10px;}
   .sf-hint{font-size:11.5px;color:var(--ink-400);margin-top:4px;}
@@ -480,6 +482,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="dsel.js"></script>
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s1"></script>
+<script src="labor-calc.js?v=20261026"></script>
 <script src="emoji-img.js" defer></script>
 <script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261024" defer></script><script src="table-scroll-standard.js?v=20261024" defer></script>
 <style>
@@ -1323,6 +1326,7 @@ function __staffFormHTML(p, s, isAdd){
   const st = s.status || 'ok';
   const stOpts = [['ok','ปฏิบัติงาน'],['resigned','ลาออก']].concat(isAdd ? [] : [['retired','เกษียณอายุ']]);
   const ptype = s.ptype || 'ลูกจ้างชั่วคราว';
+  const rh = LaborCalc.rateHistoryOf(s);
   return `
     <div class="sf-sec">
       <h4><span class="n">1</span>ข้อมูลส่วนตัว</h4>
@@ -1352,7 +1356,11 @@ function __staffFormHTML(p, s, isAdd){
         <div class="f-row c2"><label>เริ่มปฏิบัติหน้าที่ยามตั้งแต่วันที่</label><input type="date" class="edit-input" id="${p}-dutystart" value="${v(s.dutyStart)}" ${g?'':'disabled'}></div>
         <div class="f-row c2" id="${p}-w-start"><label>วันที่เริ่มงาน</label><input type="date" class="edit-input" id="${p}-startdate" value="${v(s.startDate)}"></div>
         <div class="f-row c2" id="${p}-w-resign"><label>วันที่ลาออก (มีผลตั้งแต่วันที่)</label><input type="date" class="edit-input" id="${p}-resigndate" value="${v(s.resignedDate)}"></div>
-        <div class="f-row c2" id="${p}-w-rate"><label>อัตราค่าจ้าง/วัน (บาท)</label><input type="number" class="edit-input" id="${p}-rate" value="${v(s.rate)}" placeholder="เช่น 400"></div>
+        <div class="f-row c2" id="${p}-w-rate"><label>อัตราค่าจ้าง/วัน (บาท)</label><input type="number" class="edit-input" id="${p}-rate" value="${v(!rh.length ? s.rate : (!rh[0].from ? rh[0].rate : ''))}" placeholder="เช่น 400"></div>
+        <div class="f-row c4" id="${p}-w-rh"><label>การปรับอัตราค่าจ้าง <span class="rh-hint">— ถ้ามีการปรับ ช่องด้านบนคืออัตราก่อนปรับครั้งแรก</span></label>
+          <div id="${p}-rh-list">${rh.filter(r=>r.from).map(__rhRowHTML).join('')}</div>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="__rhAdd('${p}')">+ เพิ่มการปรับอัตราค่าจ้าง</button>
+        </div>
       </div>
     </div>
     <div class="sf-sec" id="${p}-sec-leave">
@@ -1381,12 +1389,39 @@ function __staffFormHTML(p, s, isAdd){
 }
 /* แสดง/ซ่อนช่องตามตำแหน่งและประเภท: วันที่เริ่มงาน = เฉพาะ "คนงาน" (ใช้นับ 6 เดือนแรก)
    ค่าจ้าง/วัน = เฉพาะลูกจ้างชั่วคราว ; วันลาสะสม = ไม่ใช่ลูกจ้างชั่วคราว (ใบลาใส่สะสม ๐ ให้เองอยู่แล้ว) */
+/* ประวัติการปรับอัตราค่าจ้าง (staff.rateHistory) — แถวละ 1 ครั้งที่ปรับ: มีผลตั้งแต่วันที่ / อัตราใหม่ / หมายเหตุ
+   บันทึกเป็น [{from:'', rate:อัตราแรกเริ่ม}, {from, rate, note}, ...] — บัญชีแรงงานระบบที่ 4 คิดค่าจ้างแต่ละวันตามอัตราที่มีผลวันนั้น */
+function __rhRowHTML(r){
+  r = r || {};
+  return `<div class="rh-row"><input type="date" class="edit-input rh-from" value="${esc(r.from||'')}" title="มีผลตั้งแต่วันที่">`
+    + `<input type="number" class="edit-input rh-rate" value="${esc(r.rate ?? '')}" placeholder="อัตราใหม่/วัน">`
+    + `<input class="edit-input rh-note" value="${esc(r.note||'')}" placeholder="หมายเหตุ เช่น จ้างตามวุฒิ">`
+    + `<button type="button" class="btn btn-ghost btn-sm" onclick="this.parentNode.remove()">ลบ</button></div>`;
+}
+function __rhAdd(p){ document.getElementById(p+'-rh-list').insertAdjacentHTML('beforeend', __rhRowHTML()); }
+// อ่านแถวการปรับอัตราจากฟอร์ม → {hist, rate} หรือ {error}; ไม่มีการปรับ = hist null, rate = อัตราในช่องหลัก
+function __rhCollect(p){
+  const baseVal = document.getElementById(p+'-rate').value;
+  const base = baseVal ? Number(baseVal) : null;
+  const changes = [];
+  for(const row of document.querySelectorAll('#'+p+'-rh-list .rh-row')){
+    const from = row.querySelector('.rh-from').value, rv = row.querySelector('.rh-rate').value, note = row.querySelector('.rh-note').value.trim();
+    if(!from && !rv && !note) continue;
+    if(!from || !rv) return {error:'กรุณากรอก "วันที่มีผล" และ "อัตราใหม่" ของการปรับอัตราค่าจ้างให้ครบทุกแถว'};
+    changes.push({from, rate:Number(rv), note});
+  }
+  if(!changes.length) return {hist:null, rate:base};
+  changes.sort((a,b)=>a.from.localeCompare(b.from));
+  const hist = (base!=null ? [{from:'', rate:base, note:''}] : []).concat(changes);
+  return {hist, rate: LaborCalc.rateOn({rateHistory:hist}, TODAY.toISOString().slice(0,10))};
+}
 function __staffFormUpd(p){
   const worker = document.getElementById(p+'-role').value.trim()==='คนงาน';
   const temp = document.getElementById(p+'-ptype').value==='ลูกจ้างชั่วคราว';
   document.getElementById(p+'-w-start').classList.toggle('hidden', !worker);
   document.getElementById(p+'-w-resign').classList.toggle('hidden', document.getElementById(p+'-status').value!=='resigned');
   document.getElementById(p+'-w-rate').classList.toggle('hidden', !temp);
+  document.getElementById(p+'-w-rh').classList.toggle('hidden', !temp);
   document.getElementById(p+'-sec-leave').classList.toggle('hidden', temp);
   document.getElementById(p+'-n4').textContent = temp ? 3 : 4;
   document.getElementById(p+'-n5').textContent = temp ? 4 : 5;
@@ -2082,6 +2117,9 @@ function __staffDetailViewHTML(s){
   const posVal = ((s.role?esc(s.role):'') + dutyPill + retirePill).trim();
   const el = __leaveEligibleDate(s);
   const startVal = s.startDate ? fmtDate(s.startDate) + (el ? (TODAY.toISOString().slice(0,10) < el ? ` <span class="pill pill-warn">ยังไม่มีสิทธิ์ลา (ถึง ${fmtDate(el)})</span>` : ' <span class="pill pill-ok">มีสิทธิ์ลาแล้ว</span>') : '') : '';
+  // อัตราที่มีผลวันนี้ + ประวัติการปรับ (ถ้ามี)
+  const rh = LaborCalc.rateHistoryOf(s), rateNow = LaborCalc.rateOn(s, TODAY.toISOString().slice(0,10));
+  const rateVal = rateNow ? fmtMoney(rateNow)+' บาท' + (rh.some(r=>r.from) ? rh.map(r=>`<div style="font-size:12.5px;color:var(--ink-400);">${r.from ? 'ตั้งแต่ '+fmtDate(r.from) : 'อัตราแรกเริ่ม'} · ${fmtMoney(r.rate)} บาท${r.note ? ' · '+esc(r.note) : ''}</div>`).join('') : '') : '';
   const vacVal = (s.vacCarry!=null && s.vacCarry!=='') ? esc(s.vacCarry)+' วันทำการ'+(s.vacCarryFy?' (ปีงบ '+esc(s.vacCarryFy)+')':'') : '';
   const general = grid([
     f('ชื่อเล่น', s.nickname ? esc(s.nickname) : ''),
@@ -2091,7 +2129,7 @@ function __staffDetailViewHTML(s){
     f('วันเกิด / อายุ', s.birth ? fmtDateFull(s.birth)+' ('+age+' ปี)' : ''),
     f('วันที่เริ่มงาน', startVal),
     f('วุฒิการศึกษา', s.education ? esc(s.education) : ''),
-    f('อัตราค่าจ้าง/วัน', s.rate ? fmtMoney(s.rate)+' บาท' : ''),
+    f('อัตราค่าจ้าง/วัน', rateVal),
     f('วันลาพักผ่อนสะสมยกมา', vacVal),
     f('ไซส์เสื้อ', s.shirt ? esc(s.shirt) : '')
   ]);
@@ -2220,6 +2258,8 @@ function deleteStaffDetail(){
 async function saveStaffDetail(){
   if(!isAdmin() || staffDetailIndex===null) return;
   const s = staff[staffDetailIndex];
+  const rc = __rhCollect('sd');
+  if(rc.error){ alert(rc.error); return; }
   const before = Object.assign({}, s);
   const newName = document.getElementById('sd-name').value.trim();
   s.name = newName || s.name;
@@ -2238,8 +2278,8 @@ async function saveStaffDetail(){
   const vcVal = document.getElementById('sd-vaccarry').value, vcFy = document.getElementById('sd-vaccarryfy').value;
   s.vacCarry = vcVal!=='' ? Number(vcVal) : null;
   s.vacCarryFy = vcVal!=='' && vcFy ? Number(vcFy) : null;
-  const rateVal = document.getElementById('sd-rate').value;
-  s.rate = rateVal ? Number(rateVal) : null;
+  s.rate = rc.rate;               // อัตราที่มีผลวันนี้ (หน้าอื่นที่ยังอ่านค่าเดียวใช้ค่านี้)
+  s.rateHistory = rc.hist;
   s.shirt = document.getElementById('sd-shirt').value.trim() || null;
   s.med = document.getElementById('sd-med').value.trim() || null;
   s.bloodType = document.getElementById('sd-blood').value.trim() || null;
@@ -2282,7 +2322,8 @@ async function submitAddStaff(){
   if(!isAdmin()) return;
   const name = document.getElementById('as-name').value.trim();
   if(!name){ alert('กรุณากรอกชื่อ-สกุล'); return; }
-  const rateVal = document.getElementById('as-rate').value;
+  const rc = __rhCollect('as');
+  if(rc.error){ alert(rc.error); return; }
   const newStaff = {
     name,
     nickname: document.getElementById('as-nickname').value.trim() || null,
@@ -2291,7 +2332,8 @@ async function submitAddStaff(){
     duty: document.getElementById('as-guard').checked ? 'ยาม' : null,
     dutyStart: document.getElementById('as-guard').checked ? (document.getElementById('as-dutystart').value || null) : null,
     ptype: document.getElementById('as-ptype').value,
-    rate: rateVal ? Number(rateVal) : null,
+    rate: rc.rate,
+    rateHistory: rc.hist,
     shirt: document.getElementById('as-shirt').value.trim() || null,
     med: document.getElementById('as-med').value.trim() || null,
     bloodType: document.getElementById('as-blood').value.trim() || null,

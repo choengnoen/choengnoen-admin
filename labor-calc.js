@@ -69,6 +69,30 @@
     }
     return null;
   }
+  /* ประวัติอัตราค่าจ้าง (rateHistory) = [{from:'YYYY-MM-DD' หรือ '' (อัตราแรกเริ่ม), rate, note}] ตั้งค่าที่ระบบที่ 1 → ข้อมูลบุคลากร
+     ไม่มีประวัติ = ใช้ rate ค่าเดียวตลอด */
+  function rateHistoryOf(s) {
+    let h = s && s.rateHistory;
+    if (typeof h === 'string') { try { h = JSON.parse(h); } catch (e) { h = null; } }
+    if (!Array.isArray(h)) return [];
+    return h.filter(r => r && r.rate !== '' && r.rate != null && isFinite(Number(r.rate)))
+      .map(r => ({ from: r.from || '', rate: Number(r.rate), note: r.note || '' }))
+      .sort((a, b) => a.from.localeCompare(b.from));
+  }
+  // อัตราค่าจ้างที่ใช้ในวันที่ iso
+  function rateOn(emp, iso) {
+    const h = rateHistoryOf(emp);
+    if (!h.length) return Number(emp && emp.rate) || 0;
+    let hit = h[0];
+    h.forEach(r => { if (r.from <= iso) hit = r; });
+    return hit.rate;
+  }
+  // การปรับอัตราที่มีผลระหว่างเดือน (หลังวันที่ 1 ถึงสิ้นเดือน) — ใช้เขียนหมายเหตุท้ายแบบ ง.3-26
+  function rateChangesIn(emp, cycleKey) {
+    const from = cycleKey + '-01', to = cycleKey + '-' + String(daysInCycle(cycleKey)).padStart(2, '0');
+    return rateHistoryOf(emp).filter(r => r.from > from && r.from <= to);
+  }
+
   // ช่วงเวลาที่ปฏิบัติงานจริง: ตั้งแต่ startDate (ว่าง = ไม่จำกัด) ถึงวันสุดท้ายที่ปฏิบัติงาน
   function servedIn(s, from, to) {
     if (s.startDate && s.startDate > to) return false;
@@ -84,7 +108,7 @@
     return normalizeStaff(staffRows)
       .filter(s => s.role === 'คนงาน' && (cycleKey ? servedIn(s, from, to) : s.status === 'ok'))
       .map(s => ({ name: s.name, role: s.role, duty: s.duty || null, dutyStart: s.dutyStart || null, rate: (s.rate === '' || s.rate == null) ? 0 : (Number(s.rate) || 0), bankAcc: s.bankAcc || '',
-        startDate: s.startDate || null, endDate: s.status === 'ok' ? null : lastDayOf(s) }));
+        startDate: s.startDate || null, endDate: s.status === 'ok' ? null : lastDayOf(s), rateHistory: rateHistoryOf(s) }));
   }
 
   // รหัสลงเวลารายวันของแต่ละคนในรอบเดือน → { name: ['1','-','ป',...] }
@@ -112,11 +136,18 @@
 
   function workDays(codes) { return (codes || []).filter(c => WORKDAY_CODES.has(c)).length; }
 
-  // ค่าจ้างรวมของรอบเดือน = Σ (วันทำงาน × ค่าจ้างรายวัน)
-  function spendOf(cycleKey, roster, leaves, publicHolidays) {
-    const att = attendanceOf(cycleKey, roster, leaves, publicHolidays);
-    return (roster || []).reduce((sum, e) => sum + workDays(att[e.name]) * (e.rate || 0), 0);
+  // ค่าจ้างของคนหนึ่งในรอบเดือน = Σ อัตราค่าจ้างของแต่ละวันทำงาน (รองรับการปรับอัตราระหว่างเดือน) ปัดเป็นสตางค์
+  function amountOf(emp, codes, cycleKey) {
+    let sum = 0;
+    (codes || []).forEach((c, i) => { if (WORKDAY_CODES.has(c)) sum += rateOn(emp, cycleKey + '-' + String(i + 1).padStart(2, '0')); });
+    return Math.round(sum * 100) / 100;
   }
 
-  window.LaborCalc = { THAI_HOLIDAYS, LEAVE_TYPE_CODE, WORKDAY_CODES, isGuard, worksSaturday, daysInCycle, holidaysOf, leaveCodeForDay, normalizeStaff, rosterFrom, attendanceOf, workDays, spendOf };
+  // ค่าจ้างรวมของรอบเดือน = Σ ค่าจ้างของแต่ละคน
+  function spendOf(cycleKey, roster, leaves, publicHolidays) {
+    const att = attendanceOf(cycleKey, roster, leaves, publicHolidays);
+    return (roster || []).reduce((sum, e) => sum + amountOf(e, att[e.name], cycleKey), 0);
+  }
+
+  window.LaborCalc = { THAI_HOLIDAYS, LEAVE_TYPE_CODE, WORKDAY_CODES, isGuard, worksSaturday, daysInCycle, holidaysOf, leaveCodeForDay, normalizeStaff, rosterFrom, attendanceOf, workDays, spendOf, rateHistoryOf, rateOn, rateChangesIn, amountOf };
 })();

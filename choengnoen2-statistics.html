@@ -779,6 +779,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="dsel.js"></script>
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s2"></script>
+<script src="labor-calc.js?v=20261026"></script>
 <script src="emoji-img.js" defer></script>
 <script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261024" defer></script><script src="table-scroll-standard.js?v=20261024" defer></script>
 <script src="doh-import.js" defer></script>
@@ -4495,7 +4496,8 @@ function suggestLaborCost(){
     const dup = others.find(d=> (d.staff||[]).includes(name));
     if(dup){ alreadyCounted.push({name, code:dup.code}); return; }
     const s = staffList.find(x=>x.name===name);
-    if(s && s.rate){ sum += s.rate; } else missing.push(name);
+    const rate = s ? LaborCalc.rateOn(s, date || new Date().toISOString().slice(0,10)) : 0; // อัตราที่มีผลในวันที่ของใบสั่งการ (ประวัติปรับอัตราจากระบบที่ 1)
+    if(rate){ sum += rate; } else missing.push(name);
   });
   if(sum<=0 && !missing.length && !alreadyCounted.length){ hint.innerHTML=''; refreshDwAccBadges(); return; }
   const dupNote = alreadyCounted.length ? `<div style="color:var(--ink-400);margin-top:2px;">⚠ ${alreadyCounted.map(c=>`${esc(c.name)} (นับค่าแรงไปแล้วในรหัสงาน ${esc(c.code)} วันเดียวกัน — ไม่บวกซ้ำให้อัตโนมัติ)`).join(', ')}</div>` : '';
@@ -4521,7 +4523,8 @@ function onDwQtyPendingToggle(){
 let __ucEditingNo = null;
 let __ucLaborCount = 0, __ucMatCount = 0, __ucVehCount = 0;
 function avgWorkerRate(){
-  const rates = getStaffX().filter(s=>s.ptype==='ลูกจ้างชั่วคราว' && s.rate).map(s=>s.rate);
+  const today = new Date().toISOString().slice(0,10);
+  const rates = getStaffX().filter(s=>s.ptype==='ลูกจ้างชั่วคราว').map(s=>LaborCalc.rateOn(s, today)).filter(Boolean);
   if(!rates.length) return 0;
   return rates.reduce((a,b)=>a+b,0)/rates.length;
 }
