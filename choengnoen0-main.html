@@ -455,11 +455,33 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   #um-body .form-sub{margin:16px 0 8px;}
   #um-body .sec-check{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;}
   #um-body .flag-list{gap:10px 16px;}
-  .um-tabs-grp{padding:8px 0;border-bottom:1px dashed var(--paper-100);}
-  .um-tabs-grp:last-child{border-bottom:0;}
-  .um-tabs-h{font-size:13px;font-weight:600;color:var(--ink-600);margin-bottom:6px;}
-  #um-body .um-tabs-grp .sec-check{grid-template-columns:repeat(3,1fr);gap:6px 14px;}
-  @media(max-width:640px){#um-body .um-tabs-grp .sec-check{grid-template-columns:1fr 1fr;}}
+  /* หน้าต่างผู้ใช้แบ่ง 3 แท็บ: ข้อมูลผู้ใช้ / บทบาทและสิทธิ์ / แท็บที่เห็น */
+  .um-steps{display:flex;gap:2px;padding:0 18px;border-bottom:1px solid var(--line);background:var(--white);flex:none;overflow-x:auto;scrollbar-width:none;}
+  .um-steps::-webkit-scrollbar{display:none;}
+  .um-steps.hidden{display:none;}
+  .um-steps button{border:0;background:none;padding:12px 12px 10px;font-family:'Kanit';font-size:13.5px;font-weight:600;color:var(--ink-400);border-bottom:3px solid transparent;cursor:pointer;display:flex;gap:7px;align-items:center;white-space:nowrap;}
+  .um-steps button .n{width:20px;height:20px;border-radius:50%;background:var(--paper-100);color:var(--ink-600);font-size:11.5px;display:inline-flex;align-items:center;justify-content:center;}
+  .um-steps button:hover{color:var(--navy-900);}
+  .um-steps button.on{color:var(--navy-900);border-bottom-color:var(--orange-600);}
+  .um-steps button.on .n{background:var(--orange-600);color:#fff;}
+  .um-pane{display:none;}
+  .um-pane.on{display:block;}
+  .um-pane-note{font-size:12.5px;color:var(--ink-400);margin:0 0 14px;}
+  #um-body .role-card{padding:12px 10px;}
+  #um-body .role-card .rc-e{font-size:26px;}
+  .um-trow{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+  .um-trow-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;font-family:'Kanit';font-weight:600;font-size:14px;color:var(--navy-900);}
+  .um-acc{font-family:'Sarabun';font-size:11.5px;font-weight:600;padding:2px 10px;border-radius:999px;background:#8792a0;color:#fff;white-space:nowrap;}
+  .um-acc.edit{background:var(--success);}
+  .um-acc.view{background:#2563eb;}
+  .um-chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .um-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border:1.5px solid var(--line);border-radius:999px;font-size:13px;cursor:pointer;background:var(--paper-50);color:var(--ink-400);text-decoration:line-through;user-select:none;}
+  .um-chip input{display:none;}
+  .um-chip::before{content:"✕";font-size:11px;}
+  .um-chip:has(input:checked){border-color:var(--success);background:var(--success-bg);color:var(--success);text-decoration:none;font-weight:600;}
+  .um-chip:has(input:checked)::before{content:"✓";}
+  .um-trow.off{background:var(--paper-50);}
+  .um-trow.off .um-chips{opacity:.4;pointer-events:none;}
   #um-body .role-card{display:flex;flex-direction:column;align-items:center;}
   #um-body .um-say li b{color:var(--navy-900);}
   @media(max-width:640px){#um-body .sec-check{grid-template-columns:1fr;}}
@@ -748,6 +770,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <div class="modal-head-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
       <h3 id="um-title">เพิ่มผู้ใช้งาน</h3>
       <button type="button" class="modal-close" onclick="closeUserModal()">✕</button>
+    </div>
+    <div class="um-steps" id="um-steps">
+      <button type="button" data-pane="info" onclick="umStep('info')"><span class="n">1</span>ข้อมูลผู้ใช้</button>
+      <button type="button" data-pane="perm" onclick="umStep('perm')"><span class="n">2</span>บทบาทและสิทธิ์</button>
+      <button type="button" data-pane="tabs" onclick="umStep('tabs')"><span class="n">3</span>แท็บที่เห็น</button>
     </div>
     <div class="modal-body" id="um-body"></div>
     <div class="modal-foot" id="um-foot"></div>
@@ -1550,45 +1577,61 @@ function openUserModal(uid){
   document.getElementById('um-title').textContent = u ? 'แก้ไขผู้ใช้งาน — '+u.name : 'เพิ่มผู้ใช้งาน';
   const roleCards = ['chief','assistant','staff'].map(r=>`<div class="role-card ${UM.role===r?'active':''}" data-role="${r}" onclick="umPickRole('${r}')"><span class="rc-e">${FBL.ROLES[r].icon}</span><b>${esc(FBL.ROLES[r].label)}</b>${esc(UM_ROLE_DESC[r]||FBL.ROLES[r].desc)}</div>`).join('');
   document.getElementById('um-body').innerHTML = `
-    <div class="um-top">
-      <div class="um-top-fields">
-        <div class="two-col">
-          <div class="f-row"><label>ชื่อ-สกุล <span class="um-opt">(ชื่อที่เลือกตอนล็อกอิน)</span></label><input id="um-name" oninput="umRefreshSay()" value="${esc(u?u.name:'')}" placeholder="เช่น นางสาววันทนา มีมานะ"></div>
-          <div class="f-row"><label>ตำแหน่ง</label><input id="um-position" value="${esc(u?u.position:'')}" placeholder="เช่น นายช่างโยธา"></div>
-        </div>
-        <div class="f-row um-pw-row">${u ? `<label>สถานะบัญชี</label><select id="um-active" ${isOwnerRec?'disabled':''}><option value="1" ${u.active?'selected':''}>ใช้งาน</option><option value="0" ${u.active?'':'selected'}>ระงับ (ล็อกอินไม่ได้)</option></select>`
-          : `<label>รหัสผ่านเริ่มต้น <span class="um-opt">(8 ตัวขึ้นไป)</span></label><input id="um-password" type="text" autocomplete="off" placeholder="ตั้งรหัสผ่าน">`}</div>
-        ${u ? `<div class="f-row"><label>ตั้งรหัสผ่านใหม่ <span class="um-opt">(เว้นว่างถ้าไม่เปลี่ยน · 8 ตัวขึ้นไป)</span></label><input id="um-newpw" type="text" autocomplete="off"></div>` : ''}
+    <!-- แท็บ 1: ข้อมูลผู้ใช้ -->
+    <div class="um-pane" data-pane="info">
+      <div class="two-col">
+        <div class="f-row"><label>ชื่อ-สกุล <span class="um-opt">(ชื่อที่เลือกตอนล็อกอิน)</span></label><input id="um-name" oninput="umRefreshSay()" value="${esc(u?u.name:'')}" placeholder="เช่น นางสาววันทนา มีมานะ"></div>
+        <div class="f-row"><label>ตำแหน่ง</label><input id="um-position" value="${esc(u?u.position:'')}" placeholder="เช่น นายช่างโยธา"></div>
       </div>
+      <div class="two-col">
+        ${u ? `<div class="f-row"><label>สถานะบัญชี</label><select id="um-active" ${isOwnerRec?'disabled':''}><option value="1" ${u.active?'selected':''}>ใช้งาน</option><option value="0" ${u.active?'':'selected'}>ระงับ (ล็อกอินไม่ได้)</option></select></div>
+          <div class="f-row"><label>ตั้งรหัสผ่านใหม่ <span class="um-opt">(เว้นว่างถ้าไม่เปลี่ยน)</span></label><input id="um-newpw" type="text" autocomplete="off" placeholder="8 ตัวขึ้นไป"></div>`
+          : `<div class="f-row"><label>รหัสผ่านเริ่มต้น</label><input id="um-password" type="text" autocomplete="off" placeholder="8 ตัวขึ้นไป"></div><div></div>`}
+      </div>
+      ${isOwnerRec ? `<div class="hint-box">👑 <b>เจ้าของระบบ</b> — สิทธิ์เต็มเสมอ ปรับไม่ได้</div>` : ''}
     </div>
-    ${isOwnerRec ? `<div class="hint-box">👑 <b>เจ้าของระบบ</b> — สิทธิ์เต็มเสมอ ปรับไม่ได้</div>` : `
-    <div class="form-sub">บทบาท</div>
-    <div class="role-cards" id="um-roles">${roleCards}</div>
-    <div id="um-sections-wrap" style="${UM.role==='staff'?'':'display:none'}">
-      <div class="form-sub">ส่วนงานที่รับผิดชอบ <span class="um-opt">(แก้ไขได้เฉพาะที่ติ๊ก)</span></div>
-      <div class="sec-check">${FBL.SUB_KEYS.map(k=>`<label><input type="checkbox" class="um-sec" value="${k}" ${UM.sections.includes(k)?'checked':''} onchange="umSectionsChanged()"> ${k.slice(1)}. ${esc(umSecLabel(k))}</label>`).join('')}</div>
+    ${isOwnerRec ? '' : `
+    <!-- แท็บ 2: บทบาทและสิทธิ์ -->
+    <div class="um-pane" data-pane="perm">
+      <div class="form-sub" style="margin-top:0">เลือกบทบาท</div>
+      <div class="role-cards" id="um-roles">${roleCards}</div>
+      <div id="um-sections-wrap" style="${UM.role==='staff'?'':'display:none'}">
+        <div class="form-sub">ส่วนงานที่รับผิดชอบ <span class="um-opt">(แก้ไขได้เฉพาะที่ติ๊ก)</span></div>
+        <div class="sec-check">${FBL.SUB_KEYS.map(k=>`<label><input type="checkbox" class="um-sec" value="${k}" ${UM.sections.includes(k)?'checked':''} onchange="umSectionsChanged()"> ${k.slice(1)}. ${esc(umSecLabel(k))}</label>`).join('')}</div>
+      </div>
+      <div class="um-say"><h5>📋 สรุปสิทธิ์</h5><ul id="um-say"></ul></div>
+      <details class="um-adv"><summary>⚙️ ปรับสิทธิ์ละเอียด (ไม่จำเป็น)</summary><div class="um-adv-in" onchange="umRefreshSay()">
+      <div class="form-sub" style="display:flex;justify-content:space-between;align-items:center;">สิทธิ์รายระบบ <button type="button" class="btn btn-ghost btn-sm" onclick="umResetPreset()">↺ ค่าตั้งต้น</button></div>
+      <table class="perm-table"><thead><tr><th>ระบบ</th><th>✎ แก้ไข</th><th>👁 ดู</th><th>— ซ่อน</th></tr></thead>
+        <tbody>
+          <tr><td>• ระบบหลัก</td><td colspan="3"><label style="display:inline-flex;gap:6px;align-items:center;"><input type="checkbox" id="um-main"> เห็นระบบหลัก</label></td></tr>
+          ${FBL.SUB_KEYS.map(k=>`<tr><td>${k.slice(1)}. ${esc(umSecLabel(k))}</td>${['edit','view','none'].map(v=>`<td><input type="radio" name="um-${k}" value="${v}"></td>`).join('')}</tr>`).join('')}
+        </tbody></table>
+      <div class="form-sub">สิทธิ์พิเศษ</div>
+      <div class="flag-list">${FBL.FLAGS.map(f=>`<label class="flag-item"><input type="checkbox" class="um-flag" value="${f.key}"><span>${esc(umFlagLabel(f))}<small>${esc(umFlagDesc(f))}</small></span></label>`).join('')}</div>
+      </div></details>
     </div>
-    <div class="um-say"><h5>📋 สรุปสิทธิ์</h5><ul id="um-say"></ul></div>
-    <details class="um-adv"><summary>⚙️ ปรับสิทธิ์ละเอียด</summary><div class="um-adv-in" onchange="umRefreshSay()">
-    <div class="form-sub" style="display:flex;justify-content:space-between;align-items:center;">สิทธิ์รายระบบ <button type="button" class="btn btn-ghost btn-sm" onclick="umResetPreset()">↺ ค่าตั้งต้น</button></div>
-    <table class="perm-table"><thead><tr><th>ระบบ</th><th>✎ แก้ไข</th><th>👁 ดู</th><th>— ซ่อน</th></tr></thead>
-      <tbody>
-        <tr><td>• ระบบหลัก</td><td colspan="3"><label style="display:inline-flex;gap:6px;align-items:center;"><input type="checkbox" id="um-main"> เห็นระบบหลัก</label></td></tr>
-        ${FBL.SUB_KEYS.map(k=>`<tr><td>${k.slice(1)}. ${esc(umSecLabel(k))}</td>${['edit','view','none'].map(v=>`<td><input type="radio" name="um-${k}" value="${v}"></td>`).join('')}</tr>`).join('')}
-      </tbody></table>
-    <div class="form-sub">สิทธิ์พิเศษ</div>
-    <div class="flag-list">${FBL.FLAGS.map(f=>`<label class="flag-item"><input type="checkbox" class="um-flag" value="${f.key}"><span>${esc(umFlagLabel(f))}<small>${esc(umFlagDesc(f))}</small></span></label>`).join('')}</div>
-    <div class="form-sub">แท็บที่เห็นในแต่ละระบบ <span class="um-opt">(เอาติ๊กออก = ซ่อนแท็บนั้น)</span></div>
-    ${['main',...FBL.SUB_KEYS].map(k=>`<div class="um-tabs-grp"><div class="um-tabs-h">${k==='main'?'• ระบบหลัก':k.slice(1)+'. '+esc(umSecLabel(k))}</div>
-      <div class="sec-check">${FBL.PAGE_TABS[k].map(([s,l])=>`<label><input type="checkbox" class="um-tab" value="${k}:${s}"> ${esc(l)}</label>`).join('')}</div></div>`).join('')}
-    </div></details>
+    <!-- แท็บ 3: แท็บที่เห็นในแต่ละระบบ -->
+    <div class="um-pane" data-pane="tabs" onchange="umRefreshSay()">
+      <p class="um-pane-note">กดที่ชื่อแท็บเพื่อสลับ — <b style="color:var(--success)">✓ สีเขียว = เห็น</b> · ✕ สีเทา = ซ่อน (ระบบที่ตั้งเป็น "ไม่เห็น" จะซ่อนทั้งระบบอยู่แล้ว)</p>
+      ${['main',...FBL.SUB_KEYS].map(k=>`<div class="um-trow" id="um-trow-${k}">
+        <div class="um-trow-h"><span>${k==='main'?'• ระบบหลัก (งานบริหารหมวด)':k.slice(1)+'. '+esc(FBL.SECTIONS[k].label)}</span><span class="um-acc" id="um-acc-${k}"></span></div>
+        <div class="um-chips">${FBL.PAGE_TABS[k].map(([s,l])=>`<label class="um-chip"><input type="checkbox" class="um-tab" value="${k}:${s}">${esc(l)}</label>`).join('')}</div></div>`).join('')}
+    </div>
     `}`;
+  document.getElementById('um-steps').classList.toggle('hidden', isOwnerRec);
+  umStep('info');
   const delBtn = (u && !isOwnerRec) ? `<button class="btn btn-danger" style="margin-right:auto" onclick="umDelete()">ลบผู้ใช้งาน</button>` : '';
   document.getElementById('um-foot').innerHTML = `${delBtn}<button class="btn btn-ghost" onclick="closeUserModal()">ยกเลิก</button><button class="btn btn-primary" id="um-save" onclick="saveUserModal()">บันทึก</button>`;
   if(!isOwnerRec) umFillPerm();
   document.getElementById('user-modal').classList.remove('hidden');
 }
 function closeUserModal(){ document.getElementById('user-modal').classList.add('hidden'); UM = null; }
+function umStep(p){
+  document.querySelectorAll('#um-steps button').forEach(b=>b.classList.toggle('on', b.dataset.pane===p));
+  document.querySelectorAll('#um-body .um-pane').forEach(x=>x.classList.toggle('on', x.dataset.pane===p));
+  document.getElementById('um-body').scrollTop = 0;
+}
 function umFillPerm(){
   document.getElementById('um-main').checked = !!UM.perm.main;
   FBL.SUB_KEYS.forEach(k=>{ const el = document.querySelector(`input[name="um-${k}"][value="${UM.perm[k]}"]`); if(el) el.checked = true; });
@@ -1617,6 +1660,14 @@ function umRefreshSay(){
   const ht = ['main',...FBL.SUB_KEYS].map(k=>{ const h = umHiddenOf(p.hideTabs,k); return h.length ? (k==='main'?'ระบบหลัก':'ระบบ '+lab(k))+' ('+h.map(esc).join(', ')+')' : ''; }).filter(Boolean);
   if(ht.length) L.push('<b>ซ่อนแท็บ:</b> '+ht.join(' · '));
   box.innerHTML = L.map(x=>'<li>'+x+'</li>').join('');
+  // ป้ายสิทธิ์ของแต่ละระบบในแท็บ "แท็บที่เห็น" (ระบบที่ไม่เห็น → จางลง กดไม่ได้)
+  ['main',...FBL.SUB_KEYS].forEach(k=>{
+    const v = k==='main' ? (p.main ? 'view' : 'none') : p[k];
+    const acc = document.getElementById('um-acc-'+k); if(!acc) return;
+    acc.className = 'um-acc '+v;
+    acc.textContent = k==='main' ? (p.main ? 'เห็นระบบหลัก' : 'ไม่เห็นระบบนี้') : ({edit:'✎ แก้ไขได้', view:'👁 ดูอย่างเดียว', none:'ไม่เห็นระบบนี้'})[v];
+    document.getElementById('um-trow-'+k).classList.toggle('off', v==='none');
+  });
 }
 function umReadPerm(){
   const p = { main: document.getElementById('um-main').checked };
@@ -1644,11 +1695,11 @@ async function saveUserModal(){
   const btn = document.getElementById('um-save');
   const name = document.getElementById('um-name').value.trim();
   const position = document.getElementById('um-position').value.trim();
-  if(!name){ alert('กรุณากรอกชื่อ-สกุล'); return; }
+  if(!name){ umStep('info'); alert('กรุณากรอกชื่อ-สกุล'); return; }
   const payload = { name, position };
   if(!UM.isOwnerRec){ payload.role = UM.role; payload.sections = UM.role==='staff' ? UM.sections : []; payload.perm = umReadPerm();
     const allOff = ['main',...FBL.SUB_KEYS].find(k=>FBL.PAGE_TABS[k].every(([s])=>payload.perm.hideTabs.includes(k+':'+s)));
-    if(allOff){ alert('ซ่อนทุกแท็บของ'+(allOff==='main'?'ระบบหลัก':'ระบบ '+allOff.slice(1))+'ไม่ได้ — ถ้าไม่ให้เห็นระบบนั้น ให้ตั้งเป็น "ซ่อน" ในสิทธิ์รายระบบแทน'); return; }
+    if(allOff){ umStep('tabs'); alert('ซ่อนทุกแท็บของ'+(allOff==='main'?'ระบบหลัก':'ระบบ '+allOff.slice(1))+'ไม่ได้ — ถ้าไม่ให้เห็นระบบนั้น ให้ตั้งเป็น "ซ่อน" ในสิทธิ์รายระบบแทน'); return; }
   }
   btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
   try{
