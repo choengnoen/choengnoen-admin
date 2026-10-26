@@ -483,16 +483,24 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .um-segc button.edit.on{background:var(--success);}
   .um-segc button.view.on{background:#2563eb;}
   .um-segc button.none.on{background:#8792a0;}
-  .um-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--paper-100);}
-  .um-chip{border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--paper-50);color:var(--ink-400);font-family:'Sarabun';font-size:12.5px;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:line-through;}
-  .um-chip.on{border-color:var(--success);background:var(--success-bg);color:var(--success);font-weight:600;text-decoration:none;}
+  .um-sys-h>span:first-child{flex:1;min-width:0;}
+  .um-mixed{display:block;width:max-content;margin-top:3px;font-family:'Sarabun';font-size:11px;font-weight:600;color:var(--orange-600);background:#fff4ec;border:1px solid #f3c6a4;border-radius:999px;padding:0 8px;}
+  /* แถวแท็บ: ชื่อแท็บซ้าย + ปุ่มสิทธิ์ขนาดเล็กชุดเดียวกับหัวการ์ด (คอลัมน์ตรงกัน) */
+  .um-tabrows{margin-top:10px;border-top:1px dashed var(--paper-100);}
+  .um-tabrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0 6px 14px;border-bottom:1px dashed var(--paper-100);font-size:13px;color:var(--ink-900);}
+  .um-tabrow:last-child{border-bottom:0;padding-bottom:0;}
+  .um-tabrow::before{content:"";width:6px;height:6px;border-radius:50%;background:#c3cad3;margin-left:-12px;flex:none;}
+  .um-tabrow>span:first-of-type{flex:1;}
+  .um-tabrow.none>span:first-of-type{color:var(--ink-400);text-decoration:line-through;}
+  .um-segc.sm{background:var(--paper-50);}
+  .um-segc.sm button{padding:4px 0;font-size:12px;}
   /* สิทธิ์พิเศษ: ปุ่มเต็มแถว + สวิตช์ แบบเดียวกับหน้ารายละเอียด */
   .um-flags{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .um-fl{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--white);cursor:pointer;text-align:left;font-family:'Sarabun';}
   .um-fl b{display:block;font-size:13.5px;font-weight:600;color:var(--ink-900);}
   .um-fl small{display:block;font-size:11.5px;color:var(--ink-400);}
   .um-fl.on{border-color:var(--success);background:#f6fbf8;}
-  @media(max-width:640px){.um-chips{grid-template-columns:1fr 1fr;}.um-flags{grid-template-columns:1fr;}.um-segc button{width:auto;padding:6px 10px;}}
+  @media(max-width:640px){.um-tabrow{flex-wrap:wrap;}.um-flags{grid-template-columns:1fr;}.um-segc button{width:auto;padding:6px 10px;}}
   #um-body .role-card{display:flex;flex-direction:column;align-items:center;}
   #um-body .um-say li b{color:var(--navy-900);}
   @media(max-width:640px){#um-body .sec-check{grid-template-columns:1fr;}}
@@ -1561,8 +1569,9 @@ const umTabLabel = t => { const [k,s] = t.split(':'); const x = (FBL.PAGE_TABS[k
 const umHiddenOf = (hide,k) => (hide||[]).filter(t=>t.startsWith(k+':')).map(umTabLabel);
 function umHiddenNote(u,k){
   if(u.role==='owner') return '';
-  const h = umHiddenOf(u.perm.hideTabs, k);
-  return h.length ? `<div class="u-sub" style="color:var(--orange-600)">ซ่อนแท็บ: ${h.map(esc).join(', ')}</div>` : '';
+  const h = umHiddenOf(u.perm.hideTabs, k), vw = umHiddenOf(u.perm.tabView, k);
+  return (vw.length ? `<div class="u-sub" style="color:#2563eb">ดูอย่างเดียว: ${vw.map(esc).join(', ')}</div>` : '')
+    + (h.length ? `<div class="u-sub" style="color:var(--orange-600)">ซ่อนแท็บ: ${h.map(esc).join(', ')}</div>` : '');
 }
 /* ---------- หน้าต่างเพิ่ม/แก้ไขผู้ใช้ ---------- */
 let UM = null;   // { uid|null, role, sections, perm }
@@ -1607,7 +1616,6 @@ function openUserModal(uid){
       <div class="um-h">เลือกบทบาท</div>
       <div class="role-cards" id="um-roles">${roleCards}</div>
       <div class="um-h" style="margin-top:20px">สิทธิ์ในแต่ละระบบ <button type="button" class="btn btn-ghost btn-sm" onclick="umResetPreset()">↺ ค่าตั้งต้นตามบทบาท</button></div>
-      <p class="um-pane-note">เลือกว่าแก้ไขได้ / ดูอย่างเดียว / ไม่เห็น แล้วกดชื่อแท็บเพื่อเปิด-ปิดแท็บที่เห็น (สีเขียว = เห็น)</p>
       <div id="um-sys"></div>
     </div>
     <!-- แท็บ 3: สิทธิ์พิเศษ + สรุป -->
@@ -1621,7 +1629,7 @@ function openUserModal(uid){
   umStep('info');
   const delBtn = (u && !isOwnerRec) ? `<button class="btn btn-danger" style="margin-right:auto" onclick="umDelete()">ลบผู้ใช้งาน</button>` : '';
   document.getElementById('um-foot').innerHTML = `${delBtn}<button class="btn btn-ghost" onclick="closeUserModal()">ยกเลิก</button><button class="btn btn-primary" id="um-save" onclick="saveUserModal()">บันทึก</button>`;
-  if(!isOwnerRec){ UM.perm.hideTabs = UM.perm.hideTabs || []; umRender(); }
+  if(!isOwnerRec){ umTabsFromPerm(); umDerive(); umRender(); }
   document.getElementById('user-modal').classList.remove('hidden');
 }
 function closeUserModal(){ document.getElementById('user-modal').classList.add('hidden'); UM = null; }
@@ -1632,17 +1640,38 @@ function umStep(p){
 }
 /* หน้าต่างผู้ใช้วาดจาก UM.perm อย่างเดียว — กดปุ่มใดก็แก้ UM.perm แล้ววาดใหม่ทั้งหมด */
 function umRender(){ umRenderSys(); umRenderFlags(); umRefreshSay(); }
+const UM_SYS = () => ['main',...FBL.SUB_KEYS];
+const umOpts = k => k==='main' ? [['view','👁 เห็น'],['none','✕ ไม่เห็น']] : [['edit','✎ แก้ไข'],['view','👁 ดูอย่างเดียว'],['none','✕ ไม่เห็น']];
+const umSeg = (k, v, fn) => umOpts(k).map(([o,l])=>`<button type="button" class="${o}${v===o?' on':''}" onclick="${fn}'${o}')">${l}</button>`).join('');
+// UM.tabs = {'s1:staff':'edit'|'view'|'none'} ตัวจริงที่หน้าต่างแก้ — แปลงกลับเป็น perm ด้วย umDerive()
+function umTabsFromPerm(){
+  UM.tabs = {};
+  UM_SYS().forEach(k=>FBL.PAGE_TABS[k].forEach(([s])=>{ UM.tabs[k+':'+s] = FBL.tabAccess(UM.perm, k, s); }));
+}
+function umDerive(){
+  const p = UM.perm; p.hideTabs = []; p.tabView = [];
+  UM_SYS().forEach(k=>{
+    const v = FBL.PAGE_TABS[k].map(([s])=>UM.tabs[k+':'+s]);
+    const sys = v.includes('edit') ? 'edit' : v.includes('view') ? 'view' : 'none';
+    if(k==='main') p.main = sys!=='none'; else p[k] = sys;
+    if(sys==='none') return;   // ไม่เห็นทั้งระบบ — ไม่ต้องจำรายแท็บ
+    FBL.PAGE_TABS[k].forEach(([s])=>{ const t = k+':'+s;
+      if(UM.tabs[t]==='none') p.hideTabs.push(t);
+      else if(sys==='edit' && UM.tabs[t]==='view') p.tabView.push(t); });
+  });
+  if(UM.role==='staff') UM.sections = FBL.SUB_KEYS.filter(x=>p[x]==='edit'); // เจ้าหน้าที่: ระบบที่แก้ไขได้ = ส่วนงานที่รับผิดชอบ
+}
 function umRenderSys(){
   const el = document.getElementById('um-sys'); if(!el) return;
-  const p = UM.perm, hide = p.hideTabs;
-  el.innerHTML = ['main',...FBL.SUB_KEYS].map(k=>{
-    const v = k==='main' ? (p.main ? 'view' : 'none') : p[k];
-    const opts = k==='main' ? [['view','👁 เห็น'],['none','✕ ไม่เห็น']] : [['edit','✎ แก้ไข'],['view','👁 ดูอย่างเดียว'],['none','✕ ไม่เห็น']];
-    const seg = opts.map(([o,l])=>`<button type="button" class="${o}${v===o?' on':''}" onclick="umSetAcc('${k}','${o}')">${l}</button>`).join('');
-    const tabs = v==='none' ? `<div class="um-sys-off">ไม่เห็นระบบนี้ — ไม่ต้องเลือกแท็บ</div>`
-      : `<div class="um-chips">${FBL.PAGE_TABS[k].map(([s,l])=>{ const on = !hide.includes(k+':'+s);
-          return `<button type="button" class="um-chip${on?' on':''}" onclick="umToggleTab('${k}','${s}')">${on?'✓':'✕'} ${esc(l)}</button>`; }).join('')}</div>`;
-    return `<div class="um-sys${v==='none'?' off':''}"><div class="um-sys-h"><span>${k==='main'?'• ระบบหลัก (งานบริหารหมวด)':k.slice(1)+'. '+esc(FBL.SECTIONS[k].label)}</span><span class="um-segc">${seg}</span></div>${tabs}</div>`;
+  el.innerHTML = UM_SYS().map(k=>{
+    const vals = FBL.PAGE_TABS[k].map(([s])=>UM.tabs[k+':'+s]);
+    const v = k==='main' ? (UM.perm.main ? 'view' : 'none') : UM.perm[k];
+    const mixed = new Set(vals).size > 1;
+    const rows = v==='none' ? `<div class="um-sys-off">ไม่เห็นระบบนี้</div>`
+      : `<div class="um-tabrows">${FBL.PAGE_TABS[k].map(([s,l])=>{ const tv = UM.tabs[k+':'+s];
+          return `<div class="um-tabrow ${tv}"><span>${esc(l)}</span><span class="um-segc sm">${umSeg(k, tv, `umSetTab('${k}','${s}',`)}</span></div>`; }).join('')}</div>`;
+    return `<div class="um-sys${v==='none'?' off':''}"><div class="um-sys-h"><span>${k==='main'?'• ระบบหลัก (งานบริหารหมวด)':k.slice(1)+'. '+esc(FBL.SECTIONS[k].label)}${mixed?'<small class="um-mixed">กำหนดรายแท็บ</small>':''}</span>
+      <span class="um-segc" title="ตั้งทุกแท็บของระบบนี้พร้อมกัน">${umSeg(k, mixed ? '' : v, `umSetAcc('${k}',`)}</span></div>${rows}</div>`;
   }).join('');
 }
 function umRenderFlags(){
@@ -1650,20 +1679,9 @@ function umRenderFlags(){
   el.innerHTML = FBL.FLAGS.map(f=>{ const on = !!UM.perm[f.key];
     return `<button type="button" class="um-fl${on?' on':''}" onclick="umToggleFlag('${f.key}')"><span><b>${esc(umFlagLabel(f))}</b><small>${esc(umFlagDesc(f))}</small></span><span class="um-sw${on?' on':''}"></span></button>`; }).join('');
 }
-function umSetAcc(k,v){
-  if(k==='main') UM.perm.main = v!=='none'; else UM.perm[k] = v;
-  if(UM.role==='staff') UM.sections = FBL.SUB_KEYS.filter(x=>UM.perm[x]==='edit'); // เจ้าหน้าที่: ระบบที่แก้ไขได้ = ส่วนงานที่รับผิดชอบ
-  umRender();
-}
-function umToggleTab(k,s){
-  const t = k+':'+s, hide = UM.perm.hideTabs, i = hide.indexOf(t);
-  if(i!==-1) hide.splice(i,1);
-  else {
-    if(FBL.PAGE_TABS[k].filter(([x])=>!hide.includes(k+':'+x)).length<=1){ alert('ต้องเห็นอย่างน้อย 1 แท็บ — ถ้าไม่ให้เห็นทั้งระบบ ให้กด "✕ ไม่เห็น" แทน'); return; }
-    hide.push(t);
-  }
-  umRender();
-}
+// ปุ่มบนหัวการ์ด = ตั้งทุกแท็บของระบบนั้นพร้อมกัน
+function umSetAcc(k,v){ FBL.PAGE_TABS[k].forEach(([s])=>{ UM.tabs[k+':'+s] = v; }); umDerive(); umRender(); }
+function umSetTab(k,s,v){ UM.tabs[k+':'+s] = v; umDerive(); umRender(); }
 function umToggleFlag(f){ UM.perm[f] = !UM.perm[f]; umRender(); }
 // กล่องสรุปเป็นภาษาคน — อ่านจาก UM.perm
 function umRefreshSay(){
@@ -1684,6 +1702,8 @@ function umRefreshSay(){
   if(fl.length) L.push('<b>สิทธิ์พิเศษ:</b> '+fl.map(esc).join(', '));
   const ht = ['main',...FBL.SUB_KEYS].map(k=>{ const h = umHiddenOf(p.hideTabs,k); return h.length ? (k==='main'?'ระบบหลัก':'ระบบ '+lab(k))+' ('+h.map(esc).join(', ')+')' : ''; }).filter(Boolean);
   if(ht.length) L.push('<b>ซ่อนแท็บ:</b> '+ht.join(' · '));
+  const vt = FBL.SUB_KEYS.map(k=>{ const h = umHiddenOf(p.tabView,k); return h.length ? 'ระบบ '+lab(k)+' ('+h.map(esc).join(', ')+')' : ''; }).filter(Boolean);
+  if(vt.length) L.push('<b>แท็บที่ดูอย่างเดียว:</b> '+vt.join(' · '));
   box.innerHTML = L.map(x=>'<li>'+x+'</li>').join('');
 }
 function umReadPerm(){ return JSON.parse(JSON.stringify(UM.perm)); }
@@ -1692,10 +1712,11 @@ function umPickRole(r){
   document.querySelectorAll('#um-roles .role-card').forEach(c=>c.classList.toggle('active', c.dataset.role===r));
   umResetPreset();
 }
-// ค่าตั้งต้นตามบทบาท (เจ้าหน้าที่: แก้ไขได้เฉพาะส่วนงานของตัวเอง) — แท็บที่ซ่อนไว้ไม่ขึ้นกับบทบาท จึงคงไว้
+// ค่าตั้งต้นตามบทบาท (เจ้าหน้าที่: แก้ไขได้เฉพาะส่วนงานของตัวเอง) — แท็บที่ซ่อน/ดูอย่างเดียวไม่ขึ้นกับบทบาท จึงคงไว้
 function umResetPreset(){
-  const keepTabs = UM.perm.hideTabs || [];
-  UM.perm = FBL.presetPerm(UM.role, UM.sections); UM.perm.hideTabs = keepTabs; umRender();
+  const keep = { hideTabs: UM.perm.hideTabs || [], tabView: UM.perm.tabView || [] };
+  UM.perm = Object.assign(FBL.presetPerm(UM.role, UM.sections), keep);
+  umTabsFromPerm(); umDerive(); umRender();
 }
 async function saveUserModal(){
   const btn = document.getElementById('um-save');
@@ -1705,8 +1726,6 @@ async function saveUserModal(){
   const payload = { name, position };
   if(!UM.isOwnerRec){ payload.role = UM.role; payload.perm = umReadPerm();
     payload.sections = UM.role==='staff' ? FBL.SUB_KEYS.filter(k=>payload.perm[k]==='edit') : [];
-    const allOff = ['main',...FBL.SUB_KEYS].find(k=>FBL.PAGE_TABS[k].every(([s])=>payload.perm.hideTabs.includes(k+':'+s)));
-    if(allOff){ umStep('perm'); alert('ซ่อนทุกแท็บของ'+(allOff==='main'?'ระบบหลัก':'ระบบ '+allOff.slice(1))+'ไม่ได้ — ถ้าไม่ให้เห็นระบบนั้น ให้ตั้งเป็น "ซ่อน" ในสิทธิ์รายระบบแทน'); return; }
   }
   btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
   try{

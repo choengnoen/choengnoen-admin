@@ -57,7 +57,10 @@
   FBL.SECTIONS = SECTIONS;
   FBL.SUB_KEYS = SUB_KEYS;
 
-  // แท็บหน้า (.sec-tab[data-sec]) ของแต่ละระบบ — เจ้าของระบบเลือกซ่อนรายคนได้ เก็บใน perm.hideTabs = ['s1:staff', ...]
+  // แท็บหน้า (.sec-tab[data-sec]) ของแต่ละระบบ — เจ้าของระบบตั้งสิทธิ์รายแท็บรายคนได้:
+  //   perm.hideTabs = ['s1:staff', ...]   แท็บที่ซ่อน
+  //   perm.tabView  = ['s1:complaints', ...] แท็บที่ดูอย่างเดียว ทั้งที่ระบบนั้นแก้ไขได้
+  // (กันแก้ในหน้าเว็บเท่านั้น — firestore.rules ยังตัดสินสิทธิ์รายระบบ)
   // เพิ่ม/เปลี่ยนแท็บในหน้าใด ให้แก้รายการนี้ให้ตรงกับ data-sec ของหน้านั้นด้วย
   const PAGE_TABS = {
     main: [['overview', 'ภาพรวม'], ['alerts', 'แจ้งเตือน'], ['trash', 'ถังขยะ'], ['backup', 'สำรองข้อมูล'], ['users', 'ตั้งค่า']],
@@ -77,6 +80,16 @@
       return true;
     });
   }
+  // สิทธิ์ของแท็บหนึ่ง: 'edit' | 'view' | 'none' (k = 'main'|'s1'..'s4', s = data-sec ของแท็บ)
+  function tabAccess(perm, k, s) {
+    const sys = k === 'main' ? (perm.main ? 'view' : 'none') : perm[k];
+    const t = k + ':' + s;
+    if (sys === 'none' || (perm.hideTabs || []).indexOf(t) !== -1) return 'none';
+    if (sys === 'edit' && (perm.tabView || []).indexOf(t) !== -1) return 'view';
+    return sys;
+  }
+  FBL.tabAccess = tabAccess;
+  function activeTab() { const a = document.querySelector('.sec-tab.active[data-sec]'); return a ? a.dataset.sec : null; }
 
   // สิทธิ์พิเศษ (นอกเหนือจาก ดู/แก้ไข รายระบบ) — ชื่อและคำอธิบายใช้แสดงในหน้า "ผู้ใช้งานและสิทธิ์"
   const FLAGS = [
@@ -101,7 +114,7 @@
   // สิทธิ์ตั้งต้นของแต่ละบทบาท (เจ้าของระบบปรับรายคนได้ภายหลังในหน้า "ผู้ใช้งานและสิทธิ์")
   function presetPerm(role, sections) {
     const own = Array.isArray(sections) ? sections : [];
-    const p = { main: false, s1: 'view', s2: 'view', s3: 'view', s4: 'view', delete: false, restore: false, purge: false, viewLog: false, unlockLedger: false, export: false, checkFuel: false, hideTabs: [] };
+    const p = { main: false, s1: 'view', s2: 'view', s3: 'view', s4: 'view', delete: false, restore: false, purge: false, viewLog: false, unlockLedger: false, export: false, checkFuel: false, hideTabs: [], tabView: [] };
     if (role === 'owner') {
       Object.assign(p, { main: true, s1: 'edit', s2: 'edit', s3: 'edit', s4: 'edit', delete: true, restore: true, purge: true, viewLog: true, unlockLedger: true, export: true, checkFuel: true });
     } else if (role === 'chief' || role === 'assistant') { // หมวด = สิทธิ์เท่าผู้ช่วยหมวด
@@ -121,6 +134,7 @@
     p.main = !!p.main;
     FLAGS.forEach(function (f) { p[f.key] = !!p[f.key]; });
     p.hideTabs = cleanHideTabs(p.hideTabs);
+    p.tabView = cleanHideTabs(p.tabView);
     if (role === 'owner') return presetPerm('owner');
     return p;
   }
@@ -533,6 +547,21 @@
     if (!tabs.length) return;
     if (tabs.every(function (t) { return hide.indexOf(t.dataset.sec) !== -1; })) hide.length = 0; // กันซ่อนหมดทุกแท็บ
     tabs.forEach(function (t) { t.classList.toggle('fbl-tab-off', hide.indexOf(t.dataset.sec) !== -1); });
+    // สลับแท็บแล้วสิทธิ์แก้ไขเปลี่ยน (แท็บดูอย่างเดียว ↔ แท็บแก้ไขได้) → ให้หน้าวาดใหม่ ปุ่มแก้ไขจะซ่อน/แสดงตามแท็บ
+    if (!applyTabs.bound && (user.perm.tabView || []).length) {
+      applyTabs.bound = true;
+      let last = FBL.canEdit();
+      tabs.forEach(function (t) {
+        t.addEventListener('click', function () {
+          setTimeout(function () {
+            const now = FBL.canEdit();
+            if (now === last) return;
+            last = now;
+            if (typeof window.renderAll === 'function') { try { window.renderAll(); } catch (e) { console.error(e); } }
+          }, 0);
+        });
+      });
+    }
     const act = tabs.filter(function (t) { return t.classList.contains('active'); })[0];
     if (act && act.classList.contains('fbl-tab-off')) {
       const first = tabs.filter(function (t) { return !t.classList.contains('fbl-tab-off') && t.style.display !== 'none'; })[0];
@@ -598,7 +627,15 @@
   FBL.isOwner = function () { return !!(FBL.user && FBL.user.role === 'owner'); };
   FBL.perm = function () { return FBL.user ? FBL.user.perm : presetPerm('none'); };
   // แก้ไขข้อมูลในระบบ sec ได้ไหม (sec = 's1'..'s4')
-  FBL.canEdit = function (sec) { return !!(FBL.user && (FBL.user.role === 'owner' || FBL.user.perm[sec || FBL.page] === 'edit')); };
+  // ในหน้าของระบบนั้นเอง ดูแท็บที่เปิดอยู่ด้วย — แท็บที่ตั้ง "ดูอย่างเดียว" (perm.tabView) แก้ไขไม่ได้
+  FBL.canEdit = function (sec) {
+    if (!FBL.user) return false;
+    if (FBL.user.role === 'owner') return true;
+    const s = sec || FBL.page;
+    if (FBL.user.perm[s] !== 'edit') return false;
+    const t = s === FBL.page ? activeTab() : null;
+    return !t || tabAccess(FBL.user.perm, s, t) === 'edit';
+  };
   FBL.canView = function (sec) { return !!(FBL.user && (FBL.user.role === 'owner' || (sec === 'main' ? FBL.user.perm.main : FBL.user.perm[sec] !== 'none'))); };
   // อ่านข้อมูลส่วนตัวบุคลากรได้ไหม — ต้องตรงกับ canReadStaffPrivate() ใน firestore.rules
   FBL.canReadStaffPrivate = function () {
