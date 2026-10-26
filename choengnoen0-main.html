@@ -455,6 +455,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   #um-body .form-sub{margin:16px 0 8px;}
   #um-body .sec-check{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;}
   #um-body .flag-list{gap:10px 16px;}
+  .um-tabs-grp{padding:8px 0;border-bottom:1px dashed var(--paper-100);}
+  .um-tabs-grp:last-child{border-bottom:0;}
+  .um-tabs-h{font-size:13px;font-weight:600;color:var(--ink-600);margin-bottom:6px;}
+  #um-body .um-tabs-grp .sec-check{grid-template-columns:repeat(3,1fr);gap:6px 14px;}
+  @media(max-width:640px){#um-body .um-tabs-grp .sec-check{grid-template-columns:1fr 1fr;}}
   #um-body .role-card{display:flex;flex-direction:column;align-items:center;}
   #um-body .um-say li b{color:var(--navy-900);}
   @media(max-width:640px){#um-body .sec-check{grid-template-columns:1fr;}}
@@ -510,7 +515,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="dsel.js"></script>
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="main"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="labor-calc.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
 <script src="emoji-img.js" defer></script>
 <script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261024" defer></script><script src="table-scroll-standard.js?v=20261024" defer></script>
 <style>
@@ -581,6 +587,18 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div class="section-head"><h2>งานที่ต้องติดตาม</h2><button class="btn btn-ghost btn-ic" data-ic="arrow" data-tip="ดูทั้งหมด" onclick="gotoTab('alerts')"></button></div>
             <div class="today-list" id="ov-alerts"></div>
           </div>
+        </div>
+
+        <!-- งบประมาณและค่าใช้จ่าย (ย้ายมาจากระบบที่ 4) — ยอดใช้จ่ายสะสมตั้งแต่ ต.ค. ถึงเดือนปัจจุบัน เทียบวงเงินทั้งปี -->
+        <div class="section" style="margin-top:16px;">
+          <div class="section-head">
+            <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/></svg></span>งบประมาณและค่าใช้จ่าย</h2>
+            <div class="toolbar">
+              <select id="ov-budget-fy" data-fy onchange="renderBudgetDetail()"></select>
+              <button class="btn btn-ghost btn-ic" id="ov-budget-edit-btn" data-ic="pen" data-tip="แก้ไขวงเงินงบประมาณ" style="display:none;" onclick="openBudgetEditModal()"></button>
+            </div>
+          </div>
+          <div id="ov-budget-detail"></div>
         </div>
 
       </div>
@@ -737,6 +755,17 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 </div>
 
 <!-- ============ หน้าต่างทั่วไป (ยืนยัน / รายละเอียด) ============ -->
+<div id="budget-edit-overlay" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-head"><h3>แก้ไขวงเงินงบประมาณ ปีงบประมาณ <span id="budget-edit-fy"></span></h3><button type="button" class="modal-close" onclick="closeBudgetEditModal()">✕</button></div>
+    <div class="modal-body" id="budget-edit-body"></div>
+    <div class="toolbar" style="justify-content:flex-end;padding:0 20px 18px;">
+      <button class="btn btn-ghost" id="budget-edit-cancel-btn" onclick="closeBudgetEditModal()">ยกเลิก</button>
+      <button class="btn btn-primary" id="budget-edit-save-btn" onclick="saveBudgetEditModal()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
 <div id="gen-modal" class="modal-overlay hidden">
   <div class="modal-box">
     <div class="modal-head"><h3 id="gm-title"></h3><button type="button" class="modal-close" onclick="closeGenModal()">✕</button></div>
@@ -803,7 +832,7 @@ function renderUserBadge(){
 /* ============ แท็บ ============ */
 const __tabStarted = {};
 function gotoTab(sec){
-  const t = document.querySelector(`.sec-tab[data-sec="${sec}"]`); if(t) t.click();
+  const t = document.querySelector(`.sec-tab[data-sec="${sec}"]`); if(t && !t.classList.contains('fbl-tab-off')) t.click();
 }
 document.querySelectorAll('.sec-tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.sec-tab').forEach(x=>x.classList.remove('active'));
@@ -830,8 +859,8 @@ function applyTabVisibility(){
 /* ============================================================
    ข้อมูลจากระบบรอง (Firestore)
    ============================================================ */
-const D = { staff:[], leave:[], complaints:[], enc:[], permits:[], em:[], contracts:[], materials:[], matTx:[], dwo:[], bmm:[], jc:[], budget:[], ot:[], util:[], water:[], s3:{}, s4:{}, main:{} };
-const TABLES_NEEDED = ['staff','leave_requests','complaints','encroachments','permits','emergencies','contracts','materials','material_transactions',
+const D = { staff:[], leave:[], holidays:[], complaints:[], enc:[], permits:[], em:[], contracts:[], materials:[], matTx:[], dwo:[], bmm:[], jc:[], budget:[], ot:[], util:[], water:[], s3:{}, s4:{}, main:{} };
+const TABLES_NEEDED = ['staff','leave_requests','public_holidays','complaints','encroachments','permits','emergencies','contracts','materials','material_transactions',
   'budget_allocations','ot_requests','utility_bills','water_meter_log'];
 let __dataLoaded = false;
 async function loadAll(){
@@ -839,12 +868,13 @@ async function loadAll(){
     const statePromise = Promise.all([ FBL.stateGet('s3'), FBL.stateGet('s4'), FBL.stateGet('main') ]);
     if(!__dataLoaded) statePromise.then(st=>{ if(!__dataLoaded) paintOverviewSnap(st[2] && st[2].overviewSnap); }).catch(()=>{});
     const [t, [s3, s4, mainState]] = await Promise.all([ FBL.apiGetMultiple(TABLES_NEEDED), statePromise ]);
-    D.staff = t.staff; D.leave = t.leave_requests; D.complaints = t.complaints; D.enc = t.encroachments;
+    D.staff = t.staff; D.leave = t.leave_requests; D.holidays = t.public_holidays || []; D.complaints = t.complaints; D.enc = t.encroachments;
     D.permits = t.permits; D.em = t.emergencies; D.contracts = t.contracts || []; D.materials = t.materials; D.matTx = t.material_transactions;
     D.budget = t.budget_allocations;
     D.ot = t.ot_requests; D.util = t.utility_bills; D.water = t.water_meter_log;
     D.s3 = s3 || {}; D.s4 = s4 || {};
     if(!__dataLoaded){ D.main = mainState || {}; __alertState = D.main.alertState || {}; FBL.stateMarkLoaded('main', D.main); }
+    Object.keys(__laborSpendCache).forEach(k=>delete __laborSpendCache[k]); // ข้อมูลการลา/บุคลากรอาจเปลี่ยน
     __dataLoaded = true;
   }catch(err){
     console.error(err);
@@ -915,17 +945,127 @@ function materialsView(){
   });
 }
 function matStatus(m){ return m.stock<=m.reorder ? 'low' : (m.stock<=m.reorder*1.3 ? 'watch' : 'ok'); }
-/* ---------- งบประมาณ: จัดสรรจากตาราง budget_allocations (ปีงบปัจจุบัน) + ยอดเบิกจ่ายที่ระบบที่ 4 คำนวณส่งมา ---------- */
+/* ---------- งบประมาณ: วงเงินทั้งปีจากตาราง budget_allocations เทียบกับยอดใช้จ่ายสะสม ต.ค. → เดือนปัจจุบัน ----------
+   ยอดใช้จ่ายคำนวณจากข้อมูลจริงทุกครั้ง (ไม่ต้องรอให้มีคนเปิดระบบที่ 4) — ค่าแรงใช้สูตรเดียวกับบัญชีแรงงาน (labor-calc.js) */
 const BUDGET_CATS_DEFAULT = ["งบดำเนินงาน","ค่าวัสดุ","ค่าสาธารณูปโภค","งบซ่อมบำรุง"];
-function budgetView(){
-  const fy = currentFiscalYear();
-  const spentSnap = D.s4.budgetSpentSnapshot || {};
-  const cats = Array.from(new Set(BUDGET_CATS_DEFAULT.concat(Object.keys(spentSnap))));
-  return cats.map(cat=>{
-    const row = D.budget.find(b=>Number(b.fiscalYear)===fy && b.category===cat);
-    const alloc = row ? Number(row.allocatedAmount)||0 : Number((D.s4.budgetAllocation||{})[cat])||0;
-    return { cat, alloc, spent: Number(spentSnap[cat])||0 };
-  });
+const BUDGET_SRC = {
+  'งบดำเนินงาน':'ค่าตอบแทนนอกเวลาราชการ (ระบบที่ 4)',
+  'ค่าวัสดุ':'ยอดรับเข้าวัสดุ/ยางแอสฟัลท์ (ระบบที่ 3)',
+  'ค่าสาธารณูปโภค':'บิลค่าไฟฟ้า/น้ำประปา/อินเทอร์เน็ต/โทรศัพท์ (ระบบที่ 4)',
+  'งบซ่อมบำรุง':'ค่าจ้างลูกจ้างชั่วคราวจากบัญชีแรงงานรายวัน (ระบบที่ 4)'
+};
+// รอบเดือน (YYYY-MM ค.ศ.) ของปีงบประมาณ fy ตั้งแต่ ต.ค. ถึงเดือนปัจจุบัน (ปีที่ผ่านไปแล้วนับครบ 12 เดือน)
+function budgetCyclesOf(fy){
+  const now = todayISO().slice(0,7), out = [];
+  for(let i=0;i<12;i++){
+    const y = fy-544 + (i>=3 ? 1 : 0), m = ((9+i)%12)+1;
+    const key = y+'-'+String(m).padStart(2,'0');
+    if(key>now) break;
+    out.push(key);
+  }
+  return out;
+}
+const __laborSpendCache = {};
+function budgetSpentOf(cat, cycles){
+  const inFy = iso=>cycles.indexOf(String(iso||'').slice(0,7))!==-1;
+  if(cat==='งบดำเนินงาน') return D.ot.filter(o=>inFy(o.workDate)).reduce((s,o)=>s+(Number(o.amount)||0),0);
+  if(cat==='ค่าวัสดุ') return D.matTx.filter(t=>t.type==='receive' && inFy(t.date)).reduce((s,t)=>s+(Number(t.totalPrice)||0),0);
+  if(cat==='ค่าสาธารณูปโภค') return D.util.filter(b=>cycles.indexOf(b.cycle)!==-1).reduce((s,b)=>s+(Number(b.billAmount)||0),0);
+  if(cat==='งบซ่อมบำรุง'){
+    const roster = LaborCalc.rosterFrom(D.staff);
+    return cycles.reduce((s,c)=>{
+      if(!(c in __laborSpendCache)) __laborSpendCache[c] = LaborCalc.spendOf(c, roster, D.leave, D.holidays);
+      return s + __laborSpendCache[c];
+    },0);
+  }
+  return 0;
+}
+function budgetAllocOf(fy, cat){
+  const row = D.budget.find(b=>Number(b.fiscalYear)===fy && b.category===cat);
+  return row ? Number(row.allocatedAmount)||0 : 0;
+}
+function budgetView(fy){
+  fy = fy || currentFiscalYear();
+  const cycles = budgetCyclesOf(fy);
+  return BUDGET_CATS_DEFAULT.map(cat=>({ cat, alloc:budgetAllocOf(fy, cat), spent:budgetSpentOf(cat, cycles) }));
+}
+function budgetFyOptions(){
+  const cur = currentFiscalYear(), out = [];
+  for(let y=cur; y>=Math.min(2569, cur); y--) out.push(y);
+  D.budget.forEach(b=>{ const y = Number(b.fiscalYear); if(y && out.indexOf(y)===-1) out.push(y); });
+  return out.sort((a,b)=>b-a);
+}
+function renderBudgetDetail(){
+  const sel = document.getElementById('ov-budget-fy');
+  if(!sel.options.length) FYPicker.fill(sel, budgetFyOptions(), { value: currentFiscalYear() });
+  const fy = Number(sel.value) || currentFiscalYear();
+  const cycles = budgetCyclesOf(fy);
+  document.getElementById('ov-budget-edit-btn').style.display = FBL.canEdit('s4') ? '' : 'none';
+  const lastLabel = cycles.length ? MONTH_SHORT[Number(cycles[cycles.length-1].slice(5,7))-1] : '';
+  const period = cycles.length ? `สะสม ต.ค. – ${lastLabel} (${cycles.length} เดือน)` : 'ยังไม่เริ่มปีงบประมาณ';
+  const rows = budgetView(fy).map(b=>{
+    const remain = b.alloc - b.spent;
+    if(b.alloc<=0){
+      return `<div class="budget-row">
+        <div class="budget-top"><span class="name">${esc(b.cat)} <span class="pill pill-neutral">ยังไม่ได้กำหนดวงเงิน</span></span><span class="nums">ใช้ไป ${fmtMoney(b.spent)} บาท</span></div>
+        <div class="budget-track"></div>
+        <div class="budget-note">${period} — ${esc(BUDGET_SRC[b.cat]||'')}</div>
+      </div>`;
+    }
+    const usedPct = Math.round(b.spent/b.alloc*100);
+    const remainPct = 100-usedPct;
+    const cls = remainPct<10 ? 'danger' : remainPct<20 ? 'warn' : '';
+    const pill = remain<0 ? ' <span class="pill pill-danger">เกินวงเงิน</span>' : remainPct<20 ? ' <span class="pill pill-warn">เหลือน้อยกว่า 20%</span>' : '';
+    const remainTxt = remain<0 ? `เกินวงเงิน ${fmtMoney(-remain)} บาท` : `คงเหลือ ${fmtMoney(remain)} บาท (${remainPct}%)`;
+    return `<div class="budget-row">
+      <div class="budget-top"><span class="name">${esc(b.cat)}${pill}</span><span class="nums">ใช้ไป ${fmtMoney(b.spent)} / ${fmtMoney(b.alloc)} บาท</span></div>
+      <div class="budget-track"><div class="budget-fill ${cls}" style="width:${Math.min(100,Math.max(0,usedPct))}%;"></div></div>
+      <div class="budget-note">${remainTxt} · ${period} — ${esc(BUDGET_SRC[b.cat]||'')}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('ov-budget-detail').innerHTML = rows;
+}
+function openBudgetEditModal(){
+  if(!FBL.canEdit('s4')) return;
+  const fy = Number(document.getElementById('ov-budget-fy').value) || currentFiscalYear();
+  document.getElementById('budget-edit-fy').textContent = fy;
+  document.getElementById('budget-edit-body').innerHTML = BUDGET_CATS_DEFAULT.map((cat,i)=>`
+    <div class="f-row" style="margin-bottom:12px;">
+      <label style="display:block;margin-bottom:4px;">${esc(cat)}</label>
+      <input type="number" min="0" step="0.01" class="edit-input" id="budget-edit-${i}" value="${budgetAllocOf(fy,cat)||''}" placeholder="0.00">
+    </div>`).join('');
+  document.getElementById('budget-edit-overlay').classList.remove('hidden');
+}
+function closeBudgetEditModal(){ document.getElementById('budget-edit-overlay').classList.add('hidden'); }
+async function saveBudgetEditModal(){
+  if(!FBL.canEdit('s4')) return;
+  const fy = Number(document.getElementById('ov-budget-fy').value) || currentFiscalYear();
+  const saveBtn = document.getElementById('budget-edit-save-btn'), cancelBtn = document.getElementById('budget-edit-cancel-btn');
+  const label = saveBtn.textContent;
+  // กันกดซ้ำระหว่างรอผลจากเซิร์ฟเวอร์ (เคยทำให้เกิดแถวซ้ำ)
+  saveBtn.disabled = true; cancelBtn.disabled = true; saveBtn.textContent = 'กำลังบันทึก...';
+  try{
+    for(let i=0;i<BUDGET_CATS_DEFAULT.length;i++){
+      const cat = BUDGET_CATS_DEFAULT[i];
+      const amount = parseFloat(document.getElementById('budget-edit-'+i).value)||0;
+      const row = D.budget.find(b=>Number(b.fiscalYear)===fy && b.category===cat);
+      if(row){
+        if((Number(row.allocatedAmount)||0)===amount) continue;
+        row.allocatedAmount = amount;
+        await FBL.apiPost('update', 'budget_allocations', { id:row.id, fiscalYear:fy, category:cat, allocatedAmount:amount });
+      }else if(amount>0){
+        const saved = await FBL.apiPost('add', 'budget_allocations', { fiscalYear:fy, category:cat, allocatedAmount:amount });
+        D.budget.push(saved || { fiscalYear:fy, category:cat, allocatedAmount:amount });
+      }
+    }
+    closeBudgetEditModal();
+    showToast('บันทึกวงเงินงบประมาณแล้ว');
+  }catch(err){
+    alert('บันทึกวงเงินงบประมาณไม่สำเร็จ (บางหมวดอาจบันทึกไปแล้ว): ' + err.message);
+  }finally{
+    saveBtn.disabled = false; cancelBtn.disabled = false; saveBtn.textContent = label;
+    renderOverviewStats(); renderBudgetDetail();
+  }
 }
 
 /* ============================================================
@@ -939,7 +1079,9 @@ function renderOverviewStats(){
   const onLeave = lv.length - trip;
   const working = Math.max(0, staff.length - lv.length);
   const bv = budgetView();
-  const alloc = bv.reduce((s,x)=>s+x.alloc,0), spent = bv.reduce((s,x)=>s+x.spent,0);
+  // นับเฉพาะหมวดที่กำหนดวงเงินแล้ว — หมวดที่ยังไม่มีวงเงินจะทำให้ % คงเหลือรวมผิด
+  const withAlloc = bv.filter(x=>x.alloc>0);
+  const alloc = withAlloc.reduce((s,x)=>s+x.alloc,0), spent = withAlloc.reduce((s,x)=>s+x.spent,0);
   const remainPct = alloc>0 ? Math.round((alloc-spent)/alloc*100) : null;
   const mats = materialsView();
   const lowMat = mats.filter(m=>matStatus(m)==='low').length;
@@ -982,7 +1124,7 @@ function drawOverview(V, note){
       </div>
       <div class="ov-card accent-navy">
         <div class="ov-card-head">${icon('var(--navy-900)','<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>')}<h3>งบประมาณ ปีงบ ${num(V.fy)}</h3></div>
-        <div class="ov-metrics">${ovMetric(remainPct===null?'—':remainPct+'%', remainPct===null?'ยังไม่ได้บันทึกวงเงิน (ระบบที่ 4)':`คงเหลือ ${fmtMoney(alloc-spent)} จาก ${fmtMoney(alloc)} บาท`, remainPct!==null&&remainPct<20?'warn':'')}</div>
+        <div class="ov-metrics">${ovMetric(remainPct===null?'—':remainPct+'%', remainPct===null?'ยังไม่ได้กำหนดวงเงิน':`คงเหลือ ${fmtMoney(alloc-spent)} จาก ${fmtMoney(alloc)} บาท`, remainPct!==null&&remainPct<20?'warn':'')}</div>
       </div>
       <div class="ov-card accent-amber">
         <div class="ov-card-head">${icon('var(--amber-400)','<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>')}<h3>พัสดุ</h3></div>
@@ -1266,7 +1408,7 @@ function printExecReport(){
 
 function renderAll(){
   if(!__dataLoaded) return;
-  renderOverviewStats(); renderLeaveApprovals(); renderTodayLeave(); renderAlerts();
+  renderOverviewStats(); renderBudgetDetail(); renderLeaveApprovals(); renderTodayLeave(); renderAlerts();
   if(document.getElementById('panel-reports').classList.contains('active')) renderSummaryReport();
 }
 </script>
@@ -1366,8 +1508,8 @@ function renderUsers(){
       <div style="margin-top:6px"><span class="role-chip ${u.role}">${r.icon} ${esc(r.label)}</span> &nbsp;${statusHtml(u)}</div>${secNote}</div>${acts}</div>
     <div class="umd-sec"><div class="um-guide"><b>${r.icon} ${esc(r.label)}</b> — ${esc(r.desc)}</div></div>
     <div class="umd-sec"><h4>สิทธิ์รายระบบ</h4>
-      <div class="um-row"><div>• งานบริหารหมวด (ระบบหลัก)<div class="u-sub">ภาพรวม แจ้งเตือน รายงานสรุป</div></div>${segMain(!!u.perm.main)}</div>
-      ${FBL.SUB_KEYS.map(k=>`<div class="um-row"><div>${k.slice(1)}. ${esc(FBL.SECTIONS[k].label)}</div>${segSub(u.perm[k])}</div>`).join('')}</div>
+      <div class="um-row"><div>• งานบริหารหมวด (ระบบหลัก)<div class="u-sub">ภาพรวม แจ้งเตือน รายงานสรุป</div>${umHiddenNote(u,'main')}</div>${segMain(!!u.perm.main)}</div>
+      ${FBL.SUB_KEYS.map(k=>`<div class="um-row"><div>${k.slice(1)}. ${esc(FBL.SECTIONS[k].label)}${umHiddenNote(u,k)}</div>${segSub(u.perm[k])}</div>`).join('')}</div>
     <div class="umd-sec"><h4>สิทธิ์พิเศษ</h4>
       ${FBL.FLAGS.map(f=>`<div class="um-row"><div><b style="font-weight:600">${esc(umFlagLabel(f))}</b><div class="u-sub">${esc(umFlagDesc(f))}</div></div><span class="um-sw ${userCan(u,f.key)?'on':''}"></span></div>`).join('')}
       <div class="um-row"><div><b style="font-weight:600">จัดการผู้ใช้งาน</b><div class="u-sub">เพิ่ม/แก้สิทธิ์/ตั้งรหัสผ่าน/ระงับ/ลบ — เจ้าของระบบคนเดียว</div></div><span class="um-sw ${u.role==='owner'?'on':''}"></span></div></div>`;
@@ -1376,6 +1518,14 @@ function renderUsers(){
   if(seePresence){ chip.style.display=''; chip.textContent = 'ออนไลน์ตอนนี้ '+onlineCount+' คน'; chip.classList.toggle('none', onlineCount===0); }
 }
 function pickUser(uid){ SEL_UID = uid; renderUsers(); }
+/* แท็บหน้าที่ซ่อนไว้ (perm.hideTabs = ['s1:staff', ...]) — รายชื่อแท็บอยู่ใน FBL.PAGE_TABS */
+const umTabLabel = t => { const [k,s] = t.split(':'); const x = (FBL.PAGE_TABS[k]||[]).find(a=>a[0]===s); return x ? x[1] : s; };
+const umHiddenOf = (hide,k) => (hide||[]).filter(t=>t.startsWith(k+':')).map(umTabLabel);
+function umHiddenNote(u,k){
+  if(u.role==='owner') return '';
+  const h = umHiddenOf(u.perm.hideTabs, k);
+  return h.length ? `<div class="u-sub" style="color:var(--orange-600)">ซ่อนแท็บ: ${h.map(esc).join(', ')}</div>` : '';
+}
 /* ---------- หน้าต่างเพิ่ม/แก้ไขผู้ใช้ ---------- */
 let UM = null;   // { uid|null, role, sections, perm }
 // ข้อความย่อสำหรับหน้าต่างผู้ใช้ (ไม่แตะข้อความเต็มใน firebase-layer.js ที่หน้าอื่นใช้อยู่)
@@ -1428,6 +1578,9 @@ function openUserModal(uid){
       </tbody></table>
     <div class="form-sub">สิทธิ์พิเศษ</div>
     <div class="flag-list">${FBL.FLAGS.map(f=>`<label class="flag-item"><input type="checkbox" class="um-flag" value="${f.key}"><span>${esc(umFlagLabel(f))}<small>${esc(umFlagDesc(f))}</small></span></label>`).join('')}</div>
+    <div class="form-sub">แท็บที่เห็นในแต่ละระบบ <span class="um-opt">(เอาติ๊กออก = ซ่อนแท็บนั้น)</span></div>
+    ${['main',...FBL.SUB_KEYS].map(k=>`<div class="um-tabs-grp"><div class="um-tabs-h">${k==='main'?'• ระบบหลัก':k.slice(1)+'. '+esc(umSecLabel(k))}</div>
+      <div class="sec-check">${FBL.PAGE_TABS[k].map(([s,l])=>`<label><input type="checkbox" class="um-tab" value="${k}:${s}"> ${esc(l)}</label>`).join('')}</div></div>`).join('')}
     </div></details>
     `}`;
   const delBtn = (u && !isOwnerRec) ? `<button class="btn btn-danger" style="margin-right:auto" onclick="umDelete()">ลบผู้ใช้งาน</button>` : '';
@@ -1440,6 +1593,8 @@ function umFillPerm(){
   document.getElementById('um-main').checked = !!UM.perm.main;
   FBL.SUB_KEYS.forEach(k=>{ const el = document.querySelector(`input[name="um-${k}"][value="${UM.perm[k]}"]`); if(el) el.checked = true; });
   document.querySelectorAll('.um-flag').forEach(el=>{ el.checked = !!UM.perm[el.value]; });
+  const hide = UM.perm.hideTabs || [];
+  document.querySelectorAll('.um-tab').forEach(el=>{ el.checked = !hide.includes(el.value); });
   umRefreshSay();
 }
 // กล่องสรุปเป็นภาษาคน — อ่านจากช่องสิทธิ์ที่ติ๊กอยู่จริง
@@ -1459,12 +1614,15 @@ function umRefreshSay(){
   if(vw.length) L.push('<b>ดูอย่างเดียว:</b> '+grp(vw));
   if(no.length) L.push('<b>ไม่เห็น:</b> '+grp(no));
   if(fl.length) L.push('<b>สิทธิ์พิเศษ:</b> '+fl.map(esc).join(', '));
+  const ht = ['main',...FBL.SUB_KEYS].map(k=>{ const h = umHiddenOf(p.hideTabs,k); return h.length ? (k==='main'?'ระบบหลัก':'ระบบ '+lab(k))+' ('+h.map(esc).join(', ')+')' : ''; }).filter(Boolean);
+  if(ht.length) L.push('<b>ซ่อนแท็บ:</b> '+ht.join(' · '));
   box.innerHTML = L.map(x=>'<li>'+x+'</li>').join('');
 }
 function umReadPerm(){
   const p = { main: document.getElementById('um-main').checked };
   FBL.SUB_KEYS.forEach(k=>{ const el = document.querySelector(`input[name="um-${k}"]:checked`); p[k] = el ? el.value : 'none'; });
   document.querySelectorAll('.um-flag').forEach(el=>{ p[el.value] = el.checked; });
+  p.hideTabs = Array.from(document.querySelectorAll('.um-tab:not(:checked)')).map(el=>el.value);
   return p;
 }
 function umPickRole(r){
@@ -1477,14 +1635,21 @@ function umSectionsChanged(){
   UM.sections = Array.from(document.querySelectorAll('.um-sec:checked')).map(x=>x.value);
   if(UM.role==='staff') umResetPreset();
 }
-function umResetPreset(){ UM.perm = FBL.presetPerm(UM.role, UM.sections); umFillPerm(); }
+// ค่าตั้งต้นตามบทบาท — แท็บที่ซ่อนไว้ไม่ขึ้นกับบทบาท จึงคงไว้ตามที่ติ๊กอยู่
+function umResetPreset(){
+  const keepTabs = document.querySelector('.um-tab') ? umReadPerm().hideTabs : (UM.perm.hideTabs || []);
+  UM.perm = FBL.presetPerm(UM.role, UM.sections); UM.perm.hideTabs = keepTabs; umFillPerm();
+}
 async function saveUserModal(){
   const btn = document.getElementById('um-save');
   const name = document.getElementById('um-name').value.trim();
   const position = document.getElementById('um-position').value.trim();
   if(!name){ alert('กรุณากรอกชื่อ-สกุล'); return; }
   const payload = { name, position };
-  if(!UM.isOwnerRec){ payload.role = UM.role; payload.sections = UM.role==='staff' ? UM.sections : []; payload.perm = umReadPerm(); }
+  if(!UM.isOwnerRec){ payload.role = UM.role; payload.sections = UM.role==='staff' ? UM.sections : []; payload.perm = umReadPerm();
+    const allOff = ['main',...FBL.SUB_KEYS].find(k=>FBL.PAGE_TABS[k].every(([s])=>payload.perm.hideTabs.includes(k+':'+s)));
+    if(allOff){ alert('ซ่อนทุกแท็บของ'+(allOff==='main'?'ระบบหลัก':'ระบบ '+allOff.slice(1))+'ไม่ได้ — ถ้าไม่ให้เห็นระบบนั้น ให้ตั้งเป็น "ซ่อน" ในสิทธิ์รายระบบแทน'); return; }
+  }
   btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
   try{
     if(UM.uid){
@@ -1772,7 +1937,7 @@ async function runImport(){
   // หน้านี้วาดใหม่เองเมื่อมีผู้ใช้อื่นแก้ข้อมูล (ไม่ต้องกดรีเฟรช)
   FBL.onRemoteChange = debounce(loadAll, 1200);
   // เปิดแท็บเดิมที่ดูค้างไว้ (เช่น หลังรีเฟรชหน้า)
-  try{ const last = sessionStorage.getItem('cn_main_tab'); const t = last && document.querySelector(`.sec-tab[data-sec="${last}"]`); if(t && t.style.display!=='none') t.click(); }catch(e){}
+  try{ const last = sessionStorage.getItem('cn_main_tab'); const t = last && document.querySelector(`.sec-tab[data-sec="${last}"]`); if(t && t.style.display!=='none' && !t.classList.contains('fbl-tab-off')) t.click(); }catch(e){}
   if(FBL.can('restore') || FBL.can('purge')) startTrash();   // ให้ตัวเลขบนแท็บถังขยะขึ้นตั้งแต่เปิดหน้า
   await loadAll();
 })();

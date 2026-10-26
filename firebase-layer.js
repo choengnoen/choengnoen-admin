@@ -35,6 +35,7 @@
   const EMAIL_DOMAIN = 'choengnoen-admin.invalid';
   const PROFILE_CACHE_KEY = 'cn_admin_profile_v1';     // โปรไฟล์ล่าสุด ใช้แสดงหน้าได้ทันทีไม่ต้องรอเน็ต (สิทธิ์จริงอยู่ที่ Rules)
   const LEGACY_SESSION_KEY = 'saraban_shared_session'; // คีย์เดิมที่หน้าเว็บเก่าอ่าน — เขียนให้เพื่อความเข้ากันได้
+  const LOGIN_NAMES_KEY = 'cn_admin_login_names_v1';   // รายชื่อในหน้าล็อกอินครั้งล่าสุด ใช้วาดฟอร์มได้ทันทีไม่ต้องรอเน็ต
 
   const FBL = {};
   window.FBL = FBL;
@@ -56,6 +57,27 @@
   FBL.SECTIONS = SECTIONS;
   FBL.SUB_KEYS = SUB_KEYS;
 
+  // แท็บหน้า (.sec-tab[data-sec]) ของแต่ละระบบ — เจ้าของระบบเลือกซ่อนรายคนได้ เก็บใน perm.hideTabs = ['s1:staff', ...]
+  // เพิ่ม/เปลี่ยนแท็บในหน้าใด ให้แก้รายการนี้ให้ตรงกับ data-sec ของหน้านั้นด้วย
+  const PAGE_TABS = {
+    main: [['overview', 'ภาพรวม'], ['alerts', 'แจ้งเตือน'], ['trash', 'ถังขยะ'], ['backup', 'สำรองข้อมูล'], ['users', 'ตั้งค่า']],
+    s1: [['complaints', 'คำร้องทุกข์'], ['staff', 'บุคลากร'], ['leave-request', 'การลา'], ['leave-registry', 'ทะเบียนคุมลา']],
+    s2: [['routine', 'งานบำรุงปกติ'], ['encroach', 'งานรุกล้ำ'], ['emergency', 'เหตุฉุกเฉิน'], ['contracts', 'สัญญา']],
+    s3: [['master', 'ทะเบียนพัสดุ'], ['inbound', 'ใบเบิกรับเข้า'], ['report', 'พ.1-02 วัสดุ'], ['reportfuel', 'พ.1-03 น้ำมัน'], ['machinery', 'EC 1-W'], ['vehreq', 'พ.4-08 ใช้รถ'], ['vehicles', 'ทะเบียนเครื่องจักร']],
+    s4: [['labor', 'บัญชีแรงงาน'], ['ot', 'งานนอกเวลาราชการ'], ['utility', 'ทะเบียนคุมสาธารณูปโภค']]
+  };
+  FBL.PAGE_TABS = PAGE_TABS;
+  function cleanHideTabs(list) {
+    const seen = {};
+    return (Array.isArray(list) ? list : []).filter(function (t) {
+      const parts = String(t).split(':');
+      const tabs = PAGE_TABS[parts[0]];
+      if (seen[t] || !tabs || !tabs.some(function (x) { return x[0] === parts[1]; })) return false;
+      seen[t] = true;
+      return true;
+    });
+  }
+
   // สิทธิ์พิเศษ (นอกเหนือจาก ดู/แก้ไข รายระบบ) — ชื่อและคำอธิบายใช้แสดงในหน้า "ผู้ใช้งานและสิทธิ์"
   const FLAGS = [
     { key: 'delete', label: 'ลบรายการ', desc: 'ลบข้อมูลในระบบที่ตัวเองแก้ไขได้ (รายการจะไปอยู่ในถังขยะ กู้คืนได้)' },
@@ -70,7 +92,7 @@
 
   const ROLES = {
     owner: { key: 'owner', label: 'เจ้าของระบบ', icon: '👑', desc: 'สิทธิ์เต็มทุกอย่าง + จัดการผู้ใช้งาน (มีได้คนเดียว)' },
-    chief: { key: 'chief', label: 'หมวด', icon: '🎖️', desc: 'หัวหน้าหมวด — ดูได้ทุกระบบและภาพรวม ดูประวัติ/ส่งออกได้ แต่ไม่แก้ไขข้อมูล' },
+    chief: { key: 'chief', label: 'หมวด', icon: '🎖️', desc: 'หัวหน้าหมวด — สิทธิ์เท่าผู้ช่วยหมวด: แก้ไขได้ทุกระบบ ลบ/กู้คืนถังขยะได้ ปลดล็อกบัญชีได้ (ลบถาวรและจัดการผู้ใช้ไม่ได้)' },
     assistant: { key: 'assistant', label: 'ผู้ช่วยหมวด', icon: '🛡️', desc: 'แก้ไขได้ทุกระบบ ลบ/กู้คืนถังขยะได้ ปลดล็อกบัญชีได้ (ลบถาวรและจัดการผู้ใช้ไม่ได้)' },
     staff: { key: 'staff', label: 'เจ้าหน้าที่', icon: '👤', desc: 'แก้ไขได้เฉพาะส่วนงานที่รับผิดชอบ ส่วนงานอื่นดูอย่างเดียว ไม่เห็นระบบหลัก' }
   };
@@ -79,12 +101,10 @@
   // สิทธิ์ตั้งต้นของแต่ละบทบาท (เจ้าของระบบปรับรายคนได้ภายหลังในหน้า "ผู้ใช้งานและสิทธิ์")
   function presetPerm(role, sections) {
     const own = Array.isArray(sections) ? sections : [];
-    const p = { main: false, s1: 'view', s2: 'view', s3: 'view', s4: 'view', delete: false, restore: false, purge: false, viewLog: false, unlockLedger: false, export: false, checkFuel: false };
+    const p = { main: false, s1: 'view', s2: 'view', s3: 'view', s4: 'view', delete: false, restore: false, purge: false, viewLog: false, unlockLedger: false, export: false, checkFuel: false, hideTabs: [] };
     if (role === 'owner') {
       Object.assign(p, { main: true, s1: 'edit', s2: 'edit', s3: 'edit', s4: 'edit', delete: true, restore: true, purge: true, viewLog: true, unlockLedger: true, export: true, checkFuel: true });
-    } else if (role === 'chief') {
-      Object.assign(p, { main: true, viewLog: true, export: true });
-    } else if (role === 'assistant') {
+    } else if (role === 'chief' || role === 'assistant') { // หมวด = สิทธิ์เท่าผู้ช่วยหมวด
       Object.assign(p, { main: true, s1: 'edit', s2: 'edit', s3: 'edit', s4: 'edit', delete: true, restore: true, viewLog: true, unlockLedger: true, export: true });
     } else { // staff
       SUB_KEYS.forEach(function (k) { if (own.indexOf(k) !== -1) p[k] = 'edit'; });
@@ -100,6 +120,7 @@
     SUB_KEYS.forEach(function (k) { if (['edit', 'view', 'none'].indexOf(p[k]) === -1) p[k] = base[k]; });
     p.main = !!p.main;
     FLAGS.forEach(function (f) { p[f.key] = !!p[f.key]; });
+    p.hideTabs = cleanHideTabs(p.hideTabs);
     if (role === 'owner') return presetPerm('owner');
     return p;
   }
@@ -275,6 +296,7 @@
   .fbl-banner .go{background:#f59e0b;color:#1f2937}
   .fbl-banner .x{background:transparent;color:#a9bbcc;padding:6px 8px}
   .fbl-toast{position:fixed;top:18px;right:18px;z-index:6000;background:#c1402f;color:#fff;border-radius:10px;padding:11px 16px;font-family:'Sarabun',sans-serif;font-size:13.5px;box-shadow:0 14px 34px -12px rgba(7,27,48,.5);max-width:360px}
+  .sec-tab.fbl-tab-off{display:none !important}
   .fbl-role-chip{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#eef3f8;color:#123a5e;margin-top:4px}
   `;
 
@@ -332,21 +354,37 @@
   }
 
   let loginNames = null;   // [{username, name}]
+  async function fetchLoginNames() {
+    const snap = await db.collection('login_directory').get();
+    const list = snap.docs.map(function (d) { return { username: d.data().name || d.id, name: d.data().name || d.id }; })
+      .sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'th'); });
+    try { localStorage.setItem(LOGIN_NAMES_KEY, JSON.stringify(list)); } catch (e) { /* ข้าม */ }
+    return list;
+  }
+  function readCachedLoginNames() {
+    try { const a = JSON.parse(localStorage.getItem(LOGIN_NAMES_KEY) || 'null'); return Array.isArray(a) && a.length ? a : null; } catch (e) { return null; }
+  }
   async function loadLoginNames() {
     if (loginNames) return loginNames;
-    try {
-      const snap = await db.collection('login_directory').get();
-      loginNames = snap.docs.map(function (d) { return { username: d.data().name || d.id, name: d.data().name || d.id }; })
-        .sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'th'); });
-    } catch (e) { loginNames = []; }
+    try { loginNames = await fetchLoginNames(); } catch (e) { loginNames = []; }
     return loginNames;
   }
 
   async function showLogin(message) {
-    let hasOwner = true;
-    try { hasOwner = (await db.collection('config').doc('bootstrap').get()).exists; } catch (e) { /* ถือว่ามีแล้ว */ }
-    if (!hasOwner) { showBootstrap(); return; }
-    const names = await loadLoginNames();
+    // มีรายชื่อในแคช = เคยมีเจ้าของระบบแล้ว → วาดฟอร์มทันที แล้วอัปเดตรายชื่อเบื้องหลังสำหรับครั้งหน้า
+    // ไม่มีแคช → ถามเซิร์ฟเวอร์ 2 อย่างพร้อมกัน (เดิมถามทีละอย่าง ทำให้รอนาน)
+    let names = loginNames || readCachedLoginNames();
+    if (names) {
+      loginNames = names;
+      fetchLoginNames().catch(function () { /* ข้าม */ });
+    } else {
+      const res = await Promise.all([
+        db.collection('config').doc('bootstrap').get().then(function (s) { return s.exists; }, function () { return true; }), // อ่านไม่ได้ → ถือว่ามีแล้ว
+        loadLoginNames()
+      ]);
+      if (!res[0]) { showBootstrap(); return; }
+      names = res[1];
+    }
     // มีรายชื่อ → ใช้รายการเลือกชื่อแบบเดียวกับระบบอื่น / โหลดรายชื่อไม่ได้ → ให้พิมพ์ชื่อเอง
     const useSelect = names.length > 0;
     const userField = useSelect
@@ -483,7 +521,25 @@
     document.querySelectorAll('.nav-group-label').forEach(function (el) {
       if (/ระบบหลัก/.test(el.textContent)) el.style.display = mainAllowed ? '' : 'none';
     });
+    applyTabs(user);
   }
+  // ซ่อนแท็บหน้าที่เจ้าของระบบเลือกไว้ (perm.hideTabs) — ถ้าแท็บที่เปิดอยู่ถูกซ่อน ให้ย้ายไปแท็บแรกที่เห็น
+  // ใช้คลาส fbl-tab-off (display:none !important) เพื่อไม่ชนกับโค้ดหน้าที่ตั้ง style.display ของแท็บเอง
+  function applyTabs(user) {
+    const hide = (user.role === 'owner' ? [] : (user.perm.hideTabs || []))
+      .filter(function (t) { return t.indexOf(FBL.page + ':') === 0; })
+      .map(function (t) { return t.slice(FBL.page.length + 1); });
+    const tabs = Array.prototype.slice.call(document.querySelectorAll('.sec-tab[data-sec]'));
+    if (!tabs.length) return;
+    if (tabs.every(function (t) { return hide.indexOf(t.dataset.sec) !== -1; })) hide.length = 0; // กันซ่อนหมดทุกแท็บ
+    tabs.forEach(function (t) { t.classList.toggle('fbl-tab-off', hide.indexOf(t.dataset.sec) !== -1); });
+    const act = tabs.filter(function (t) { return t.classList.contains('active'); })[0];
+    if (act && act.classList.contains('fbl-tab-off')) {
+      const first = tabs.filter(function (t) { return !t.classList.contains('fbl-tab-off') && t.style.display !== 'none'; })[0];
+      if (first) first.click();
+    }
+  }
+  FBL.isTabHidden = function (sec) { const t = document.querySelector('.sec-tab[data-sec="' + sec + '"]'); return !!(t && t.classList.contains('fbl-tab-off')); };
   FBL.applyNav = function () { if (FBL.user) applyNav(FBL.user); };
 
   // แถบแจ้งว่ามีข้อมูลใหม่จากผู้ใช้อื่น (หน้าเว็บเดิมไม่ได้ออกแบบให้วาดใหม่เองอัตโนมัติ จึงให้ผู้ใช้กดรีเฟรชเอง)
@@ -695,6 +751,9 @@
       onDomReady(function () { showLogin(); });
       return;
     }
+    // มีโปรไฟล์ในแคชของบัญชีเดียวกัน → ให้หน้าเริ่มโหลดข้อมูลได้เลย ไม่ต้องรอเช็กสิทธิ์กับเซิร์ฟเวอร์ก่อน
+    // (ด้านล่างยังเช็กต่อ ถ้าสิทธิ์เปลี่ยน/ถูกระงับ จะรีเฟรชหรือออกจากระบบเหมือนเดิม; สิทธิ์จริงอยู่ที่ Rules)
+    if (cached && cached.uid === u.uid && FBL.user && FBL.user.uid === u.uid) readyResolve(FBL.user);
     try {
       let d = null;
       try { d = await db.collection('team').doc(u.uid).get({ source: 'server' }); }
