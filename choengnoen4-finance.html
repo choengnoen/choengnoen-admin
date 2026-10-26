@@ -152,6 +152,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .f-row .ot-people label{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7px;cursor:pointer;font-weight:500;margin:0;}
   .f-row .ot-people label:hover{background:var(--paper-50);}
   .f-row .ot-people input[type=checkbox]{width:16px;height:16px;margin:0;padding:0;flex:none;}
+  .f-row .ot-people label .p-sub{margin-left:auto;}
+  .ot-calc{border:1px solid var(--line);border-radius:10px;background:var(--paper-50);padding:8px 12px;font-size:13.5px;}
+  .ot-calc .row{display:flex;justify-content:space-between;gap:10px;padding:3px 0;}
+  .ot-calc .row b{white-space:nowrap;}
+  .ot-calc .total{border-top:1px solid var(--line);margin-top:4px;padding-top:6px;font-weight:700;}
   .ot-people-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
   #water-table tfoot td{padding:10px 14px;border-top:2px solid var(--line);background:var(--paper-50);font-weight:700;color:var(--navy-900);}
   .wtr-sub{display:block;font-size:11.5px;font-weight:400;color:var(--ink-400);}
@@ -232,17 +237,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .util-unpaid-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
   .util-unpaid-list button{border:1px solid currentColor;background:#fff;color:inherit;border-radius:999px;padding:2px 10px;font:inherit;font-size:12.5px;cursor:pointer;}
 
-  /* budget bars */
-  .budget-row{padding:14px 20px;border-bottom:1px solid var(--paper-100);}
-  .budget-row:last-child{border-bottom:none;}
-  .budget-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
-  .budget-top .name{font-weight:600;color:var(--navy-900);font-size:13.5px;}
-  .budget-top .nums{font-size:12.5px;color:var(--ink-600);}
-  .budget-track{height:10px;border-radius:6px;background:var(--paper-100);overflow:hidden;}
-  .budget-fill{height:100%;border-radius:6px;background:var(--navy-800);}
-  .budget-fill.warn{background:var(--amber-400);}
-  .budget-fill.danger{background:var(--danger);}
-  .budget-note{font-size:11.5px;color:var(--ink-400);margin-top:6px;}
 
   /* OT workflow steps */
   .steps{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
@@ -410,6 +404,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="dsel.js"></script>
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s4"></script>
+<script src="labor-calc.js"></script>
 <script src="emoji-img.js" defer></script>
 <script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261024" defer></script><script src="table-scroll-standard.js?v=20261024" defer></script>
 <style>
@@ -460,7 +455,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <div class="sec-tabs no-print" id="sec-tabs">
         <div class="sec-tab active" data-sec="labor">บัญชีแรงงาน</div>
         <div class="sec-tab" data-sec="ot">งานนอกเวลาราชการ</div>
-        <div class="sec-tab" data-sec="budget">งบประมาณและค่าใช้จ่าย</div>
         <div class="sec-tab" data-sec="utility">ทะเบียนคุมสาธารณูปโภค</div>
       </div>
 
@@ -546,7 +540,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div class="table-wrap"><table id="ot-table"></table></div>
           <div class="legend-block" id="ot-note-block">
             <button type="button" class="legend-dot-btn no-print" id="ot-note-toggle" onclick="__toggleOtNote(this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="ot-note" style="display:none;background:transparent;border-top:none;">อนุมัติล่วงหน้าอย่างน้อย 2 วันทำการ (ยกเว้นเหตุฉุกเฉินขออนุมัติภายหลังได้)</div>
+            <div class="foot-note" id="ot-note" style="display:none;background:transparent;border-top:none;">อนุมัติล่วงหน้าอย่างน้อย 2 วันทำการ (ยกเว้นเหตุฉุกเฉินขออนุมัติภายหลังได้) · อัตราค่าตอบแทน: ลูกจ้าง ตอนเย็นวันทำงาน ชั่วโมงละ 50 บาท ไม่เกิน 200 บาท/วัน · วันเสาร์-อาทิตย์และวันหยุดนักขัตฤกษ์ 377.85 บาท/วัน · ข้าราชการ / พนักงานราชการ / ลูกจ้างประจำ 200 บาท/วัน</div>
           </div>
         </div>
         <div id="ot-modal-overlay" class="modal-overlay hidden no-print">
@@ -571,7 +565,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                   <div class="ot-people" id="ot-people"></div>
                 </div>
                 <div class="f-row"><label>ลักษณะงานที่ทำ <span class="req">*</span></label><input type="text" id="ot-task" placeholder="เช่น งานซ่อมแซมไฟฟ้าแสงสว่างฉุกเฉิน"></div>
-                <div class="f-row"><label>จำนวนเงินค่าตอบแทน ต่อคน (บาท)</label><input type="number" id="ot-amount" placeholder="0.00"></div>
+                <div class="f-row"><label>ค่าตอบแทน (ระบบคำนวณให้ตามเงื่อนไข)</label><div class="ot-calc" id="ot-calc"></div></div>
               </div>
               <div id="ot-guard-warn" style="display:none;margin:0 0 12px;padding:10px 12px;border-radius:8px;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger);font-size:14px;line-height:1.6;white-space:pre-line;"></div>
             </div>
@@ -585,39 +579,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         </div>
       </div>
 
-      <!-- ============ BUDGET ============ -->
-      <div class="panel" id="panel-budget">
-        <div class="section">
-          <div class="section-head">
-            <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/></svg></span>
-              การควบคุมงบประมาณและค่าใช้จ่าย
-            </h2>
-            <div class="toolbar">
-              <select id="budget-cycle" onchange="renderBudget()"></select>
-              <button class="btn btn-ghost btn-ic hidden" id="budget-edit-btn" data-ic="pen" data-tip="แก้ไขวงเงินงบประมาณ" onclick="openBudgetEditModal()"></button>
-            </div>
-          </div>
-          <div id="budget-detail"></div>
-
-          <div id="budget-edit-overlay" class="modal-overlay hidden">
-            <div class="modal-box">
-              <div class="modal-head">
-                <h3>แก้ไขวงเงินงบประมาณ ปีงบประมาณ <span id="budget-edit-fy"></span></h3>
-                <button type="button" class="modal-close" onclick="closeBudgetEditModal()">✕</button>
-              </div>
-              <div class="modal-body" id="budget-edit-body"></div>
-              <div class="toolbar" style="justify-content:flex-end;padding:0 20px 18px;">
-                <button class="btn btn-ghost" id="budget-edit-cancel-btn" onclick="closeBudgetEditModal()">ยกเลิก</button>
-                <button class="btn btn-primary" id="budget-edit-save-btn" onclick="saveBudgetEditModal()">💾 บันทึก</button>
-              </div>
-            </div>
-          </div>
-          <div class="legend-block" id="budget-note-block">
-            <button type="button" class="legend-dot-btn no-print" id="budget-note-toggle" onclick="__toggleBudgetNote(this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="budget-note" style="display:none;background:transparent;border-top:none;">รวมยอดเบิกจ่ายค่าวัสดุจากระบบที่ 3 และค่าจ้างจากบัญชีแรงงานรายวันมาแสดงผลแบบ Real-time</div>
-          </div>
-        </div>
-      </div>
+<!-- งบประมาณและค่าใช้จ่าย ย้ายไปอยู่ที่ระบบหลัก → ภาพรวม (เห็นเฉพาะผู้บริหาร) -->
 
       <!-- ============ UTILITY ============ -->
       <div class="panel" id="panel-utility">
@@ -796,110 +758,44 @@ const FALLBACK_STAFF_ROSTER = [
   {name:"นายสุรศักดิ์  สุขคุ้ม", role:"คนงาน", duty:"ยาม", rate:377.85, status:"ok"},
 ];
 // บัญชีแรงงานรายวัน (ง.3-12) แสดงเฉพาะพนักงานที่ยังปฏิบัติงานอยู่และมีตำแหน่ง "คนงาน" เท่านั้น
-// แก้ไขข้อมูลเก่าที่อาจยังไม่อัปเดตจากระบบที่ 1 (เผื่อกรณีเปิดระบบที่ 4 ก่อนที่ระบบที่ 1 จะเคยโหลด/บันทึกด้วยเวอร์ชันล่าสุด)
-// นายสุรศักดิ์ สุขคุ้ม ตำแหน่งจริงคือ "คนงาน" (หน้าที่พิเศษ "ยาม") — ถ้าพบข้อมูลเก่าที่ยังเป็นตำแหน่ง "ยาม" ให้แก้ไขก่อนกรอง
-function __normalizeStaffSource(source){
-  return source.map(s=>{
-    if(s.name==='นายสุรศักดิ์  สุขคุ้ม' && s.role==='ยาม'){
-      return {...s, role:'คนงาน', duty: s.duty || 'ยาม'};
-    }
-    return s;
-  });
-}
+// กฎการกรองรายชื่อ/นับวันทำงานอยู่ที่ labor-calc.js (ใช้ร่วมกับหน้าภาพรวมงบประมาณของระบบหลัก)
+const __normalizeStaffSource = LaborCalc.normalizeStaff;
 function buildLaborRoster(){
   const real = loadRealStaffRoster();
-  const source = __normalizeStaffSource(real.length ? real : FALLBACK_STAFF_ROSTER);
-  return source
-    .filter(s=>s.status==='ok' && s.role==='คนงาน')
-    .map(s=>({name:s.name, role:s.role, duty:s.duty||null, dutyStart:s.dutyStart||null, rate:s.rate||0, bankAcc:s.bankAcc||''}));
+  return LaborCalc.rosterFrom(real.length ? real : FALLBACK_STAFF_ROSTER);
 }
 /* หน้าที่ยาม = จ้างรวมวันเสาร์ (วันอาทิตย์หยุด) ตั้งแต่วันเริ่มปฏิบัติหน้าที่ยาม (dutyStart ว่าง = ทุกวัน)
    ตั้งค่าได้ที่ระบบที่ 1 → ข้อมูลบุคลากร → "ปฏิบัติหน้าที่ยาม (จ้างรวมวันเสาร์)" — ระบบที่ 1 ใช้เงื่อนไขเดียวกันนับวันลา */
-function isGuard(emp){ return String(emp && emp.duty || '').includes('ยาม'); }
-function worksSaturday(emp, iso){ return isGuard(emp) && (!emp.dutyStart || iso>=emp.dutyStart); }
+const isGuard = LaborCalc.isGuard;
+const worksSaturday = LaborCalc.worksSaturday;
 let laborRoster = buildLaborRoster();
 function __refreshLaborRoster(){ laborRoster = buildLaborRoster(); }
 
-// วันหยุดนักขัตฤกษ์ต่อรอบบิล (YYYY-MM) — จ่ายค่าจ้างเสมือนมาปฏิบัติงานตามหมายเหตุที่ระบุ
-// เพิ่ม/แก้ไขได้ตามประกาศวันหยุดราชการจริงของแต่ละปี
-const THAI_HOLIDAYS = {
-  '2026-04': [
-    {day:6,  name:'วันจักรี'},
-    {day:13, name:'วันสงกรานต์ (วันผู้สูงอายุ)'},
-    {day:14, name:'วันสงกรานต์ (วันครอบครัว)'},
-    {day:15, name:'วันสงกรานต์ (วันเถลิงศก)'},
-  ],
-  '2026-05': [
-    {day:1, name:'วันแรงงานแห่งชาติ'},
-    {day:4, name:'วันฉัตรมงคล'},
-    {day:9, name:'วันพืชมงคล'},
-  ],
-  '2026-07': [
-    {day:28, name:'วันเฉลิมพระชนมพรรษา ร.10'},
-    {day:29, name:'วันอาสาฬหบูชา'},
-    {day:30, name:'วันเข้าพรรษา'},
-  ],
-};
-/* รวมวันหยุดนักขัตฤกษ์จากตาราง public_holidays (จัดการได้ที่ระบบที่ 1 → การลา → วันหยุดนักขัตฤกษ์) กับรายการที่ตั้งไว้ในโค้ดด้านบน
-   — เดิมใช้เฉพาะรายการในโค้ด (มีแค่บางเดือน) ต้องมาแก้โค้ดทุกปี ตอนนี้เพิ่มวันหยุดที่ระบบที่ 1 แล้วบัญชีแรงงานใช้ตามทันที */
+/* วันหยุดนักขัตฤกษ์ต่อรอบบิล = รายการตั้งต้นใน labor-calc.js + ตาราง public_holidays (จัดการได้ที่ระบบที่ 1 → การลา → วันหยุดนักขัตฤกษ์)
+   จ่ายค่าจ้างเสมือนมาปฏิบัติงาน */
 function cycleHolidays(cycleKey){
-  const list = (THAI_HOLIDAYS[cycleKey] || []).slice();
-  if(window.FBL && FBL.rows){
-    FBL.rows('public_holidays').forEach(h=>{
-      const iso = String(h.date||'');
-      if(iso.slice(0,7)!==cycleKey) return;
-      const day = parseInt(iso.slice(8,10),10);
-      if(day && !list.some(x=>x.day===day)) list.push({day, name:h.name||'วันหยุดนักขัตฤกษ์'});
-    });
-  }
-  return list.sort((a,b)=>a.day-b.day);
+  return LaborCalc.holidaysOf(cycleKey, (window.FBL && FBL.rows) ? FBL.rows('public_holidays') : []);
 }
 function holidayNameOn(cycleKey, day){ const h = cycleHolidays(cycleKey).find(x=>x.day===day); return h?h.name:''; }
 
 // เชื่อมโยงข้อมูลลาจริงจาก "ระบบที่ 1" (บัญชีลงเวลาการปฏิบัติราชการ/บันทึกข้อมูลการลา)
 // ระบบที่ 1 เขียนคำขอลาที่บันทึกไว้ทั้งหมดลง localStorage คีย์นี้ทุกครั้งที่มีการบันทึก/แก้ไข (ดู __saveSharedLeaveRequests ในไฟล์ระบบที่ 1)
 const __SHARED_LEAVE_KEY = 'saraban_shared_leave_requests_v1';
-// แผนที่ประเภทการลา (ระบบที่ 1) → รหัสลงเวลาที่ใช้ในตาราง ง.3-12
-const LEAVE_TYPE_CODE = {'ป่วย':'ป','กิจ':'ก','พักผ่อน':'พ','คลอดบุตร':'ค','ไปราชการ':'ร','ขาดงาน':'ข'};
 /* อ่านการลาจาก Firestore โดยตรง (โหลดไว้ตอนเปิดหน้าใน __initApiData) — เดิมอ่าน localStorage ที่มีเฉพาะเครื่องที่เคยเปิดระบบที่ 1 */
 function loadRealLeaveRequests(){
   return (window.FBL && FBL.rows) ? FBL.rows('leave_requests') : [];
 }
-// คืนรหัสลาของพนักงานคนนี้ในวันที่ dateISO ถ้ามีคำขอลาที่ยื่นเข้าระบบครอบคลุมวันนั้น
-// (ตัดการกรองสถานะ "อนุมัติแล้ว" ออก — งานเอกสารลาจริงต้องผ่านการลงนามบนใบลาด้วยปากกาอยู่แล้ว
-// การมีสถานะอนุมัติดิจิทัลแยกต่างหากไม่มีความหมายในทางปฏิบัติ ถือว่าคำขอลาที่ยื่นเข้าระบบ = ลาจริงทั้งหมด
-// ยกเว้น cancelled ซึ่งหมายถึงยกเลิกคำขอนั้นไปแล้วจริงๆ)
-function leaveCodeForDay(approvedLeaves, name, dateISO){
-  const hit = approvedLeaves.find(r=>r.name===name && r.status!=='cancelled' && dateISO>=r.from && dateISO<=r.to);
-  return hit ? (LEAVE_TYPE_CODE[hit.type] || null) : null;
-}
+// รหัสลงเวลารายวัน (กฎอยู่ที่ LaborCalc.attendanceOf ใน labor-calc.js — ถือว่าคำขอลาที่ยื่นเข้าระบบ = ลาจริง ยกเว้น cancelled)
 let attendanceCache = {}; // cycleKey -> {name -> [codes...]} — แคชในหน่วยความจำระหว่างเปิดหน้านี้เท่านั้น (ไม่บันทึกลง localStorage เพราะข้อมูลต้นทางที่ระบบที่ 1 เปลี่ยนแปลงได้ตลอด)
-function daysInCycle(key){ const [y,m]=key.split('-').map(Number); return new Date(y,m,0).getDate(); }
+const daysInCycle = LaborCalc.daysInCycle;
 function generateAttendance(cycleKey){
   if(attendanceCache[cycleKey]) return attendanceCache[cycleKey];
-  const [y,m] = cycleKey.split('-').map(Number);
-  const nDays = daysInCycle(cycleKey);
-  const holidays = new Set(cycleHolidays(cycleKey).map(h=>h.day));
-  const approvedLeaves = loadRealLeaveRequests();
-  const map = {};
-  laborRoster.forEach(emp=>{
-    const codes = [];
-    for(let d=1; d<=nDays; d++){
-      const dateISO = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const dow = new Date(y,m-1,d).getDay();
-      if(holidays.has(d)){ codes.push('1'); continue; } // วันหยุดนักขัตฤกษ์ จ่ายค่าจ้างเสมือนมาปฏิบัติงาน
-      if(dow===0){ codes.push('-'); continue; } // อาทิตย์หยุดทุกตำแหน่ง
-      if(dow===6 && !worksSaturday(emp, dateISO)){ codes.push('-'); continue; } // เสาร์หยุด ยกเว้นผู้ปฏิบัติหน้าที่ยามที่จ้างรวมวันเสาร์ (นับตั้งแต่วันเริ่มปฏิบัติหน้าที่ยาม)
-      const leaveCode = leaveCodeForDay(approvedLeaves, emp.name, dateISO);
-      codes.push(leaveCode || '1'); // ไม่มีคำขอลาที่อนุมัติในวันนี้ → ถือว่ามาปฏิบัติงาน
-    }
-    map[emp.name] = codes;
-  });
+  const map = LaborCalc.attendanceOf(cycleKey, laborRoster, loadRealLeaveRequests(), (window.FBL && FBL.rows) ? FBL.rows('public_holidays') : []);
   attendanceCache[cycleKey] = map;
   return map;
 }
 function __clearAttendanceCache(){ attendanceCache = {}; }
-const WORKDAY_CODES = new Set(['1','ป','ก','พ','ค','ร']); // มาปฏิบัติงานเต็มวัน + ลาที่ได้รับอนุมัติทุกประเภท นับเป็นวันทำงาน (ไม่รวม ข/ขาดงาน และ -/วันหยุด)
+const WORKDAY_CODES = LaborCalc.WORKDAY_CODES; // มาปฏิบัติงานเต็มวัน + ลาที่ได้รับอนุมัติทุกประเภท นับเป็นวันทำงาน (ไม่รวม ข/ขาดงาน และ -/วันหยุด)
 function workDaysOf(cycleKey, name){
   const codes = generateAttendance(cycleKey)[name] || [];
   return codes.filter(c=>WORKDAY_CODES.has(c)).length;
@@ -994,64 +890,7 @@ async function loadOtRequestsFromApi(){
 }
 let otCounter = 1;
 
-// งบประมาณต่อรอบเดือน — schema เดิม (fiscalYear + category เป็นหลายแถวต่อปี) ถูกต้องอยู่แล้ว
-// จุดที่ผิดคือ frontend เดิมใช้ object แบนค่าคงที่ 0 ตลอด ไม่มี UI ให้กรอกวงเงินจริงเลย
-// (ดู setBudgetAllocation()/openBudgetEditModal() ด้านล่าง ที่เพิ่มเข้ามาแก้ปัญหานี้)
-let budgetCategories = ["งบดำเนินงาน","ค่าวัสดุ","ค่าสาธารณูปโภค","งบซ่อมบำรุง"];
-/* แปลง budget_allocations ระหว่างรูปแบบภายใน กับคอลัมน์ Sheet — field ชื่อตรงกันอยู่แล้ว
-   ยกเว้น amount<-allocatedAmount */
-function budgetAllocFromApi(row){
-  return { id:row.id, fiscalYear:Number(row.fiscalYear), category:row.category, amount:Number(row.allocatedAmount)||0 };
-}
-function budgetAllocToApi(b){
-  return { id:b.id, fiscalYear:b.fiscalYear, category:b.category, allocatedAmount:b.amount||0 };
-}
-/* ข้อมูลวงเงินงบประมาณจริงย้ายไปอยู่ที่ Google Sheets แท็บ "budget_allocations" แล้ว
-   หน้านี้โหลดจาก API ตอนเปิดหน้าเสมอ ดูฟังก์ชัน loadBudgetAllocationsFromApi() ด้านล่าง */
-let budgetAllocations = [];
-async function loadBudgetAllocationsFromApi(){
-  try{
-    budgetAllocations = (await apiGet('budget_allocations')).map(budgetAllocFromApi);
-  }catch(err){
-    console.error('โหลดข้อมูลวงเงินงบประมาณจากฐานข้อมูลกลางล้มเหลว', err);
-    alert('โหลดข้อมูลวงเงินงบประมาณจากฐานข้อมูลกลางไม่สำเร็จ: ' + err.message + '\nกรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วรีเฟรชหน้าใหม่');
-  }
-}
-function getBudgetAllocation(fy, cat){
-  const r = budgetAllocations.find(x=>x.fiscalYear===fy && x.category===cat);
-  return r ? r.amount : 0;
-}
-async function setBudgetAllocation(fy, cat, amount){
-  const existing = budgetAllocations.find(x=>x.fiscalYear===fy && x.category===cat);
-  if(existing){
-    existing.amount = amount;
-    await apiPost('update', 'budget_allocations', budgetAllocToApi(existing));
-  } else {
-    const saved = await apiPost('add', 'budget_allocations', budgetAllocToApi({fiscalYear:fy, category:cat, amount}));
-    budgetAllocations.push(budgetAllocFromApi(saved));
-  }
-}
-// ยอดค่าวัสดุที่ดึงจากระบบที่ 3 จริง (เดิมเป็นค่า 0 ตายตัว ไม่เคยเชื่อมข้อมูลจริงเลย)
-// อ่านจาก materialTransactions ของระบบที่ 3 ตรงๆ (origin เดียวกัน) นับเฉพาะรายการ "รับเข้าคลัง" (kind:'receive')
-// ในรอบบิลนั้น เพราะเป็นจุดที่มีการจ่ายเงินซื้อจริง (มี unitPrice/totalPrice บันทึกไว้) — รายการ "เบิกจ่ายออก"
-// ไปใช้งานภาคสนาม (kind:'issue') ไม่มีราคาต่อหน่วยบันทึกไว้ในระบบที่ 3 เลย จึงคำนวณเป็นมูลค่าไม่ได้
-/* เดิมอ่านยอดรับเข้าวัสดุของระบบรองที่ 3 ผ่าน localStorage คีย์ 'saraban_subsystem3_v2'
-   แต่ตั้งแต่ระบบรองที่ 3 ย้าย material_transactions ไปอยู่บนฐานข้อมูลกลางแล้ว (ไม่เขียน
-   localStorage อีกต่อไป) ฟังก์ชันนี้จะได้ [] เสมอ (ยอดค่าวัสดุเงียบๆ กลายเป็น 0 ตลอด) —
-   แก้โดยโหลด material_transactions จาก apiGet ครั้งเดียวตอนเปิดหน้าแทน (ดู
-   __subsys3MaterialTx / loadSubsys3MaterialTxFromApi ท้ายไฟล์) แล้วอ่านจาก cache นี้ */
-let __subsys3MaterialTx = [];
-async function loadSubsys3MaterialTxFromApi(){
-  try{
-    __subsys3MaterialTx = await apiGet('material_transactions');
-  }catch(err){
-    console.error('โหลดข้อมูลยอดรับเข้าวัสดุจากระบบรองที่ 3 ล้มเหลว', err);
-  }
-}
-function materialSpendingOf(cycleKey){
-  return __subsys3MaterialTx.filter(t=>t.type==='receive' && (t.date||'').slice(0,7)===cycleKey)
-    .reduce((s,t)=>s+(Number(t.totalPrice)||0),0);
-}
+// งบประมาณและค่าใช้จ่าย (วงเงิน budget_allocations + ยอดใช้จ่ายสะสม) ย้ายไปอยู่ที่ระบบหลัก → ภาพรวม แล้ว
 
 // ทะเบียนคุมค่าสาธารณูปโภค
 // ข้อมูลย้อนหลังจริง (ต.ค.2568 - ก.ค.2569) ตามรูปที่ผู้ใช้แนบ — เก็บเป็นค่าคงที่แยกไว้
@@ -1301,25 +1140,9 @@ document.querySelectorAll('.sec-tab').forEach(t=>{
 });
 
 /* ============================================================
-   BUDGET CALCULATIONS (ตัวกลาง ใช้ร่วมกันหลายส่วน)
+   รอบเดือนปัจจุบัน
    ============================================================ */
 function currentCycle(){ return `${TODAY.getFullYear()}-${String(TODAY.getMonth()+1).padStart(2,'0')}`; }
-function laborSpendOf(cycleKey){
-  return laborRoster.reduce((sum,e)=>sum + workDaysOf(cycleKey,e.name)*e.rate, 0);
-}
-function utilitySpendOf(cycleKey){
-  return utilityBills.filter(b=>b.cycle===cycleKey).reduce((s,b)=>s+b.amount,0);
-}
-/* แก้บั๊กเดิม: หมวด "งบดำเนินงาน" รวมยอด OT ทุกคำขอตั้งแต่เริ่มระบบ ไม่กรองตามรอบเดือน
-   (cycleKey) เหมือนหมวดอื่นทั้งหมด ทำให้สลับ dropdown รอบบิลแล้วตัวเลขไม่เปลี่ยน —
-   ตอนนี้กรองด้วย workDate (o.date) ให้อยู่ในรอบเดียวกับ cycleKey เหมือนหมวดอื่น */
-function budgetSpentOf(cat, cycleKey){
-  if(cat==="งบดำเนินงาน") return otRequests.filter(o=>(o.date||'').slice(0,7)===cycleKey).reduce((s,o)=>s+(o.amount||0),0);
-  if(cat==="ค่าวัสดุ") return materialSpendingOf(cycleKey);
-  if(cat==="ค่าสาธารณูปโภค") return utilitySpendOf(cycleKey);
-  if(cat==="งบซ่อมบำรุง") return laborSpendOf(cycleKey);
-  return 0;
-}
 
 
 /* ============================================================
@@ -1766,9 +1589,49 @@ function renderOT(){
 
   /* รายชื่อผู้ปฏิบัติงานในหน้าต่างยื่นคำขอ — คงค่าที่ติ๊กไว้เดิมถ้ามีการวาดใหม่ระหว่างเปิดหน้าต่าง */
   const picked = new Set(getOtPeople());
-  document.getElementById('ot-people').innerHTML = laborRoster.map(e=>
-    `<label><input type="checkbox" value="${esc(e.name)}" ${picked.has(e.name)?'checked':''} onchange="checkOtGuard()">${esc(e.name)}</label>`).join('');
+  otRoster = buildOtRoster();
+  document.getElementById('ot-people').innerHTML = otRoster.map(e=>
+    `<label><input type="checkbox" value="${esc(e.name)}" ${picked.has(e.name)?'checked':''} onchange="checkOtGuard()">${esc(e.name)}<span class="p-sub">${esc(e.ptype||'')}</span></label>`).join('');
   updateOtPeopleCount();
+}
+/* ผู้ยื่น OT ได้ = บุคลากรที่ยังปฏิบัติงานอยู่ทุกประเภท (ไม่ใช่เฉพาะคนงานในบัญชีแรงงาน) เรียงตามประเภทแบบระบบที่ 1 */
+let otRoster = [];
+const OT_PTYPE_ORDER = ['ข้าราชการ','ลูกจ้างประจำ','พนักงานราชการ','ลูกจ้างชั่วคราว'];
+function buildOtRoster(){
+  const real = loadRealStaffRoster();
+  if(!real.length) return laborRoster.map(e=>({...e, ptype:'ลูกจ้างชั่วคราว'}));
+  const rank = s=>{ const k = OT_PTYPE_ORDER.indexOf(s.ptype); return k===-1 ? OT_PTYPE_ORDER.length : k; };
+  return __normalizeStaffSource(real).filter(s=>s.status==='ok')
+    .map(s=>({...s, ptype: s.ptype || (s.role==='คนงาน' ? 'ลูกจ้างชั่วคราว' : '')}))
+    .sort((a,b)=>rank(a)-rank(b));
+}
+/* อัตราค่าตอบแทนนอกเวลาราชการ (ต่อคนต่อวัน)
+   - ข้าราชการ / พนักงานราชการ / ลูกจ้างประจำ: เหมาจ่ายวันละ 200 บาท
+   - ลูกจ้าง: วันทำงานของผู้นั้น (ตอนเย็น) ชั่วโมงละ 50 บาท ไม่เกิน 200 บาท (นับเต็มชั่วโมง)
+              วันเสาร์-อาทิตย์ / วันหยุดนักขัตฤกษ์ เหมาจ่ายวันละ 377.85 บาท
+   วันเสาร์ของผู้ปฏิบัติหน้าที่ยามนับเป็นวันทำงาน (เหมือนตัวตรวจช่วงเวลาราชการ) */
+const OT_RATE_HOUR = 50, OT_EVENING_CAP = 200, OT_HOLIDAY_DAY = 377.85, OT_OFFICIAL_DAY = 200;
+function isOtOfficial(emp){ return ['ข้าราชการ','พนักงานราชการ','ลูกจ้างประจำ'].includes(emp && emp.ptype); }
+function calcOtAmount(name, date, time){
+  const emp = otRoster.find(e=>e.name===name);
+  if(!emp || !date) return {amount:0, note:'เลือกวันที่เพื่อคำนวณ'};
+  if(isOtOfficial(emp)) return {amount:OT_OFFICIAL_DAY, note:`${emp.ptype} เหมาจ่ายวันละ 200 บาท`};
+  const dow = new Date(date+'T00:00:00').getDay();
+  const holiday = holidayNameOn(date.slice(0,7), +date.slice(8,10));
+  const workday = (dow===6 && worksSaturday(emp, date)) || (dow>=1 && dow<=5 && !holiday);
+  if(!workday) return {amount:OT_HOLIDAY_DAY, note:(holiday && dow>=1 && dow<=5 ? 'วันหยุดนักขัตฤกษ์' : 'วันเสาร์-อาทิตย์')+' เหมาจ่ายวันละ 377.85 บาท'};
+  const r = parseOtTimeRange(time);
+  if(!r) return {amount:0, note:'ระบุช่วงเวลาเพื่อคำนวณ'};
+  const hrs = Math.floor((r.end-r.start)/60);
+  return {amount:Math.min(hrs*OT_RATE_HOUR, OT_EVENING_CAP), note:`ตอนเย็น ${hrs} ชม. × 50 บาท`+(hrs*OT_RATE_HOUR>OT_EVENING_CAP ? ' (ไม่เกิน 200 บาท)' : '')};
+}
+function renderOtCalc(){
+  const names = getOtPeople(), date = document.getElementById('ot-date').value, time = document.getElementById('ot-time').value;
+  const box = document.getElementById('ot-calc');
+  if(!names.length){ box.innerHTML = '<span class="p-sub">เลือกผู้ปฏิบัติงานเพื่อดูยอดค่าตอบแทน</span>'; return; }
+  const list = names.map(n=>({n, ...calcOtAmount(n, date, time)}));
+  box.innerHTML = list.map(x=>`<div class="row"><span>${esc(x.n)} <span class="p-sub" style="display:inline;">· ${esc(x.note)}</span></span><b>${fmtMoney(x.amount)}</b></div>`).join('')
+    + (list.length>1 ? `<div class="row total"><span>รวม ${list.length} คน</span><b>${fmtMoney(list.reduce((s,x)=>s+x.amount,0))} บาท</b></div>` : '');
 }
 function getOtPeople(){
   return [...document.querySelectorAll('#ot-people input:checked')].map(c=>c.value);
@@ -1818,7 +1681,6 @@ function openOTModal(){
   document.getElementById('ot-date').value='';
   document.getElementById('ot-time').value='';
   document.getElementById('ot-task').value='';
-  document.getElementById('ot-amount').value='';
   document.querySelectorAll('#ot-people input').forEach(c=>c.checked=false);
   checkOtGuard();
   document.getElementById('ot-modal-overlay').classList.remove('hidden');
@@ -1859,6 +1721,7 @@ function otGuardBlockReason(name, date, time){
 }
 function checkOtGuard(){
   updateOtPeopleCount();
+  renderOtCalc();
   const date = document.getElementById('ot-date').value, time = document.getElementById('ot-time').value;
   /* ตรวจทีละคนที่เลือก — ติดคนใดคนหนึ่งก็บันทึกไม่ได้ (ให้เอาชื่อนั้นออกก่อน) */
   const reason = getOtPeople().map(n=>otGuardBlockReason(n, date, time)).filter(Boolean).join('\n\n⛔ ');
@@ -1873,7 +1736,6 @@ async function submitOT(){
   const date = document.getElementById('ot-date').value;
   const time = document.getElementById('ot-time').value;
   const task = document.getElementById('ot-task').value;
-  const amount = parseFloat(document.getElementById('ot-amount').value)||0;
   if(!names.length||!date||!time||!task){ alert('กรุณากรอกข้อมูลให้ครบถ้วน และเลือกผู้ปฏิบัติงานอย่างน้อย 1 คน'); return; }
   const guardReason = checkOtGuard();
   if(guardReason){ alert(guardReason); return; }
@@ -1888,7 +1750,7 @@ async function submitOT(){
   const failed = [];
   for(const name of names){
     try{
-      const saved = await apiPost('add', 'ot_requests', otToApi({no, name, team:'', date, time, task, amount, status:'awaiting_work'}));
+      const saved = await apiPost('add', 'ot_requests', otToApi({no, name, team:'', date, time, task, amount:calcOtAmount(name, date, time).amount, status:'awaiting_work'}));
       otRequests.unshift(otFromApi(saved));
     }catch(err){
       failed.push(`${name}: ${err.message}`);
@@ -1911,7 +1773,6 @@ async function submitOT(){
   document.getElementById('ot-date').value='';
   document.getElementById('ot-time').value='';
   document.getElementById('ot-task').value='';
-  document.getElementById('ot-amount').value='';
   closeOTModal();
   renderAll();
 }
@@ -1958,83 +1819,6 @@ function printOTReport(i){
       </div>
     </div>`;
   doPrint(html);
-}
-
-/* ============================================================
-   BUDGET
-   ============================================================ */
-function populateBudgetCycles(){
-  const sel = document.getElementById('budget-cycle');
-  sel.innerHTML = cycleList().map(c=>`<option value="${esc(c)}">${cycleLabel(c)}</option>`).join('');
-}
-function renderBudget(){
-  const cyc = document.getElementById('budget-cycle').value || currentCycle();
-  const fy = cycleFiscalYearBE(cyc);
-  const editBtn = document.getElementById('budget-edit-btn');
-  if(editBtn) editBtn.classList.toggle('hidden', !isAdmin());
-  let html = '';
-  budgetCategories.forEach(cat=>{
-    const alloc = getBudgetAllocation(fy, cat);
-    const spent = budgetSpentOf(cat, cyc);
-    const pct = alloc>0 ? Math.min(100, Math.round((spent/alloc)*100)) : 0;
-    const remainPct = 100-pct;
-    const cls = remainPct<10?'danger':remainPct<20?'warn':'';
-    let src = '';
-    if(cat==="ค่าวัสดุ") src = 'อ้างอิงยอดเบิกวัสดุ/ยางแอสฟัลท์จากระบบที่ 3 (งานพัสดุและเครื่องจักร)';
-    if(cat==="งบซ่อมบำรุง") src = 'รวมค่าจ้างลูกจ้างชั่วคราวจากบัญชีแรงงานรายวันของรอบนี้';
-    if(cat==="ค่าสาธารณูปโภค") src = 'รวมยอดบิลค่าไฟฟ้า/น้ำประปา/อินเตอร์เน็ต/โทรศัพท์ของรอบนี้';
-    if(cat==="งบดำเนินงาน") src = 'รวมค่าตอบแทนนอกเวลาราชการและค่าใช้จ่ายเบ็ดเตล็ด';
-    html += `<div class="budget-row">
-      <div class="budget-top"><span class="name">${cat}${remainPct<20?' <span class="pill pill-warn">เหลือน้อยกว่า 20%</span>':''}</span><span class="nums">${fmtMoney(spent)} / ${fmtMoney(alloc)} บาท</span></div>
-      <div class="budget-track"><div class="budget-fill ${cls}" style="width:${pct}%;"></div></div>
-      <div class="budget-note">คงเหลือ ${fmtMoney(alloc-spent)} บาท (${remainPct}%) — ${src}</div>
-    </div>`;
-  });
-  document.getElementById('budget-detail').innerHTML = html;
-}
-/* แก้ปัญหาเดิม: budget_allocations ไม่เคยมี UI ให้กรอกวงเงินจริงเลย (ค่าเป็น 0 ตลอด ทำให้
-   แถบ % งบใช้ไปไม่มีความหมาย) — เปิดฟอร์มกรอกวงเงินจัดสรรของปีงบประมาณที่กำลังดูอยู่ ทีละ 4 หมวด */
-function openBudgetEditModal(){
-  if(!isAdmin()) return;
-  const cyc = document.getElementById('budget-cycle').value || currentCycle();
-  const fy = cycleFiscalYearBE(cyc);
-  document.getElementById('budget-edit-fy').textContent = fy;
-  document.getElementById('budget-edit-body').innerHTML = budgetCategories.map(cat=>`
-    <div class="f-row" style="margin-bottom:12px;">
-      <label style="display:block;margin-bottom:4px;">${cat}</label>
-      <input type="number" min="0" step="0.01" class="edit-input" id="budget-edit-${cat}" value="${getBudgetAllocation(fy,cat)}">
-    </div>`).join('');
-  document.getElementById('budget-edit-overlay').classList.remove('hidden');
-}
-function closeBudgetEditModal(){
-  document.getElementById('budget-edit-overlay').classList.add('hidden');
-}
-async function saveBudgetEditModal(){
-  if(!isAdmin()) return;
-  const cyc = document.getElementById('budget-cycle').value || currentCycle();
-  const fy = cycleFiscalYearBE(cyc);
-  const saveBtn = document.getElementById('budget-edit-save-btn');
-  const cancelBtn = document.getElementById('budget-edit-cancel-btn');
-  const originalLabel = saveBtn ? saveBtn.textContent : '';
-  // ป้องกันการกดซ้ำระหว่างรอผลจากเซิร์ฟเวอร์ (สาเหตุของแถวซ้ำที่เคยเกิดขึ้น) — ปิดปุ่มและแสดงสถานะกำลังบันทึกให้เห็นชัดเจน
-  if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'กำลังบันทึก...'; }
-  if(cancelBtn) cancelBtn.disabled = true;
-  try{
-    for(const cat of budgetCategories){
-      const amount = parseFloat(document.getElementById('budget-edit-'+cat).value)||0;
-      await setBudgetAllocation(fy, cat, amount);
-    }
-  }catch(err){
-    alert('บันทึกวงเงินงบประมาณไปยังฐานข้อมูลกลางไม่สำเร็จ (บางหมวดอาจบันทึกไปแล้ว): ' + err.message);
-    if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = originalLabel; }
-    if(cancelBtn) cancelBtn.disabled = false;
-    renderAll();
-    return;
-  }
-  if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = originalLabel; }
-  if(cancelBtn) cancelBtn.disabled = false;
-  closeBudgetEditModal();
-  renderAll();
 }
 
 /* ============================================================
@@ -2536,7 +2320,6 @@ function renderAll(){
   renderLaborSummary();
   renderLabor();
   renderOT();
-  renderBudget();
   renderUtility();
   renderUtilReport();
   renderWaterTable();
@@ -2544,7 +2327,6 @@ function renderAll(){
 populateLogin();
 populateLaborFY();
 populateLaborCycles();
-populateBudgetCycles();
 
 /* ============================================================
    บันทึกข้อมูลอัตโนมัติ (localStorage) — สำหรับช่วงทดลองใช้งาน
@@ -2552,22 +2334,11 @@ populateBudgetCycles();
    ============================================================ */
 const __STORAGE_KEY = 'saraban_subsystem4_v2';
 
-/* otRequests/utilityBills/waterMeterLog/budgetAllocations ย้ายไปอยู่บนฐานข้อมูลกลาง
-   (Google Sheets) แล้ว ไม่เก็บซ้ำใน localStorage อีกต่อไป — ยกเว้น budgetSpentSnapshot และ
-   budgetAllocation (ชื่อคีย์เดิมเจตนาคงไว้) ที่ยังคงเขียนไว้เป็นค่า snapshot อ่านอย่างเดียว
-   เพราะ choengnoen0-main.html (หน้าบริหารหมวด) ยังอ่านค่าสองตัวนี้จาก localStorage คีย์นี้อยู่
-   (บริหารหมวดไม่ได้อยู่ในขอบเขตงานเชื่อมต่อ backend รอบนี้ — เชื่อม 3 ระบบรองเท่านั้น) districtReports/
-   laborSentStatus เป็น local-only จริงๆ (ไม่มีตารางฝั่ง backend รองรับแนวคิดนี้) */
+/* otRequests/utilityBills/waterMeterLog ย้ายไปอยู่บนฐานข้อมูลกลางแล้ว ไม่เก็บซ้ำใน localStorage อีกต่อไป
+   (ยอดงบประมาณคงเหลือ ระบบหลักคำนวณเองจากข้อมูลจริงแล้ว ไม่ต้องส่ง snapshot จากหน้านี้)
+   districtReports/laborSentStatus เป็นค่าสถานะที่ใช้ร่วมกันผ่าน app_state/s4 */
 function __collectState(){
-  const cyc = currentCycle();
-  const fy = cycleFiscalYearBE(cyc);
-  const budgetSpentSnapshot = {};
-  const budgetAllocation = {};
-  budgetCategories.forEach(cat=>{
-    budgetSpentSnapshot[cat] = budgetSpentOf(cat, cyc);
-    budgetAllocation[cat] = getBudgetAllocation(fy, cat);
-  });
-  return { districtReports, budgetSpentSnapshot, budgetAllocation, laborSentStatus, laborPayer: laborPayerOverride, laborRemark };
+  return { districtReports, laborSentStatus, laborPayer: laborPayerOverride, laborRemark };
 }
 function __applyState(saved){
   if('laborPayer' in saved) laborPayerOverride = saved.laborPayer || null;
@@ -2614,14 +2385,6 @@ window.addEventListener('storage', function(e){
 
 function __toggleOtNote(btn){
   const note = document.getElementById('ot-note');
-  if(!note) return;
-  const show = note.style.display === 'none';
-  note.style.display = show ? 'block' : 'none';
-  btn.setAttribute('aria-expanded', String(show));
-  btn.classList.toggle('is-open', show);
-}
-function __toggleBudgetNote(btn){
-  const note = document.getElementById('budget-note');
   if(!note) return;
   const show = note.style.display === 'none';
   note.style.display = show ? 'block' : 'none';
@@ -2681,13 +2444,11 @@ renderAll();
   await Promise.all([
     loadUtilityBillsFromApi(),
     loadWaterMeterLogFromApi(),
-    loadOtRequestsFromApi(),
-    loadBudgetAllocationsFromApi(),
-    loadSubsys3MaterialTxFromApi()
+    loadOtRequestsFromApi()
   ]);
-  // เริ่มเขียนค่าสถานะขึ้น Firestore ได้หลังโหลดข้อมูลครบแล้วเท่านั้น (ยอดงบคงเหลือจะได้ไม่เป็น 0 ชั่วคราว)
+  // เริ่มเขียนค่าสถานะขึ้น Firestore ได้หลังโหลดข้อมูลครบแล้วเท่านั้น
   __stateLoadedFromServer = true;
-  __lastSavedJSON = ''; __saveState(); // ส่งยอดงบประมาณคงเหลือล่าสุดให้ระบบหลักทันที (stateSet ข้ามเองถ้าค่าไม่เปลี่ยน)
+  __lastSavedJSON = ''; __saveState();
   // เลขที่เอกสาร OT (otCounter) ต้องเริ่มถัดจากเลขสูงสุดที่มีอยู่จริงใน backend เสมอ กันเลขซ้ำ
   const otNums = otRequests.map(o=>{ const m = String(o.no||'').match(/OT-0*(\d+)/); return m ? Number(m[1]) : 0; });
   otCounter = otNums.length ? Math.max(...otNums)+1 : 1;
