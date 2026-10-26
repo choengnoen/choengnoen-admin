@@ -768,6 +768,14 @@ function buildLaborRoster(){
    ตั้งค่าได้ที่ระบบที่ 1 → ข้อมูลบุคลากร → "ปฏิบัติหน้าที่ยาม (จ้างรวมวันเสาร์)" — ระบบที่ 1 ใช้เงื่อนไขเดียวกันนับวันลา */
 const isGuard = LaborCalc.isGuard;
 const worksSaturday = LaborCalc.worksSaturday;
+/* ตำแหน่งในบัญชีแรงงาน ง.3-12: ยาม (เฉพาะเดือนที่เริ่มปฏิบัติหน้าที่ยามแล้ว) → พขร. (ผู้ประจำรถในทะเบียนเครื่องจักร ระบบที่ 3) → ตำแหน่งเดิม */
+function laborPositionOf(emp, cycEnd){
+  if(isGuard(emp) && (!emp.dutyStart || emp.dutyStart<=cycEnd)) return 'ยาม';
+  const norm = n => String(n||'').replace(/\s+/g,' ').trim();
+  const machines = (window.FBL && FBL.rows) ? FBL.rows('machinery') : [];
+  const drives = machines.some(m=>norm(m.operatorName)===norm(emp.name) && /^รถ/.test(String(m.vehicleType||m.label||'').trim()));
+  return drives ? 'พขร.' : (emp.role||'');
+}
 let laborRoster = buildLaborRoster(); // ผู้ที่ยังปฏิบัติงานอยู่ปัจจุบัน (ใช้กับ OT)
 /* รายชื่อในบัญชีแรงงานของรอบเดือนนั้น ๆ ตามช่วงเวลาที่ปฏิบัติงานจริง — ผู้เกษียณอายุแล้วยังแสดงในเดือนก่อนวันเกษียณ */
 let laborRosterCache = {};
@@ -1480,7 +1488,7 @@ function buildPaymentEvidenceSVG(cyc, mode){
     s += T(mid(C[0],C[1]), y, String(i+1), {a:'middle'})
        + T(C[1]+1.4, y, shortName(emp.name), {w:C[2]-C[1]-2.4})
        + T(mid(C[2],C[3]), y, emp.bankAcc||'', {a:'middle', w:C[3]-C[2]-2})
-       + T(mid(C[3],C[4]), y, emp.duty||emp.role||'', {a:'middle', w:C[4]-C[3]-2})
+       + T(mid(C[3],C[4]), y, laborPositionOf(emp, cycEnd), {a:'middle', w:C[4]-C[3]-2})
        + T(C[5]-1.2, y, fmtMoney(LaborCalc.rateOn(emp, rateDay)), {a:'end', w:C[5]-C[4]-2});
     for(let d=1; d<=31; d++){ const c = codes[d-1]; if(c && c!=='-') s += T(dayX(d)+G.DAYW/2, y, c, {a:'middle', fs:7.6, w:G.DAYW-0.6}); }
     s += T(mid(R[0],R[1]), y, String(workDays), {a:'middle'}) + money(y,amount,R[1],R[2]) + money(y,ss,R[2],R[3]) + money(y,net,R[3],R[4]);
@@ -2456,6 +2464,8 @@ renderAll();
   try{ await apiGetMultiple(['staff','leave_requests','public_holidays']); }catch(e){ console.error('โหลดรายชื่อบุคลากร/การลา/วันหยุดจากระบบที่ 1 ไม่สำเร็จ', e); }
   // ทะเบียนผู้บริหารหมวด — ใช้ชื่อหัวหน้าหมวดปัจจุบันเป็น "ผู้จ่ายเงิน" ในหลักฐานการจ่ายเงิน ง.3-26
   try{ await apiGet('exec_terms'); }catch(e){ console.warn('โหลดทะเบียนผู้บริหารหมวดไม่สำเร็จ ใช้ชื่อสำรองแทน', e); }
+  // ทะเบียนเครื่องจักร/ยานพาหนะ (ระบบ 3) — ผู้ประจำรถแสดงตำแหน่ง "พขร." ในบัญชีแรงงาน ง.3-12
+  try{ await apiGet('machinery'); }catch(e){ console.warn('โหลดทะเบียนเครื่องจักรไม่สำเร็จ ตำแหน่งคนขับรถจะแสดงเป็นตำแหน่งเดิม', e); }
   __refreshLaborRoster();
   if(typeof __clearAttendanceCache==='function') __clearAttendanceCache();
   // ค่าสถานะที่ใช้ร่วมกัน (สถานะรายงานแขวง / การส่งบัญชีแรงงาน) จาก Firestore — แทน localStorage เครื่องเดียว
