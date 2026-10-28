@@ -297,6 +297,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .reg-summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 20px;background:linear-gradient(180deg,#ffffff,var(--paper-50) 140%);border-bottom:1px solid var(--line);flex-wrap:wrap;}
   .reg-table thead th{text-align:center;}
   .reg-table tbody td{text-align:center;}
+  .reg-table.reg-ov th:first-child,.reg-table.reg-ov td:first-child{text-align:left;}
+  .reg-table.reg-ov tbody tr{cursor:pointer;}
+  .reg-table.reg-ov tbody tr:hover td{background:var(--paper-50);}
   .lr-inline-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:2px;}
   .lr-inline-row .lr-stat-panel{margin-top:0;flex:1 1 auto;}
   #lr-warning{flex:1 1 260px;min-width:220px;}
@@ -3393,9 +3396,8 @@ function printCancelForm(i){
    ============================================================ */
 function populateRegistryFy(){
   const nameInput = document.getElementById('reg-name');
-  if(!nameInput.value || !staff.some(s=>s.name===nameInput.value)){
-    nameInput.value = staff[0] ? staff[0].name : '';
-  }
+  // ไม่เลือกใครไว้ล่วงหน้า — ช่องว่าง = แสดงหน้าภาพรวมทุกคน
+  if(nameInput.value && !staff.some(s=>s.name===nameInput.value)) nameInput.value = '';
   const fys = [...new Set(computeLeaveHistory().map(r=>r.fy))].sort((a,b)=>b-a);
   document.getElementById('reg-fy').innerHTML = fys.map(y=>`<option value="${y}">ปีงบประมาณ ${y}</option>`).join('');
 }
@@ -3495,7 +3497,60 @@ function searchLeaveRange(){
 function registryRecords(name, fy){
   return computeLeaveHistory().filter(r=>r.name===name && r.fy===fy).slice().sort((a,b)=>a.from.localeCompare(b.from));
 }
+/* หน้าแรกของแท็บ: สรุปการลาทุกคนในปีงบ (คนที่ลาเยอะขึ้นก่อน) — คลิกแถวเพื่อดูทะเบียนรายคน */
+function registryOverviewHTML(fy){
+  const recs = computeLeaveHistory().filter(r=>r.fy===fy);
+  const names = staff.filter(s=>s.status!=='resigned' && s.status!=='retired').map(s=>s.name);
+  recs.forEach(r=>{ if(!names.includes(r.name)) names.push(r.name); });
+  const list = names.map((name,order)=>{
+    const s = staff.find(x=>x.name===name) || {};
+    const st = {ป่วย:{c:0,d:0}, กิจ:{c:0,d:0}, พักผ่อน:{c:0,d:0}};
+    recs.filter(r=>r.name===name).forEach(r=>{
+      const t = st[__registryLeaveType(r.type)];
+      if(t){ t.c++; t.d += daysBetween(r.from,r.to,r.name); }
+    });
+    return { name, s, st, order, count: st.ป่วย.c+st.กิจ.c+st.พักผ่อน.c, days: st.ป่วย.d+st.กิจ.d+st.พักผ่อน.d };
+  }).sort((a,b)=> b.days-a.days || a.order-b.order);
+  const totalCount = list.reduce((a,x)=>a+x.count,0), totalDays = list.reduce((a,x)=>a+x.days,0);
+  const cellStat = (t)=> t.c ? `<b>${t.d}</b> <span style="color:var(--ink-400);font-size:11px;">(${t.c} ครั้ง)</span>` : `<span style="color:var(--ink-400);">–</span>`;
+  let rows = list.map(x=>`<tr onclick="__openRegistryFor('${jsArg(x.name)}')" title="ดูทะเบียนการลาของ ${esc(x.name)}">
+      <td><b>${esc(x.name)}</b>${x.s.status==='resigned'?' <span style="color:var(--ink-400);font-size:11px;">(ลาออก)</span>':''}${x.s.status==='retired'?' <span style="color:var(--ink-400);font-size:11px;">(เกษียณอายุ)</span>':''}</td>
+      <td>${esc(x.s.ptype||'-')}</td>
+      <td>${cellStat(x.st.ป่วย)}</td>
+      <td>${cellStat(x.st.กิจ)}</td>
+      <td>${cellStat(x.st.พักผ่อน)}</td>
+      <td>${x.days ? `<span class="pill pill-ok" style="min-width:24px;justify-content:center;">${x.days}</span>` : `<span style="color:var(--ink-400);">0</span>`}</td>
+      <td style="color:var(--ink-400);">›</td>
+    </tr>`).join('');
+  if(!rows) rows = `<tr><td colspan="7" style="text-align:center;color:var(--ink-400);padding:26px 14px;">ยังไม่มีรายชื่อพนักงาน</td></tr>`;
+  return `
+    <div class="reg-summary">
+      <div class="person">
+        <div>
+          <div class="p-name" style="font-size:15px;">ภาพรวมการลา ปีงบประมาณ ${fy||'-'}</div>
+          <div class="p-sub">พนักงาน ${list.length} คน · ลารวม ${totalCount} ครั้ง · ${totalDays} วันทำการ — คลิกชื่อเพื่อดู/พิมพ์ทะเบียนรายคน</div>
+        </div>
+      </div>
+    </div>
+    <div class="table-wrap table-wrap-scroll" style="max-height:60vh;">
+      <table class="reg-table reg-ov">
+        <thead>
+          <tr><th>ชื่อ-สกุล</th><th>ประเภทบุคลากร</th><th>ป่วย (วัน)</th><th>กิจ (วัน)</th><th>พักผ่อน (วัน)</th><th>รวม (วันทำการ)</th><th></th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+function __openRegistryFor(name){
+  document.getElementById('reg-name').value = name;
+  renderRegistry();
+}
+function __registryBack(){
+  document.getElementById('reg-name').value = '';
+  renderRegistry();
+}
 function registryOnscreenHTML(name, fy){
+  if(!name) return registryOverviewHTML(fy);
   const s = staff.find(x=>x.name===name) || {};
   const recs = registryRecords(name, fy);
   const cell = (r,t)=> __registryLeaveType(r.type)===t ? daysBetween(r.from,r.to,r.name) : '-';
@@ -3530,6 +3585,7 @@ function registryOnscreenHTML(name, fy){
           <div class="p-sub">${esc(s.ptype) || (name ? 'ไม่พบข้อมูลประเภทบุคลากร' : 'พิมพ์ชื่อด้านบนเพื่อค้นหา')}${s.status==='resigned' ? ' · ลาออกแล้ว' : ''}${s.status==='retired' ? ' · เกษียณอายุแล้ว' : ''}</div>
         </div>
       </div>
+      <button class="btn btn-ghost" onclick="__registryBack()">← กลับภาพรวม</button>
     </div>
     ${name ? `
     <div class="lr-stat-panel" style="margin:14px 20px 0;">
@@ -3634,6 +3690,7 @@ function renderRegistry(){
 }
 function printRegistry(){
   const name = document.getElementById('reg-name').value;
+  if(!name){ alert('กรุณาเลือกพนักงานก่อนพิมพ์ จ.3-03 (คลิกชื่อในตาราง หรือค้นหาชื่อด้านบน)'); return; }
   const fy = parseInt(document.getElementById('reg-fy').value);
   document.getElementById('print-registry').innerHTML = registrySheetsHTML(name, fy);
   printForm('print-registry');

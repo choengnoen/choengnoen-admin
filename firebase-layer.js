@@ -98,9 +98,10 @@
     { key: 'purge', label: 'ลบถาวร', desc: 'ลบรายการในถังขยะทิ้งถาวร (กู้คืนไม่ได้อีก)' },
     { key: 'viewLog', label: 'ดูประวัติการใช้งาน', desc: 'ดูว่าใครเพิ่ม/แก้ไข/ลบอะไร เมื่อไร และดูสถานะออนไลน์' },
     { key: 'unlockLedger', label: 'ปลดล็อกบัญชีรายเดือน', desc: 'ปลดล็อกเดือนที่ปิดบัญชี พ.1-02 / พ.1-03 แล้ว' },
-    { key: 'export', label: 'ส่งออก/สำรองข้อมูล', desc: 'ดาวน์โหลดข้อมูลทั้งระบบเป็น Excel / JSON' },
-    { key: 'checkFuel', label: 'ตรวจรายวัน (พ.1-02 วัสดุ / พ.1-03 น้ำมัน)', desc: 'ติ๊ก "ตรวจแล้ว" รายการเบิกวัสดุ/น้ำมันแต่ละวัน ยืนยันปิดวัน และปลดล็อกวันที่ยืนยันแล้ว (เจ้าของระบบ/หมวด/ผู้ช่วยหมวดมีสิทธิ์นี้อยู่แล้วตามบทบาท — ติ๊กที่นี่เฉพาะเมื่อต้องการให้คนอื่นตรวจได้ด้วย)' }
+    { key: 'export', label: 'ส่งออก/สำรองข้อมูล', desc: 'ดาวน์โหลดข้อมูลทั้งระบบเป็น Excel / JSON' }
   ];
+  // ตรวจรายวัน (พ.1-02 / พ.1-03) ไม่ใช่สวิตช์รายคน — ผูกกับบทบาท เจ้าของระบบ/หมวด/ผู้ช่วยหมวด เท่านั้น (ดู FBL.canCheckFuel)
+  // เจ้าหน้าที่ (staff) ไม่มีสิทธิ์พิเศษ — normalizePerm บังคับ: ลบรายการ = มีระบบที่แก้ไขได้อย่างน้อย 1 ระบบ, ที่เหลือปิดหมด
   FBL.FLAGS = FLAGS;
 
   const ROLES = {
@@ -114,9 +115,9 @@
   // สิทธิ์ตั้งต้นของแต่ละบทบาท (เจ้าของระบบปรับรายคนได้ภายหลังในหน้า "ผู้ใช้งานและสิทธิ์")
   function presetPerm(role, sections) {
     const own = Array.isArray(sections) ? sections : [];
-    const p = { main: false, s1: 'view', s2: 'view', s3: 'view', s4: 'view', delete: false, restore: false, purge: false, viewLog: false, unlockLedger: false, export: false, checkFuel: false, hideTabs: [], tabView: [] };
+    const p = { main: false, s1: 'view', s2: 'view', s3: 'view', s4: 'view', delete: false, restore: false, purge: false, viewLog: false, unlockLedger: false, export: false, hideTabs: [], tabView: [] };
     if (role === 'owner') {
-      Object.assign(p, { main: true, s1: 'edit', s2: 'edit', s3: 'edit', s4: 'edit', delete: true, restore: true, purge: true, viewLog: true, unlockLedger: true, export: true, checkFuel: true });
+      Object.assign(p, { main: true, s1: 'edit', s2: 'edit', s3: 'edit', s4: 'edit', delete: true, restore: true, purge: true, viewLog: true, unlockLedger: true, export: true });
     } else if (role === 'chief' || role === 'assistant') { // หมวด = สิทธิ์เท่าผู้ช่วยหมวด
       Object.assign(p, { main: true, s1: 'edit', s2: 'edit', s3: 'edit', s4: 'edit', delete: true, restore: true, viewLog: true, unlockLedger: true, export: true });
     } else { // staff
@@ -126,6 +127,13 @@
     return p;
   }
   FBL.presetPerm = presetPerm;
+  // เจ้าหน้าที่: ปิดสิทธิ์พิเศษทั้งหมด ยกเว้นลบรายการ (เปิดอัตโนมัติเมื่อมีระบบที่แก้ไขได้) — ต้องตรงกับ can() ใน firestore.rules
+  function staffFlags(p) {
+    FLAGS.forEach(function (f) { p[f.key] = false; });
+    p.delete = SUB_KEYS.some(function (k) { return p[k] === 'edit'; });
+    return p;
+  }
+  FBL.staffFlags = staffFlags;
 
   function normalizePerm(perm, role) {
     const base = presetPerm(role || 'staff', []);
@@ -133,6 +141,8 @@
     SUB_KEYS.forEach(function (k) { if (['edit', 'view', 'none'].indexOf(p[k]) === -1) p[k] = base[k]; });
     p.main = !!p.main;
     FLAGS.forEach(function (f) { p[f.key] = !!p[f.key]; });
+    delete p.checkFuel; // สวิตช์เก่า — ตรวจรายวันผูกกับบทบาทแล้ว
+    if (role !== 'owner' && role !== 'chief' && role !== 'assistant') staffFlags(p);
     p.hideTabs = cleanHideTabs(p.hideTabs);
     p.tabView = cleanHideTabs(p.tabView);
     if (role === 'owner') return presetPerm('owner');
@@ -177,7 +187,7 @@
     encroachments: { section: 's2', label: 'งานรุกล้ำ', idField: 'code', idPrefix: null, columns: ['code', 'name', 'km', 'dist', 'structure', 'stage', 'stageDate', 'cleared', 'clearedDate', 'lastUpdated'], numericFields: ['dist', 'stage'] },
     emergencies: { section: 's2', label: 'เหตุฉุกเฉิน', idField: 'no', idPrefix: null, columns: ['no', 'type', 'loc', 'start', 'lastUpdate', 'status', 'lastUpdated'], numericFields: ['no'] },
     // งานสัญญา (17 ต.ค. 2569): 1 สัญญา = 1 รายการ, ช่วงทางหลวงหลายช่วงเก็บใน rangesJson = [{route, k1, k2}] (กม. เป็นกิโลเมตร ทศนิยม) / status = สถานะพิเศษ (ระงับงาน, ยกเลิกสัญญา) ว่าง = คำนวณจากวันที่
-    contracts: { section: 's2', label: 'สัญญา', idField: 'id', idPrefix: 'CON', columns: ['id', 'fiscalYear', 'contractNo', 'name', 'contractor', 'amount', 'startDate', 'endDate', 'warrantyEnd', 'supervisor', 'status', 'note', 'rangesJson', 'lastUpdated', 'workQty', 'deliveryDate', 'acceptDate', 'workType', 'warrantyYears', 'reflectNeeded'], numericFields: ['fiscalYear', 'amount', 'warrantyYears'], jsonFields: ['rangesJson'] },
+    contracts: { section: 's2', label: 'สัญญา', idField: 'id', idPrefix: 'CON', columns: ['id', 'fiscalYear', 'contractNo', 'name', 'contractor', 'amount', 'startDate', 'endDate', 'warrantyEnd', 'supervisor', 'status', 'note', 'rangesJson', 'lastUpdated', 'workQty', 'deliveryDate', 'acceptDate', 'workType', 'warrantyYears', 'reflectNeeded', 'refl12Done', 'refl24Done'], numericFields: ['fiscalYear', 'amount', 'warrantyYears'], jsonFields: ['rangesJson'] },
 
     materials: { section: 's3', label: 'ทะเบียนพัสดุ', idField: 'code', idPrefix: null, columns: ['code', 'itemName', 'category', 'unit', 'openingStock', 'reorderPoint', 'status', 'lastUpdated', 'unitPrice', 'usage'], numericFields: ['openingStock', 'reorderPoint', 'unitPrice'] },
     material_transactions: { section: 's3', label: 'รับ-จ่ายวัสดุ', idField: 'id', idPrefix: 'MTX', columns: ['id', 'materialId', 'type', 'qty', 'unitPrice', 'totalPrice', 'refNo', 'date', 'note', 'relatedDailyWorkOrderId', 'lastUpdated'], numericFields: ['qty', 'unitPrice', 'totalPrice'] },
@@ -189,7 +199,7 @@
     fuel_settings: { section: 's3', label: 'จุดสั่งซื้อน้ำมัน', idField: 'fuelType', idPrefix: null, columns: ['fuelType', 'reorderPoint', 'minOrder', 'lastUpdated'], numericFields: ['reorderPoint', 'minOrder'], trash: false },
     ledger_locks: { section: 's3', label: 'ล็อกเดือนบัญชี', idField: 'monthKey', idPrefix: null, columns: ['monthKey', 'lockedBy', 'lockedAt', 'lastUpdated'], numericFields: [], trash: false },
     // ตรวจน้ำมันรายวัน พ.1-03 (18 ต.ค. 2569): 1 วัน = 1 รายการ (dayKey 'YYYY-MM-DD'), checkedJson = รายชื่อรถ/เครื่องที่ติ๊กตรวจแล้ว, confirmed = '1' เมื่อยืนยันปิดวัน (ล็อกวัน)
-    // เขียน/ลบได้เฉพาะผู้มีสิทธิ์พิเศษ checkFuel (ไม่ใช่ผู้แก้ไขระบบ 3 ทั่วไป) — บังคับที่ firestore.rules
+    // เขียน/ลบได้เฉพาะเจ้าของระบบ/หมวด/ผู้ช่วยหมวด (ไม่ใช่ผู้แก้ไขระบบ 3 ทั่วไป) — บังคับที่ firestore.rules
     fuel_day_checks: { section: 's3', label: 'ตรวจน้ำมันรายวัน', idField: 'dayKey', idPrefix: null, columns: ['dayKey', 'checkedJson', 'checkedBy', 'checkedAt', 'confirmed', 'confirmedBy', 'confirmedAt', 'lastUpdated'], numericFields: [], jsonFields: ['checkedJson'], trash: false },
     mat_day_checks: { section: 's3', label: 'ตรวจวัสดุรายวัน (พ.1-02)', idField: 'dayKey', idPrefix: null, columns: ['dayKey', 'checkedJson', 'checkedBy', 'checkedAt', 'confirmed', 'confirmedBy', 'confirmedAt', 'lastUpdated'], numericFields: [], jsonFields: ['checkedJson'], trash: false },
     ledger_overrides: { section: 's3', label: 'แก้ยอดยกมา/รับเข้า', idField: 'id', idPrefix: 'LOV', columns: ['id', 'kind', 'itemKey', 'monthKey', 'value', 'lastUpdated'], numericFields: ['value'], trash: false },
@@ -697,8 +707,8 @@
   };
   // สิทธิ์พิเศษ: delete / restore / purge / viewLog / unlockLedger / export
   FBL.can =function (flag) { return !!(FBL.user && (FBL.user.role === 'owner' || FBL.user.perm[flag] === true)); };
-  // ตรวจน้ำมันรายวัน พ.1-03: เจ้าของระบบ / หมวด / ผู้ช่วยหมวด ตามบทบาทเสมอ (ผู้อื่นต้องถูกติ๊กสิทธิ์ checkFuel รายคน) — ต้องตรงกับ canCheckFuel() ใน firestore.rules
-  FBL.canCheckFuel = function () { return !!(FBL.user && (['owner', 'chief', 'assistant'].indexOf(FBL.user.role) !== -1 || FBL.user.perm.checkFuel === true)); };
+  // ตรวจรายวัน พ.1-02 / พ.1-03: เจ้าของระบบ / หมวด / ผู้ช่วยหมวด ตามบทบาทเท่านั้น — ต้องตรงกับ canCheckFuel() ใน firestore.rules
+  FBL.canCheckFuel = function () { return !!(FBL.user && ['owner', 'chief', 'assistant'].indexOf(FBL.user.role) !== -1); };
   function canWriteTable(table) {
     const sec = sectionOf(table);
     if (!sec) return false;

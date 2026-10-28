@@ -136,6 +136,12 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ov-card.accent-orange{border-top:3px solid var(--orange-600);}
   .ov-card.accent-amber{border-top:3px solid var(--amber-400);}
   .ov-card.accent-success{border-top:3px solid var(--success);}
+  .ov-leave{margin-top:10px;max-height:150px;overflow-y:auto;}
+  .ov-leave-title{font-size:11.5px;font-weight:600;color:var(--ink-600);margin-bottom:4px;}
+  .ov-leave-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dashed var(--line);font-size:12.5px;}
+  .ov-leave-item:last-child{border-bottom:none;}
+  .ov-leave-item .pill{white-space:nowrap;}
+  .ov-leave-empty{font-size:11.5px;color:var(--ink-400);padding:4px 0;}
   @media(max-width:640px){ .ov-grid{grid-template-columns:1fr 1fr;} }
 
 
@@ -201,7 +207,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .search-box{display:flex;align-items:center;gap:7px;background:var(--paper-50);border:1px solid var(--line);border-radius:7px;padding:6px 11px;font-size:13px;color:var(--ink-600);min-width:190px;}
   .search-box input,.search-box select{border:none;background:none;outline:none;font-family:'Sarabun';font-size:13px;color:var(--ink-900);width:100%;}
   select{font-family:'Sarabun';font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink-900);}
-  .bk-grid{display:grid;grid-template-columns:minmax(0,calc(50% - 8px));justify-content:center;gap:28px;align-items:stretch;}
+  .bk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 64px;align-items:stretch;}
   .bk-grid>.section{margin:0;}
   .bk-card{display:flex;flex-direction:column;overflow:hidden;border-top:4px solid var(--orange-500);}
   .bk-card-b{border-top-color:var(--navy-700);}
@@ -270,7 +276,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .dot-yellow{width:9px;height:9px;border-radius:50%;background:var(--amber-400);display:inline-block;flex-shrink:0;}
   .dot-blue{width:9px;height:9px;border-radius:50%;background:var(--navy-700);display:inline-block;flex-shrink:0;}
   .alert-row{flex-wrap:wrap;}
-  .alert-row.a-done{opacity:.5;}
+  .alert-row.a-done .a-left,.alert-row.a-done .a-right>:not(.a-act){opacity:.5;}
+  .a-act{display:flex;gap:6px;align-items:center;}
   .alert-row.a-done .a-task{text-decoration:line-through;}
   .a-left{display:flex;align-items:flex-start;gap:9px;min-width:0;}
   .a-check{width:17px;height:17px;flex-shrink:0;margin-top:2px;cursor:pointer;accent-color:var(--orange-600);}
@@ -620,26 +627,21 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         <div id="overview-stats"></div>
 
         <div class="ov-two" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <!-- งบประมาณและค่าใช้จ่าย (ย้ายมาจากระบบที่ 4) — ยอดใช้จ่ายสะสมตั้งแต่ ต.ค. ถึงเดือนปัจจุบัน เทียบวงเงินทั้งปี -->
           <div class="section">
-            <div class="section-head"><h2>ผู้ลา / ไปราชการวันนี้</h2><span class="muted small" id="today-date"></span></div>
-            <div class="today-list" id="today-leave"></div>
+            <div class="section-head">
+              <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/></svg></span>งบประมาณและค่าใช้จ่าย</h2>
+              <div class="toolbar">
+                <select id="ov-budget-fy" data-fy onchange="renderBudgetDetail()"></select>
+                <button class="btn btn-ghost btn-ic" id="ov-budget-edit-btn" data-ic="pen" data-tip="แก้ไขวงเงินงบประมาณ" style="display:none;" onclick="openBudgetEditModal()"></button>
+              </div>
+            </div>
+            <div id="ov-budget-detail"></div>
           </div>
           <div class="section">
             <div class="section-head"><h2>งานที่ต้องติดตาม</h2><button class="btn btn-ghost btn-ic" data-ic="arrow" data-tip="ดูทั้งหมด" onclick="gotoTab('alerts')"></button></div>
             <div class="today-list" id="ov-alerts"></div>
           </div>
-        </div>
-
-        <!-- งบประมาณและค่าใช้จ่าย (ย้ายมาจากระบบที่ 4) — ยอดใช้จ่ายสะสมตั้งแต่ ต.ค. ถึงเดือนปัจจุบัน เทียบวงเงินทั้งปี -->
-        <div class="section" style="margin-top:16px;">
-          <div class="section-head">
-            <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/></svg></span>งบประมาณและค่าใช้จ่าย</h2>
-            <div class="toolbar">
-              <select id="ov-budget-fy" data-fy onchange="renderBudgetDetail()"></select>
-              <button class="btn btn-ghost btn-ic" id="ov-budget-edit-btn" data-ic="pen" data-tip="แก้ไขวงเงินงบประมาณ" style="display:none;" onclick="openBudgetEditModal()"></button>
-            </div>
-          </div>
-          <div id="ov-budget-detail"></div>
         </div>
 
       </div>
@@ -793,7 +795,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
     <div class="um-steps" id="um-steps">
       <button type="button" data-pane="info" onclick="umStep('info')"><span class="n">1</span>ข้อมูลผู้ใช้</button>
       <button type="button" data-pane="perm" onclick="umStep('perm')"><span class="n">2</span>บทบาทและระบบ</button>
-      <button type="button" data-pane="flags" onclick="umStep('flags')"><span class="n">3</span>สิทธิ์พิเศษ</button>
+      <button type="button" data-pane="flags" onclick="umStep('flags')"><span class="n">3</span><span id="um-step3-lbl">สิทธิ์พิเศษ</span></button>
     </div>
     <div class="modal-body" id="um-body"></div>
     <div class="modal-foot" id="um-foot"></div>
@@ -1165,7 +1167,8 @@ function drawOverview(V, note){
     <div class="ov-grid">
       <div class="ov-card accent-orange">
         <div class="ov-card-head">${icon('var(--orange-600)','<circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1"/><path d="M17 11a4 4 0 0 0 0-8"/>')}<h3>กำลังพลวันนี้</h3><span class="ov-note">ทั้งหมด ${staff.length} คน</span></div>
-        <div class="ov-metrics">${ovMetric(working,'ปฏิบัติงาน','ok')}${ovMetric(onLeave,'ลา')}${ovMetric(trip,'ไปราชการ')}</div>
+        <div class="ov-metrics">${ovMetric(working,'ปฏิบัติงาน','ok')}</div>
+        <div class="ov-leave" id="ov-leave-names">${__todayLeaveHTML}</div>
       </div>
       <div class="ov-card accent-navy">
         <div class="ov-card-head">${icon('var(--navy-900)','<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>')}<h3>งบประมาณ ปีงบ ${num(V.fy)}</h3></div>
@@ -1181,12 +1184,15 @@ function drawOverview(V, note){
       </div>
     </div>`;
 }
+/* รายชื่อผู้ลา / ไปราชการวันนี้ — แสดงในการ์ดกำลังพล (เก็บ HTML ไว้ เพราะ drawOverview วาดการ์ดใหม่ทั้งใบ) */
+var __todayLeaveHTML = '';
 function renderTodayLeave(){
-  document.getElementById('today-date').textContent = fmtDateFull(todayISO());
   const lv = leaveToday().sort((a,b)=>String(a.type).localeCompare(String(b.type),'th'));
-  document.getElementById('today-leave').innerHTML = lv.length ? lv.map(r=>`
-    <div class="today-item"><span>${esc(r.name)}</span><span class="pill ${r.type==='ไปราชการ'?'pill-in':'pill-warn'}">${esc(r.type==='ไปราชการ'?'ไปราชการ':'ลา'+r.type)} · ${fmtDate(r.from)}${r.to&&r.to!==r.from?' – '+fmtDate(r.to):''}</span></div>`).join('')
-    : '<div class="empty">วันนี้ไม่มีผู้ลาหรือไปราชการ — มาปฏิบัติงานครบ</div>';
+  __todayLeaveHTML = lv.length ? `<div class="ov-leave-title">ผู้ลา / ไปราชการวันนี้ (${lv.length} คน)</div>` + lv.map(r=>`
+    <div class="ov-leave-item"><span>${esc(r.name)}</span><span class="pill ${r.type==='ไปราชการ'?'pill-in':'pill-warn'}">${esc(r.type==='ไปราชการ'?'ไปราชการ':'ลา'+r.type)} · ${fmtDate(r.from)}${r.to&&r.to!==r.from?' – '+fmtDate(r.to):''}</span></div>`).join('')
+    : '<div class="ov-leave-empty">วันนี้ไม่มีผู้ลาหรือไปราชการ — มาปฏิบัติงานครบ</div>';
+  const el = document.getElementById('ov-leave-names');
+  if(el) el.innerHTML = __todayLeaveHTML;
 }
 /* ============================================================
    แจ้งเตือน / ติดตามงาน (เช็คลิสต์ + ผู้รับผิดชอบ เก็บที่ app_state/main ใช้ร่วมกันทุกเครื่อง)
@@ -1249,11 +1255,15 @@ function alertRowHTML(o){
   const st = __alertState[o.id] || {};
   const done = o.checklist && st.doneFor === o.checkKey;
   const safeLabel = jsArg(o.task);
-  const check = o.checklist ? `<input type="checkbox" class="a-check" ${done?'checked':''} title="ทำเครื่องหมายว่าดำเนินการแล้ว" onchange="toggleAlertDone('${jsArg(o.id)}','${jsArg(o.checkKey)}')">` : '';
+  // ปุ่มทำเครื่องหมาย — รูปแบบเดียวกับปุ่มอนุมัติใบลา
+  const toggle = `toggleAlertDone('${jsArg(o.id)}','${jsArg(o.checkKey)}')`;
+  const check = !o.checklist ? '' : done
+    ? `<button type="button" class="btn btn-ghost btn-sm" data-ic="undo" onclick="${toggle}">ยกเลิก</button>`
+    : `<button type="button" class="btn btn-ok btn-sm" data-ic="check" onclick="${toggle}">ดำเนินการแล้ว</button>`;
   const assignee = st.assignee || '';
   const asg = o.noAssign ? '' : `<span class="a-assignee${assignee?' filled':''}" onclick="setAlertAssignee('${jsArg(o.id)}','${safeLabel}')">${assignee ? '👤 '+esc(assignee) : '+ มอบหมาย'}</span>`;
   const when = o.dueIso ? `<span class="al-date">${esc(String(fmtDate(o.dueIso)).split(' ').slice(0,2).join(' '))}</span>` : '';
-  return `<div class="alert-row${done?' a-done':''}"><div class="a-left">${check}${when}<div><div class="a-task">${esc(o.task)}</div><div class="a-detail">${o.detailHTML || esc(o.detail)}</div></div></div><div class="a-right">${asg}${o.pillHTML}</div></div>`;
+  return `<div class="alert-row${done?' a-done':''}"><div class="a-left">${when}<div><div class="a-task">${esc(o.task)}</div><div class="a-detail">${o.detailHTML || esc(o.detail)}</div></div></div><div class="a-right">${asg}${o.pillHTML}${check ? '<span class="a-act">'+check+'</span>' : ''}</div></div>`;
 }
 function computeAlerts(){
   const out = { red:[], yellow:[], blue:[] };
@@ -1289,11 +1299,14 @@ function computeAlerts(){
     const m = [1,2,3].find(m=>todayIso >= ctAddM(w,-m)); return m ? {c, m, d:daysUntil(w)} : null;
   }).filter(Boolean).sort((a,b)=>a.d-b.d);
   const w30 = warrLv.filter(x=>x.m===1), w90 = warrLv.filter(x=>x.m>1);
-  // วัดค่าสะท้อนแสง รอบ 12 / 24 เดือน ถัดจากวันส่งงาน — เตือนก่อน 30 วัน
-  const reflDue = cts.filter(c=>(c.reflectNeeded===true||c.reflectNeeded==='true') && ctIso(c.deliveryDate)).map(c=>{
-    const r = [12,24].map(m=>({m, date:ctAddM(ctIso(c.deliveryDate), m)})).find(r=>r.date >= todayIso);
+  // วัดค่าสะท้อนแสง รอบ 12 / 24 เดือน ถัดจากวันส่งงาน — เตือนก่อน 30 วัน และเตือนต่อ "เลยกำหนด" จนกว่าจะบันทึกวันที่วัดแล้ว (refl12Done/refl24Done)
+  const reflAll = cts.filter(c=>(c.reflectNeeded===true||c.reflectNeeded==='true') && ctIso(c.deliveryDate)).map(c=>{
+    const r = [12,24].map(m=>({m, date:ctAddM(ctIso(c.deliveryDate), m)})).find(r=>!ctIso(c['refl'+r.m+'Done']));
     return r ? {c, m:r.m, d:daysUntil(r.date)} : null;
-  }).filter(x=>x && x.d<=30).sort((a,b)=>a.d-b.d);
+  }).filter(Boolean).sort((a,b)=>a.d-b.d);
+  const reflOver = reflAll.filter(x=>x.d<0);
+  if(reflOver.length) out.red.push({id:'ct-refl-over', noAssign:true, task:'เลยกำหนดวัดค่าสะท้อนแสง — ยังไม่บันทึกวันที่วัดแล้ว', detailHTML: reflOver.slice(0,5).map(x=>`• ${ctName(x.c)} — รอบ ${x.m} เดือน (เลยมา ${-x.d} วัน)`).join('<br>') + (reflOver.length>5?`<br>และอีก ${reflOver.length-5} สัญญา`:''), pillHTML:`<span class="pill pill-danger">${reflOver.length} สัญญา</span>`});
+  const reflDue = reflAll.filter(x=>x.d>=0 && x.d<=30);
   const endSoon = cts.filter(c=>c.status!=='ระงับงาน' && !ctIso(c.deliveryDate) && ctIso(c.endDate) && (!ctIso(c.startDate) || daysUntil(ctIso(c.startDate))<=0) && daysUntil(ctIso(c.endDate))>=0 && daysUntil(ctIso(c.endDate))<=60)
     .map(c=>({c, d:daysUntil(ctIso(c.endDate))})).sort((a,b)=>a.d-b.d);
   const wList = arr => arr.slice(0,5).map(x=>`• ${ctName(x.c)} — คืนค้ำ ${fmtDate(ctIso(x.c.warrantyEnd))} (ภายใน ${x.m} เดือน · เหลือ ${x.d} วัน)`).join('<br>') + (arr.length>5?`<br>และอีก ${arr.length-5} สัญญา`:'');
@@ -1568,9 +1581,10 @@ function renderUsers(){
     <div class="umd-sec"><h4>สิทธิ์รายระบบ</h4>
       <div class="um-row"><div>• งานบริหารหมวด (ระบบหลัก)<div class="u-sub">ภาพรวม แจ้งเตือน รายงานสรุป</div>${umHiddenNote(u,'main')}</div>${segMain(!!u.perm.main)}</div>
       ${FBL.SUB_KEYS.map(k=>`<div class="um-row"><div>${k.slice(1)}. ${esc(FBL.SECTIONS[k].label)}${umHiddenNote(u,k)}</div>${segSub(u.perm[k])}</div>`).join('')}</div>
-    <div class="umd-sec"><h4>สิทธิ์พิเศษ</h4>
+    ${u.role==='staff' ? '' : `<div class="umd-sec"><h4>สิทธิ์พิเศษ</h4>
       ${FBL.FLAGS.map(f=>`<div class="um-row"><div><b style="font-weight:600">${esc(umFlagLabel(f))}</b><div class="u-sub">${esc(umFlagDesc(f))}</div></div><span class="um-sw ${userCan(u,f.key)?'on':''}"></span></div>`).join('')}
-      <div class="um-row"><div><b style="font-weight:600">จัดการผู้ใช้งาน</b><div class="u-sub">เพิ่ม/แก้สิทธิ์/ตั้งรหัสผ่าน/ระงับ/ลบ — เจ้าของระบบคนเดียว</div></div><span class="um-sw ${u.role==='owner'?'on':''}"></span></div></div>`;
+      <div class="um-row"><div><b style="font-weight:600">ตรวจรายวัน</b><div class="u-sub">พ.1-02 วัสดุ / พ.1-03 น้ำมัน — เจ้าของระบบ/หมวด/ผู้ช่วยหมวด ตามตำแหน่ง</div></div><span class="um-sw on"></span></div>
+      <div class="um-row"><div><b style="font-weight:600">จัดการผู้ใช้งาน</b><div class="u-sub">เพิ่ม/แก้สิทธิ์/ตั้งรหัสผ่าน/ระงับ/ลบ — เจ้าของระบบคนเดียว</div></div><span class="um-sw ${u.role==='owner'?'on':''}"></span></div></div>`}`;
 
   const chip = document.getElementById('presence-chip');
   if(seePresence){ chip.style.display=''; chip.textContent = 'ออนไลน์ตอนนี้ '+onlineCount+' คน'; chip.classList.toggle('none', onlineCount===0); }
@@ -1595,8 +1609,7 @@ const UM_FLAG_TXT = {
   purge:{label:'ลบถาวร', desc:'กู้คืนไม่ได้'},
   viewLog:{label:'ดูประวัติการใช้งาน', desc:'ใครทำอะไร เมื่อไร'},
   unlockLedger:{label:'ปลดล็อกบัญชีรายเดือน', desc:'เดือนที่ปิดบัญชีแล้ว'},
-  export:{label:'ส่งออก/สำรองข้อมูล', desc:'Excel / JSON'},
-  checkFuel:{label:'ตรวจรายวัน', desc:'พ.1-02 วัสดุ / พ.1-03 น้ำมัน'}
+  export:{label:'ส่งออก/สำรองข้อมูล', desc:'Excel / JSON'}
 };
 const umFlagLabel = f => (UM_FLAG_TXT[f.key]||f).label;
 const umFlagDesc = f => (UM_FLAG_TXT[f.key]||f).desc;
@@ -1632,7 +1645,7 @@ function openUserModal(uid){
     </div>
     <!-- แท็บ 3: สิทธิ์พิเศษ + สรุป -->
     <div class="um-pane" data-pane="flags">
-      <div class="um-h">สิทธิ์พิเศษ <span class="um-opt">(กดเพื่อเปิด-ปิด)</span></div>
+      <div class="um-h" id="um-flags-h">สิทธิ์พิเศษ <span class="um-opt">(กดเพื่อเปิด-ปิด)</span></div>
       <div class="um-flags" id="um-flags"></div>
       <div class="um-say"><h5>📋 สรุปสิทธิ์ก่อนบันทึก</h5><ul id="um-say"></ul></div>
     </div>
@@ -1671,7 +1684,10 @@ function umDerive(){
       if(UM.tabs[t]==='none') p.hideTabs.push(t);
       else if(sys==='edit' && UM.tabs[t]==='view') p.tabView.push(t); });
   });
-  if(UM.role==='staff') UM.sections = FBL.SUB_KEYS.filter(x=>p[x]==='edit'); // เจ้าหน้าที่: ระบบที่แก้ไขได้ = ส่วนงานที่รับผิดชอบ
+  if(UM.role==='staff'){ // เจ้าหน้าที่: ระบบที่แก้ไขได้ = ส่วนงานที่รับผิดชอบ, ไม่มีสิทธิ์พิเศษ (ลบรายการเปิดเองเมื่อมีระบบที่แก้ไขได้)
+    UM.sections = FBL.SUB_KEYS.filter(x=>p[x]==='edit');
+    FBL.staffFlags(p);
+  }
 }
 function umRenderSys(){
   const el = document.getElementById('um-sys'); if(!el) return;
@@ -1688,6 +1704,10 @@ function umRenderSys(){
 }
 function umRenderFlags(){
   const el = document.getElementById('um-flags'); if(!el) return;
+  const staff = UM.role==='staff';
+  document.getElementById('um-flags-h').style.display = staff ? 'none' : '';
+  document.getElementById('um-step3-lbl').textContent = staff ? 'สรุป' : 'สิทธิ์พิเศษ';
+  if(staff){ el.innerHTML = ''; return; }
   el.innerHTML = FBL.FLAGS.map(f=>{ const on = !!UM.perm[f.key];
     return `<button type="button" class="um-fl${on?' on':''}" onclick="umToggleFlag('${f.key}')"><span><b>${esc(umFlagLabel(f))}</b><small>${esc(umFlagDesc(f))}</small></span><span class="um-sw${on?' on':''}"></span></button>`; }).join('');
 }
@@ -1711,7 +1731,8 @@ function umRefreshSay(){
   if(ed.length) L.push('<b>แก้ไข:</b> '+grp(ed));
   if(vw.length) L.push('<b>ดูอย่างเดียว:</b> '+grp(vw));
   if(no.length) L.push('<b>ไม่เห็น:</b> '+grp(no));
-  if(fl.length) L.push('<b>สิทธิ์พิเศษ:</b> '+fl.map(esc).join(', '));
+  if(UM.role==='staff'){ if(p.delete) L.push('<b>ลบรายการ:</b> ได้ในระบบที่แก้ไขได้ (เข้าถังขยะ กู้คืนได้)'); }
+  else{ if(fl.length) L.push('<b>สิทธิ์พิเศษ:</b> '+fl.map(esc).join(', ')); L.push('<b>ตรวจรายวัน:</b> พ.1-02 / พ.1-03 ตามตำแหน่ง'); }
   const ht = ['main',...FBL.SUB_KEYS].map(k=>{ const h = umHiddenOf(p.hideTabs,k); return h.length ? (k==='main'?'ระบบหลัก':'ระบบ '+lab(k))+' ('+h.map(esc).join(', ')+')' : ''; }).filter(Boolean);
   if(ht.length) L.push('<b>ซ่อนแท็บ:</b> '+ht.join(' · '));
   const vt = FBL.SUB_KEYS.map(k=>{ const h = umHiddenOf(p.tabView,k); return h.length ? 'ระบบ '+lab(k)+' ('+h.map(esc).join(', ')+')' : ''; }).filter(Boolean);

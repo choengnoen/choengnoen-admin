@@ -4290,7 +4290,7 @@ function renderFuelKpiBand(mk, fuelTypes){
 /* ============================================================
    พ.1-03 หน้าตรวจรายวัน (แบบ 3-4, 2569-10-18)
    เลือกวัน → เห็นรายการเบิกของวันนั้น: ผู้เบิก/เครื่อง/ประเภท/ครั้งล่าสุด/ครั้งนี้/เลขไมล์ก่อน-นี้ + ผลตรวจอัตโนมัติ
-   ผู้มีสิทธิ์ตรวจ (perm.checkFuel) ติ๊ก "ตรวจแล้ว" รายแถว แล้วกด "ยืนยันตรวจครบทั้งวัน" → วันนั้นถูกล็อก (แก้ไม่ได้จนกว่าผู้มีสิทธิ์ตรวจจะปลดล็อก)
+   ผู้มีสิทธิ์ตรวจ (เจ้าของระบบ/หมวด/ผู้ช่วยหมวด) ติ๊ก "ตรวจแล้ว" รายแถว แล้วกด "ยืนยันตรวจครบทั้งวัน" → วันนั้นถูกล็อก (แก้ไม่ได้จนกว่าผู้มีสิทธิ์ตรวจจะปลดล็อก)
    สถานะเก็บที่ตาราง fuel_day_checks (1 วัน = 1 รายการ) — แทนการล็อกเดือนในแท็บ พ.1-03 (ล็อกเดือนยังใช้ที่ พ.1-02)
    ช่องลิตรใช้ระบบฉบับร่าง (draftFuelCells) + ช่องเลขไมล์บันทึกทันที เหมือนเดิมทุกประการ
    ============================================================ */
@@ -4310,7 +4310,7 @@ async function loadFuelDayChecksFromApi(){
     console.error('โหลดสถานะตรวจน้ำมันรายวันจากฐานข้อมูลกลางไม่สำเร็จ', err);
   }
 }
-function canCheckFuel(){ return !!(window.FBL && FBL.canCheckFuel && FBL.canCheckFuel()); } // เจ้าของระบบ/หมวด/ผู้ช่วยหมวด (หรือผู้ที่ถูกติ๊กสิทธิ์ checkFuel)
+function canCheckFuel(){ return !!(window.FBL && FBL.canCheckFuel && FBL.canCheckFuel()); } // เจ้าของระบบ/หมวด/ผู้ช่วยหมวด ตามตำแหน่งเท่านั้น
 function fuelDayRec(date){ return fuelDayChecks[date] || {checked:[], confirmed:false}; }
 function currentFuelMk(){ return ledgerMonthKey('rep-fuel-ledger-fy','rep-fuel-ledger-month'); }
 function fuelShortDate(ds){
