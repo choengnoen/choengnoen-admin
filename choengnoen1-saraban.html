@@ -383,6 +383,13 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .exec-mini:last-child{border-bottom:0;}
   @media (max-width:760px){ .ec-cols{grid-template-columns:1fr;} }
   .er-inline{padding:16px 20px 20px;}
+  /* หัวแท็บทะเบียนผู้บริหาร: ใช้สีเขียวหัวเป็ดของผู้บริหาร + ดาว + เส้นคั่นจากแท็บประเภทบุคลากร ให้เห็นว่าเป็นคนละหมวด */
+  #staff-tabs{align-items:center;}
+  #staff-tabs .tab[data-stafftab="exec"]{display:inline-flex;align-items:center;gap:6px;margin:6px 10px 6px 0;padding:6px 14px;border:1px solid #a9ddd5;border-radius:99px;background:#f0faf8;color:#0f766e;font-weight:600;position:relative;}
+  #staff-tabs .tab[data-stafftab="exec"]::before{content:'★';font-size:12px;}
+  #staff-tabs .tab[data-stafftab="exec"]::after{content:'';position:absolute;right:-11px;top:4px;bottom:4px;border-right:1px solid var(--line);}
+  #staff-tabs .tab[data-stafftab="exec"]:hover{background:#d9f3ef;}
+  #staff-tabs .tab[data-stafftab="exec"].active{background:#0f766e;border-color:#0f766e;color:#fff;box-shadow:0 2px 6px rgba(15,118,110,.25);}
   .lr-stat-panel{background:var(--paper-100);border-radius:10px;padding:11px 14px;margin-top:4px;display:flex;flex-direction:column;gap:7px;}
   .lr-stat-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .lr-stat-label{font-size:11px;color:var(--ink-400);font-weight:600;min-width:88px;}
