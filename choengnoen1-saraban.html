@@ -3398,6 +3398,7 @@ function populateRegistryFy(){
   const nameInput = document.getElementById('reg-name');
   // ไม่เลือกใครไว้ล่วงหน้า — ช่องว่าง = แสดงหน้าภาพรวมทุกคน
   if(nameInput.value && !staff.some(s=>s.name===nameInput.value)) nameInput.value = '';
+  if(__regPick && !staff.some(s=>s.name===__regPick)) __regPick = '';
   const fys = [...new Set(computeLeaveHistory().map(r=>r.fy))].sort((a,b)=>b-a);
   document.getElementById('reg-fy').innerHTML = fys.map(y=>`<option value="${y}">ปีงบประมาณ ${y}</option>`).join('');
 }
@@ -3413,6 +3414,7 @@ function __filterRegNameSuggest(){
 }
 function __pickRegName(name){
   document.getElementById('reg-name').value = name;
+  __regPick = '';
   const box = document.getElementById('reg-name-suggest');
   box.innerHTML=''; box.classList.add('hidden');
   renderRegistry();
@@ -3512,14 +3514,14 @@ function registryOverviewHTML(fy){
     return { name, s, st, order, count: st.ป่วย.c+st.กิจ.c+st.พักผ่อน.c, days: st.ป่วย.d+st.กิจ.d+st.พักผ่อน.d };
   }).sort((a,b)=> b.days-a.days || a.order-b.order);
   const totalCount = list.reduce((a,x)=>a+x.count,0), totalDays = list.reduce((a,x)=>a+x.days,0);
-  const cellStat = (t)=> t.c ? `<b>${t.d}</b> <span style="color:var(--ink-400);font-size:11px;">(${t.c} ครั้ง)</span>` : `<span style="color:var(--ink-400);">–</span>`;
+  const cellStat = (t)=> t.c ? `<b>${t.d}</b> วัน <span style="color:var(--ink-400);font-size:11px;">(${t.c} ครั้ง)</span>` : `<span style="color:var(--ink-400);">–</span>`;
   let rows = list.map(x=>`<tr onclick="__openRegistryFor('${jsArg(x.name)}')" title="ดูทะเบียนการลาของ ${esc(x.name)}">
       <td><b>${esc(x.name)}</b>${x.s.status==='resigned'?' <span style="color:var(--ink-400);font-size:11px;">(ลาออก)</span>':''}${x.s.status==='retired'?' <span style="color:var(--ink-400);font-size:11px;">(เกษียณอายุ)</span>':''}</td>
       <td>${esc(x.s.ptype||'-')}</td>
       <td>${cellStat(x.st.ป่วย)}</td>
       <td>${cellStat(x.st.กิจ)}</td>
       <td>${cellStat(x.st.พักผ่อน)}</td>
-      <td>${x.days ? `<span class="pill pill-ok" style="min-width:24px;justify-content:center;">${x.days}</span>` : `<span style="color:var(--ink-400);">0</span>`}</td>
+      <td>${x.days ? `<span class="pill pill-ok" style="min-width:24px;justify-content:center;">${x.days} วัน</span>` : `<span style="color:var(--ink-400);">–</span>`}</td>
       <td style="color:var(--ink-400);">›</td>
     </tr>`).join('');
   if(!rows) rows = `<tr><td colspan="7" style="text-align:center;color:var(--ink-400);padding:26px 14px;">ยังไม่มีรายชื่อพนักงาน</td></tr>`;
@@ -3528,8 +3530,13 @@ function registryOverviewHTML(fy){
       <div class="person">
         <div>
           <div class="p-name" style="font-size:15px;">ภาพรวมการลา ปีงบประมาณ ${fy||'-'}</div>
-          <div class="p-sub">พนักงาน ${list.length} คน · ลารวม ${totalCount} ครั้ง · ${totalDays} วันทำการ — คลิกชื่อเพื่อดู/พิมพ์ทะเบียนรายคน</div>
+          <div class="p-sub">คลิกชื่อในตารางเพื่อดูหรือพิมพ์ทะเบียนรายคน</div>
         </div>
+      </div>
+      <div class="lr-stat-row">
+        <span class="lr-stat-chip">พนักงาน <b>${list.length}</b> คน</span>
+        <span class="lr-stat-chip">ลารวม <b>${totalCount}</b> ครั้ง</span>
+        <span class="lr-stat-chip" style="border-color:var(--orange-500);">รวม <b>${totalDays}</b> วันทำการ</span>
       </div>
     </div>
     <div class="table-wrap table-wrap-scroll" style="max-height:60vh;">
@@ -3541,12 +3548,17 @@ function registryOverviewHTML(fy){
       </table>
     </div>`;
 }
+/* คนที่เลือกจากตารางภาพรวม — เก็บแยกจากช่องค้นหา (คลิกจากตารางไม่ต้องเติมชื่อลงช่องค้นหา) */
+let __regPick = '';
+function __regName(){ return document.getElementById('reg-name').value || __regPick; }
 function __openRegistryFor(name){
-  document.getElementById('reg-name').value = name;
+  document.getElementById('reg-name').value = '';
+  __regPick = name;
   renderRegistry();
 }
 function __registryBack(){
   document.getElementById('reg-name').value = '';
+  __regPick = '';
   renderRegistry();
 }
 function registryOnscreenHTML(name, fy){
@@ -3554,7 +3566,7 @@ function registryOnscreenHTML(name, fy){
   const s = staff.find(x=>x.name===name) || {};
   const recs = registryRecords(name, fy);
   const cell = (r,t)=> __registryLeaveType(r.type)===t ? daysBetween(r.from,r.to,r.name) : '-';
-  const cellPill = (v)=> v==='-' ? `<span style="color:var(--ink-400);">–</span>` : `<span class="pill pill-ok" style="min-width:24px;justify-content:center;">${v}</span>`;
+  const cellPill = (v)=> v==='-' ? `<span style="color:var(--ink-400);">–</span>` : `<span class="pill pill-ok" style="min-width:24px;justify-content:center;">${v} วัน</span>`;
   const statFor = (t) => {
     const list = recs.filter(r=>__registryLeaveType(r.type)===t);
     return { count: list.length, days: list.reduce((a,r)=>a+daysBetween(r.from,r.to,r.name),0) };
@@ -3570,7 +3582,7 @@ function registryOnscreenHTML(name, fy){
       <td>${cellPill(cell(r,'กิจ'))}</td>
       <td>${cellPill(cell(r,'พักผ่อน'))}</td>
       <td>${cellPill(cell(r,'คลอดบุตร'))}</td>
-      <td><b>${d}</b></td>
+      <td><b>${d}</b> วัน</td>
       <td>${fmtDate(r.from)}</td>
       <td>${fmtDate(r.to)}</td>
     </tr>`;
@@ -3588,7 +3600,7 @@ function registryOnscreenHTML(name, fy){
       <button class="btn btn-ghost" onclick="__registryBack()">← กลับภาพรวม</button>
     </div>
     ${name ? `
-    <div class="lr-stat-panel" style="margin:14px 20px 0;">
+    <div class="lr-stat-panel" style="margin:14px 20px 16px;">
       <div class="lr-stat-row">
         <span class="lr-stat-label">สรุปการลา ปีงบ ${fy}</span>
         <span class="lr-stat-chip">ป่วย <b>${sickStat.count}</b> ครั้ง · <b>${sickStat.days}</b> วันทำการ</span>
@@ -3684,12 +3696,12 @@ function registrySheetsHTML(name, fy){
   return out;
 }
 function renderRegistry(){
-  const name = document.getElementById('reg-name').value;
+  const name = __regName();
   const fy = parseInt(document.getElementById('reg-fy').value);
   document.getElementById('registry-onscreen').innerHTML = registryOnscreenHTML(name, fy);
 }
 function printRegistry(){
-  const name = document.getElementById('reg-name').value;
+  const name = __regName();
   if(!name){ alert('กรุณาเลือกพนักงานก่อนพิมพ์ จ.3-03 (คลิกชื่อในตาราง หรือค้นหาชื่อด้านบน)'); return; }
   const fy = parseInt(document.getElementById('reg-fy').value);
   document.getElementById('print-registry').innerHTML = registrySheetsHTML(name, fy);
