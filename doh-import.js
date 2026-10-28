@@ -785,45 +785,34 @@
   function compareText(){
     const m = cmpModel();
     /* คัดลอกเฉพาะเรื่องที่เจ้าหน้าที่ต้องตรวจกับเอกสาร — ไม่รวมยอดเงินที่กรมแบ่งตามแผน และวัสดุที่ไม่อยู่ในทะเบียน (งานของคนดูแลทะเบียน)
-       แต่ละเรื่องบอก: ปัญหาคืออะไร · รายการ · ตรวจเอกสารอะไร · ผลออกมาแบบไหนต้องแก้อย่างไร */
+       รูปแบบตามที่ผู้ใช้กำหนด: หัว 2 บรรทัด · "เรื่อง:" + รายการ · ปิดท้ายขอให้รายงานผล */
     const secs = [];
-    const sec = (title, notes, arr, how) => { if(arr.length) secs.push({ title, notes, arr, how }); };
+    const sec = (title, arr) => { if(arr.length) secs.push({ title, arr }); };
     const dates = ds => ds.map(dateTh).join(', ');
     const dayNoYr = d => String(dateTh(d)).replace(/\s+\d{2,4}$/,'');   // ปีอยู่ในหัวข้อแล้ว
     const nDept = m.leave.filter(p=>p.dept).length;
     sec('มีใบลาในระบบ แต่มีชื่ออยู่ในใบสั่งการวันเดียวกัน ('+m.leave.length+' คน '+m.leaveDays+' วัน)',
-      nDept===m.leave.length ? ['ทุกรายการไฟล์กรม (rmms) ก็มีชื่อด้วย'] : nDept ? ['รายการที่มี (rmms มีชื่อ) คือไฟล์กรมก็ลงชื่อด้วย'] : ['ทุกรายการมีเฉพาะในระบบเรา ไฟล์กรมไม่มีชื่อ'],
       m.leave.map(p=>p.name.replace(/\s+/g,' ')+': '+p.dates.map(d=>dayNoYr(d)+(p.days[d].codes.length?' (รหัส '+p.days[d].codes.join(', ')+')':'')).join(', ')
-        +(p.dept && nDept<m.leave.length?' (rmms มีชื่อ)':'')),
-      ['ตรวจใบลาตัวจริงของแต่ละวัน แล้วแจ้งผลเป็นรายวันว่า "ลาจริง" หรือ "ไม่ได้ลา"',
-       'ลาจริง → เอาชื่อออกจากใบสั่งการ'+(nDept===m.leave.length?' และแจ้งแขวงให้แก้ใน rmms':nDept?' ถ้า rmms มีชื่อให้แจ้งแขวงแก้ด้วย':''),
-       'ไม่ได้ลา → แก้หรือยกเลิกใบลาในระบบ']);
-    sec('น้ำมันรวมต่อเครื่องทั้งเดือนไม่ตรง', ['ตัวเลขเป็นลิตร: ระบบเรา / กรม'],
-      m.fuelBad.map(r=>r.label+': '+r.sys+' / '+r.dept+' (ต่าง '+(r.diff>0?'+':'')+r.diff+')'),
-      ['ตรวจใบเบิกน้ำมันที่ลงนาม', 'ระบบผิด → แก้ใบสั่งการ · กรมผิด → แจ้งแขวงแก้ rmms']);
+        +(p.dept && nDept<m.leave.length?' (rmms มีชื่อ)':'')));   // บอกเฉพาะตอนที่บางคนมีในกรม บางคนไม่มี
+    sec('น้ำมันรวมต่อเครื่องทั้งเดือนไม่ตรง (ลิตร ระบบเรา / กรม)',
+      m.fuelBad.map(r=>r.label+': '+r.sys+' / '+r.dept+' (ต่าง '+(r.diff>0?'+':'')+r.diff+')'));
     const dayL = [];
     m.day.forEach(x=>{ if(x.dept) dayL.push(x.c.label+': กรมลงวันที่ '+dates(x.dept.dates)+' แต่ระบบไม่มีใบ'); if(x.sys) dayL.push(x.c.label+': ระบบมีใบวันที่ '+dates(x.sys.sheets.map(s=>s.date))+' แต่กรมไม่ได้ลง'); });
-    sec('วันปฏิบัติงานไม่ตรงกัน', [], dayL,
-      ['ตรวจบัญชีลงเวลา/ใบสั่งการตัวจริงของวันที่ระบุ', 'กรมลงแต่ระบบไม่มีใบ → สร้างใบในระบบ · ระบบมีใบแต่กรมไม่ได้ลง → ถ้าทำงานจริงให้แจ้งแขวงเพิ่มใน rmms ถ้าไม่ได้ทำให้แก้ใบในระบบ']);
+    sec('วันปฏิบัติงานไม่ตรงกัน', dayL);
     const stL = [];
     m.staff.forEach(x=>{ if(x.dept) stL.push(x.c.label+': กรมลงแต่ใบระบบไม่มี '+x.dept.names.join(', ')); if(x.sys) stL.push(x.c.label+': อยู่ในใบระบบแต่กรมไม่ได้ลง '+x.sys.names.join(', ')); });
-    sec('รายชื่อคนทำงานไม่ตรง', [], stL,
-      ['ตรวจบัญชีลงเวลาของงานนั้น', 'ระบบขาดชื่อ → เพิ่มชื่อในใบสั่งการ · กรมขาดชื่อ → แจ้งแขวงแก้ rmms']);
+    sec('รายชื่อคนทำงานไม่ตรง', stL);
     const mtL = [];
     m.mat.forEach(x=>x.list.filter(t=>t.k==='mat').forEach(t=>mtL.push(x.c.label+': '+t.text)));
-    sec('วัสดุไม่ตรง', [], mtL, ['ตรวจใบเบิกวัสดุที่ลงนาม']);
-    const lines = ['ผลเทียบใบสั่งการ (ระบบหมวด) กับไฟล์กรม (rmms) — '+mkLabel(S.importMk)];
+    sec('วัสดุไม่ตรง', mtL);
+    const lines = ['ผลเทียบใบสั่งการ (ระบบหมวด) กับไฟล์กรม (rmms)', 'เดือน '+mkLabel(S.importMk)];
     const many = secs.length > 1;
     secs.forEach((s,i)=>{
-      lines.push('', (many?(i+1)+') ':'เรื่อง: ')+s.title);
-      s.notes.forEach(t=>lines.push(t));
-      lines.push('');
+      if(i) lines.push('');
+      lines.push((many?'เรื่องที่ '+(i+1)+': ':'เรื่อง: ')+s.title, '');
       s.arr.forEach(t=>lines.push('- '+t));
-      lines.push('');
-      s.how.forEach((t,j)=>lines.push(j ? '- '+t : t));
     });
-    if(!secs.length) lines.push('', 'ตรงกันทุกแผน ไม่มีจุดที่ต้องตรวจ');
-    else lines.push('', 'กรุณาแจ้งผลภายในวันที่ ........');
+    lines.push('', secs.length ? 'กรุณาตรวจสอบและรายงานผลค่ะ' : 'ตรงกันทุกแผน ไม่มีจุดที่ต้องตรวจ');
     return lines.join('\n');
   }
   async function copyCompare(){
