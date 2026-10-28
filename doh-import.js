@@ -363,6 +363,36 @@
       .dohi-table th,.dohi-table td{padding:6px 8px;border-bottom:1px solid #dfe2dd;text-align:left;vertical-align:top;}
       .dohi-table th{color:#4d5a66;font-size:12.5px;background:#f5f6f4;}
       .dohi-list{margin:4px 0 0;padding-left:18px;}
+      .dohi-sec{background:#fff;border:1px solid #e3e6ea;border-radius:14px;margin:0 0 14px;overflow:hidden;box-shadow:0 1px 2px rgba(10,37,64,.04);}
+      .dohi-sec-h{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #eef0f2;}
+      .dohi-sec-h i{display:inline-flex;width:24px;height:24px;border-radius:50%;background:#c1402f;color:#fff;font-style:normal;font-size:12.5px;font-weight:700;align-items:center;justify-content:center;flex-shrink:0;}
+      .dohi-sec.low .dohi-sec-h i{background:#8792a0;}
+      .dohi-sec-h b{font-family:'Kanit',sans-serif;font-size:14.5px;color:#182430;}
+      .dohi-sec-h .n{margin-left:auto;background:#fbeae7;color:#c1402f;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap;}
+      .dohi-sec.low .dohi-sec-h .n{background:#eef0ed;color:#4d5a66;}
+      .dohi-how{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:0;padding:9px 16px;background:#fafaf8;border-bottom:1px solid #eef0f2;font-size:12.5px;line-height:1.6;color:#4d5a66;}
+      .dohi-how dt{font-weight:700;color:#182430;}
+      .dohi-how dd{margin:0;}
+      .dohi-sec-b{padding:4px 16px 10px;}
+      .dohi-row{display:flex;gap:14px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed #e6e8eb;font-size:13.5px;}
+      .dohi-row:last-child{border-bottom:none;}
+      .dohi-row>.who{flex:0 0 230px;font-weight:600;color:#182430;line-height:1.6;}
+      .dohi-row>.what{flex:1;min-width:0;}
+      .dohi-row .ln{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:2px 0;line-height:1.6;}
+      .dohi-row .ln:only-child,.dohi-row .what>.dohi-chip{margin-top:0;}
+      .dohi-row .what>.dohi-chip{margin:0 6px 6px 0;}
+      .dohi-row .lbl{font-size:12.5px;color:#4d5a66;margin-right:2px;}
+      .dohi-chip{display:inline-flex;align-items:baseline;gap:5px;border:1px solid #f0b9b0;background:#fff7f5;color:#a5311f;border-radius:8px;padding:3px 9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;line-height:1.4;}
+      .dohi-chip:hover{background:#fbeae7;border-color:#e59a8e;}
+      .dohi-chip.plain{cursor:default;background:#f5f6f4;border-color:#dfe2dd;color:#4d5a66;}
+      .dohi-chip small{font-size:11.5px;font-weight:400;color:#8792a0;}
+      .dohi-tag{display:inline-block;border-radius:6px;padding:1px 7px;font-size:11.5px;font-weight:600;background:#eef0ed;color:#4d5a66;}
+      .dohi-tag.warn{background:#fdf1d9;color:#7a5000;}
+      .dohi-act{display:flex;gap:6px;align-items:center;margin-top:6px;font-size:13px;color:#1c4f8a;}
+      .dohi-okall{background:#e5f4ec;border:1px solid #b6dfc8;border-radius:10px;padding:10px 14px;margin:0 0 12px;font-size:13px;color:#1c8a53;}
+      .dohi-okall summary{cursor:pointer;font-weight:700;}
+      .dohi-okall ul{color:#2f4a3c;}
+      @media(max-width:700px){.dohi-row{flex-direction:column;gap:4px;}.dohi-row>.who{flex:none;}.dohi-how{grid-template-columns:1fr;}}
       .dohi-badge{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#c1402f;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;box-sizing:border-box;}
     `;
     document.head.appendChild(st);
@@ -384,9 +414,12 @@
   function openImport(){
     if(typeof requireAdmin==='function' && !requireAdmin()) return;
     ensureCss();
-    if(!S.busy){ S.parsed = []; S.skipped = []; S.plan = null; S.result = null; S.cmp = []; S.sel = {}; S.cmpMsg = ''; S.mode = 'import'; }
+    /* กลับมาจากการเปิดใบสั่งการจากหน้าผลเทียบ → คงไฟล์เดิมไว้ แล้วเทียบใหม่กับข้อมูลที่เพิ่งแก้ */
+    const back = S.keep && S.parsed.length && !S.busy; S.keep = false;
+    if(!S.busy && !back){ S.parsed = []; S.skipped = []; S.plan = null; S.result = null; S.cmp = []; S.sel = {}; S.cmpMsg = ''; S.mode = 'import'; }
     overlay().classList.remove('hidden');
-    render();
+    if(back){ S.mode = 'compare'; S.result = null; rebuild().then(()=>{ S.cmpMsg = 'เทียบใหม่แล้ว หลังแก้ใบสั่งการ'; render(); }); }
+    else render();
   }
   const pickHtml = () => '<label class="btn btn-primary" style="cursor:pointer;">📂 เลือกไฟล์ CSV จากกรม<input type="file" accept=".csv,text/csv" multiple style="display:none" onchange="DohImp.onFiles(this)"></label>';
   function monthOptions(sel){
@@ -513,62 +546,99 @@
   function togAct(k, v){ S.sel[k] = !!v; render(); }
 
   /* ---------- โหมดเทียบกับข้อมูลในระบบ (ไม่ลบ/ไม่แทนที่ใบเดิม) ---------- */
+  /* กรมแยกงานเดียวกัน (รหัสงาน+สายทางเดียวกัน) เป็นหลายแผนได้ เช่น ทำความสะอาด สาย 36 แผน 8 กับแผน 9
+     → ใบในระบบต้องแบ่งให้แผนเดียว ไม่งั้นทุกแผนนับใบชุดเดียวกันซ้ำ (ยอดระบบ = ผลรวมทุกแผน)
+     ลำดับ: ใบที่นำเข้าจากกรม (หมายเหตุ [กรม:เดือน:แผน]) → แผนนั้น · วันที่อยู่ในแผนเดียว → แผนนั้น
+     · วันที่อยู่หลายแผน → ใช้ร่วม (เทียบยอดรายแผนไม่ได้) · ไม่อยู่ในแผนใดเลย → แผนที่มีวันใกล้ที่สุด */
+  const tokenPlan = d => { const m = String(d.note||'').match(/\[กรม:[^:\]]*:([^\]]+)\]/); return m ? m[1].trim() : ''; };
+  const dayDist = (x, y) => Math.abs(new Date(x) - new Date(y));
+  function splitSheets(pre){
+    const owners = new Map();
+    pre.forEach((p,i)=>p.cand.forEach(d=>{ if(!owners.has(d)) owners.set(d, []); owners.get(d).push(i); }));
+    const pick = (d, idx) => {
+      if(idx.length===1) return idx;
+      const tp = tokenPlan(d), byTok = idx.filter(i=>pre[i].a.plan===tp);
+      if(tp && byTok.length) return byTok.slice(0,1);
+      const inDates = idx.filter(i=>pre[i].dates.indexOf(d.date)>=0);
+      if(inDates.length) return inDates;
+      let best = idx[0], bd = Infinity;
+      idx.forEach(i=>pre[i].dates.forEach(x=>{ const v = dayDist(x, d.date); if(v<bd){ bd = v; best = i; } }));
+      return [best];
+    };
+    pre.forEach(p=>{ p.ex = []; p.shared = false; });
+    owners.forEach((idx, d)=>{ const own = pick(d, idx); own.forEach(i=>{ pre[i].ex.push(d); if(own.length>1) pre[i].shared = true; }); });
+    pre.forEach(p=>p.ex.sort((x,y)=>x.date<y.date?-1:1));
+  }
   function buildCompare(){
     const leaves = getLeaveHistoryX();
     const planItems = (S.plan && S.plan.items) || [];
-    return S.parsed.map(a=>{
+    const pre = S.parsed.map(a=>{
       const dates = Array.from(new Set(a.dates.map(iso).filter(Boolean))).sort();
-      const label = 'แผน '+a.plan+' '+a.jobName+' (สาย '+a.route+')';
-      const c = { label, plan:a.plan, diffs:[], oks:[], actions:[], exN:0, skip:'' };
-      if(!dates.length){ c.skip = 'กรมไม่ระบุวันที่ปฏิบัติงาน'; return c; }
-      const job = findJob(a.jobCode);
-      if(!job){ c.skip = 'ไม่พบรหัสงาน '+a.jobCode+' ในข้อมูลอ้างอิง'; return c; }
+      const p = { a, dates, label:'แผน '+a.plan+' '+a.jobName+' (สาย '+a.route+')', cand:[], skip:'' };
+      if(!dates.length){ p.skip = 'กรมไม่ระบุวันที่ปฏิบัติงาน'; return p; }
+      if(!findJob(a.jobCode)){ p.skip = 'ไม่พบรหัสงาน '+a.jobCode+' ในข้อมูลอ้างอิง'; return p; }
       const route = findRouteDoh(a.route, a.control), rv = route ? route.routeNo : '__other__';
       const mks = new Set(dates.map(d=>d.slice(0,7)));
-      const ex = dailyWorkOrders.filter(d=>d.code===a.jobCode && mks.has(String(d.date).slice(0,7)) && (String(d.route||'')===String(rv) || new RegExp('ทล\\.\\s*'+a.route+'(?!\\d)').test(String(d.loc||'')))).sort((x,y)=>x.date<y.date?-1:1);
+      p.cand = dailyWorkOrders.filter(d=>d.code===a.jobCode && mks.has(String(d.date).slice(0,7)) && (String(d.route||'')===String(rv) || new RegExp('ทล\\.\\s*'+a.route+'(?!\\d)').test(String(d.loc||''))));
+      return p;
+    });
+    splitSheets(pre);
+    return pre.map(p=>{
+      const a = p.a, dates = p.dates, label = p.label;
+      /* iss = จุดต่างแยกตามชนิด (ใช้จัดกลุ่มตามต้นเหตุตอนแสดงผล) · diffs = ข้อความเดิม ใช้นับจำนวน */
+      const c = { label, plan:a.plan, diffs:[], oks:[], actions:[], exN:0, skip:p.skip, iss:[] };
+      if(p.skip) return c;
+      const ex = p.ex;
       c.exN = ex.length; c.ex = ex;
-      const cmpNum = (name, sys, dept, tol)=>{ if(Math.abs(sys-dept) > (tol||0.01)) c.diffs.push(name+': ระบบ '+r2(sys)+' / กรม '+r2(dept)); else c.oks.push(name); };
+      const add = (k, text, o) => { c.diffs.push(text); c.iss.push(Object.assign({ k, text }, o||{})); };
+      const cmpNum = (name, sys, dept, tol, k)=>{ if(Math.abs(sys-dept) > (tol||0.01)) add(k||'num', name+': ระบบ '+r2(sys)+' / กรม '+r2(dept), { name, sys:r2(sys), dept:r2(dept) }); else c.oks.push(name); };
       const exDates = Array.from(new Set(ex.map(d=>d.date)));
       const missing = dates.filter(d=>exDates.indexOf(d)<0), extra = exDates.filter(d=>dates.indexOf(d)<0);
-      if(missing.length) c.diffs.push('กรมลงวันที่ '+missing.map(dateTh).join(', ')+' แต่ระบบไม่มีใบ');
-      if(extra.length) c.diffs.push('ระบบมีใบวันที่ '+extra.map(dateTh).join(', ')+' แต่กรมไม่ได้ลง');
+      if(missing.length) add('dayDept', 'กรมลงวันที่ '+missing.map(dateTh).join(', ')+' แต่ระบบไม่มีใบ', { dates:missing });
+      if(extra.length) add('daySys', 'ระบบมีใบวันที่ '+extra.map(dateTh).join(', ')+' แต่กรมไม่ได้ลง', { sheets:ex.filter(d=>extra.indexOf(d.date)>=0).map(d=>({ date:d.date, id:d.__backendId })) });
       if(!missing.length && !extra.length) c.oks.push('วันที่ปฏิบัติงาน');
       const missItems = planItems.filter(it=>it.planNo===a.plan && it.label===label && missing.indexOf(it.rec.date)>=0);
       if(missItems.length) c.actions.push({ type:'days', text:'สร้างใบสั่งการวันที่ขาด '+missItems.length+' ใบ (จากยอดของกรม)', items:missItems });
       if(ex.length){
         const sum = k => ex.reduce((s,d)=>s+(d[k]||0),0);
-        cmpNum('ปริมาณงาน', sum('qty'), a.qty);
-        cmpNum('ค่าแรงงาน', sum('labor'), a.sum['ค่าแรงงาน']||0);
-        cmpNum('ค่าเช่าเครื่องจักร', sum('rent'), a.sum['ค่าเช่าเครื่องจักร']||0);
-        cmpNum('ค่าน้ำมัน', sum('fuel'), a.sum['ค่าน้ำมันเชื้อเพลิง']||0);
-        cmpNum('ค่าวัสดุ', sum('material'), a.sum['ค่าวัสดุ']||0);
+        if(p.shared) c.iss.push({ k:'info', text:'บางวันใช้ใบเดียวกันกับแผนอื่นของงานเดียวกัน จึงเทียบยอดเงิน/ปริมาณรายแผนไม่ได้' });
+        else {
+          cmpNum('ปริมาณงาน', sum('qty'), a.qty);
+          cmpNum('ค่าแรงงาน', sum('labor'), a.sum['ค่าแรงงาน']||0);
+          cmpNum('ค่าเช่าเครื่องจักร', sum('rent'), a.sum['ค่าเช่าเครื่องจักร']||0);
+          cmpNum('ค่าน้ำมัน', sum('fuel'), a.sum['ค่าน้ำมันเชื้อเพลิง']||0);
+          cmpNum('ค่าวัสดุ', sum('material'), a.sum['ค่าวัสดุ']||0);
+        }
         // วัสดุ
         const newParts = [];
         (S.opt.mats ? a.mats : []).forEach(m=>{
           const hit = matchMaterial(m.name);
-          if(!hit){ c.diffs.push('วัสดุ "'+m.name+'" ไม่อยู่ในทะเบียนพัสดุ — ให้เพิ่มเข้าทะเบียนก่อน'); return; }
+          if(!hit){ add('matReg', 'วัสดุ "'+m.name+'" ไม่อยู่ในทะเบียนพัสดุ — ให้เพิ่มเข้าทะเบียนก่อน'); return; }
           const sq = ex.reduce((s,d)=>s+(d.parts||[]).filter(p=>p.code===hit.m.code).reduce((t,p)=>t+(p.qty||0),0),0);
-          if(sq===0 && m.qty>0){ c.diffs.push('วัสดุ '+m.name+' กรมลง '+m.qty+' '+m.unit+' แต่ใบของระบบไม่มี'); newParts.push({ code:hit.m.code, qty:m.qty }); }
-          else cmpNum('วัสดุ '+m.name, sq, m.qty, 0.001);
+          if(sq===0 && m.qty>0){ add('mat', 'วัสดุ '+m.name+' กรมลง '+m.qty+' '+m.unit+' แต่ใบของระบบไม่มี'); newParts.push({ code:hit.m.code, qty:m.qty }); }
+          else cmpNum('วัสดุ '+m.name, sq, m.qty, 0.001, 'mat');
         });
         if(newParts.length) c.actions.push({ type:'parts', text:'เติมวัสดุที่ไม่มีในใบ '+newParts.length+' รายการ ลงใบวันแรก ('+dateTh(ex[0].date)+') และตัดคลังตาม', parts:newParts, target:ex[0] });
         // เครื่องจักร/น้ำมัน: เทียบรวมต่อเครื่องทั้งเดือนที่ส่วนบนของหน้า (กรมแบ่งน้ำมันไปลงทีละแผน เทียบทีละแผนไม่ได้)
-        a.machines.forEach(m=>{ if(!matchVehicle(m.no)) c.diffs.push('เครื่องจักร '+m.no+' ไม่พบในทะเบียน'); });
+        a.machines.forEach(m=>{ if(!matchVehicle(m.no)) add('mach', 'เครื่องจักร '+m.no+' ไม่พบในทะเบียน'); });
         // คนทำงาน
         const sysStaff = Array.from(new Set(ex.reduce((arr,d)=>arr.concat(d.staff||[]),[])));
+        const inDept = n => a.labor.some(x=>normPerson(x)===normPerson(n));
         const lackStaff = a.labor.filter(n=>!sysStaff.some(s=>normPerson(s)===normPerson(n)));
-        if(lackStaff.length) c.diffs.push('คนที่กรมลงแต่ใบของระบบไม่มี: '+lackStaff.join(', ')); else c.oks.push('รายชื่อคนทำงาน');
-        const moreStaff = sysStaff.filter(s=>!a.labor.some(n=>normPerson(s)===normPerson(n)));
-        if(moreStaff.length) c.diffs.push('คนที่อยู่ในใบของระบบแต่กรมไม่ได้ลง: '+moreStaff.join(', '));
-        // ลางาน
-        ex.forEach(d=>{ const lv = (d.staff||[]).filter(n=>leaves.some(l=>l.name===n && l.from<=d.date && d.date<=l.to)); if(lv.length) c.diffs.push('วันที่ '+dateTh(d.date)+' มีบันทึกลาแต่ลงว่าทำงาน: '+lv.join(', ')); });
+        if(lackStaff.length) add('staffDept', 'คนที่กรมลงแต่ใบของระบบไม่มี: '+lackStaff.join(', '), { names:lackStaff }); else c.oks.push('รายชื่อคนทำงาน');
+        const moreStaff = sysStaff.filter(s=>!inDept(s));
+        if(moreStaff.length) add('staffSys', 'คนที่อยู่ในใบของระบบแต่กรมไม่ได้ลง: '+moreStaff.join(', '), { names:moreStaff });
+        // ลางาน (ใบลาในระบบ แต่ใบสั่งการของระบบลงชื่อว่าทำงาน)
+        ex.forEach(d=>{ const lv = (d.staff||[]).filter(n=>leaves.some(l=>l.name===n && l.from<=d.date && d.date<=l.to)); if(lv.length) add('leave', 'วันที่ '+dateTh(d.date)+' มีบันทึกลาแต่ลงว่าทำงาน: '+lv.join(', '), { date:d.date, id:d.__backendId, names:lv, inDept:lv.filter(inDept) }); });
       }
       return c;
     });
   }
-  /* น้ำมันรวมต่อเครื่อง ทั้งเดือน (ทุกแผน/ทุกรหัสงาน) — เทียบกับยอดที่ใบสั่งการของระบบเบิกไว้ (ซึ่งตรงกับใบเบิกที่ลงนาม) */
+  /* น้ำมันรวมต่อเครื่อง ทั้งเดือน (ทุกแผน/ทุกรหัสงาน) — เทียบกับยอดที่ใบสั่งการของระบบเบิกไว้ (ซึ่งตรงกับใบเบิกที่ลงนาม)
+     จับคู่ด้วยเลขทะเบียนรถ ไม่ใช่ชื่อ (ใบเก่าอาจเก็บชื่อคนขับเดิม/สะกดต่างจากทะเบียน) */
+  const fuelKey = label => { const v = matchVehicle(vehicleReg(label)); return v ? v.label : String(label||''); };
   function buildFuelCompare(){
-    const months = new Set(); const dept = {}, sys = {}, unk = [];
+    const months = new Set(); const dept = {}, sys = {}, alias = {}, unk = [];
     S.parsed.forEach(a=>{
       const dates = Array.from(new Set(a.dates.map(iso).filter(Boolean)));
       dates.forEach(d=>months.add(d.slice(0,7)));
@@ -579,18 +649,23 @@
       });
     });
     dailyWorkOrders.filter(d=>months.has(String(d.date).slice(0,7))).forEach(d=>{
-      (d.vehicles||[]).forEach(x=>{ sys[x.label] = r2((sys[x.label]||0) + (x.liters||0)); });
+      (d.vehicles||[]).forEach(x=>{
+        const k = fuelKey(x.label);
+        sys[k] = r2((sys[k]||0) + (x.liters||0));
+        if(x.label && x.label!==k){ alias[k] = alias[k] || []; if(alias[k].indexOf(x.label)<0) alias[k].push(x.label); }
+      });
     });
     const labels = Array.from(new Set(Object.keys(dept).concat(Object.keys(sys)))).sort();
-    return { rows: labels.map(l=>({ label:l, sys:sys[l]||0, dept:dept[l]||0, diff:r2((sys[l]||0)-(dept[l]||0)) })), unk };
+    return { rows: labels.map(l=>({ label:l, sys:sys[l]||0, dept:dept[l]||0, diff:r2((sys[l]||0)-(dept[l]||0)), alias:alias[l]||[] })), unk };
   }
   function togFuel(i){ S.fuelOpen = (S.fuelOpen===i) ? -1 : i; render(); }
+  function togFuelAll(){ S.fuelAll = !S.fuelAll; render(); }
   /* รายวันของเครื่องหนึ่งคัน: ฝั่งระบบ (ใบสั่งการที่คีย์) และฝั่งกรม (ยอดต่อแผน + วันที่ปฏิบัติงานของแผน) */
   function fuelDetail(label){
     const months = new Set(); S.parsed.forEach(a=>a.dates.map(iso).filter(Boolean).forEach(d=>months.add(d.slice(0,7))));
     const sysRows = [];
     dailyWorkOrders.filter(d=>months.has(String(d.date).slice(0,7))).sort((x,y)=>x.date<y.date?-1:x.date>y.date?1:0).forEach(d=>{
-      (d.vehicles||[]).forEach(x=>{ if(x.label===label){ const j = findJob(d.code); sysRows.push({ date:d.date, job:d.code+' '+((j&&j.name)||''), loc:d.loc||'', liters:x.liters||0 }); } });
+      (d.vehicles||[]).forEach(x=>{ if(fuelKey(x.label)===label){ const j = findJob(d.code); sysRows.push({ date:d.date, job:d.code+' '+((j&&j.name)||''), loc:d.loc||'', liters:x.liters||0 }); } });
     });
     const deptRows = [];
     S.parsed.forEach(a=>{
@@ -600,7 +675,7 @@
       if(hit) deptRows.push({ plan:'แผน '+a.plan+' '+a.jobName+' (สาย '+a.route+')', liters:r2(lit), dates:dates.map(dateTh).join(', ') });
     });
     const sysTot = r2(sysRows.reduce((s,x)=>s+x.liters,0)), deptTot = r2(deptRows.reduce((s,x)=>s+x.liters,0));
-    return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">'
+    return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;">'
       + '<div><b>ระบบเรา (ใบสั่งการที่คีย์)</b><table class="dohi-table"><thead><tr><th>วันที่</th><th>งาน / สายทาง</th><th style="text-align:right">ลิตร</th></tr></thead><tbody>'
       + (sysRows.length ? sysRows.map(x=>'<tr><td style="white-space:nowrap">'+H(dateTh(x.date))+'</td><td>'+H(x.job)+(x.loc?'<br><small>'+H(x.loc)+'</small>':'')+'</td><td style="text-align:right">'+x.liters+'</td></tr>').join('') : '<tr><td colspan="3">ไม่มี</td></tr>')
       + '<tr><td colspan="2"><b>รวม</b></td><td style="text-align:right"><b>'+sysTot+'</b></td></tr></tbody></table></div>'
@@ -608,51 +683,124 @@
       + (deptRows.length ? deptRows.map(x=>'<tr><td>'+H(x.plan)+'<br><small>'+H(x.dates)+'</small></td><td style="text-align:right">'+x.liters+'</td></tr>').join('') : '<tr><td colspan="2">ไม่มี</td></tr>')
       + '<tr><td><b>รวม</b></td><td style="text-align:right"><b>'+deptTot+'</b></td></tr></tbody></table></div></div>';
   }
-  function renderFuel(){
-    const f = S.fuel; if(!f || !f.rows) return '';
-    const bad = f.rows.filter(r=>Math.abs(r.diff)>0.05).length;
-    return '<div class="dohi-note" style="background:#fff"><b>น้ำมันรวมต่อเครื่อง ทั้งเดือน (ทุกแผน)</b> — '
-      + (bad ? '<span style="color:#c1402f">ต่างกัน '+bad+' เครื่อง</span>' : '<span style="color:#1c8a53">✓ ตรงกันทุกเครื่อง</span>')
-      + '<div style="overflow:auto"><table class="dohi-table"><thead><tr><th>เครื่องจักร</th><th style="text-align:right">ระบบเรา (ลิตร)</th><th style="text-align:right">กรม (ลิตร)</th><th style="text-align:right">ต่าง</th></tr></thead><tbody>'
-      + f.rows.map((r,i)=>{ const b = Math.abs(r.diff)>0.05, open = S.fuelOpen===i;
-          return '<tr onclick="DohImp.togFuel('+i+')" style="cursor:pointer;'+(b?'background:#fdf1d9':'')+'" title="กดดูรายวัน"><td>'+(open?'▾ ':'▸ ')+H(r.label)+'</td><td style="text-align:right">'+r.sys+'</td><td style="text-align:right">'+r.dept+'</td><td style="text-align:right;'+(b?'color:#c1402f;font-weight:700':'')+'">'+(r.diff>0?'+':'')+r.diff+'</td></tr>'
+  function fuelTable(rows){
+    return '<div style="overflow:auto"><table class="dohi-table"><thead><tr><th>เครื่องจักร</th><th style="text-align:right">ระบบเรา (ลิตร)</th><th style="text-align:right">กรม (ลิตร)</th><th style="text-align:right">ต่าง</th></tr></thead><tbody>'
+      + rows.map(r=>{ const b = Math.abs(r.diff)>0.05, open = S.fuelOpen===r.i;
+          return '<tr onclick="DohImp.togFuel('+r.i+')" style="cursor:pointer;'+(b?'background:#fdf1d9':'')+'" title="กดดูรายวัน"><td>'+(open?'▾ ':'▸ ')+H(r.label)+'</td><td style="text-align:right">'+r.sys+'</td><td style="text-align:right">'+r.dept+'</td><td style="text-align:right;'+(b?'color:#c1402f;font-weight:700':'')+'">'+(r.diff>0?'+':'')+r.diff+'</td></tr>'
             + (open ? '<tr><td colspan="4" style="background:#fff">'+fuelDetail(r.label)+'</td></tr>' : ''); }).join('')
-      + '</tbody></table></div><div style="margin-top:6px;font-size:12.5px;color:#8792a0">กดแถวเครื่องจักรเพื่อดูรายวัน เทียบกับใบเบิกที่ลงนาม</div>'
-      + (f.unk.length?'<div style="margin-top:6px">เครื่องจักรที่ไม่พบในทะเบียน: '+H(f.unk.join(', '))+'</div>':'')
-      + '</div>';
+      + '</tbody></table></div>';
   }
+  /* รวมจุดต่างของทุกแผนเป็นกลุ่มตามต้นเหตุ (ใช้ทั้งหน้าจอและข้อความคัดลอก) — คนลา 1 คน 1 วันนับครั้งเดียวแม้อยู่หลายแผน */
+  function cmpModel(){
+    const m = { leave:[], leaveDays:0, fuelAll:[], fuelBad:[], day:[], staff:[], mat:[], num:[], other:[], ok:[] };
+    const byP = {};
+    S.cmp.forEach((c,i)=>{
+      if(c.skip){ m.other.push(c.label+' — ข้าม: '+c.skip); return; }
+      if(!c.diffs.length) m.ok.push(c.label);
+      const g = k => c.iss.filter(x=>x.k===k);
+      g('leave').forEach(x=>x.names.forEach(n=>{
+        const p = byP[n] = byP[n] || { name:n, days:{}, dept:false };
+        const d = p.days[x.date] = p.days[x.date] || { plans:[], id:x.id };
+        if(d.plans.indexOf(c.plan)<0) d.plans.push(c.plan);
+        if(x.inDept.indexOf(n)>=0) p.dept = true;
+      }));
+      const dd = g('dayDept')[0], ds = g('daySys')[0], dAct = c.actions.find(a=>a.type==='days');
+      if(dd || ds || dAct) m.day.push({ i, c, dept:dd, sys:ds, act:dAct });
+      const sd = g('staffDept')[0], ss = g('staffSys')[0];
+      if(sd || ss) m.staff.push({ c, dept:sd, sys:ss });
+      const mt = g('mat').concat(g('matReg')), pAct = c.actions.find(a=>a.type==='parts');
+      if(mt.length || pAct) m.mat.push({ i, c, list:mt, act:pAct });
+      const nm = g('num'); if(nm.length) m.num.push({ c, list:nm, byDay:!!(dd||ds) });
+      g('mach').concat(g('info')).forEach(x=>m.other.push(c.label+' — '+x.text));
+    });
+    m.leave = Object.keys(byP).map(k=>{ const p = byP[k]; p.dates = Object.keys(p.days).sort(); return p; })
+      .sort((x,y)=>y.dates.length-x.dates.length || x.name.localeCompare(y.name,'th'));
+    m.leaveDays = m.leave.reduce((s,p)=>s+p.dates.length,0);
+    const f = (S.fuel && S.fuel.rows) ? S.fuel : { rows:[], unk:[] };
+    m.fuelAll = f.rows.map((r,i)=>Object.assign({ i }, r));
+    m.fuelBad = m.fuelAll.filter(r=>Math.abs(r.diff)>0.05);
+    f.rows.forEach(r=>r.alias.forEach(al=>m.other.push('ชื่อเครื่องจักรในใบสั่งการ "'+al+'" ไม่ตรงกับทะเบียน "'+r.label+'" — เทียบน้ำมันด้วยเลขทะเบียนรถแล้ว ควรแก้ชื่อให้ตรงกัน')));
+    if(f.unk.length) m.other.push('เครื่องจักรในไฟล์กรมที่ไม่พบในทะเบียน: '+f.unk.join(', '));
+    m.total = m.leaveDays + m.fuelBad.length + m.day.length + m.staff.length + m.mat.length + m.num.length;
+    return m;
+  }
+  const jsId = id => String(id||'').replace(/[^\w-]/g,'');
+  /* ชิปวันที่: ถ้ารู้ใบ → กดเปิดใบสั่งการนั้น */
+  const chip = (date, sub, id) => id
+    ? '<button type="button" class="dohi-chip" title="เปิดใบสั่งการ" onclick="DohImp.editOrder(\''+jsId(id)+'\')">'+H(dateTh(date))+(sub?'<small>'+H(sub)+'</small>':'')+'</button>'
+    : '<span class="dohi-chip plain">'+H(dateTh(date))+(sub?'<small>'+H(sub)+'</small>':'')+'</span>';
+  const actBox = (i, a) => a ? '<label class="dohi-act"><input type="checkbox" '+(S.sel[i+':'+a.type]?'checked':'')+' onchange="DohImp.togAct(\''+i+':'+a.type+'\',this.checked)"> '+H(a.text)+'</label>' : '';
+  const shortLabel = c => String(c.label).length>70 ? String(c.label).slice(0,68)+'…' : c.label;
+  const row = (who, what) => '<div class="dohi-row"><div class="who">'+who+'</div><div class="what">'+what+'</div></div>';
+  const ln = (lbl, inner) => '<div class="ln"><span class="lbl">'+lbl+'</span>'+inner+'</div>';
   function renderCompare(){
     if(!S.cmp.length) return '';
-    const bad = S.cmp.filter(c=>c.diffs.length||c.skip).length;
-    const head = '<div class="dohi-kpi"><div><b>'+S.cmp.length+'</b>แผนในไฟล์กรม</div><div><b style="color:#1c8a53">'+(S.cmp.length-bad)+'</b>ตรงกับระบบ</div><div><b style="color:#c1402f">'+bad+'</b>มีจุดต่าง</div></div>';
-    return head + renderFuel() + S.cmp.map((c,i)=>{
-      const state = c.skip ? '<span style="color:#7a5000">ข้าม</span>' : (!c.exN && c.actions.length ? '<span style="color:#c1402f">ระบบยังไม่มีใบ</span>' : (c.diffs.length ? '<span style="color:#c1402f">มีจุดต่าง '+c.diffs.length+'</span>' : '<span style="color:#1c8a53">✓ ตรงกัน</span>'));
-      return '<div class="dohi-note" style="background:#fff"><b>'+H(c.label)+'</b> — '+state+' <small>(ใบในระบบ '+c.exN+' ใบ)</small>'
-        + (c.skip?'<div>'+H(c.skip)+'</div>':'')
-        + (c.diffs.length?'<ul class="dohi-list">'+c.diffs.map(x=>'<li>'+H(x)+'</li>').join('')+'</ul>':'')
-        + c.actions.map(a=>'<label style="display:flex;gap:6px;align-items:center;margin-top:6px;font-size:13px;"><input type="checkbox" '+(S.sel[i+':'+a.type]?'checked':'')+' onchange="DohImp.togAct(\''+i+':'+a.type+'\',this.checked)"> '+H(a.text)+'</label>').join('')
-        + '</div>';
-    }).join('');
+    const m = cmpModel();
+    const fuelOk = m.fuelAll.length - m.fuelBad.length;
+    const head = '<div class="dohi-kpi">'
+      + '<div><b style="color:'+(m.total?'#c1402f':'#1c8a53')+'">'+m.total+'</b>รายการที่ต้องตรวจ</div>'
+      + '<div><b style="color:#1c8a53">'+m.ok.length+'<small style="font-size:14px;color:#8792a0"> / '+S.cmp.length+'</small></b>แผนที่ตรงกับกรม</div>'
+      + (m.fuelAll.length ? '<div><b style="color:'+(m.fuelBad.length?'#c1402f':'#1c8a53')+'">'+fuelOk+'<small style="font-size:14px;color:#8792a0"> / '+m.fuelAll.length+'</small></b>เครื่องจักรที่น้ำมันตรง</div>' : '')
+      + '</div>';
+    let n = 0; const out = [];
+    const sec = (title, count, how, body, low) => { n++;
+      out.push('<div class="dohi-sec'+(low?' low':'')+'"><div class="dohi-sec-h"><i>'+n+'</i><b>'+title+'</b><span class="n">'+count+'</span></div>'
+        + (how ? '<dl class="dohi-how">'+how.map(h=>'<dt>'+h[0]+'</dt><dd>'+h[1]+'</dd>').join('')+'</dl>' : '')
+        + '<div class="dohi-sec-b">'+body+'</div></div>');
+      return n; };
+    if(m.leave.length) sec('ลาแต่ลงชื่อทำงาน', m.leave.length+' คน · '+m.leaveDays+' วัน',
+      [['ตรวจ','ใบลาตัวจริง เทียบกับใบสั่งการของวันนั้น (กดวันที่เพื่อเปิดใบ)'],
+       ['แก้','ลาจริง → เอาชื่อออกจากใบสั่งการ ถ้ามีป้าย <b>กรมก็ลงชื่อ</b> ให้แจ้งแขวงแก้ rmms ด้วย · ไม่ได้ลา → แก้หรือยกเลิกใบลาในระบบ']],
+      m.leave.map(p=>row(H(p.name)+' '+(p.dept?'<span class="dohi-tag warn">กรมก็ลงชื่อ</span>':'<span class="dohi-tag">เฉพาะระบบเรา</span>'),
+        p.dates.map(d=>chip(d, 'แผน '+p.days[d].plans.join(', '), p.days[d].id)).join(''))).join(''));
+    if(m.fuelBad.length) sec('น้ำมันรวมต่อเครื่องไม่ตรง', m.fuelBad.length+' เครื่อง',
+      [['ตรวจ','ใบเบิกน้ำมันที่ลงนาม (กดแถวเพื่อดูรายวัน ระบบเรา/กรม)'],['แก้','ระบบผิด → แก้ใบสั่งการ · กรมผิด → แจ้งแขวงแก้ rmms']],
+      fuelTable(m.fuelBad));
+    const dayN = m.day.length ? sec('วันปฏิบัติงานไม่ตรงกัน', m.day.length+' แผน',
+      [['ตรวจ','บัญชีลงเวลา/ใบสั่งการตัวจริงของวันที่ระบุ'],
+       ['แก้','กรมลงแต่ระบบไม่มีใบ → ติ๊กสร้างใบจากยอดกรม แล้วกด "ดำเนินการที่เลือก" · ระบบมีใบแต่กรมไม่ได้ลง → ใบผิดวัน/ผิดงานให้แก้ใบ ถ้าทำงานจริงให้แจ้งแขวงเพิ่มใน rmms']],
+      m.day.map(x=>row(H(shortLabel(x.c)),
+        (x.dept ? ln('กรมลง แต่ระบบไม่มีใบ', x.dept.dates.map(d=>chip(d)).join('')) : '')
+        + (x.sys ? ln('ระบบมีใบ แต่กรมไม่ได้ลง', x.sys.sheets.map(s=>chip(s.date, '', s.id)).join('')) : '')
+        + actBox(x.i, x.act))).join('')) : 0;
+    if(m.staff.length) sec('รายชื่อคนทำงานไม่ตรง', m.staff.length+' แผน',
+      [['ตรวจ','บัญชีลงเวลาของแผนนั้น'],['แก้','ระบบขาดชื่อ → เพิ่มชื่อในใบสั่งการ · กรมขาดชื่อ → แจ้งแขวงแก้ rmms']],
+      m.staff.map(x=>row(H(shortLabel(x.c)),
+        (x.dept ? ln('กรมลง แต่ใบระบบไม่มี', x.dept.names.map(s=>'<span class="dohi-tag">'+H(s)+'</span>').join('')) : '')
+        + (x.sys ? ln('อยู่ในใบระบบ แต่กรมไม่ได้ลง', x.sys.names.map(s=>'<span class="dohi-tag">'+H(s)+'</span>').join('')) : ''))).join(''));
+    if(m.mat.length) sec('วัสดุไม่ตรง', m.mat.length+' แผน',
+      [['ตรวจ','ใบเบิกวัสดุที่ลงนาม'],['แก้','ใบระบบไม่มีวัสดุ → ติ๊กเติมวัสดุ แล้วกด "ดำเนินการที่เลือก" · ไม่อยู่ในทะเบียน → เพิ่มเข้าทะเบียนพัสดุก่อน']],
+      m.mat.map(x=>row(H(shortLabel(x.c)), x.list.map(t=>'<div class="ln">'+H(t.text)+'</div>').join('') + actBox(x.i, x.act))).join(''));
+    if(m.num.length) sec('ยอดปริมาณงาน/เงินไม่ตรง', m.num.length+' แผน',
+      [['หมายเหตุ','ถ้าแผนนั้นมีวันไม่ตรงอยู่ด้วย ให้แก้เรื่องวันก่อน ยอดมักตรงเอง']],
+      m.num.map(x=>row(H(shortLabel(x.c))+(x.byDay && dayN ? '<br><span class="dohi-tag warn">น่าจะมาจากวันไม่ตรง (ข้อ '+dayN+')</span>' : ''),
+        x.list.map(t=>'<div class="ln">'+H(t.name)+': ระบบ <b>'+t.sys+'</b> / กรม <b>'+t.dept+'</b> <span style="color:#c1402f">('+(t.sys-t.dept>0?'+':'')+r2(t.sys-t.dept)+')</span></div>').join(''))).join(''), true);
+    if(m.other.length) sec('อื่น ๆ', m.other.length+' เรื่อง', null, m.other.map(t=>'<div class="ln">• '+H(t)+'</div>').join(''), true);
+    const okBox = '<details class="dohi-okall"><summary>✓ แผนที่ตรงกับกรม '+m.ok.length+' แผน (กดดูรายชื่อ)</summary>'
+      + (m.ok.length ? '<ul class="dohi-list">'+m.ok.map(l=>'<li>'+H(l)+'</li>').join('')+'</ul>' : '<div>ยังไม่มี</div>') + '</details>'
+      + (m.fuelAll.length ? '<div style="margin:0 0 12px"><button type="button" class="btn btn-ghost btn-sm" onclick="DohImp.togFuelAll()">'+(S.fuelAll?'ซ่อน':'ดู')+'น้ำมันทุกเครื่อง ('+m.fuelAll.length+')</button></div>'
+        + (S.fuelAll ? '<div class="dohi-sec"><div class="dohi-sec-b">'+fuelTable(m.fuelAll)+'</div></div>' : '') : '');
+    return head + (out.length ? out.join('') : '<div class="dohi-note ok"><b>ตรงกันทั้งหมด</b> ไม่มีจุดที่ต้องตรวจ</div>') + okBox;
   }
   function compareText(){
-    const lines = ['ผลเทียบข้อมูลใบสั่งการ ระบบเรา กับไฟล์กรม (rmms) ประจำ'+mkLabel(S.importMk),''];
+    const m = cmpModel();
+    const lines = ['ผลเทียบข้อมูลใบสั่งการ ระบบเรา กับไฟล์กรม (rmms) ประจำ'+mkLabel(S.importMk)];
+    /* คัดลอกเฉพาะเรื่องที่เจ้าหน้าที่ต้องตรวจกับเอกสาร — ไม่รวมยอดเงินที่กรมแบ่งตามแผน และวัสดุที่ไม่อยู่ในทะเบียน (งานของคนดูแลทะเบียน) */
     let n = 0;
-    /* คัดลอกเฉพาะเรื่องที่เจ้าหน้าที่ต้องตรวจกับเอกสาร — ไม่รวมตัวเลขที่กรมแบ่งตามแผน (ปริมาณงาน/ค่าแรง/ค่าเช่า/น้ำมัน/ค่าวัสดุ)
-       และวัสดุที่ไม่อยู่ในทะเบียนพัสดุ (เป็นงานของคนดูแลทะเบียน) */
-    const skipRe = /^(ปริมาณงาน|ค่าแรงงาน|ค่าเช่าเครื่องจักร|ค่าน้ำมัน|ค่าวัสดุ)|ไม่อยู่ในทะเบียนพัสดุ/;
-    const badFuel = (S.fuel && S.fuel.rows) ? S.fuel.rows.filter(r=>Math.abs(r.diff)>0.05) : [];
-    if(badFuel.length){
-      lines.push('น้ำมันรวมต่อเครื่อง ทั้งเดือน ที่ไม่ตรงกัน (ลิตร) ระบบเรา / กรม:');
-      badFuel.forEach(r=>lines.push('   - '+r.label+': '+r.sys+' / '+r.dept+'  ← ต่าง '+(r.diff>0?'+':'')+r.diff));
-      lines.push(''); n++;
-    }
-    S.cmp.forEach(c=>{
-      const ds = c.diffs.filter(x=>!skipRe.test(x));
-      if(!ds.length && !c.skip) return;
-      n++; lines.push(c.label+(c.skip?' — ข้าม: '+c.skip:''));
-      ds.forEach(x=>lines.push('   - '+x));
-    });
-    if(!n) lines.push('ตรงกันทุกแผน ไม่มีจุดที่ต้องตรวจ'); else lines.push('','กรุณาตรวจเทียบกับเอกสารจริง แล้วแจ้งผลกลับ');
+    const sec = (title, arr) => { if(!arr.length) return; n++; lines.push('', n+') '+title); arr.forEach(t=>lines.push('   - '+t)); };
+    const dates = ds => ds.map(dateTh).join(', ');
+    sec('ลาแต่ลงชื่อทำงาน ('+m.leave.length+' คน '+m.leaveDays+' วัน) — ตรวจใบลาตัวจริง', m.leave.map(p=>p.name.replace(/\s+/g,' ')+': '+dates(p.dates)+(p.dept?' (กรมก็ลงชื่อ)':'')));
+    sec('น้ำมันรวมต่อเครื่องทั้งเดือนไม่ตรง (ลิตร ระบบเรา / กรม) — ตรวจใบเบิกน้ำมัน', m.fuelBad.map(r=>r.label+': '+r.sys+' / '+r.dept+' (ต่าง '+(r.diff>0?'+':'')+r.diff+')'));
+    const dayL = [];
+    m.day.forEach(x=>{ if(x.dept) dayL.push(x.c.label+': กรมลงวันที่ '+dates(x.dept.dates)+' แต่ระบบไม่มีใบ'); if(x.sys) dayL.push(x.c.label+': ระบบมีใบวันที่ '+dates(x.sys.sheets.map(s=>s.date))+' แต่กรมไม่ได้ลง'); });
+    sec('วันปฏิบัติงานไม่ตรงกัน', dayL);
+    const stL = [];
+    m.staff.forEach(x=>{ if(x.dept) stL.push(x.c.label+': กรมลงแต่ใบระบบไม่มี '+x.dept.names.join(', ')); if(x.sys) stL.push(x.c.label+': อยู่ในใบระบบแต่กรมไม่ได้ลง '+x.sys.names.join(', ')); });
+    sec('รายชื่อคนทำงานไม่ตรง', stL);
+    const mtL = [];
+    m.mat.forEach(x=>x.list.filter(t=>t.k==='mat').forEach(t=>mtL.push(x.c.label+': '+t.text)));
+    sec('วัสดุไม่ตรง — ตรวจใบเบิกวัสดุ', mtL);
+    if(!n) lines.push('', 'ตรงกันทุกแผน ไม่มีจุดที่ต้องตรวจ'); else lines.push('', 'กรุณาตรวจเทียบกับเอกสารจริง แล้วแจ้งผลกลับ');
     return lines.join('\n');
   }
   async function copyCompare(){
@@ -796,7 +944,7 @@
   }
   function editOrder(id, fromCheck){
     const rec = dailyWorkOrders.find(d=>d.__backendId===id); if(!rec){ alert('ไม่พบใบสั่งการนี้ (อาจถูกแก้ไขหรือลบไปแล้ว)'); return; }
-    if(fromCheck) closeCheck(); else document.getElementById('doh-imp-overlay').classList.add('hidden');
+    if(fromCheck) closeCheck(); else { if(S.mode==='compare') S.keep = true; document.getElementById('doh-imp-overlay').classList.add('hidden'); }
     editDailyEntry(rec.no);
   }
 
@@ -913,5 +1061,5 @@
   setInterval(updateBadge, 2000);
 
   function setEc1w(v){ S.ec1w = !!v; }
-  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, setOpt, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, runCompare, togFuel, addMissing, pickExisting, pickInput, pickKey, pickChoose, pickClose };
+  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, setOpt, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, runCompare, togFuel, togFuelAll,addMissing, pickExisting, pickInput, pickKey, pickChoose, pickClose };
 })();
