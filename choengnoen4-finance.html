@@ -254,6 +254,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .f-row textarea{resize:vertical;min-height:56px;}
   .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  /* ป้ายบางช่องยาว 2 บรรทัด: ดันข้อความป้ายลงล่าง ให้ช่องกรอกทุกช่องอยู่แนวเดียวกัน */
+  .two-col > .f-row, .three-col > .f-row{display:flex;flex-direction:column;}
+  .two-col > .f-row > label, .three-col > .f-row > label{flex:1;display:flex;align-items:flex-end;}
   .stat-mini{background:var(--paper-100);border-radius:8px;padding:10px 14px;font-size:12.5px;color:var(--ink-600);margin-top:4px;}
 
   /* floating modal system (บันทึกบิลใหม่ / บันทึกข้อมูลประจำเดือน / ยื่นขออนุมัติ OT) */
