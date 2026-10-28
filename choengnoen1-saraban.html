@@ -300,6 +300,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .reg-table.reg-ov th:first-child,.reg-table.reg-ov td:first-child{text-align:left;}
   .reg-table.reg-ov tbody tr{cursor:pointer;}
   .reg-table.reg-ov tbody tr:hover td{background:var(--paper-50);}
+  .reg-table.reg-ov tr.reg-ov-group{cursor:default;}
+  .reg-table.reg-ov tr.reg-ov-group td{background:var(--paper-100)!important;color:var(--ink-600);font-size:12px;font-weight:600;padding:7px 14px;}
+  .reg-table.reg-ov tr.reg-ov-former td{color:var(--ink-400);}
+  .reg-table.reg-ov tr.reg-ov-former td b{color:var(--ink-600);}
   .lr-inline-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:2px;}
   .lr-inline-row .lr-stat-panel{margin-top:0;flex:1 1 auto;}
   #lr-warning{flex:1 1 260px;min-width:220px;}
@@ -3511,12 +3515,16 @@ function registryOverviewHTML(fy){
       const t = st[__registryLeaveType(r.type)];
       if(t){ t.c++; t.d += daysBetween(r.from,r.to,r.name); }
     });
-    return { name, s, st, order, count: st.ป่วย.c+st.กิจ.c+st.พักผ่อน.c, days: st.ป่วย.d+st.กิจ.d+st.พักผ่อน.d };
-  }).sort((a,b)=> b.days-a.days || a.order-b.order);
+    // ผู้ลาออก/เกษียณ (หรือไม่พบในรายชื่อแล้ว) แยกไว้กลุ่มล่างสุดเสมอ
+    const former = !s.name || s.status==='resigned' || s.status==='retired';
+    return { name, s, st, order, former, count: st.ป่วย.c+st.กิจ.c+st.พักผ่อน.c, days: st.ป่วย.d+st.กิจ.d+st.พักผ่อน.d };
+  }).sort((a,b)=> a.former-b.former || b.days-a.days || a.order-b.order);
+  const activeN = list.filter(x=>!x.former).length;
   const totalCount = list.reduce((a,x)=>a+x.count,0), totalDays = list.reduce((a,x)=>a+x.days,0);
   const cellStat = (t)=> t.c ? `<b>${t.d}</b> วัน <span style="color:var(--ink-400);font-size:11px;">(${t.c} ครั้ง)</span>` : `<span style="color:var(--ink-400);">–</span>`;
-  let rows = list.map(x=>`<tr onclick="__openRegistryFor('${jsArg(x.name)}')" title="ดูทะเบียนการลาของ ${esc(x.name)}">
-      <td><b>${esc(x.name)}</b>${x.s.status==='resigned'?' <span style="color:var(--ink-400);font-size:11px;">(ลาออก)</span>':''}${x.s.status==='retired'?' <span style="color:var(--ink-400);font-size:11px;">(เกษียณอายุ)</span>':''}</td>
+  const formerTag = (x)=> x.s.status==='resigned' ? 'ลาออก' : x.s.status==='retired' ? 'เกษียณอายุ' : 'ไม่พบในรายชื่อ';
+  let rows = list.map((x,i)=>`${x.former && (i===0 || !list[i-1].former) ? `<tr class="reg-ov-group"><td colspan="7">ผู้ลาออก / เกษียณอายุ (มีวันลาในปีงบนี้)</td></tr>` : ''}<tr${x.former?' class="reg-ov-former"':''} onclick="__openRegistryFor('${jsArg(x.name)}')" title="ดูทะเบียนการลาของ ${esc(x.name)}">
+      <td><b>${esc(x.name)}</b>${x.former?` <span class="pill pill-neutral" style="font-size:10.5px;padding:1px 8px;margin-left:4px;">${formerTag(x)}</span>`:''}</td>
       <td>${esc(x.s.ptype||'-')}</td>
       <td>${cellStat(x.st.ป่วย)}</td>
       <td>${cellStat(x.st.กิจ)}</td>
@@ -3534,7 +3542,7 @@ function registryOverviewHTML(fy){
         </div>
       </div>
       <div class="lr-stat-row">
-        <span class="lr-stat-chip">พนักงาน <b>${list.length}</b> คน</span>
+        <span class="lr-stat-chip">พนักงาน <b>${activeN}</b> คน</span>
         <span class="lr-stat-chip">ลารวม <b>${totalCount}</b> ครั้ง</span>
         <span class="lr-stat-chip" style="border-color:var(--orange-500);">รวม <b>${totalDays}</b> วันทำการ</span>
       </div>
