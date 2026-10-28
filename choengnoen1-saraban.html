@@ -339,14 +339,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   @media (max-width:640px){ .sf-grid{grid-template-columns:1fr 1fr;} .sf-grid .c2,.sf-grid .c4{grid-column:span 2;} }
   /* ---------- ทะเบียนผู้บริหารหมวด (หัวหน้า/ผู้ช่วยหมวด) + โมดัลบุคลากรแบบพับหัวข้อ ---------- */
   .exec-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:99px;font-size:11.5px;font-weight:700;white-space:nowrap;}
-  /* สีผู้บริหาร: หัวหน้าหมวด = เขียวหัวเป็ด #0f766e, ผู้ช่วยหมวด = แดงกุหลาบ #e11d48 */
+  /* สีผู้บริหาร: หัวหน้าหมวด = เขียวหัวเป็ด #0f766e, ผู้ช่วยหมวด = เหลืองสดใส #facc15 (ตัวอักษรบนพื้นอ่อนใช้ #a16207 ให้อ่านง่าย) */
   .exec-pill.head{background:#d9f3ef;color:#0f766e;}
-  .exec-pill.assist{background:#ffe4e6;color:#e11d48;}
+  .exec-pill.assist{background:#fef9c3;color:#a16207;}
   .exec-since{font-size:11px;color:var(--ink-400);margin-top:2px;}
   tr.exec-grp td{background:var(--paper-100);font-size:12px;font-weight:700;color:var(--ink-600);padding:7px 14px;}
   tr.exec-grp .btn{float:right;padding:3px 12px;font-size:11.5px;}
   tr.exec-row td:first-child{box-shadow:inset 4px 0 0 #0f766e;}
-  tr.exec-row.assist td:first-child{box-shadow:inset 4px 0 0 #e11d48;}
+  tr.exec-row.assist td:first-child{box-shadow:inset 4px 0 0 #facc15;}
   .sd-acc{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden;}
   .sd-acc>summary{padding:11px 16px;font-weight:700;font-size:13px;cursor:pointer;background:var(--paper-100);list-style:none;}
   .sd-acc>summary::-webkit-details-marker{display:none;}
@@ -360,10 +360,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ec-col{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;min-width:0;}
   .ec-h{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);}
   .ec-col.head .ec-h{background:linear-gradient(90deg,#d9f3ef,#fff);box-shadow:inset 4px 0 0 #0f766e;}
-  .ec-col.assist .ec-h{background:linear-gradient(90deg,#ffe4e6,#fff);box-shadow:inset 4px 0 0 #e11d48;}
+  .ec-col.assist .ec-h{background:linear-gradient(90deg,#fef9c3,#fff);box-shadow:inset 4px 0 0 #facc15;}
   .ec-star{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;flex-shrink:0;}
   .ec-col.head .ec-star{background:#0f766e;}
-  .ec-col.assist .ec-star{background:#e11d48;}
+  .ec-col.assist .ec-star{background:#facc15;color:#713f12;}
   .ec-h h4{margin:0;font-family:'Kanit';font-weight:600;font-size:14px;color:var(--ink-900);}
   .ec-h .ec-cnt{font-size:11.5px;color:var(--ink-400);}
   .ec-h .btn{margin-left:auto;padding:4px 12px;font-size:12px;}
@@ -376,7 +376,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ec-dt{font-size:12px;color:var(--ink-400);font-weight:600;margin-bottom:4px;}
   .ec-cd{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff;}
   .ec-col.head .ec-it.cur .ec-cd{background:#f0faf8;border-color:#a9ddd5;}
-  .ec-col.assist .ec-it.cur .ec-cd{background:#fff5f6;border-color:#fecdd3;}
+  .ec-col.assist .ec-it.cur .ec-cd{background:#fefce8;border-color:#fde047;}
   .ec-cd .ec-m{flex:1;min-width:0;}
   .ec-cd .meta{font-size:12px;color:var(--ink-400);}
   .exec-mini{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed var(--line);font-size:12.5px;}
