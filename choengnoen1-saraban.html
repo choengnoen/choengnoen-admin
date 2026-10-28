@@ -382,6 +382,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .exec-mini{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed var(--line);font-size:12.5px;}
   .exec-mini:last-child{border-bottom:0;}
   @media (max-width:760px){ .ec-cols{grid-template-columns:1fr;} }
+  .er-inline{padding:16px 20px 20px;}
   .lr-stat-panel{background:var(--paper-100);border-radius:10px;padding:11px 14px;margin-top:4px;display:flex;flex-direction:column;gap:7px;}
   .lr-stat-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .lr-stat-label{font-size:11px;color:var(--ink-400);font-weight:600;min-width:88px;}
@@ -580,21 +581,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         </div>
       </div>
 
-      <!-- ============ EXEC REGISTER (ทะเบียนผู้บริหาร) MODAL ============ -->
-      <div id="exec-reg-modal" class="modal-overlay hidden no-print">
-        <div class="modal-box" style="max-width:900px;">
-          <div class="modal-head">
-            <div class="modal-head-icon">🏛️</div>
-            <h3>ทะเบียนผู้บริหาร</h3>
-            <button type="button" class="modal-close" onclick="closeExecReg()">✕</button>
-          </div>
-          <div class="modal-body" id="er-body"></div>
-          <div class="modal-foot">
-            <button class="btn btn-ghost" onclick="closeExecReg()">ปิด</button>
-          </div>
-        </div>
-      </div>
-
       <!-- ============ EXEC TERM (แต่งตั้ง/แก้ไขวาระ) MODAL ============ -->
       <div id="exec-term-modal" class="modal-overlay hidden no-print">
         <div class="modal-box" style="max-width:560px;">
@@ -656,18 +642,18 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </h2>
             <div class="toolbar">
               <div class="search-box">🔍 <input id="staff-search" placeholder="ค้นหาชื่อ / ชื่อเล่น"></div>
-              <button class="btn btn-ghost" onclick="openExecReg()">ทะเบียนผู้บริหาร</button>
               <button class="btn btn-primary" data-ic="plus" onclick="openAddStaff()">เพิ่มเจ้าหน้าที่</button>
             </div>
           </div>
           <div class="tabs" id="staff-tabs">
-            <div class="tab active" data-stafftab="all">ทั้งหมด</div>
+            <div class="tab active" data-stafftab="exec">ทะเบียนผู้บริหาร</div>
             <div class="tab" data-stafftab="ข้าราชการ">ข้าราชการ</div>
             <div class="tab" data-stafftab="ลูกจ้างประจำ">ลูกจ้างประจำ</div>
             <div class="tab" data-stafftab="พนักงานราชการ">พนักงานราชการ</div>
             <div class="tab" data-stafftab="ลูกจ้างชั่วคราว">ลูกจ้างชั่วคราว</div>
           </div>
-          <div class="table-wrap table-wrap-scroll"><table>
+          <div id="er-body" class="er-inline"></div>
+          <div class="table-wrap table-wrap-scroll" id="staff-table-wrap"><table>
             <thead><tr><th>ชื่อ-สกุล</th><th>ตำแหน่งทางราชการ</th><th>ประเภทบุคลากร</th><th>เบอร์โทรศัพท์</th><th>สถานะ</th></tr></thead>
             <tbody id="staff-body"></tbody>
           </table></div>
@@ -1914,11 +1900,12 @@ function ptypeBadge(ptype){
   return `<div class="p-avatar" style="background:${b.bg};" title="${esc(ptype)}">${b.svg}</div>`;
 }
 
-const STAFF_TAB_LABELS = {all:'ทั้งหมด', 'ข้าราชการ':'ข้าราชการ', 'ลูกจ้างประจำ':'ลูกจ้างประจำ', 'พนักงานราชการ':'พนักงานราชการ', 'ลูกจ้างชั่วคราว':'ลูกจ้างชั่วคราว'};
+const STAFF_TAB_LABELS = {exec:'ทะเบียนผู้บริหาร', 'ข้าราชการ':'ข้าราชการ', 'ลูกจ้างประจำ':'ลูกจ้างประจำ', 'พนักงานราชการ':'พนักงานราชการ', 'ลูกจ้างชั่วคราว':'ลูกจ้างชั่วคราว'};
 function renderStaffTabCounts(){
   document.querySelectorAll('#staff-tabs [data-stafftab]').forEach(t=>{
     const key = t.dataset.stafftab;
     const label = STAFF_TAB_LABELS[key] || key;
+    if(key==='exec'){ t.textContent = label; return; } // แท็บทะเบียนผู้บริหาร ไม่แสดงจำนวน
     const count = key==='all' ? activeStaff().length
       : key==='ลูกจ้างชั่วคราว' ? staff.filter(s=>s.ptype===key && s.status==='ok').length
       : staff.filter(s=>s.ptype===key && s.status!=='retired').length;
@@ -1934,12 +1921,17 @@ function staffSortTier(s){
 }
 function renderStaff(){
   renderStaffTabCounts();
-  const filter = document.querySelector('[data-stafftab].active')?.dataset.stafftab || 'all';
+  const filter = document.querySelector('[data-stafftab].active')?.dataset.stafftab || 'exec';
   const q = (document.getElementById('staff-search').value||'').toLowerCase();
+  // แท็บทะเบียนผู้บริหาร (แท็บแรก แทนแท็บ "ทั้งหมด" เดิม): แสดงทะเบียนแทนตาราง — ถ้าพิมพ์ค้นหา จะค้นจากบุคลากรทุกคนแล้วแสดงเป็นตาราง
+  const showReg = filter==='exec' && !q;
+  document.getElementById('er-body').style.display = showReg ? '' : 'none';
+  document.getElementById('staff-table-wrap').style.display = showReg ? 'none' : '';
+  if(showReg) renderExecReg();
   const body = document.getElementById('staff-body');
   let indices = [];
   staff.forEach((s,i)=>{
-    if(filter!=='all' && s.ptype!==filter) return;
+    if(filter!=='exec' && s.ptype!==filter) return;
     if(q && !(s.name.toLowerCase().includes(q) || (s.nickname||'').toLowerCase().includes(q))) return;
     indices.push(i);
   });
@@ -1958,7 +1950,7 @@ function renderStaff(){
       <td><div class="person">${ptypeBadge(s.ptype)}<div><div class="p-name">${esc(s.name)}</div>${s.nickname?`<div class="p-sub">(${esc(s.nickname)})</div>`:''}</div></div></td>
       <td>${s.role?esc(s.role):'<span style="color:var(--ink-400);font-size:12.5px">ยังไม่ระบุ</span>'}${s.duty?` <span class="pill pill-warn" style="font-size:10.5px;"${__isGuard(s)?` title="จ้างรวมวันเสาร์${s.dutyStart?' ตั้งแต่ '+fmtDate(s.dutyStart):''}"`:''}>ปฏิบัติหน้าที่${esc(s.duty)}${__isGuard(s)?' (ส.)':''}</span>`:''}${(()=>{const el=__leaveEligibleDate(s); if(!el || TODAY.toISOString().slice(0,10)>=el) return ''; return ` <span class="pill pill-danger" style="font-size:10.5px;" title="ยังไม่มีสิทธิ์ลาถึง ${fmtDate(el)}">🔒 ทดลองงาน</span>`;})()}${(()=>{const ri=__retirementInfo(s); if(!ri || s.status!=='ok') return ''; return ri.status==='overdue' ? ` <span class="pill pill-danger" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ</span>` : ` <span class="pill pill-warn" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ</span>`;})()}</td>
       <td><span class="pill pill-neutral">${esc(s.ptype)}</span></td>
-      <td style="white-space:nowrap;">${s.phone?esc(s.phone):''}</td>      <td>${__staffStatusPill(s)}</td>
+      <td style="white-space:nowrap;">${s.phone?esc(__fmtPhone(s.phone)):''}</td>      <td>${__staffStatusPill(s)}</td>
     </tr>`;
   };
   if(execIdx.length){
@@ -2015,9 +2007,12 @@ function execRoleCellHTML(s, role){
   return __execPill(role) + (t ? `<div class="exec-since">ตั้งแต่ ${__fmtDateBE(t.startDate)}</div>` : '');
 }
 
-/* ---------- โมดัลทะเบียนผู้บริหาร: สองคอลัมน์ (หัวหน้าหมวด | ผู้ช่วยหมวด) ในหน้าเดียว ---------- */
-function openExecReg(){ renderExecReg(); document.getElementById('exec-reg-modal').classList.remove('hidden'); }
-function closeExecReg(){ document.getElementById('exec-reg-modal').classList.add('hidden'); }
+/* ---------- ทะเบียนผู้บริหาร: สองคอลัมน์ (หัวหน้าหมวด | ผู้ช่วยหมวด) แสดงในแท็บแรกของฐานข้อมูลบุคลากร ---------- */
+function openExecReg(){
+  document.getElementById('staff-search').value = '';
+  document.querySelectorAll('[data-stafftab]').forEach(x=>x.classList.toggle('active', x.dataset.stafftab==='exec'));
+  renderStaff();
+}
 function renderExecReg(){
   const admin = isAdmin();
   const col = r => {
@@ -2175,7 +2170,7 @@ function __staffDetailViewHTML(s){
     f('ไซส์เสื้อ', s.shirt ? esc(s.shirt) : '')
   ]);
   const contact = grid([
-    f('เบอร์โทรศัพท์', s.phone ? esc(s.phone) : ''),
+    f('เบอร์โทรศัพท์', s.phone ? esc(__fmtPhone(s.phone)) : ''),
     f('ที่อยู่ปัจจุบัน', s.address ? esc(s.address) : '', true),
     f('ผู้ติดต่อฉุกเฉิน', s.emergencyContact ? esc(s.emergencyContact) : ''),
     f('เบอร์โทรผู้ติดต่อฉุกเฉิน', s.emergencyPhone ? esc(s.emergencyPhone) : ''),
@@ -2328,7 +2323,7 @@ async function saveStaffDetail(){
   s.shirt = document.getElementById('sd-shirt').value.trim() || null;
   s.med = document.getElementById('sd-med').value.trim() || null;
   s.bloodType = document.getElementById('sd-blood').value.trim() || null;
-  s.phone = document.getElementById('sd-phone').value.trim() || null;
+  s.phone = __fmtPhone(document.getElementById('sd-phone').value.trim()) || null;
   s.education = document.getElementById('sd-education').value.trim() || null;
   s.address = document.getElementById('sd-address').value.trim() || null;
   s.emergencyContact = document.getElementById('sd-emergency-contact').value.trim() || null;
@@ -2365,6 +2360,12 @@ async function saveStaffDetail(){
   renderStaffDetailModal();
 }
 
+/* เบอร์มือถือ 10 หลักแสดงเป็น 088-5642695 (พิมพ์มีขีด/ช่องว่างหรือไม่ก็ได้) · รูปแบบอื่น เช่น เบอร์บ้าน 9 หลัก คงไว้ตามที่พิมพ์ */
+function __fmtPhone(p){
+  const d = String(p||'').replace(/\D/g,'');
+  return d.length===10 && d[0]==='0' ? d.slice(0,3)+'-'+d.slice(3) : String(p||'').trim();
+}
+
 /* ---------- Add staff modal ---------- */
 function openAddStaff(){
   if(!isAdmin()){ alert('ต้องเข้าสู่ระบบด้วยสิทธิ์แก้ไข (หัวหน้าหมวด/ผู้ช่วยหัวหน้าหมวด) จึงจะเพิ่มข้อมูลได้'); return; }
@@ -2398,7 +2399,7 @@ async function submitAddStaff(){
     shirt: document.getElementById('as-shirt').value.trim() || null,
     med: document.getElementById('as-med').value.trim() || null,
     bloodType: document.getElementById('as-blood').value.trim() || null,
-    phone: document.getElementById('as-phone').value.trim() || null,
+    phone: __fmtPhone(document.getElementById('as-phone').value.trim()) || null,
     education: document.getElementById('as-education').value.trim() || null,
     address: document.getElementById('as-address').value.trim() || null,
     emergencyContact: document.getElementById('as-emergency-contact').value.trim() || null,
