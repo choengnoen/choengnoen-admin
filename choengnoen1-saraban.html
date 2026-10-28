@@ -301,7 +301,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .reg-table.reg-ov tbody tr{cursor:pointer;}
   .reg-table.reg-ov tbody tr:hover td{background:var(--paper-50);}
   .reg-table.reg-ov tr.reg-ov-group{cursor:default;}
-  .reg-table.reg-ov tr.reg-ov-group td{background:var(--paper-100)!important;color:var(--ink-600);font-size:12px;font-weight:600;padding:7px 14px;}
+  /* แถบคั่นกลุ่มผู้ลาออก: เว้นช่องขาวด้านบนก่อนถึงแถบ + เส้นซ้ายเข้ม ให้เห็นชัดว่าเปลี่ยนกลุ่มแล้ว */
+  .reg-table.reg-ov tr.reg-ov-group td{background:var(--paper-100)!important;color:var(--ink-900);font-size:12.5px;font-weight:600;padding:9px 14px;border-top:22px solid var(--white)!important;border-bottom:1px solid var(--line);box-shadow:inset 4px 0 0 var(--ink-400);}
+  .reg-table.reg-ov tr.reg-ov-group td span{color:var(--ink-400);font-weight:500;margin-left:6px;}
   .reg-table.reg-ov tr.reg-ov-former td{color:var(--ink-400);}
   .reg-table.reg-ov tr.reg-ov-former td b{color:var(--ink-600);}
   .lr-inline-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:2px;}
@@ -1153,10 +1155,16 @@ async function loadComplaintsFromApi(){
    ตัดการกรอง status==='approved' ออก (2569-09-18) — งานเอกสารลาจริงต้องผ่านการลงนามด้วยปากกา
    บนใบลาอยู่แล้ว ถือว่าคำขอลาที่ยื่นเข้าระบบ = ลาจริงทั้งหมด ยกเว้นที่ถูกยกเลิกไปแล้ว (cancelled) */
 function computeLeaveHistory(){
+  const canon = __staffNameMap();
   return leaveRequests
     .filter(r=>r.status!=='cancelled' && REGISTRY_LEAVE_TYPES.includes(r.type))
-    .map(r=>({fy:fiscalYearOf(r.from), name:r.name, type:r.type, from:r.from, to:r.to}));
+    .map(r=>({fy:fiscalYearOf(r.from), name:canon.get(__nameKey(r.name)) || r.name, type:r.type, from:r.from, to:r.to}));
 }
+/* กุญแจเทียบชื่อคน — ไม่สนเว้นวรรคซ้ำ/ช่องว่างหัวท้าย/อักขระล่องหน (เคยทำให้ "นางสำเนียง  นุ่มดี" กับ
+   "นางสำเนียง นุ่มดี" กลายเป็น 2 คนในทะเบียนคุมลา) — ชื่อที่เก็บจริงยังคงเดิม ใช้เฉพาะตอนเทียบ */
+function __nameKey(n){ return String(n||'').normalize('NFC').replace(/[​-‍﻿]/g,'').replace(/\s+/g,' ').trim(); }
+/* กุญแจ → ชื่อตามรายชื่อพนักงาน (ใช้แปลงชื่อในใบลาเก่าให้ตรงกับรายชื่อ) */
+function __staffNameMap(){ const m = new Map(); staff.forEach(s=>{ const k = __nameKey(s.name); if(!m.has(k)) m.set(k, s.name); }); return m; }
 
 let docs = [];
 
@@ -2336,6 +2344,19 @@ async function saveStaffDetail(){
     renderStaffDetailModal();
     return;
   }
+  // เปลี่ยนชื่อพนักงาน → ย้ายใบลาเดิมไปอยู่ใต้ชื่อใหม่ด้วย ไม่งั้นทะเบียนคุมลาจะแตกเป็น 2 คน (ชื่อเก่าขึ้น "ไม่พบในรายชื่อ")
+  if(__nameKey(before.name) !== __nameKey(s.name)){
+    const oldKey = __nameKey(before.name);
+    const olds = leaveRequests.filter(r=>__nameKey(r.name)===oldKey);
+    let failed = 0;
+    for(const r of olds){
+      const prev = r.name;
+      r.name = s.name;
+      try{ Object.assign(r, await apiPost('update', 'leave_requests', r)); }
+      catch(err){ r.name = prev; failed++; console.error('ย้ายใบลาไปชื่อใหม่ไม่สำเร็จ', r, err); }
+    }
+    if(failed) alert(`เปลี่ยนชื่อสำเร็จ แต่ย้ายใบลาเดิมไปชื่อใหม่ไม่สำเร็จ ${failed} จาก ${olds.length} รายการ\nกรุณารีเฟรชหน้าแล้วตรวจทะเบียนคุมลาของ ${s.name}`);
+  }
   staffDetailEditing = false;
   renderAll();
   renderStaffDetailModal();
@@ -2716,10 +2737,14 @@ function removeHoliday(idx){
   });
 }
 async function submitLeaveRequest(){
-  const name = document.getElementById('lr-name').value;
+  const typed = document.getElementById('lr-name').value;
   const type = document.getElementById('lr-type').value;
   const from = document.getElementById('lr-from').value, to = document.getElementById('lr-to').value;
-  if(!String(name||'').trim()){ alert('กรุณาระบุชื่อผู้ลา'); return; }
+  if(!String(typed||'').trim()){ alert('กรุณาระบุชื่อผู้ลา'); return; }
+  // ต้องเป็นชื่อที่มีในรายชื่อพนักงาน และบันทึกด้วยชื่อตามรายชื่อเป๊ะ ๆ — กันชื่อสะกด/เว้นวรรคต่างไปแล้วกลายเป็นอีกคนในทะเบียนคุมลา
+  const name = __staffNameMap().get(__nameKey(typed));
+  if(!name){ alert('ไม่พบ "' + typed.trim() + '" ในรายชื่อพนักงาน\nกรุณาเลือกชื่อจากรายการที่ขึ้นมาตอนพิมพ์'); return; }
+  document.getElementById('lr-name').value = name;
   if(!from||!to){ alert('กรุณาระบุวันที่ลา'); return; }
   const ovDup = __findLeaveOverlap(name, from, to);
   if(ovDup){ alert('บันทึกไม่ได้ — ' + __leaveOverlapMsg(ovDup)); checkLrWarning(); return; }
@@ -3516,15 +3541,17 @@ function registryOverviewHTML(fy){
       if(t){ t.c++; t.d += daysBetween(r.from,r.to,r.name); }
     });
     // ผู้ลาออก/เกษียณ (หรือไม่พบในรายชื่อแล้ว) แยกไว้กลุ่มล่างสุดเสมอ
-    const former = !s.name || s.status==='resigned' || s.status==='retired';
-    return { name, s, st, order, former, count: st.ป่วย.c+st.กิจ.c+st.พักผ่อน.c, days: st.ป่วย.d+st.กิจ.d+st.พักผ่อน.d };
-  }).sort((a,b)=> a.former-b.former || b.days-a.days || a.order-b.order);
+    // กลุ่ม: 0 ยังทำงานอยู่ · 1 เกษียณอายุ · 2 ลาออก · 3 ไม่พบในรายชื่อ — แต่ละกลุ่มมีแถบคั่นของตัวเอง
+    const grp = !s.name ? 3 : s.status==='resigned' ? 2 : s.status==='retired' ? 1 : 0;
+    return { name, s, st, order, grp, former: grp>0, count: st.ป่วย.c+st.กิจ.c+st.พักผ่อน.c, days: st.ป่วย.d+st.กิจ.d+st.พักผ่อน.d };
+  }).sort((a,b)=> a.grp-b.grp || b.days-a.days || a.order-b.order);
   const activeN = list.filter(x=>!x.former).length;
+  const GRP_LABEL = ['', 'ผู้เกษียณอายุ', 'ผู้ลาออก', 'ไม่พบในรายชื่อพนักงาน'];
+  const grpN = g => list.filter(x=>x.grp===g).length;
   const totalCount = list.reduce((a,x)=>a+x.count,0), totalDays = list.reduce((a,x)=>a+x.days,0);
   const cellStat = (t)=> t.c ? `<b>${t.d}</b> วัน <span style="color:var(--ink-400);font-size:11px;">(${t.c} ครั้ง)</span>` : `<span style="color:var(--ink-400);">–</span>`;
-  const formerTag = (x)=> x.s.status==='resigned' ? 'ลาออก' : x.s.status==='retired' ? 'เกษียณอายุ' : 'ไม่พบในรายชื่อ';
-  let rows = list.map((x,i)=>`${x.former && (i===0 || !list[i-1].former) ? `<tr class="reg-ov-group"><td colspan="7">ผู้ลาออก / เกษียณอายุ (มีวันลาในปีงบนี้)</td></tr>` : ''}<tr${x.former?' class="reg-ov-former"':''} onclick="__openRegistryFor('${jsArg(x.name)}')" title="ดูทะเบียนการลาของ ${esc(x.name)}">
-      <td><b>${esc(x.name)}</b>${x.former?` <span class="pill pill-neutral" style="font-size:10.5px;padding:1px 8px;margin-left:4px;">${formerTag(x)}</span>`:''}</td>
+  let rows = list.map((x,i)=>`${x.former && (i===0 || list[i-1].grp!==x.grp) ? `<tr class="reg-ov-group"><td colspan="7">${GRP_LABEL[x.grp]}<span>${grpN(x.grp)} คน · มีวันลาในปีงบนี้</span></td></tr>` : ''}<tr${x.former?' class="reg-ov-former"':''} onclick="__openRegistryFor('${jsArg(x.name)}')" title="ดูทะเบียนการลาของ ${esc(x.name)}">
+      <td><b>${esc(x.name)}</b></td>
       <td>${esc(x.s.ptype||'-')}</td>
       <td>${cellStat(x.st.ป่วย)}</td>
       <td>${cellStat(x.st.กิจ)}</td>
