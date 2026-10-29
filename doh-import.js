@@ -372,6 +372,7 @@
       .dohi-sec.low .dohi-sec-h .n{background:#eef0ed;color:#4d5a66;}
       .dohi-sec-h .cp{border:1px solid #dfe2dd;background:#fff;color:#4d5a66;border-radius:8px;padding:3px 10px;font-family:'Sarabun',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;}
       .dohi-sec-h .cp:hover{border-color:#f07a1f;color:#e0620f;}
+      .dohi-sec-h .cp:disabled{opacity:.7;cursor:progress;}
       .dohi-sec-h .cp.ok{border-color:#1c8a53;color:#1c8a53;background:#e5f4ec;}
       .dohi-how{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:0;padding:9px 16px;background:#fafaf8;border-bottom:1px solid #eef0f2;font-size:12.5px;line-height:1.6;color:#4d5a66;}
       .dohi-how dt{font-weight:700;color:#182430;}
@@ -746,12 +747,9 @@
       + (m.fuelAll.length ? '<div><b style="color:'+(m.fuelBad.length?'#c1402f':'#1c8a53')+'">'+fuelOk+'<small style="font-size:14px;color:#8792a0"> / '+m.fuelAll.length+'</small></b>เครื่องจักรที่น้ำมันตรง</div>' : '')
       + '</div>';
     let n = 0; const out = [];
-    const keys = ['leave','fuel','day','staff','matAll','num','other'];   // ลำดับตรงกับการเรียก sec() ด้านล่าง ใช้กับปุ่มคัดลอกรายหัวข้อ
-    const has = { leave:m.leave.length, fuel:m.fuelBad.length, day:m.day.length, staff:m.staff.length, matAll:m.mat.length, num:m.num.length, other:m.other.length };
-    const secKeys = keys.filter(k=>has[k]);
-    const sec = (title, count, how, body, low) => { const key = secKeys[n]; n++;
+    const sec = (title, count, how, body, low) => { n++;
       out.push('<div class="dohi-sec'+(low?' low':'')+'"><div class="dohi-sec-h"><i>'+n+'</i><b>'+title+'</b><span class="n">'+count+'</span>'
-        + '<button type="button" class="cp" title="คัดลอกเฉพาะหัวข้อนี้ ส่งให้เจ้าหน้าที่ที่เกี่ยวข้อง" onclick="DohImp.copySec(\''+key+'\',this)">📋 คัดลอก</button></div>'
+        + '<button type="button" class="cp" title="คัดลอกกล่องนี้เป็นรูปภาพ ไปวางส่งให้เจ้าหน้าที่ที่เกี่ยวข้อง" onclick="DohImp.copySecImg(this)">🖼️ คัดลอกเป็นรูป</button></div>'
         + (how ? '<dl class="dohi-how">'+how.map(h=>'<dt>'+h[0]+'</dt><dd>'+h[1]+'</dd>').join('')+'</dl>' : '')
         + '<div class="dohi-sec-b">'+body+'</div></div>');
       return n; };
@@ -789,7 +787,7 @@
         + (S.fuelAll ? '<div class="dohi-sec"><div class="dohi-sec-b">'+fuelTable(m.fuelAll)+'</div></div>' : '') : '');
     return head + (out.length ? out.join('') : '<div class="dohi-note ok"><b>ตรงกันทั้งหมด</b> ไม่มีจุดที่ต้องตรวจ</div>') + okBox;
   }
-  /* ข้อความรายหัวข้อ (key -> {title, arr}) ใช้ร่วมกันระหว่าง "คัดลอกผลเทียบ" ทั้งหมด และปุ่มคัดลอกที่หัวแต่ละกล่อง */
+  /* ข้อความรายหัวข้อ (key -> {title, arr}) สำหรับ "คัดลอกผลเทียบ" */
   function compareSecs(m){
     const secs = {};
     const sec = (key, title, arr) => { if(arr.length) secs[key] = { title, arr }; };
@@ -810,15 +808,6 @@
     const mtL = [];
     m.mat.forEach(x=>x.list.filter(t=>t.k==='mat').forEach(t=>mtL.push(x.c.label+': '+t.text)));
     sec('mat', 'วัสดุไม่ตรง', mtL);
-    /* หัวข้อด้านล่างใช้เฉพาะปุ่มคัดลอกรายหัวข้อ (คัดลอกผลเทียบทั้งหมดยังไม่รวม ตามเดิม)
-       matAll = วัสดุทุกบรรทัดที่เห็นในกล่อง รวมวัสดุที่ไม่อยู่ในทะเบียน */
-    const maL = [];
-    m.mat.forEach(x=>x.list.forEach(t=>maL.push(x.c.label+': '+t.text)));
-    sec('matAll', 'วัสดุไม่ตรง', maL);
-    const numL = [];
-    m.num.forEach(x=>x.list.forEach(t=>numL.push(x.c.label+': '+t.name+' ระบบ '+t.sys+' / กรม '+t.dept+' (ต่าง '+(t.sys-t.dept>0?'+':'')+r2(t.sys-t.dept)+')')));
-    sec('num', 'ยอดปริมาณงาน/เงินไม่ตรง (ระบบเรา / กรม)', numL);
-    sec('other', 'เรื่องอื่น ๆ', m.other.slice());
     return secs;
   }
   function secLines(list){
@@ -842,13 +831,52 @@
     try{ await navigator.clipboard.writeText(t); return true; }
     catch(e){ const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText='position:fixed;opacity:0;'; document.body.appendChild(ta); ta.select(); let ok = false; try{ ok = document.execCommand('copy'); }catch(e2){} ta.remove(); return ok; }
   }
-  /* ปุ่มคัดลอกที่หัวกล่องแต่ละหัวข้อ — คัดลอกเฉพาะเรื่องนั้น ไม่วาดหน้าใหม่ (คงตำแหน่งเลื่อนเดิม) แค่เปลี่ยนข้อความบนปุ่มชั่วคราว */
-  async function copySec(key, btn){
-    const s = compareSecs(cmpModel())[key];
-    if(!s) return;
-    const ok = await copyText(secLines([s]));
-    if(!ok){ alert('คัดลอกไม่สำเร็จ'); return; }
-    if(btn){ btn.textContent = '✓ คัดลอกแล้ว'; btn.classList.add('ok'); setTimeout(()=>{ btn.textContent = '📋 คัดลอก'; btn.classList.remove('ok'); }, 1800); }
+  /* ปุ่มที่หัวกล่องแต่ละหัวข้อ — จับภาพกล่องนั้นเป็นรูป PNG แล้วคัดลอกลงคลิปบอร์ด (วางในไลน์ได้ทันที)
+     ไลบรารี html2canvas โหลดจาก cdnjs เฉพาะตอนกดครั้งแรก · ในรูปซ่อนปุ่มเอง และเติมเดือนที่เทียบไว้ใต้หัวข้อ
+     เบราว์เซอร์ที่คัดลอกรูปไม่ได้ → ดาวน์โหลดเป็นไฟล์ .png แทน */
+  let h2cP = null;
+  function loadH2C(){
+    if(window.html2canvas) return Promise.resolve(window.html2canvas);
+    return h2cP || (h2cP = new Promise((ok, no)=>{
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      s.onload = ()=>ok(window.html2canvas); s.onerror = ()=>{ h2cP = null; no(new Error('โหลดตัวจับภาพไม่สำเร็จ')); };
+      document.head.appendChild(s);
+    }));
+  }
+  async function copySecImg(btn){
+    const box = btn && btn.closest('.dohi-sec');
+    if(!box || btn.disabled) return;
+    const label = btn.textContent, done = (t, cls)=>{ btn.textContent = t; if(cls) btn.classList.add(cls); setTimeout(()=>{ btn.textContent = label; btn.classList.remove('ok'); btn.disabled = false; }, 1800); };
+    btn.disabled = true; btn.textContent = 'กำลังจับภาพ…';
+    try{
+      const h2c = await loadH2C();
+      box.setAttribute('data-dohi-cap', '1');
+      const canvas = await h2c(box, { scale:2, backgroundColor:'#ffffff', logging:false, useCORS:true,
+        ignoreElements: el => el.classList && el.classList.contains('cp'),
+        onclone: doc => {
+          const c = doc.querySelector('[data-dohi-cap]'); if(!c) return;
+          c.style.margin = '0'; c.style.boxShadow = 'none';
+          const h = c.querySelector('.dohi-sec-h b');
+          if(h){ const sub = doc.createElement('div'); sub.textContent = 'ผลเทียบกับไฟล์กรม (rmms) · เดือน '+mkLabel(S.importMk);
+            sub.style.cssText = 'font-family:Sarabun,sans-serif;font-size:12px;font-weight:400;color:#8792a0;margin-top:1px;';
+            const wrap = doc.createElement('span'); h.parentNode.insertBefore(wrap, h); wrap.appendChild(h); wrap.appendChild(sub); }
+        } });
+      box.removeAttribute('data-dohi-cap');
+      const blob = await new Promise(r=>canvas.toBlob(r, 'image/png'));
+      let copied = false;
+      try{ if(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){ await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]); copied = true; } }catch(e){}
+      if(copied){ done('✓ คัดลอกรูปแล้ว', 'ok'); return; }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'ผลเทียบ-rmms-'+S.importMk+'-'+((box.querySelector('.dohi-sec-h b')||{}).textContent||'หัวข้อ').trim()+'.png';
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+      done('⬇ บันทึกเป็นไฟล์รูปแล้ว', 'ok');
+    }catch(err){
+      box.removeAttribute('data-dohi-cap');
+      alert('คัดลอกเป็นรูปไม่สำเร็จ: '+err.message);
+      done(label);
+    }
   }
   async function copyCompare(){
     const ok = await copyText(compareText());
@@ -1106,5 +1134,5 @@
   setInterval(updateBadge, 2000);
 
   function setEc1w(v){ S.ec1w = !!v; }
-  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, setOpt, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, copySec, runCompare, togFuel, togFuelAll,addMissing, pickExisting, pickInput, pickKey, pickChoose, pickClose };
+  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, setOpt, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, copySecImg, runCompare, togFuel, togFuelAll,addMissing, pickExisting, pickInput, pickKey, pickChoose, pickClose };
 })();
