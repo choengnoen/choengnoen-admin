@@ -370,6 +370,9 @@
       .dohi-sec-h b{font-family:'Kanit',sans-serif;font-size:14.5px;color:#182430;}
       .dohi-sec-h .n{margin-left:auto;background:#fbeae7;color:#c1402f;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap;}
       .dohi-sec.low .dohi-sec-h .n{background:#eef0ed;color:#4d5a66;}
+      .dohi-sec-h .cp{border:1px solid #dfe2dd;background:#fff;color:#4d5a66;border-radius:8px;padding:3px 10px;font-family:'Sarabun',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;}
+      .dohi-sec-h .cp:hover{border-color:#f07a1f;color:#e0620f;}
+      .dohi-sec-h .cp.ok{border-color:#1c8a53;color:#1c8a53;background:#e5f4ec;}
       .dohi-how{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:0;padding:9px 16px;background:#fafaf8;border-bottom:1px solid #eef0f2;font-size:12.5px;line-height:1.6;color:#4d5a66;}
       .dohi-how dt{font-weight:700;color:#182430;}
       .dohi-how dd{margin:0;}
@@ -743,8 +746,12 @@
       + (m.fuelAll.length ? '<div><b style="color:'+(m.fuelBad.length?'#c1402f':'#1c8a53')+'">'+fuelOk+'<small style="font-size:14px;color:#8792a0"> / '+m.fuelAll.length+'</small></b>เครื่องจักรที่น้ำมันตรง</div>' : '')
       + '</div>';
     let n = 0; const out = [];
-    const sec = (title, count, how, body, low) => { n++;
-      out.push('<div class="dohi-sec'+(low?' low':'')+'"><div class="dohi-sec-h"><i>'+n+'</i><b>'+title+'</b><span class="n">'+count+'</span></div>'
+    const keys = ['leave','fuel','day','staff','matAll','num','other'];   // ลำดับตรงกับการเรียก sec() ด้านล่าง ใช้กับปุ่มคัดลอกรายหัวข้อ
+    const has = { leave:m.leave.length, fuel:m.fuelBad.length, day:m.day.length, staff:m.staff.length, matAll:m.mat.length, num:m.num.length, other:m.other.length };
+    const secKeys = keys.filter(k=>has[k]);
+    const sec = (title, count, how, body, low) => { const key = secKeys[n]; n++;
+      out.push('<div class="dohi-sec'+(low?' low':'')+'"><div class="dohi-sec-h"><i>'+n+'</i><b>'+title+'</b><span class="n">'+count+'</span>'
+        + '<button type="button" class="cp" title="คัดลอกเฉพาะหัวข้อนี้ ส่งให้เจ้าหน้าที่ที่เกี่ยวข้อง" onclick="DohImp.copySec(\''+key+'\',this)">📋 คัดลอก</button></div>'
         + (how ? '<dl class="dohi-how">'+how.map(h=>'<dt>'+h[0]+'</dt><dd>'+h[1]+'</dd>').join('')+'</dl>' : '')
         + '<div class="dohi-sec-b">'+body+'</div></div>');
       return n; };
@@ -782,43 +789,69 @@
         + (S.fuelAll ? '<div class="dohi-sec"><div class="dohi-sec-b">'+fuelTable(m.fuelAll)+'</div></div>' : '') : '');
     return head + (out.length ? out.join('') : '<div class="dohi-note ok"><b>ตรงกันทั้งหมด</b> ไม่มีจุดที่ต้องตรวจ</div>') + okBox;
   }
-  function compareText(){
-    const m = cmpModel();
-    /* คัดลอกเฉพาะเรื่องที่เจ้าหน้าที่ต้องตรวจกับเอกสาร — ไม่รวมยอดเงินที่กรมแบ่งตามแผน และวัสดุที่ไม่อยู่ในทะเบียน (งานของคนดูแลทะเบียน)
-       รูปแบบตามที่ผู้ใช้กำหนด: หัว 2 บรรทัด · "เรื่อง:" + รายการ · ปิดท้ายขอให้รายงานผล */
-    const secs = [];
-    const sec = (title, arr) => { if(arr.length) secs.push({ title, arr }); };
+  /* ข้อความรายหัวข้อ (key -> {title, arr}) ใช้ร่วมกันระหว่าง "คัดลอกผลเทียบ" ทั้งหมด และปุ่มคัดลอกที่หัวแต่ละกล่อง */
+  function compareSecs(m){
+    const secs = {};
+    const sec = (key, title, arr) => { if(arr.length) secs[key] = { title, arr }; };
     const dates = ds => ds.map(dateTh).join(', ');
     const dayNoYr = d => String(dateTh(d)).replace(/\s+\d{2,4}$/,'');   // ปีอยู่ในหัวข้อแล้ว
     const nDept = m.leave.filter(p=>p.dept).length;
-    sec('มีใบลาในระบบ แต่มีชื่ออยู่ในใบสั่งการวันเดียวกัน ('+m.leave.length+' คน '+m.leaveDays+' วัน)',
+    sec('leave', 'มีใบลาในระบบ แต่มีชื่ออยู่ในใบสั่งการวันเดียวกัน ('+m.leave.length+' คน '+m.leaveDays+' วัน)',
       m.leave.map(p=>p.name.replace(/\s+/g,' ')+': '+p.dates.map(d=>dayNoYr(d)+(p.days[d].codes.length?' (รหัส '+p.days[d].codes.join(', ')+')':'')).join(', ')
         +(p.dept && nDept<m.leave.length?' (rmms มีชื่อ)':'')));   // บอกเฉพาะตอนที่บางคนมีในกรม บางคนไม่มี
-    sec('น้ำมันรวมต่อเครื่องทั้งเดือนไม่ตรง (ลิตร ระบบเรา / กรม)',
+    sec('fuel', 'น้ำมันรวมต่อเครื่องทั้งเดือนไม่ตรง (ลิตร ระบบเรา / กรม)',
       m.fuelBad.map(r=>r.label+': '+r.sys+' / '+r.dept+' (ต่าง '+(r.diff>0?'+':'')+r.diff+')'));
     const dayL = [];
     m.day.forEach(x=>{ if(x.dept) dayL.push(x.c.label+': กรมลงวันที่ '+dates(x.dept.dates)+' แต่ระบบไม่มีใบ'); if(x.sys) dayL.push(x.c.label+': ระบบมีใบวันที่ '+dates(x.sys.sheets.map(s=>s.date))+' แต่กรมไม่ได้ลง'); });
-    sec('วันปฏิบัติงานไม่ตรงกัน', dayL);
+    sec('day', 'วันปฏิบัติงานไม่ตรงกัน', dayL);
     const stL = [];
     m.staff.forEach(x=>{ if(x.dept) stL.push(x.c.label+': กรมลงแต่ใบระบบไม่มี '+x.dept.names.join(', ')); if(x.sys) stL.push(x.c.label+': อยู่ในใบระบบแต่กรมไม่ได้ลง '+x.sys.names.join(', ')); });
-    sec('รายชื่อคนทำงานไม่ตรง', stL);
+    sec('staff', 'รายชื่อคนทำงานไม่ตรง', stL);
     const mtL = [];
     m.mat.forEach(x=>x.list.filter(t=>t.k==='mat').forEach(t=>mtL.push(x.c.label+': '+t.text)));
-    sec('วัสดุไม่ตรง', mtL);
+    sec('mat', 'วัสดุไม่ตรง', mtL);
+    /* หัวข้อด้านล่างใช้เฉพาะปุ่มคัดลอกรายหัวข้อ (คัดลอกผลเทียบทั้งหมดยังไม่รวม ตามเดิม)
+       matAll = วัสดุทุกบรรทัดที่เห็นในกล่อง รวมวัสดุที่ไม่อยู่ในทะเบียน */
+    const maL = [];
+    m.mat.forEach(x=>x.list.forEach(t=>maL.push(x.c.label+': '+t.text)));
+    sec('matAll', 'วัสดุไม่ตรง', maL);
+    const numL = [];
+    m.num.forEach(x=>x.list.forEach(t=>numL.push(x.c.label+': '+t.name+' ระบบ '+t.sys+' / กรม '+t.dept+' (ต่าง '+(t.sys-t.dept>0?'+':'')+r2(t.sys-t.dept)+')')));
+    sec('num', 'ยอดปริมาณงาน/เงินไม่ตรง (ระบบเรา / กรม)', numL);
+    sec('other', 'เรื่องอื่น ๆ', m.other.slice());
+    return secs;
+  }
+  function secLines(list){
     const lines = ['ผลเทียบใบสั่งการ (ระบบหมวด) กับไฟล์กรม (rmms)', 'เดือน '+mkLabel(S.importMk)];
-    const many = secs.length > 1;
-    secs.forEach((s,i)=>{
+    const many = list.length > 1;
+    list.forEach((s,i)=>{
       if(i) lines.push('');
       lines.push((many?'เรื่องที่ '+(i+1)+': ':'เรื่อง: ')+s.title, '');
       s.arr.forEach(t=>lines.push('- '+t));
     });
-    lines.push('', secs.length ? 'กรุณาตรวจสอบและรายงานผลค่ะ' : 'ตรงกันทุกแผน ไม่มีจุดที่ต้องตรวจ');
+    lines.push('', list.length ? 'กรุณาตรวจสอบและรายงานผลค่ะ' : 'ตรงกันทุกแผน ไม่มีจุดที่ต้องตรวจ');
     return lines.join('\n');
   }
+  function compareText(){
+    /* คัดลอกเฉพาะเรื่องที่เจ้าหน้าที่ต้องตรวจกับเอกสาร — ไม่รวมยอดเงินที่กรมแบ่งตามแผน และวัสดุที่ไม่อยู่ในทะเบียน (งานของคนดูแลทะเบียน)
+       รูปแบบตามที่ผู้ใช้กำหนด: หัว 2 บรรทัด · "เรื่อง:" + รายการ · ปิดท้ายขอให้รายงานผล */
+    const all = compareSecs(cmpModel());
+    return secLines(['leave','fuel','day','staff','mat'].filter(k=>all[k]).map(k=>all[k]));
+  }
+  async function copyText(t){
+    try{ await navigator.clipboard.writeText(t); return true; }
+    catch(e){ const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText='position:fixed;opacity:0;'; document.body.appendChild(ta); ta.select(); let ok = false; try{ ok = document.execCommand('copy'); }catch(e2){} ta.remove(); return ok; }
+  }
+  /* ปุ่มคัดลอกที่หัวกล่องแต่ละหัวข้อ — คัดลอกเฉพาะเรื่องนั้น ไม่วาดหน้าใหม่ (คงตำแหน่งเลื่อนเดิม) แค่เปลี่ยนข้อความบนปุ่มชั่วคราว */
+  async function copySec(key, btn){
+    const s = compareSecs(cmpModel())[key];
+    if(!s) return;
+    const ok = await copyText(secLines([s]));
+    if(!ok){ alert('คัดลอกไม่สำเร็จ'); return; }
+    if(btn){ btn.textContent = '✓ คัดลอกแล้ว'; btn.classList.add('ok'); setTimeout(()=>{ btn.textContent = '📋 คัดลอก'; btn.classList.remove('ok'); }, 1800); }
+  }
   async function copyCompare(){
-    const t = compareText(); let ok = false;
-    try{ await navigator.clipboard.writeText(t); ok = true; }
-    catch(e){ const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText='position:fixed;opacity:0;'; document.body.appendChild(ta); ta.select(); try{ ok = document.execCommand('copy'); }catch(e2){} ta.remove(); }
+    const ok = await copyText(compareText());
     S.cmpMsg = ok ? '✓ คัดลอกผลเทียบแล้ว นำไปวางในไลน์/ข้อความได้เลย' : ''; render(); if(!ok) alert('คัดลอกไม่สำเร็จ');
   }
   async function runCompare(silent){
@@ -1073,5 +1106,5 @@
   setInterval(updateBadge, 2000);
 
   function setEc1w(v){ S.ec1w = !!v; }
-  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, setOpt, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, runCompare, togFuel, togFuelAll,addMissing, pickExisting, pickInput, pickKey, pickChoose, pickClose };
+  window.DohImp = { openImport, close, onFiles, setMonth, run, again, editOrder, setEc1w, setOpt, openCheck, closeCheck, setCheckMonth, copyCheck, setMode, togAct, copyCompare, copySec, runCompare, togFuel, togFuelAll,addMissing, pickExisting, pickInput, pickKey, pickChoose, pickClose };
 })();
