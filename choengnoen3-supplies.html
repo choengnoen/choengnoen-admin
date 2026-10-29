@@ -4928,8 +4928,31 @@ function startWhoEdit(box){
   inp.focus(); inp.select();
 }
 document.addEventListener('focusin', e=>{ const box = e.target.closest && e.target.closest('[data-whoedit]'); if(box) startWhoEdit(box); });
-function pickItems(kind){
-  if(kind==='staff') return activeStaff().map(s=>({value:s.name, sub:s.role||''}));
+/* รายชื่อผู้เบิกที่ยังทำงานอยู่ในวันที่ date (YYYY-MM-DD):
+   ปกติ = ทุกวันตั้งแต่วันเริ่มงาน · เกษียณ = ถึงวันที่เกษียณ (รวมวันนั้น) · ลาออก = ก่อนวันที่ลาออกมีผล */
+function staffWorkingOn(date){
+  if(!date) return activeStaff();
+  return staff.filter(s=>{
+    if(!s.name) return false;
+    if(s.startDate && date < s.startDate) return false;
+    if(s.status==='ok') return true;
+    if(s.status==='retired'){
+      // ข้อมูลเก่าที่ไม่มีวันเกษียณ: คิดจากวันเกิด = 30 ก.ย. ของปีงบประมาณที่อายุครบ 60 (แบบเดียวกับระบบที่ 1)
+      let rd = s.retiredDate;
+      if(!rd && /^\d{4}-\d{2}/.test(s.birth||'')){ const y = +s.birth.slice(0,4)+60, m = +s.birth.slice(5,7); rd = (m>=10 ? y+1 : y)+'-09-30'; }
+      return !!rd && date <= rd;
+    }
+    if(s.status==='resigned') return !!s.resignedDate && date < s.resignedDate;
+    return false;
+  });
+}
+function pickItems(kind, inp){
+  if(kind==='staff'){
+    const date = (inp && inp.dataset.date) || (inp && inp.id==='mat-add-who' ? dateStrFor(currentMatMk(), matCheckDay)
+               : inp && inp.id==='fuel-add-who' ? dateStrFor(currentFuelMk(), fuelCheckDay) : '');
+    return staffWorkingOn(date).map(s=>({value:s.name,
+      sub:[s.role||'', s.status==='retired'?'เกษียณอายุ':s.status==='resigned'?'ลาออก':''].filter(Boolean).join(' · ')}));
+  }
   if(kind==='mat') return Object.keys(matDayAddMap).map(k=>{ const m = materials.find(x=>x.code===matDayAddMap[k]); return {value:k, sub:m?((m.code||'')+' · '+(m.unit||'')):''}; });
   if(kind==='veh') return Object.keys(fuelDayAddMap).map(k=>({value:k, sub:''}));
   return [];
@@ -4962,7 +4985,7 @@ function pickItems(kind){
   }
   function open(inp){
     cur = inp; ensure();
-    const all = pickItems(inp.dataset.pick), v = norm(inp.value);
+    const all = pickItems(inp.dataset.pick, inp), v = norm(inp.value);
     items = (typed && v) ? all.filter(x=>norm(x.value+' '+x.sub).includes(v)) : all;
     active = items.findIndex(x=>norm(x.value)===v);
     if(active<0 && typed && items.length) active = 0;
@@ -5149,7 +5172,7 @@ function renderReportMaterialDay(mk){
     body += `<tr class="${cls}" data-mlabel="${esc(m.code)}">
       <td class="fd-c"><div class="fd-cb${on?' on':''}${canCk&&!confirmed&&r.qty>0?' can':''}"${r.qty>0?` data-mck="${esc(m.code)}"`:''} title="${r.qty>0?(canCk?'ติ๊กเมื่อตรวจแล้ว':'เฉพาะผู้มีสิทธิ์ตรวจ'):''}">✔</div></td>
       <td class="fd-who-td">${whoCell}</td>
-      <td class="md-name" title="${esc(m.name)}"><b>${esc(m.name)}</b><div class="fd-mut">${esc(m.code||'')}</div></td>
+      <td class="md-name" title="${esc(m.name)}"><b>${esc(m.name)}</b></td>
       <td class="fd-c">${esc(m.unit||'')}</td>
       <td class="fd-c"><span class="fd-tag ${acct==='นอกบัญชี'?'fd-g':'fd-d'}">${acct}</span></td>
       <td class="fd-r">${r.last?`<b>${fmtNum(r.last.qty,1)}</b><div class="fd-mut">${fuelShortDate(r.last.date)}</div>`:'<span class="fd-mut">ไม่มีประวัติ</span>'}</td>
@@ -6252,7 +6275,8 @@ renderAll();
   // รายชื่อบุคลากรจริงจากฐานข้อมูลบุคลากร (ระบบ 1) แทนรายชื่อตั้งต้นที่เขียนไว้ในหน้านี้ — ใช้กับช่อง "ผู้เบิก" ของ พ.1-02/พ.1-03 และผู้ขอใช้รถ
   try{
     const rows = await apiGet('staff');
-    if(rows.length){ staff.length = 0; rows.forEach(r=>staff.push({name:String(r.name||'').trim(), role:r.role||'', ptype:r.ptype||'', status:r.status||'ok', nickname:r.nickname||''})); }
+    if(rows.length){ staff.length = 0; rows.forEach(r=>staff.push({name:String(r.name||'').trim(), role:r.role||'', ptype:r.ptype||'', status:r.status||'ok', nickname:r.nickname||'',
+      startDate:r.startDate||'', birth:r.birth||'', retiredDate:r.retiredDate||'', resignedDate:r.resignedDate||''})); }
   }catch(e){ console.error('โหลดรายชื่อบุคลากรจากระบบที่ 1 ไม่สำเร็จ', e); }
   await Promise.all([
     loadMaterialsFromApi(),
