@@ -341,6 +341,20 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .sum-table thead th.ctr{text-align:center;}
   .sum-table tfoot td{padding:10px 14px;border-top:2px solid var(--line);background:var(--paper-50);font-weight:700;color:var(--navy-900);position:sticky;bottom:0;z-index:2;}  .sum-table tr.is-viewing td{background:rgba(242,169,48,.12);}
   .sum-table tr.is-viewing td:first-child{box-shadow:inset 3px 0 0 var(--orange-600);}
+  /* บันทึกการตรวจสอบรายเดือน (แสดงบนหน้าจอเท่านั้น ไม่พิมพ์ลงแบบ ง.3-26) */
+  .audit-btn{border:none;cursor:pointer;font-family:inherit;}
+  .audit-btn.empty{background:transparent;color:var(--ink-400);font-weight:500;}
+  .sum-table tr.audit-row > td{white-space:normal;background:var(--paper-50);padding:6px 14px 14px;}
+  /* ตารางสรุปเลื่อนซ้าย-ขวาได้ — ให้กล่องบันทึกค้างอยู่ในส่วนที่มองเห็น ไม่ยืดตามความกว้างตาราง */
+  .audit-inner{position:sticky;left:14px;max-width:min(900px, calc(100vw - 96px));}
+  .audit-card{border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 14px;margin-top:8px;font-size:13px;line-height:1.65;}
+  .audit-card .ah{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
+  .audit-card .ah b{color:var(--navy-900);}
+  .audit-card .ah .acts{margin-left:auto;display:flex;gap:4px;}
+  .audit-card .lb{color:var(--ink-600);}
+  .audit-card .meta{color:var(--ink-400);font-size:12px;}
+  .audit-link{background:none;border:none;padding:0;color:var(--navy-700);text-decoration:underline;cursor:pointer;font:inherit;}
+  .audit-empty{color:var(--ink-400);font-size:13px;padding:8px 0 2px;}
   .labor-summary{display:flex;gap:14px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid var(--line);}
   .labor-summary .ov-metric{
     flex:1 1 200px;
@@ -522,6 +536,47 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <div style="display:flex;gap:8px;margin-left:auto;">
                 <button class="btn btn-ghost" onclick="closePayerModal()">ยกเลิก</button>
                 <button class="btn btn-primary" onclick="savePayerModal()">บันทึก</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- บันทึกการตรวจสอบรายเดือน — เปิดจากคอลัมน์ "บันทึกการตรวจ" ในตารางสรุป (ไม่พิมพ์ลงแบบ ง.3-26) -->
+        <div id="audit-modal-overlay" class="modal-overlay hidden no-print">
+          <div class="modal-box">
+            <div class="modal-head">
+              <div class="modal-head-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg></div>
+              <h3 id="audit-modal-title">บันทึกการตรวจสอบ</h3>
+              <button type="button" class="modal-close" onclick="closeAuditModal()">✕</button>
+            </div>
+            <div class="modal-body">
+              <div class="dw-group">
+                <div class="dw-group-title"><span class="dot"></span>เรื่องที่พบ</div>
+                <div class="two-col">
+                  <div class="f-row"><label>คนงาน</label><select id="audit-staff" onchange="auditAutoAmount()"></select></div>
+                  <div class="f-row"><label>ประเภท</label><select id="audit-kind"></select></div>
+                </div>
+                <div class="f-row"><label>ข้อเท็จจริง</label><textarea id="audit-fact" rows="2" placeholder="เช่น ลาป่วยเกินสิทธิ์ 15 วัน วันที่ 18, 20, 27 แต่เบิกจ่ายเต็ม (ส่งฎีกาก่อนตัดวันลา)"></textarea></div>
+                <div class="two-col">
+                  <div class="f-row"><label>จำนวนวัน</label><input type="number" id="audit-days" min="0" step="1" oninput="auditAutoAmount()"></div>
+                  <div class="f-row"><label>จำนวนเงิน (บาท) — คำนวณจากอัตราค่าจ้าง แก้ได้</label><input type="number" id="audit-amount" min="0" step="0.01"></div>
+                </div>
+              </div>
+              <div class="dw-group">
+                <div class="dw-group-title"><span class="dot"></span>การแก้ไขและผลการตรวจ</div>
+                <div class="f-row"><label>การแก้ไข</label><textarea id="audit-fix" rows="2" placeholder="เช่น หักชดเชยในรอบเดือนถัดไป 3 วัน / เรียกเงินคืน"></textarea></div>
+                <div class="two-col">
+                  <div class="f-row"><label>เกี่ยวข้องกับรอบเดือน</label><select id="audit-link"></select></div>
+                  <div class="f-row"><label>สถานะ</label><select id="audit-status"></select></div>
+                </div>
+                <div class="f-row"><label>เอกสารอ้างอิง</label><input type="text" id="audit-ref" placeholder="เช่น ใบลาเลขที่ …, ฎีกาเลขที่ …"></div>
+              </div>
+              <div class="stat-mini" id="audit-meta"></div>
+            </div>
+            <div class="modal-foot">
+              <button class="btn btn-ghost" data-ic="trash" id="audit-delete-btn" onclick="deleteAuditNote()">ลบบันทึกนี้</button>
+              <div style="display:flex;gap:8px;margin-left:auto;">
+                <button class="btn btn-ghost" onclick="closeAuditModal()">ยกเลิก</button>
+                <button class="btn btn-primary" onclick="saveAuditModal()">บันทึก</button>
               </div>
             </div>
           </div>
@@ -1236,7 +1291,7 @@ function renderLaborSummary(){
     return {cyc, total, ss, net: total-ss, days, people: roster.length, info};
   });
   const viewing = document.getElementById('labor-cycle').value;
-  const thead = `<thead><tr><th>รอบเดือน</th><th class="ctr">คน / วันทำงาน</th><th class="num">ยอดเงินรวม</th><th class="num">หัก ปกส. 5%</th><th class="num">ยอดรับจริงรวม</th><th class="ctr">สถานะการส่ง</th><th class="no-print"></th></tr></thead>`;
+  const thead = `<thead><tr><th>รอบเดือน</th><th class="ctr">คน / วันทำงาน</th><th class="num">ยอดเงินรวม</th><th class="num">หัก ปกส. 5%</th><th class="num">ยอดรับจริงรวม</th><th class="ctr">สถานะการส่ง</th><th class="ctr">บันทึกการตรวจ</th><th class="no-print"></th></tr></thead>`;
   const tbody = rows.map(r=>`<tr data-cyc="${esc(r.cyc)}"${r.cyc===viewing?' class="is-viewing"':''}>
       <td><b>${cycleLabel(r.cyc)}</b></td>
       <td class="ctr">${r.people} คน / ${r.days} วัน</td>
@@ -1249,12 +1304,13 @@ function renderLaborSummary(){
             {label:'ส่งแล้ว', cls:'pill-ok', js:`toggleLaborSentFor('${jsArg(r.cyc)}', true)`},
             {label:un.label, cls:un.cls, js:`toggleLaborSentFor('${jsArg(r.cyc)}', false)`}]:null); })()}
       </td>
+      <td class="ctr">${auditBadgeHTML(r.cyc)}</td>
       <td class="num no-print" style="white-space:nowrap;"><button class="btn btn-ghost btn-ic btn-sm" data-ic="eye" data-tip="ดูรายงาน" onclick="openLaborReport('${jsArg(r.cyc)}')"></button> <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์หลักฐานการจ่ายเงิน" onclick="printPaymentEvidence('${jsArg(r.cyc)}')"></button></td>
-    </tr>`).join('');
+    </tr>${auditOpenCyc===r.cyc ? `<tr class="audit-row"><td colspan="8"><div class="audit-inner">${auditNotesHTML(r.cyc)}</div></td></tr>` : ''}`).join('');
   // แถวรวมทั้งปีงบประมาณ — แสดงเมื่อมีมากกว่า 1 รอบเดือน
   const sum = k => rows.reduce((s,r)=>s+r[k],0);
   const tfoot = rows.length>1 ? `<tfoot><tr><td>รวมปีงบประมาณ ${fy} (${rows.length} เดือน)</td><td></td>
-      <td class="num">${fmtMoney(sum('total'))}</td><td class="num">${sum('ss').toLocaleString('en-US')}</td><td class="num">${fmtMoney(sum('net'))}</td><td></td><td class="no-print"></td></tr></tfoot>` : '';
+      <td class="num">${fmtMoney(sum('total'))}</td><td class="num">${sum('ss').toLocaleString('en-US')}</td><td class="num">${fmtMoney(sum('net'))}</td><td></td><td></td><td class="no-print"></td></tr></tfoot>` : '';
   document.getElementById('labor-summary-table').innerHTML = thead + '<tbody>' + tbody + '</tbody>' + tfoot;
 }
 // ไฮไลต์แถวในตารางสรุปที่ตรงกับรอบเดือนที่กำลังแสดงในฟอร์ม ง.3-12
@@ -1271,6 +1327,113 @@ function toggleLaborSentFor(cyc, checked){
   laborSentStatus[cyc] = checked;
   renderLaborSummary();
   if(document.getElementById('labor-cycle').value === cyc) renderLabor();
+}
+/* ---------- บันทึกการตรวจสอบรายเดือน ----------
+   ข้อตรวจพบหลังส่งบัญชีแล้ว เช่น จ่ายเกินเพราะส่งฎีกาก่อนตัดวันลา แล้วหักชดเชยในเดือนถัดไป
+   แสดงบนหน้าจอเท่านั้น ไม่พิมพ์ลงแบบ ง.3-26 และไม่เปลี่ยนตัวเลขที่ระบบคำนวณ — เก็บใน app_state/s4 ใช้ร่วมกันทุกเครื่อง
+   เพิ่ม/แก้/ลบได้เฉพาะเจ้าของระบบ / หัวหน้าหมวด / ผู้ช่วยหมวด (เหมือนสถานะ "ส่งแล้ว") ทุกคนดูได้ */
+const laborAuditNotes = {}; // cycleKey -> [{id, staff, kind, fact, days, amount, fix, linkCyc, status, ref, by, at}]
+const AUDIT_KINDS = ['จ่ายเกิน', 'หักชดเชย', 'จ่ายขาด', 'อื่น ๆ'];
+const AUDIT_STATUS = [
+  {v:'open',  label:'ยังค้าง',       cls:'pill-warn'},
+  {v:'done',  label:'ชดเชยครบแล้ว', cls:'pill-ok'},
+  {v:'check', label:'รอตรวจสอบ',    cls:'pill-neutral'},
+];
+let auditOpenCyc = '';           // รอบเดือนที่กางบันทึกอยู่ในตารางสรุป
+let auditEditing = null;         // {cyc, id} ที่กำลังแก้ใน modal (id ว่าง = เพิ่มใหม่)
+function canEditAuditNotes(){ return canSetLaborSent(); }
+function auditStatusOf(v){ return AUDIT_STATUS.find(s=>s.v===v) || AUDIT_STATUS[0]; }
+function auditBadgeHTML(cyc){
+  const list = laborAuditNotes[cyc] || [];
+  const open = auditOpenCyc===cyc ? ' ▲' : ' ▼';
+  if(!list.length) return canEditAuditNotes() ? `<button type="button" class="pill audit-btn empty" onclick="toggleAuditRow('${jsArg(cyc)}')" title="เปิดเพื่อเพิ่มบันทึกการตรวจ">—${open}</button>` : '<span style="color:var(--ink-400)">—</span>';
+  const pending = list.some(n=>n.status!=='done');
+  return `<button type="button" class="pill audit-btn ${pending?'pill-warn':'pill-ok'}" onclick="toggleAuditRow('${jsArg(cyc)}')" title="${pending?'มีเรื่องที่ยังไม่ปิด':'ทุกเรื่องชดเชยครบแล้ว'}">${list.length} เรื่อง${open}</button>`;
+}
+function toggleAuditRow(cyc){ auditOpenCyc = auditOpenCyc===cyc ? '' : cyc; renderLaborSummary(); }
+function auditNotesHTML(cyc){
+  const list = laborAuditNotes[cyc] || [], edit = canEditAuditNotes();
+  const cards = list.map(n=>{
+    const st = auditStatusOf(n.status);
+    const money = (n.days || n.amount) ? `<div><span class="lb">จำนวน:</span> ${n.days ? `${n.days} วัน` : ''}${n.days && n.amount ? ' = ' : ''}${n.amount ? `${fmtMoney(n.amount)} บาท` : ''}</div>` : '';
+    const link = n.linkCyc ? ` <button type="button" class="audit-link" onclick="toggleAuditRow('${jsArg(n.linkCyc)}')">→ ดูบันทึกเดือน${cycleLabel(n.linkCyc)}</button>` : '';
+    return `<div class="audit-card">
+      <div class="ah"><b>${esc(n.staff || 'ไม่ระบุชื่อ')}</b><span class="pill pill-neutral">${esc(n.kind || '')}</span><span class="pill ${st.cls}">${esc(st.label)}</span>
+        ${edit ? `<span class="acts"><button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="openAuditModal('${jsArg(cyc)}','${jsArg(n.id)}')"></button></span>` : ''}</div>
+      ${n.fact ? `<div><span class="lb">ข้อเท็จจริง:</span> ${esc(n.fact)}</div>` : ''}
+      ${money}
+      ${(n.fix || link) ? `<div><span class="lb">การแก้ไข:</span> ${esc(n.fix || '')}${link}</div>` : ''}
+      ${n.ref ? `<div><span class="lb">อ้างอิง:</span> ${esc(n.ref)}</div>` : ''}
+      <div class="meta">บันทึกโดย ${esc(n.by || '—')} · ${fmtDateTH(n.at)}</div>
+    </div>`;
+  }).join('');
+  return `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><b style="color:var(--navy-900)">บันทึกการตรวจสอบ ${cycleLabel(cyc)}</b><span style="color:var(--ink-400);font-size:12px;">แสดงบนหน้าจอเท่านั้น ไม่พิมพ์ลงแบบ ง.3-26</span>
+      ${edit ? `<button class="btn btn-ghost btn-sm" data-ic="plus" style="margin-left:auto;" onclick="openAuditModal('${jsArg(cyc)}')">เพิ่มบันทึก</button>` : ''}</div>`
+    + (cards || '<div class="audit-empty">ยังไม่มีบันทึกการตรวจของเดือนนี้</div>');
+}
+function openAuditModal(cyc, id){
+  if(!canEditAuditNotes()) return;
+  const n = id ? (laborAuditNotes[cyc] || []).find(x=>x.id===id) : null;
+  if(id && !n) return;
+  auditEditing = {cyc, id: n ? n.id : ''};
+  const names = laborRosterOf(cyc).map(e=>e.name);
+  if(n && n.staff && !names.includes(n.staff)) names.push(n.staff);
+  const opt = (v, label, cur) => `<option value="${esc(v)}"${v===cur?' selected':''}>${esc(label)}</option>`;
+  document.getElementById('audit-modal-title').textContent = `บันทึกการตรวจสอบ — ${cycleLabel(cyc)}`;
+  document.getElementById('audit-staff').innerHTML = opt('', '— เลือกคนงาน —', n ? n.staff : '') + names.map(x=>opt(x, x, n ? n.staff : '')).join('');
+  document.getElementById('audit-kind').innerHTML = AUDIT_KINDS.map(k=>opt(k, k, n ? n.kind : AUDIT_KINDS[0])).join('');
+  document.getElementById('audit-status').innerHTML = AUDIT_STATUS.map(s=>opt(s.v, s.label, n ? n.status : 'open')).join('');
+  const fy = Number(document.getElementById('labor-fy').value) || currentFiscalYear();
+  const cycles = [...new Set([...cyclesInFiscalYear(fy), ...cyclesInFiscalYear(fy+1)])].filter(c=>c!==cyc);
+  if(n && n.linkCyc && !cycles.includes(n.linkCyc)) cycles.push(n.linkCyc);
+  document.getElementById('audit-link').innerHTML = opt('', '— ไม่มี —', n ? n.linkCyc : '') + cycles.sort().map(c=>opt(c, cycleLabel(c), n ? n.linkCyc : '')).join('');
+  document.getElementById('audit-fact').value = n ? n.fact || '' : '';
+  document.getElementById('audit-days').value = n && n.days ? n.days : '';
+  document.getElementById('audit-amount').value = n && n.amount ? n.amount : '';
+  document.getElementById('audit-fix').value = n ? n.fix || '' : '';
+  document.getElementById('audit-ref').value = n ? n.ref || '' : '';
+  document.getElementById('audit-meta').textContent = n ? `บันทึกโดย ${n.by || '—'} · ${fmtDateTH(n.at)}` : 'ชื่อผู้บันทึกและวันที่จะใส่ให้อัตโนมัติ';
+  document.getElementById('audit-delete-btn').style.visibility = n ? 'visible' : 'hidden';
+  document.getElementById('audit-modal-overlay').classList.remove('hidden');
+}
+function closeAuditModal(){ document.getElementById('audit-modal-overlay').classList.add('hidden'); auditEditing = null; }
+// จำนวนเงิน = จำนวนวัน × อัตราค่าจ้างของคนงานคนนั้น ณ สิ้นรอบเดือน (แก้เองได้)
+function auditAutoAmount(){
+  if(!auditEditing) return;
+  const days = Number(document.getElementById('audit-days').value) || 0;
+  const emp = laborRosterOf(auditEditing.cyc).find(e=>e.name===document.getElementById('audit-staff').value);
+  if(!emp || !days) return;
+  const cyc = auditEditing.cyc, rate = LaborCalc.rateOn(emp, `${cyc}-${String(daysInCycle(cyc)).padStart(2,'0')}`);
+  document.getElementById('audit-amount').value = (Math.round(days*rate*100)/100).toFixed(2);
+}
+function saveAuditModal(){
+  if(!auditEditing || !canEditAuditNotes()) return;
+  const v = id => document.getElementById(id).value.trim();
+  const rec = {
+    staff: v('audit-staff'), kind: v('audit-kind'), fact: v('audit-fact'),
+    days: Number(v('audit-days')) || 0, amount: Math.round((Number(v('audit-amount')) || 0)*100)/100,
+    fix: v('audit-fix'), linkCyc: v('audit-link'), status: v('audit-status'), ref: v('audit-ref'),
+  };
+  if(!rec.staff && !rec.fact){ alert('กรุณาเลือกคนงาน หรือกรอกข้อเท็จจริงอย่างน้อย 1 ช่อง'); return; }
+  const {cyc, id} = auditEditing;
+  const list = laborAuditNotes[cyc] || (laborAuditNotes[cyc] = []);
+  const old = id ? list.find(x=>x.id===id) : null;
+  if(old) Object.assign(old, rec);
+  else list.push(Object.assign({id: 'au_' + Date.now().toString(36), by: (window.FBL && FBL.user && FBL.user.name) || '', at: TODAY.toISOString().slice(0,10)}, rec));
+  __saveState();
+  closeAuditModal();
+  auditOpenCyc = cyc;
+  renderLaborSummary();
+}
+function deleteAuditNote(){
+  if(!auditEditing || !auditEditing.id || !canEditAuditNotes()) return;
+  if(!confirm('ลบบันทึกการตรวจนี้?')) return;
+  const {cyc, id} = auditEditing;
+  laborAuditNotes[cyc] = (laborAuditNotes[cyc] || []).filter(x=>x.id!==id);
+  if(!laborAuditNotes[cyc].length) delete laborAuditNotes[cyc];
+  __saveState();
+  closeAuditModal();
+  renderLaborSummary();
 }
 function openLaborReport(cyc){
   document.getElementById('labor-cycle').value = cyc;
@@ -2387,9 +2550,10 @@ const __STORAGE_KEY = 'saraban_subsystem4_v2';
    (ยอดงบประมาณคงเหลือ ระบบหลักคำนวณเองจากข้อมูลจริงแล้ว ไม่ต้องส่ง snapshot จากหน้านี้)
    districtReports/laborSentStatus เป็นค่าสถานะที่ใช้ร่วมกันผ่าน app_state/s4 */
 function __collectState(){
-  return { districtReports, laborSentStatus, laborPayer: laborPayerOverride, laborRemark };
+  return { districtReports, laborSentStatus, laborPayer: laborPayerOverride, laborRemark, laborAuditNotes };
 }
 function __applyState(saved){
+  if(saved.laborAuditNotes){ Object.keys(laborAuditNotes).forEach(k=>delete laborAuditNotes[k]); Object.assign(laborAuditNotes, saved.laborAuditNotes); }
   if('laborPayer' in saved) laborPayerOverride = saved.laborPayer || null;
   if('laborRemark' in saved) laborRemark = saved.laborRemark || '';
   if(saved.districtReports){ districtReports.length=0; districtReports.push(...saved.districtReports); }
