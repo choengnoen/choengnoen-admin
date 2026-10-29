@@ -5682,37 +5682,38 @@ function printP204Month(mk){
     if(pages[pages.length-1].length + b.length > P204_ROWS) pages.push([]);
     pages[pages.length-1].push(...b);
   });
-  p204PrintFrame('รายงานสรุปวัสดุ พ.2-04 พัสดุ'+acctType+' '+monthNamesTh[mo-1]+' '+be, pages.map(p=>p204SheetSvg(p, mo, be)).join(''));
+  p204Print('รายงานสรุปวัสดุ พ.2-04 พัสดุ'+acctType+' '+monthNamesTh[mo-1]+' '+be, pages.map(p=>p204SheetSvg(p, mo, be)).join(''));
 }
-/* พิมพ์ใน iframe แยก: กระดาษ Letter ไม่มีขอบ ตามต้นฉบับ (ระยะขอบทั้งหมดอยู่ในพิกัด SVG แล้ว) และรอฟอนต์โหลดก่อนพิมพ์
-   ข้อความที่ยังยาวเกินช่อง (data-w) บีบเฉพาะข้อความนั้นให้พอดี แทนการล้นทับเส้นตาราง */
-function p204PrintFrame(title, body){
+/* พิมพ์จากหน้าหลัก (ไม่ใช้ iframe — Chrome ไม่ใช้ @page ของ iframe ทำให้มีขอบ + หัว/ท้ายกระดาษ วันที่/URL/เลขหน้า ติดมา)
+   - ใส่ @page{size:A4;margin:0} ชั่วคราวตอนพิมพ์ (ไม่มีขอบ = เบราว์เซอร์ไม่พิมพ์หัว/ท้ายกระดาษ) แล้วลบออกหลังพิมพ์
+   - ต้นฉบับเป็นกระดาษ Letter: วางลง A4 แบบ "พอดีหน้า" เหมือนสั่งพิมพ์ไฟล์ PDF ต้นฉบับลง A4 (ย่อ 97.27% กึ่งกลางหน้า)
+   - ข้อความที่ยังยาวเกินช่อง (data-w) บีบเฉพาะข้อความนั้นให้พอดี — วัดตอนวางนอกจอ ก่อนสั่งพิมพ์ */
+function p204Print(title, body){
   const F = p204Font();
-  const old = document.getElementById('p204-frame'); if(old) old.remove();
-  const fr = document.createElement('iframe');
-  fr.id = 'p204-frame';
-  fr.style.cssText = 'position:fixed;right:0;bottom:0;width:8.5in;height:11in;border:0;visibility:hidden;pointer-events:none;';
-  document.body.appendChild(fr);
-  const d = fr.contentDocument;
-  d.open();
-  d.write(`<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>${esc(title)}</title>
-${F.web ? '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">' : ''}
-<style>@page{size:8.5in 11in;margin:0;} html,body{margin:0;padding:0;background:#fff;}
-.pg{width:8.5in;height:10.98in;overflow:hidden;break-after:page;page-break-after:always;}
-.pg:last-child{break-after:auto;page-break-after:auto;}
-svg{display:block;width:8.5in;height:11in;} text{font-family:${F.fam},sans-serif;fill:#000;} rect{fill:#000;}</style></head><body>${body}</body></html>`);
-  d.close();
-  const fit = ()=>d.querySelectorAll('text[data-w]').forEach(el=>{
+  let box = document.getElementById('print-p204');
+  if(!box){ box = document.createElement('div'); box.id = 'print-p204'; box.className = 'print-only'; document.body.appendChild(box); }
+  box.innerHTML = body;
+  let st = document.getElementById('p204-print-style');
+  if(!st){ st = document.createElement('style'); st.id = 'p204-print-style'; document.head.appendChild(st); }
+  st.textContent = `#print-p204 .pg{width:210mm;height:296.5mm;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff;break-after:page;page-break-after:always;}
+    #print-p204 .pg:last-child{break-after:auto;page-break-after:auto;}
+    #print-p204 svg{display:block;width:210mm;height:271.77mm;flex:none;}
+    #print-p204 text{font-family:${F.fam},sans-serif;fill:#000;} #print-p204 rect{fill:#000;}
+    #print-p204.p204-meas{display:block !important;position:absolute;left:-99999px;top:0;}
+    @media print{ @page{size:A4 portrait;margin:0;} body:has(#print-p204.show-print) .app{display:none !important;} body{margin:0 !important;} }`;
+  const fit = ()=>box.querySelectorAll('text[data-w]').forEach(el=>{
     const w = Number(el.getAttribute('data-w'));
     if(el.getComputedTextLength() > w){ el.setAttribute('textLength', w); el.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
   });
-  const go = ()=>{ try{ fit(); fr.contentWindow.focus(); fr.contentWindow.print(); }catch(e){ console.error(e); } };
-  // รอฟอนต์ (ปกติ/ตัวหนา) โหลดจริงก่อนบีบข้อความและพิมพ์ — กันไว้สูงสุด 4 วินาที
-  const link = d.querySelector('link[rel=stylesheet]');
-  const cssReady = new Promise(r=>{ if(!link || link.sheet) r(); else { link.onload = r; link.onerror = r; } });
   const sz = (16*F.k)+'px '+F.fam;
-  const fontReady = cssReady.then(()=>d.fonts ? Promise.all([d.fonts.load(sz), d.fonts.load('bold '+sz)]).then(()=>d.fonts.ready) : null);
-  Promise.race([fontReady, new Promise(r=>setTimeout(r,4000))]).catch(()=>{}).then(()=>setTimeout(go,150));
+  const fontReady = document.fonts ? Promise.all([document.fonts.load(sz), document.fonts.load('bold '+sz)]) : Promise.resolve();
+  Promise.race([fontReady, new Promise(r=>setTimeout(r,3000))]).catch(()=>{}).then(()=>{
+    box.classList.add('p204-meas'); fit(); box.classList.remove('p204-meas');
+    const oldTitle = document.title; document.title = title; // ชื่อไฟล์ตอนบันทึกเป็น PDF
+    const done = ()=>{ document.title = oldTitle; st.textContent = ''; box.innerHTML = ''; window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    printForm('print-p204');
+  });
 }
 
 /* ============================================================
