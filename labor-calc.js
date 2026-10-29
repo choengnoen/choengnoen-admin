@@ -120,9 +120,10 @@
     const dateISO = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const dow = new Date(y, m - 1, d).getDay();
     if ((emp.startDate && dateISO < emp.startDate) || (emp.endDate && dateISO > emp.endDate)) return '-'; // นอกช่วงที่ปฏิบัติงานจริง ไม่จ่ายค่าจ้าง
-    if (holidays.has(d)) return '1'; // วันหยุดนักขัตฤกษ์ จ่ายค่าจ้างเสมือนมาปฏิบัติงาน
+    // ตรวจวันหยุดประจำสัปดาห์ก่อน — วันหยุดนักขัตฤกษ์ที่ตรงเสาร์/อาทิตย์ไม่นับเป็นวันทำงานเพิ่ม (เช่น วันพืชมงคล ส. 9 พ.ค. 2569)
     if (dow === 0) return '-'; // อาทิตย์หยุดทุกตำแหน่ง
     if (dow === 6 && !worksSaturday(emp, dateISO)) return '-'; // เสาร์หยุด ยกเว้นผู้ปฏิบัติหน้าที่ยาม
+    if (holidays.has(d)) return '1'; // วันหยุดนักขัตฤกษ์ จ่ายค่าจ้างเสมือนมาปฏิบัติงาน
     return leaveCodeForDay(leaves, emp.name, dateISO) || '1'; // ไม่มีคำขอลา → ถือว่ามาปฏิบัติงาน
   }
   // รอบเดือนก่อนหน้า cycleKey ในปีงบประมาณเดียวกัน (ต.ค. ถึงเดือนก่อน cycleKey)
