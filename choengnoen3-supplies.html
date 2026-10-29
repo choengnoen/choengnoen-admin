@@ -724,6 +724,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .md-add input{flex:1 1 260px;max-width:420px;height:34px;border:1.5px solid var(--line);border-radius:8px;padding:0 10px;font-family:'Sarabun';font-size:13.5px;background:#fff;}
   .md-add input:focus{outline:none;border-color:var(--orange-500);box-shadow:0 0 0 3px rgba(224,98,15,.18);}
   .fd-table td.md-name{overflow:hidden;text-overflow:ellipsis;}
+  .md-add .md-f{display:flex;align-items:center;gap:6px;margin:0;}
+  .md-add .md-f span{font-weight:600;color:var(--ink-600);white-space:nowrap;}
+  .md-add .md-f input{flex:1 1 auto;max-width:none;min-width:0;}
+  .md-add .md-f-who{flex:0 1 220px;} .md-add .md-f-item{flex:1 1 300px;} .md-add .md-f-qty{flex:0 0 150px;}
+  .md-add .md-f-qty input{text-align:center;font-family:'Kanit';font-weight:600;}
+  .md-add .md-add-btn{height:34px;padding:0 18px;}
+  .fd-in.fd-who{font-family:'Sarabun';font-size:13.5px;font-weight:600;text-align:left;padding:0 8px;height:34px;}
+  .fd-who-td{min-width:130px;}
   /* แถบวันที่ — หน้าตาเดียวกับแถบสัปดาห์ของใบสั่งการรายวัน (วันทำการทั้งเดือน เลื่อนซ้าย-ขวาได้) */
   .dwk-bar{display:flex;align-items:stretch;background:var(--paper-50);border:solid var(--line);border-width:1px 0;border-radius:0;overflow:hidden;margin:0 -20px 14px;box-shadow:none;}
   .dwk-arr{width:42px;border:0;background:transparent;cursor:pointer;font-size:16px;color:var(--ink-600);flex:none;}
@@ -3567,12 +3575,12 @@ function fuelTxFromApi(row){
     vehicle:row.vehicleId, note:row.note||'', ref:row.ref||undefined,
     unitPrice: row.unitPrice!==''&&row.unitPrice!=null ? Number(row.unitPrice) : undefined,
     totalPrice: row.totalPrice!==''&&row.totalPrice!=null ? Number(row.totalPrice) : undefined,
-    relatedDailyWorkOrderId: row.relatedDailyWorkOrderId || undefined };
+    relatedDailyWorkOrderId: row.relatedDailyWorkOrderId || undefined, requester:row.requester||'' };
 }
 function fuelTxToApi(t){
   return { id:t.id, vehicleId:t.vehicle, fuelType:t.fuelType, kind:t.kind, date:t.date,
     qty:t.liters, ref:t.ref, unitPrice:t.unitPrice, totalPrice:t.totalPrice, note:t.note||'',
-    relatedDailyWorkOrderId:t.relatedDailyWorkOrderId };
+    relatedDailyWorkOrderId:t.relatedDailyWorkOrderId, requester:t.requester };
 }
 /* ข้อมูลรับ-จ่ายน้ำมันจริงย้ายไปอยู่ที่ Google Sheets แท็บ "fuel_transactions" แล้ว
    หน้านี้โหลดจาก API ตอนเปิดหน้าเสมอ ดูฟังก์ชัน loadFuelTransactionsFromApi() ด้านล่าง */
@@ -3700,11 +3708,11 @@ function matTxFromApi(row){
     note:row.note||'', ref:row.refNo||undefined,
     unitPrice: row.unitPrice!==''&&row.unitPrice!=null ? Number(row.unitPrice) : undefined,
     totalPrice: row.totalPrice!==''&&row.totalPrice!=null ? Number(row.totalPrice) : undefined,
-    sourceDailyId: row.relatedDailyWorkOrderId || undefined };
+    sourceDailyId: row.relatedDailyWorkOrderId || undefined, requester:row.requester||'' };
 }
 function matTxToApi(t){
   return { id:t.id, materialId:t.itemCode, type:t.kind, qty:t.qty, unitPrice:t.unitPrice,
-    totalPrice:t.totalPrice, refNo:t.ref, date:t.date, note:t.note||'', relatedDailyWorkOrderId:t.sourceDailyId };
+    totalPrice:t.totalPrice, refNo:t.ref, date:t.date, note:t.note||'', relatedDailyWorkOrderId:t.sourceDailyId, requester:t.requester };
 }
 /* ข้อมูลเบิก-จ่ายพัสดุจริงย้ายไปอยู่ที่ Google Sheets แท็บ "material_transactions" แล้ว
    หน้านี้โหลดจาก API ตอนเปิดหน้าเสมอ ดูฟังก์ชัน loadMaterialTransactionsFromApi() ด้านล่าง */
@@ -3737,26 +3745,45 @@ function committedFuelIssueQty(fuelType, vehicle, date){
   const tx = fuelTransactions.find(t=>t.vehicle===vehicle && t.date===date && t.kind==='issue' && t.fuelType===fuelType);
   return tx ? tx.liters : null;
 }
+/* ฉบับร่าง 1 ช่อง = จำนวน (raw) + ชื่อผู้เบิก (who) — ถ้าทั้งสองค่าเท่ากับที่บันทึกไว้แล้ว ถือว่าไม่ได้แก้ (ลบออกจากฉบับร่าง)
+   คืนค่า true ถ้ายังมีฉบับร่างค้างอยู่ */
+function setMatDraft(code, date, patch){
+  const key = code+'|'+date;
+  const tx = materialTransactions.find(t=>t.itemCode===code && t.date===date && t.kind==='issue');
+  const base = {raw: tx ? String(tx.qty) : '', who: tx ? (tx.requester||'') : ''};
+  const cur = Object.assign({code, date}, base, draftMatCells[key]||{}, patch);
+  if(cur.raw===base.raw && cur.who===base.who){ delete draftMatCells[key]; return false; }
+  draftMatCells[key] = cur; return true;
+}
+function setFuelDraft(fuelType, vehicle, date, patch){
+  const key = fuelType+'|'+vehicle+'|'+date;
+  const tx = fuelTransactions.find(t=>t.vehicle===vehicle && t.date===date && t.kind==='issue' && t.fuelType===fuelType);
+  const base = {raw: tx ? String(tx.liters) : '', who: tx ? (tx.requester||'') : ''};
+  const cur = Object.assign({fuelType, vehicle, date}, base, draftFuelCells[key]||{}, patch);
+  if(cur.raw===base.raw && cur.who===base.who){ delete draftFuelCells[key]; return false; }
+  draftFuelCells[key] = cur; return true;
+}
+/* ชื่อผู้เบิกที่มีผล (รวมฉบับร่าง) */
+function matEffWho(code, date){
+  const d = draftMatCells[code+'|'+date]; if(d && d.who!=null) return d.who;
+  const tx = materialTransactions.find(t=>t.itemCode===code && t.date===date && t.kind==='issue');
+  return tx ? (tx.requester||'') : '';
+}
+function fuelEffWho(fuelType, vehicle, date){
+  const d = draftFuelCells[fuelType+'|'+vehicle+'|'+date]; if(d && d.who!=null) return d.who;
+  const tx = fuelTransactions.find(t=>t.vehicle===vehicle && t.date===date && t.kind==='issue' && t.fuelType===fuelType);
+  return tx ? (tx.requester||'') : '';
+}
 function onMatCellDraftInput(el){
   if(!isAdmin()) return;
-  const code = el.dataset.code, date = el.dataset.date;
-  const raw = el.value.trim();
-  const committed = committedMatIssueQty(code, date);
-  const committedStr = committed==null ? '' : String(committed);
-  const key = code+'|'+date;
-  if(raw===committedStr){ delete draftMatCells[key]; el.classList.remove('cell-dirty'); }
-  else { draftMatCells[key] = {code, date, raw}; el.classList.add('cell-dirty'); }
+  const patch = el.dataset.f==='who' ? {who: el.value.trim()} : {raw: el.value.trim()};
+  el.classList.toggle('cell-dirty', setMatDraft(el.dataset.code, el.dataset.date, patch));
   updateDraftChip('mat');
 }
 function onFuelCellDraftInput(el){
   if(!isAdmin()) return;
-  const fuelType = el.dataset.fueltype, vehicle = el.dataset.vehicle, date = el.dataset.date;
-  const raw = el.value.trim();
-  const committed = committedFuelIssueQty(fuelType, vehicle, date);
-  const committedStr = committed==null ? '' : String(committed);
-  const key = fuelType+'|'+vehicle+'|'+date;
-  if(raw===committedStr){ delete draftFuelCells[key]; el.classList.remove('cell-dirty'); }
-  else { draftFuelCells[key] = {fuelType, vehicle, date, raw}; el.classList.add('cell-dirty'); }
+  const patch = el.dataset.f==='who' ? {who: fuelWhoNorm(el.dataset.vehicle, el.value.trim())} : {raw: el.value.trim()};
+  el.classList.toggle('cell-dirty', setFuelDraft(el.dataset.fueltype, el.dataset.vehicle, el.dataset.date, patch));
   updateDraftChip('fuel');
 }
 function onMileageInput(el){
@@ -3787,20 +3814,20 @@ function updateDraftChip(kind){
 function updateDraftChips(){ updateDraftChip('mat'); updateDraftChip('fuel'); }
 function applyDraftToState(kind){
   if(!kind || kind==='mat'){
-    Object.values(draftMatCells).forEach(({code,date,raw})=>{
+    Object.values(draftMatCells).forEach(({code,date,raw,who})=>{
       materialTransactions = materialTransactions.filter(t=>!(t.itemCode===code && t.date===date && t.kind==='issue'));
       const val = raw===''?NaN:parseFloat(raw);
       if(!isNaN(val) && val>0){
-        materialTransactions.push({id:__matTxNextId++, date, itemCode:code, kind:'issue', qty:val, note:'บันทึกจากตารางเบิกจ่ายรายวัน'});
+        materialTransactions.push({id:__matTxNextId++, date, itemCode:code, kind:'issue', qty:val, requester:who||'', note:'บันทึกจากตารางเบิกจ่ายรายวัน'});
       }
     });
   }
   if(!kind || kind==='fuel'){
-    Object.values(draftFuelCells).forEach(({fuelType,vehicle,date,raw})=>{
+    Object.values(draftFuelCells).forEach(({fuelType,vehicle,date,raw,who})=>{
       fuelTransactions = fuelTransactions.filter(t=>!(t.vehicle===vehicle && t.date===date && t.kind==='issue' && t.fuelType===fuelType));
       const val = raw===''?NaN:parseFloat(raw);
       if(!isNaN(val) && val>0){
-        fuelTransactions.push({id:__fuelTxNextId++, date, fuelType, kind:'issue', liters:val, vehicle, note:'บันทึกจากตารางเบิกจ่ายรายวัน'});
+        fuelTransactions.push({id:__fuelTxNextId++, date, fuelType, kind:'issue', liters:val, vehicle, requester:who||'', note:'บันทึกจากตารางเบิกจ่ายรายวัน'});
       }
     });
   }
@@ -3879,7 +3906,7 @@ async function confirmCommitDraftReport(){
   const total = draftCountFor(kind);
   try{
     if(kind==='mat'){
-      for(const {code,date,raw} of Object.values(draftMatCells)){
+      for(const {code,date,raw,who} of Object.values(draftMatCells)){
         const existing = materialTransactions.find(t=>t.itemCode===code && t.date===date && t.kind==='issue');
         const val = raw===''?NaN:parseFloat(raw);
         if(existing){
@@ -3888,7 +3915,7 @@ async function confirmCommitDraftReport(){
           materialTransactions = materialTransactions.filter(t=>t!==existing);
         }
         if(!isNaN(val) && val>0){
-          const rec = {itemCode:code, kind:'issue', date, qty:val, note:'บันทึกจากตารางเบิกจ่ายรายวัน', ref: existing ? existing.ref : undefined};   /* คงเลขที่ใบเดิมไว้ (ลบแล้วสร้างใหม่) */
+          const rec = {itemCode:code, kind:'issue', date, qty:val, requester:who||'', note:'บันทึกจากตารางเบิกจ่ายรายวัน', ref: existing ? existing.ref : undefined};   /* คงเลขที่ใบเดิมไว้ (ลบแล้วสร้างใหม่) */
           const saved = await apiPost('add', 'material_transactions', matTxToApi(rec));
           materialTransactions.push(matTxFromApi(saved));
         }
@@ -3896,7 +3923,7 @@ async function confirmCommitDraftReport(){
       }
       draftMatCells = {};
     } else {
-      for(const {fuelType,vehicle,date,raw} of Object.values(draftFuelCells)){
+      for(const {fuelType,vehicle,date,raw,who} of Object.values(draftFuelCells)){
         const existing = fuelTransactions.find(t=>t.vehicle===vehicle && t.date===date && t.kind==='issue' && t.fuelType===fuelType);
         const val = raw===''?NaN:parseFloat(raw);
         if(existing){
@@ -3904,7 +3931,7 @@ async function confirmCommitDraftReport(){
           fuelTransactions = fuelTransactions.filter(t=>t!==existing);
         }
         if(!isNaN(val) && val>0){
-          const rec = {fuelType, kind:'issue', date, liters:val, vehicle, note:'บันทึกจากตารางเบิกจ่ายรายวัน', ref: existing ? existing.ref : undefined};   /* คงเลขที่ใบเดิมไว้ (ลบแล้วสร้างใหม่) */
+          const rec = {fuelType, kind:'issue', date, liters:val, vehicle, requester:who||'', note:'บันทึกจากตารางเบิกจ่ายรายวัน', ref: existing ? existing.ref : undefined};   /* คงเลขที่ใบเดิมไว้ (ลบแล้วสร้างใหม่) */
           const saved = await apiPost('add', 'fuel_transactions', fuelTxToApi(rec));
           fuelTransactions.push(fuelTxFromApi(saved));
         }
@@ -4311,6 +4338,8 @@ let fuelDayChecks = {};     // 'YYYY-MM-DD' -> {checked:[ป้ายรถ], ch
 let fuelCheckDay = null;    // เลขวันที่ที่กำลังตรวจ
 let fuelCheckDayMk = null;  // เดือนที่เลขวันข้างบนสังกัดอยู่
 let fuelPickFirstDay = false; // true = ผู้ใช้เพิ่งเลือกปีงบ/เดือน → แสดงวันทำการแรกของเดือน
+let fuelDayAdded = {};      // 'YYYY-MM-DD' -> Set(ป้ายรถที่ผู้ใช้กด "เพิ่มรายการ" ไว้ในวันนั้น แม้ยังไม่ได้ใส่ลิตร) — เหมือน matDayAdded ของ พ.1-02
+let fuelDayAddMap = {};     // ข้อความในช่องค้นหา -> ป้ายรถ
 const FUEL_CHECK_MAX_KM_PER_DAY = 300; // เกณฑ์เลขไมล์เพิ่มสูงสุดต่อวัน (ใช้เมื่อรถคันนั้นไม่ได้กำหนด maxKmPerDay เอง)
 const FUEL_SHORT_MONTH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 async function loadFuelDayChecksFromApi(){
@@ -4404,13 +4433,15 @@ function fuelIssueHistory(ft, label, date, days){
   fuelTransactions.forEach(t=>{ if(t.vehicle===label && t.kind==='issue' && t.fuelType===ft && t.date<date && t.date>=from && t.liters>0) by[t.date] = (by[t.date]||0) + t.liters; });
   return Object.values(by);
 }
-function fuelDayRows(date, fuelTypes, q, showAll){
+function fuelDayRows(date, fuelTypes, q, showAll, added){
   const rows = [];
+  added = added || new Set();
   fuelTypes.forEach(ft=>{
     vehicles.filter(v=>v.fuelType===ft).forEach(v=>{
-      if(q && !((v.label||'')+' '+(v.note||'')).toLowerCase().includes(q)) return;
+      const isAdded = added.has(v.label);
+      if(!isAdded && q && !((v.label||'')+' '+(v.note||'')).toLowerCase().includes(q)) return;
       const lit = fuelEffLiters(ft, v.label, date);
-      if(!(lit>0) && !showAll) return;
+      if(!(lit>0) && !showAll && !isAdded) return;
       const hasMile = ft==='ดีเซล'; // เครื่องมือกลุ่มเบนซิน (เครื่องตัดหญ้า/เครื่องมือถือ) ไม่มีเลขไมล์
       const mRaw = vehicleMileage[v.label+'|'+date];
       const mNow = mileageNumeric(mRaw), mPrev = hasMile ? mileagePrevBefore(v.label, date) : null;
@@ -4418,7 +4449,7 @@ function fuelDayRows(date, fuelTypes, q, showAll){
       const flags = [];
       let dist = null, kmpl = null;
       const isIssue = vehicleFuelMode(v)==='issue';   // เบิกเป็นครั้ง: ตรวจข้ามรอบ (ไมล์จากครั้งก่อน ÷ ลิตรที่เติมครั้งก่อน)
-      if(lit>0 && approvedLeaveOnDate(v.note, date)) flags.push({c:'w', t:'ผู้รับผิดชอบลาในวันนี้', s:'ลา'});
+      if(lit>0 && approvedLeaveOnDate(fuelEffWho(ft, v.label, date) || v.note, date)) flags.push({c:'w', t:'ผู้เบิกลาในวันนี้', s:'ลา'});
       if(lit>0 && hasMile && (mRaw==null || String(mRaw).trim()==='')) flags.push({c:'w', t:'ยังไม่กรอกเลขไมล์', s:'ไม่มีไมล์'});
       // จุดอ้างอิงไมล์: เบิกเป็นครั้ง = ไมล์ ณ วันที่เบิกครั้งก่อน, เบิกสม่ำเสมอ = ไมล์ล่าสุดก่อนวันนี้
       const mBase = (isIssue && last) ? (mileageAtOrBefore(v.label, last.date) || mPrev) : mPrev;
@@ -4486,6 +4517,36 @@ function fuelMileageBlur(el){
   __saveMileageEntry(el.dataset.miVehicle, el.dataset.miDate);
   setTimeout(()=>renderReportFuel(currentFuelMk()), 0); // รอให้โฟกัสย้ายไปช่องถัดไปก่อน แล้วค่อยวาดใหม่ (วาดแล้วคืนโฟกัสให้เอง)
 }
+/* ผู้เบิกน้ำมัน: ค่าเริ่มต้น = ผู้รับผิดชอบรถ (v.note) — เก็บลงฐานข้อมูลเฉพาะเมื่อคนเบิกไม่ใช่ผู้รับผิดชอบ (เก็บเป็นค่าว่างถ้าเป็นคนเดียวกัน) */
+function fuelWhoNorm(label, who){
+  const v = vehicles.find(x=>x.label===label);
+  return (v && (v.note||'').trim()===who) ? '' : who;
+}
+/* แถบเพิ่มรายการ: รถ/เครื่อง → ผู้เบิก (ขึ้นชื่อผู้รับผิดชอบให้อัตโนมัติ แก้ได้) → ลิตร → กด "เพิ่ม" */
+function onFuelAddVehicle(el){
+  const label = fuelDayAddMap[el.value.trim()];
+  const v = label && vehicles.find(x=>x.label===label);
+  const whoEl = document.getElementById('fuel-add-who');
+  if(v && whoEl) whoEl.value = v.note||'';
+}
+function addFuelDayRow(){
+  const vEl = document.getElementById('fuel-add-veh'), whoEl = document.getElementById('fuel-add-who'), litEl = document.getElementById('fuel-add-lit');
+  const item = vEl.value.trim(), who = whoEl.value.trim(), lit = parseFloat(litEl.value);
+  const label = fuelDayAddMap[item];
+  if(!label){ showAlertModal(item ? 'ไม่พบรถ/เครื่องจักร "'+item+'" — เลือกจากรายการที่ขึ้นให้' : 'กรุณาเลือกรถ/เครื่องจักรที่เบิก'); vEl.focus(); return; }
+  if(!who){ showAlertModal('กรุณาระบุชื่อผู้เบิก'); whoEl.focus(); return; }
+  if(!(lit>0)){ showAlertModal('กรุณากรอกจำนวนลิตรที่เบิก (มากกว่า 0)'); litEl.focus(); return; }
+  const v = vehicles.find(x=>x.label===label);
+  const date = dateStrFor(currentFuelMk(), fuelCheckDay);
+  (fuelDayAdded[date] || (fuelDayAdded[date] = new Set())).add(label);
+  setFuelDraft(v.fuelType, label, date, {raw:String(lit), who:fuelWhoNorm(label, who)});
+  renderReportFuel(currentFuelMk());
+  // ดีเซลมีเลขไมล์ → พาไปช่องเลขไมล์ของแถวนั้นต่อ, นอกนั้นกลับไปช่องเลือกรถเพื่อเพิ่มคันถัดไป
+  const mi = Array.from(document.querySelectorAll('#rep-fuel-grid-wrap input.fd-mi')).find(i=>i.dataset.miVehicle===label);
+  const tr = Array.from(document.querySelectorAll('#rep-fuel-grid-wrap tr[data-flabel]')).find(r=>r.dataset.flabel===label);
+  if(tr){ tr.scrollIntoView({block:'nearest', behavior:'smooth'}); tr.classList.add('fd-hl'); setTimeout(()=>tr.classList.remove('fd-hl'), 1600); }
+  if(mi) mi.focus(); else { const n = document.getElementById('fuel-add-veh'); if(n) n.focus(); }
+}
 function setFuelCheckDay(day){ fuelCheckDay = day; fuelCheckDayMk = currentFuelMk(); renderReportFuel(fuelCheckDayMk); }
 /* แถบสัปดาห์ (จันทร์–อาทิตย์) หน้าตาเดียวกับใบสั่งการรายวัน — ไปยังวันที่ iso (ข้ามเดือนได้ โดยเปลี่ยนตัวเลือกปีงบ/เดือนให้ตรงกัน) */
 const FUEL_WEEKDAY_FULL = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
@@ -4522,14 +4583,14 @@ function renderReportFuel(mk){
   const rec = fuelDayRec(date), confirmed = !!rec.confirmed;
   const editable = isAdmin() && !confirmed;
   const canCk = canCheckFuel();
-  const rows = fuelDayRows(date, fuelTypes, q, showAll);
+  const rows = fuelDayRows(date, fuelTypes, q, showAll, fuelDayAdded[date]);
   const real = rows.filter(r=>r.lit>0);
   const ckSet = new Set(rec.checked||[]);
   const ckCount = real.filter(r=>ckSet.has(r.v.label)).length;
   const warnRows = real.filter(r=>r.flags.length);
   // เก็บตำแหน่งโฟกัสไว้คืนหลังวาดใหม่
   const ae = document.activeElement;
-  const focusKey = (ae && wrap.contains(ae) && ae.matches('input.fd-in')) ? (ae.dataset.miVehicle ? 'M|'+ae.dataset.miVehicle : 'L|'+ae.dataset.fueltype+'|'+ae.dataset.vehicle) : null;
+  const focusKey = (ae && wrap.contains(ae) && ae.matches('input.fd-in')) ? (ae.dataset.miVehicle ? 'M|'+ae.dataset.miVehicle : (ae.dataset.f==='who'?'W':'L')+'|'+ae.dataset.fueltype+'|'+ae.dataset.vehicle) : null;
   const sx = wrap.scrollLeft, sy = wrap.scrollTop;
 
   const dayAgg = {};
@@ -4569,6 +4630,23 @@ function renderReportFuel(mk){
   }
   progHtml += `</div>`;
 
+  let addHtml = '';
+  if(editable){
+    fuelDayAddMap = {};
+    const opts = vehicles.filter(v=>fuelTypes.includes(v.fuelType)).slice()
+      .sort((a,b)=>vehicleShortName(a.label).localeCompare(vehicleShortName(b.label),'th')).map(v=>{
+        const txt = vehicleShortName(v.label)+' '+vehicleRegNo(v.label)+(v.note?' — '+v.note:'')+' ('+v.fuelType+')';
+        const key = fuelDayAddMap[txt] ? txt+' ['+v.label+']' : txt;
+        fuelDayAddMap[key] = v.label;
+        return `<option value="${esc(key)}"></option>`;
+      }).join('');
+    addHtml = `<div class="md-add"><b>➕ เพิ่มรายการเบิก</b>
+      <label class="md-f md-f-item"><span>รถ/เครื่อง</span><input id="fuel-add-veh" list="fuel-day-dl" autocomplete="off" placeholder="พิมพ์ชื่อรถ/ทะเบียน/ผู้รับผิดชอบ แล้วเลือก" onchange="onFuelAddVehicle(this)" onkeydown="mdAddKey(event, addFuelDayRow)"></label><datalist id="fuel-day-dl">${opts}</datalist>
+      <label class="md-f md-f-who"><span>ผู้เบิก</span><input id="fuel-add-who" list="fuel-staff-dl" autocomplete="off" placeholder="ขึ้นอัตโนมัติเมื่อเลือกรถ" onkeydown="mdAddKey(event, addFuelDayRow)"></label>${staffDatalist('fuel-staff-dl')}
+      <label class="md-f md-f-qty"><span>ลิตร</span><input id="fuel-add-lit" type="number" min="0" step="0.1" placeholder="0" onkeydown="mdAddKey(event, addFuelDayRow)"></label>
+      <button type="button" class="btn btn-primary md-add-btn" onclick="addFuelDayRow()">เพิ่ม</button></div>`;
+  }
+
   let body = '';
   rows.forEach(r=>{
     const label = r.v.label, on = ckSet.has(label);
@@ -4582,10 +4660,15 @@ function renderReportFuel(mk){
     const miCell = !r.hasMile ? '<span class="fd-mut">ไม่มีเลขไมล์</span>'
       : editable ? `<input type="text" class="fd-in fd-mi${badMi}" value="${r.mRaw!=null?esc(String(r.mRaw)):''}" placeholder="เลขไมล์" data-mi-vehicle="${esc(label)}" data-mi-date="${date}" oninput="onMileageInput(this)" onblur="fuelMileageBlur(this)">`
       : `<b>${r.mRaw!=null&&String(r.mRaw)!==''?esc(String(r.mRaw)):'—'}</b>`;
+    const whoRaw = fuelEffWho(r.ft, label, date), who = whoRaw || r.v.note || '';
+    const whoDirty = isDirty && whoRaw!==((fuelTransactions.find(t=>t.vehicle===label && t.date===date && t.kind==='issue' && t.fuelType===r.ft)||{}).requester||'');
+    const whoCell = editable
+      ? `<input type="text" list="fuel-staff-dl" autocomplete="off" class="fd-in fd-who${whoDirty?' cell-dirty':''}" value="${esc(who)}" placeholder="ระบุชื่อ" data-f="who" data-fueltype="${r.ft}" data-vehicle="${esc(label)}" data-date="${date}" oninput="onFuelCellDraftInput(this)"${whoRaw?` title="ไม่ใช่ผู้รับผิดชอบรถ (${esc(r.v.note||'—')})"`:''}>`
+      : `<b>${esc(who||'—')}</b>`;
     const distTxt = r.dist!=null ? `<b${r.dist<0?' class="fd-neg"':''}>${r.dist>=0?'+':''}${fmtNum(r.dist,0)} กม.</b>${r.kmpl?`<div class="fd-mut" title="${r.isIssue?'ระยะทางตั้งแต่เบิกครั้งก่อน ÷ ลิตรที่เบิกครั้งก่อน':''}">${fmtNum(r.kmpl,1)} กม./ล.${r.isIssue?' (รอบก่อน)':''}</div>`:''}` : '—';
     body += `<tr class="${cls}" data-flabel="${esc(label)}">
       <td class="fd-c"><div class="fd-cb${on?' on':''}${canCk&&!confirmed&&r.lit>0?' can':''}"${r.lit>0?` data-fck="${esc(label)}"`:''} title="${r.lit>0?(canCk?'ติ๊กเมื่อตรวจแล้ว':'เฉพาะผู้มีสิทธิ์ตรวจ'):''}">✔</div></td>
-      <td><b>${esc(r.v.note||'—')}</b><div class="fd-mut">${fuelShortDate(date)}</div></td>
+      <td class="fd-who-td">${whoCell}${whoRaw?`<div class="fd-mut">แทน ${esc(r.v.note||'—')}</div>`:''}</td>
       <td><b>${esc(vehicleShortName(label))}</b><div class="fd-mut">${esc(vehicleRegNo(label))}</div></td>
       <td class="fd-c"><span class="fd-tag ${r.ft==='ดีเซล'?'fd-d':'fd-g'}">น้ำมัน${r.ft}</span></td>
       <td class="fd-r">${r.last?`<b>${fmtNum(r.last.liters,1)} ล.</b><div class="fd-mut">${fuelShortDate(r.last.date)}</div>`:'<span class="fd-mut">ไม่มีประวัติ</span>'}</td>
@@ -4595,19 +4678,19 @@ function renderReportFuel(mk){
       <td class="fd-c">${distTxt}</td>
       <td class="fd-flags">${fuelFlagHtml(r)}</td></tr>`;
   });
-  if(!rows.length) body = `<tr><td colspan="10" class="fd-empty">วันนี้ไม่มีรายการเบิก</td></tr>`;
+  if(!rows.length) body = `<tr><td colspan="10" class="fd-empty">วันนี้ไม่มีรายการเบิก${editable?' — เพิ่มรายการได้ที่ช่องด้านบน':''}</td></tr>`;
   const grand = rows.reduce((s,r)=>s+(r.lit||0),0);
   const table = `<div class="fd-tablewrap"><table class="fd-table"><colgroup><col style="width:54px"><col style="width:140px"><col style="width:150px"><col style="width:104px"><col style="width:112px"><col style="width:104px"><col style="width:100px"><col style="width:112px"><col style="width:96px"><col style="width:118px"></colgroup><thead><tr>
     <th style="width:54px">ตรวจ<br>แล้ว</th><th>ผู้เบิก</th><th>หมายเลขเครื่อง/รถ</th><th>ประเภท<br>พัสดุที่เบิก</th><th>เบิกครั้งล่าสุด<br><small>จำนวน · วันที่</small></th><th class="fd-cur">เบิกครั้งนี้<br><small>(ลิตร)</small></th><th>เลขไมล์<br>ครั้งก่อน</th><th class="fd-cur">เลขไมล์<br>ครั้งนี้</th><th>ระยะทาง</th><th>ผลตรวจ</th></tr></thead>
     <tbody>${body}</tbody><tfoot><tr><td colspan="5" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${fmtNum(grand,1)} ล.</td><td colspan="4"></td></tr></tfoot></table></div>`;
 
-  wrap.innerHTML = head + `<div class="fd-top">${alertsHtml}${progHtml}</div>` + table;
+  wrap.innerHTML = head + `<div class="fd-top">${alertsHtml}${progHtml}</div>` + addHtml + table;
   wrap.scrollLeft = sx; wrap.scrollTop = sy;
   const fdDays = wrap.querySelector('.fd-days'), fdSel = fdDays && fdDays.querySelector('.on');
   if(fdSel) fdDays.scrollLeft = fdSel.offsetLeft - (fdDays.clientWidth - fdSel.offsetWidth)/2;
   if(focusKey){
     const parts = focusKey.split('|');
-    const t = Array.from(wrap.querySelectorAll('input.fd-in')).find(i=> parts[0]==='M' ? i.dataset.miVehicle===parts[1] : (i.dataset.fueltype===parts[1] && i.dataset.vehicle===parts[2]));
+    const t = Array.from(wrap.querySelectorAll('input.fd-in')).find(i=> parts[0]==='M' ? i.dataset.miVehicle===parts[1] : (i.dataset.fueltype===parts[1] && i.dataset.vehicle===parts[2] && (i.dataset.f==='who')===(parts[0]==='W')));
     if(t) t.focus();
   }
   updateDraftChip('fuel');
@@ -4765,15 +4848,36 @@ function matDayInput(el){
   onMatCellDraftInput(el);
 }
 function matDayChange(){ setTimeout(()=>renderReportMaterial(currentMatMk()), 0); }  // คำนวณคงเหลือ/ผลตรวจใหม่หลังกรอกเสร็จ
-function addMatDayRow(el){
-  const code = matDayAddMap[el.value.trim()];
-  if(!code){ if(el.value.trim()) showAlertModal('ไม่พบพัสดุชื่อ "'+el.value.trim()+'" — เลือกจากรายการที่ขึ้นให้'); return; }
+/* แถบเพิ่มรายการ: ผู้เบิก + พัสดุ + จำนวน → กด "เพิ่ม" (หรือ Enter ที่ช่องจำนวน)
+   ชื่อผู้เบิกค้างไว้หลังเพิ่ม เพื่อเพิ่มพัสดุหลายรายการของคนเดียวกันต่อได้เลย */
+let matAddWho = '';
+function staffDatalist(id){
+  return `<datalist id="${id}">${activeStaff().map(s=>`<option value="${esc(s.name)}">${esc(s.role||'')}</option>`).join('')}</datalist>`;
+}
+/* Enter ที่ช่องในแถบเพิ่มรายการ → ไปช่องถัดไป, ช่องสุดท้าย = กดเพิ่ม */
+function mdAddKey(e, addFn){
+  if(e.key!=='Enter') return;
+  e.preventDefault();
+  const ins = Array.from(e.target.closest('.md-add').querySelectorAll('input'));
+  const n = ins[ins.indexOf(e.target)+1];
+  if(n) n.focus(); else addFn();
+}
+function addMatDayRow(){
+  const whoEl = document.getElementById('mat-add-who'), itemEl = document.getElementById('mat-add-item'), qtyEl = document.getElementById('mat-add-qty');
+  const who = whoEl.value.trim(), item = itemEl.value.trim(), raw = qtyEl.value.trim();
+  const code = matDayAddMap[item];
+  if(!who){ showAlertModal('กรุณาระบุชื่อผู้เบิก'); whoEl.focus(); return; }
+  if(!code){ showAlertModal(item ? 'ไม่พบพัสดุชื่อ "'+item+'" — เลือกจากรายการที่ขึ้นให้' : 'กรุณาเลือกพัสดุที่เบิก'); itemEl.focus(); return; }
+  const qty = parseFloat(raw);
+  if(!(qty>0)){ showAlertModal('กรุณากรอกจำนวนที่เบิก (มากกว่า 0)'); qtyEl.focus(); return; }
   const date = dateStrFor(currentMatMk(), matCheckDay);
   (matDayAdded[date] || (matDayAdded[date] = new Set())).add(code);
-  el.value = '';
+  matAddWho = who;
+  setMatDraft(code, date, {raw:String(qty), who});
   renderReportMaterial(currentMatMk());
-  const inp = Array.from(document.querySelectorAll('#rep-mat-grid-wrap input.fd-in')).find(i=>i.dataset.code===code);
-  if(inp){ inp.scrollIntoView({block:'center', behavior:'smooth'}); inp.focus(); }
+  const tr = Array.from(document.querySelectorAll('#rep-mat-grid-wrap tr[data-mlabel]')).find(r=>r.dataset.mlabel===code);
+  if(tr){ tr.scrollIntoView({block:'nearest', behavior:'smooth'}); tr.classList.add('fd-hl'); setTimeout(()=>tr.classList.remove('fd-hl'), 1600); }
+  const next = document.getElementById('mat-add-item'); if(next) next.focus();
 }
 function renderReportMaterialDay(mk){
   const wrap = document.getElementById('rep-mat-grid-wrap');
@@ -4791,6 +4895,7 @@ function renderReportMaterialDay(mk){
   const added = matDayAdded[date] || new Set();
   const ae = document.activeElement;
   const focusCode = (ae && wrap.contains(ae) && ae.matches('input.fd-in')) ? ae.dataset.code : null;
+  const focusF = focusCode ? (ae.dataset.f||'') : '';
   const sx = wrap.scrollLeft, sy = wrap.scrollTop;
 
   // จำนวนรายการที่เบิกในแต่ละวัน (รวมฉบับร่าง) สำหรับแถบสัปดาห์
@@ -4868,7 +4973,11 @@ function renderReportMaterialDay(mk){
       matDayAddMap[v] = m.code;
       return `<option value="${esc(v)}"></option>`;
     }).join('');
-    addHtml = `<div class="md-add"><b>➕ เพิ่มรายการเบิกของวันนี้</b><input id="mat-day-add" list="mat-day-dl" autocomplete="off" placeholder="พิมพ์ชื่อพัสดุแล้วเลือกจากรายการ" onchange="addMatDayRow(this)"><datalist id="mat-day-dl">${opts}</datalist><span class="fd-mut">พัสดุที่ไม่อยู่ในรายการด้านล่างให้เพิ่มจากช่องนี้</span></div>`;
+    addHtml = `<div class="md-add"><b>➕ เพิ่มรายการเบิก</b>
+      <label class="md-f md-f-who"><span>ผู้เบิก</span><input id="mat-add-who" list="mat-staff-dl" autocomplete="off" placeholder="พิมพ์/เลือกชื่อ" value="${esc(matAddWho)}" onkeydown="mdAddKey(event, addMatDayRow)"></label>${staffDatalist('mat-staff-dl')}
+      <label class="md-f md-f-item"><span>พัสดุ</span><input id="mat-add-item" list="mat-day-dl" autocomplete="off" placeholder="พิมพ์ชื่อพัสดุแล้วเลือกจากรายการ" onkeydown="mdAddKey(event, addMatDayRow)"></label><datalist id="mat-day-dl">${opts}</datalist>
+      <label class="md-f md-f-qty"><span>จำนวน</span><input id="mat-add-qty" type="number" min="0" step="0.1" placeholder="0" onkeydown="mdAddKey(event, addMatDayRow)"></label>
+      <button type="button" class="btn btn-primary md-add-btn" onclick="addMatDayRow()">เพิ่ม</button></div>`;
   }
 
   let body = '';
@@ -4884,8 +4993,14 @@ function renderReportMaterialDay(mk){
       : !r.flags.length ? '<span class="fd-fl fd-ok">✔ ปกติ</span>'
       : `<span class="fd-fl ${r.flags.some(f=>f.c==='b')?'fd-b':'fd-w'}" title="${esc(r.flags.map(f=>f.t).join(' · '))}">${r.flags[0].c==='b'?'⛔':'⚠'} ${esc(r.flags[0].s||r.flags[0].t)}${r.flags.length>1?' +'+(r.flags.length-1):''}</span>`;
     const acct = m.accountType==='นอกบัญชี' ? 'นอกบัญชี' : 'ในบัญชี';
+    const who = matEffWho(m.code, date);
+    const whoDirty = isDirty && who!==((materialTransactions.find(t=>t.itemCode===m.code && t.date===date && t.kind==='issue')||{}).requester||'');
+    const whoCell = editable
+      ? `<input type="text" list="mat-staff-dl" autocomplete="off" class="fd-in fd-who${whoDirty?' cell-dirty':''}" value="${esc(who)}" placeholder="ระบุชื่อ" data-f="who" data-code="${esc(m.code)}" data-date="${date}" oninput="onMatCellDraftInput(this)">`
+      : (who ? `<b>${esc(who)}</b>` : '<span class="fd-mut">ไม่ระบุ</span>');
     body += `<tr class="${cls}" data-mlabel="${esc(m.code)}">
       <td class="fd-c"><div class="fd-cb${on?' on':''}${canCk&&!confirmed&&r.qty>0?' can':''}"${r.qty>0?` data-mck="${esc(m.code)}"`:''} title="${r.qty>0?(canCk?'ติ๊กเมื่อตรวจแล้ว':'เฉพาะผู้มีสิทธิ์ตรวจ'):''}">✔</div></td>
+      <td class="fd-who-td">${whoCell}</td>
       <td class="md-name" title="${esc(m.name)}"><b>${esc(m.name)}</b><div class="fd-mut">${esc(m.code||'')}</div></td>
       <td class="fd-c">${esc(m.unit||'')}</td>
       <td class="fd-c"><span class="fd-tag ${acct==='นอกบัญชี'?'fd-g':'fd-d'}">${acct}</span></td>
@@ -4894,16 +5009,16 @@ function renderReportMaterialDay(mk){
       <td class="fd-r"><b class="fd-big${r.after<0?' fd-neg':''}">${fmtNum(r.after,1)}</b></td>
       <td class="fd-flags">${flagHtml}</td></tr>`;
   });
-  if(!rows.length) body = `<tr><td colspan="8" class="fd-empty">วันนี้ไม่มีรายการเบิก${editable?' — เพิ่มรายการได้ที่ช่องด้านบน':''}</td></tr>`;
-  const table = `<div class="fd-tablewrap"><table class="fd-table md-table"><colgroup><col style="width:54px"><col style="width:300px"><col style="width:84px"><col style="width:104px"><col style="width:120px"><col style="width:112px"><col style="width:112px"><col style="width:140px"></colgroup><thead><tr>
-    <th style="width:54px">ตรวจ<br>แล้ว</th><th>ชื่อพัสดุ</th><th>หน่วย</th><th>ประเภทบัญชี</th><th>เบิกครั้งล่าสุด<br><small>จำนวน · วันที่</small></th><th class="fd-cur">เบิกวันนี้<br><small>(จำนวน)</small></th><th>คงเหลือ<br>หลังเบิก</th><th>ผลตรวจ</th></tr></thead>
-    <tbody>${body}</tbody><tfoot><tr><td colspan="5" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${real.length} รายการ</td><td colspan="2"></td></tr></tfoot></table></div>`;
+  if(!rows.length) body = `<tr><td colspan="9" class="fd-empty">วันนี้ไม่มีรายการเบิก${editable?' — เพิ่มรายการได้ที่ช่องด้านบน':''}</td></tr>`;
+  const table = `<div class="fd-tablewrap"><table class="fd-table md-table"><colgroup><col style="width:54px"><col style="width:170px"><col style="width:260px"><col style="width:76px"><col style="width:96px"><col style="width:112px"><col style="width:104px"><col style="width:100px"><col style="width:120px"></colgroup><thead><tr>
+    <th style="width:54px">ตรวจ<br>แล้ว</th><th>ผู้เบิก</th><th>ชื่อพัสดุ</th><th>หน่วย</th><th>ประเภทบัญชี</th><th>เบิกครั้งล่าสุด<br><small>จำนวน · วันที่</small></th><th class="fd-cur">เบิกวันนี้<br><small>(จำนวน)</small></th><th>คงเหลือ<br>หลังเบิก</th><th>ผลตรวจ</th></tr></thead>
+    <tbody>${body}</tbody><tfoot><tr><td colspan="6" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${real.length} รายการ</td><td colspan="2"></td></tr></tfoot></table></div>`;
 
   wrap.innerHTML = head + `<div class="fd-top">${alertsHtml}${sumHtml}</div>` + addHtml + table;
   wrap.scrollLeft = sx; wrap.scrollTop = sy;
   const fdDays = wrap.querySelector('.fd-days'), fdSel = fdDays && fdDays.querySelector('.on');
   if(fdSel) fdDays.scrollLeft = fdSel.offsetLeft - (fdDays.clientWidth - fdSel.offsetWidth)/2;
-  if(focusCode){ const t = Array.from(wrap.querySelectorAll('input.fd-in')).find(i=>i.dataset.code===focusCode); if(t) t.focus(); }
+  if(focusCode){ const t = Array.from(wrap.querySelectorAll('input.fd-in')).find(i=>i.dataset.code===focusCode && (i.dataset.f||'')===focusF); if(t) t.focus(); }
   updateDraftChip('mat');
 }
 /* เหตุการณ์ของมุมมองรายวัน (ผูกครั้งเดียว) — ใช้ mousedown กับแถบวัน เพราะช่องกรอกที่กำลังพิมพ์จะวาดใหม่ตอนเสียโฟกัส ทำให้ click หลุด */
