@@ -325,9 +325,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
     #print-vehreq.show-print{page:vehreqpage;}
   }
   /* รายงานสรุปวัสดุประจำปี พ.2-04 ตามไฟล์ "พ.2-04.pdf" (A4 แนวตั้ง) — วางตำแหน่งเป็น มม. ตามต้นฉบับ ดู printP204()
-     1 หน้า = 27 บรรทัด ถ้ารายการเกินขึ้นหน้าใหม่ (หัวกระดาษ/ลายเซ็นซ้ำทุกหน้า) */
-  @page p204page{size:A4 portrait;margin:0;}
-  .p204-sheet{position:relative;width:210mm;height:297mm;overflow:hidden;background:#fff;color:#000;font-family:'Sarabun',sans-serif;font-size:8.5pt;line-height:1.2;break-after:page;page-break-after:always;}
+     1 หน้า = 27 บรรทัด ถ้ารายการเกินขึ้นหน้าใหม่ (หัวกระดาษ/ลายเซ็นซ้ำทุกหน้า)
+     พิมพ์ผ่าน iframe แยก (p204PrintFrame) ที่มี @page{size:A4;margin:0} ของตัวเอง — กฎ .p204-sheet ด้านล่างถูกคัดลอกไปใช้ในนั้น */
+  .p204-sheet{position:relative;width:210mm;height:296mm;overflow:hidden;/* สูง 296 ไม่ใช่ 297 — ปัดเศษแล้วล้นเกิดหน้าว่างเกิน 1 แผ่น */background:#fff;color:#000;font-family:'Sarabun',sans-serif;font-size:8.5pt;line-height:1.2;break-after:page;page-break-after:always;}
   .p204-sheet:last-child{break-after:auto;page-break-after:auto;}
   .p204-sheet .a{position:absolute;white-space:nowrap;}
   .p204-sheet .t{font-size:13pt;font-weight:700;}
@@ -342,10 +342,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .p204-sheet tr:last-child td{border-bottom:.3mm solid #000;}
   .p204-sheet .sg{position:absolute;top:245mm;width:34mm;margin-left:-17mm;text-align:center;white-space:nowrap;}
   .p204-sheet .sg i{display:block;width:20mm;margin:0 auto 2.2mm;border-top:.3mm dotted #000;}
-  @media print{
-    body:has(#print-p204.show-print) .app{display:none !important;}
-    #print-p204.show-print{page:p204page;}
-  }
   tr.mileage-row input.mi-decrease,tr.mileage-row td.mi-decrease{background:var(--danger-bg)!important;}
   tr.mileage-row input.mi-decrease{border-color:var(--danger)!important;color:var(--danger);font-weight:600;}
   tr.mileage-row input.mi-jump,tr.mileage-row td.mi-jump{background:#fff4e0!important;}
@@ -555,14 +551,17 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .mc-col h3 .n{margin-left:auto;background:#fff;border-radius:99px;padding:1px 11px;font-size:12.5px;}
   .mc-card{background:#fff;border-radius:11px;padding:12px 13px;margin-bottom:9px;box-shadow:0 1px 2px rgba(0,0,0,.07);display:flex;flex-direction:column;box-sizing:border-box;}
   .mc-card .mc-l1{margin-bottom:auto;}
-  .mc-l1{display:flex;gap:10px;align-items:center;}
-  .mc-nm{flex:1;font-size:13.5px;line-height:1.35;color:var(--ink-900);}
+  /* ยอดคงเหลือ+หน่วย และปุ่ม ชิดบนและกว้างคงที่ ให้อยู่ตำแหน่งเดียวกันทุกการ์ด ไม่ว่าชื่อจะยาวกี่บรรทัด */
+  .mc-l1{display:flex;gap:10px;align-items:flex-start;}
+  .mc-nm{flex:1;min-width:0;font-size:13.5px;line-height:1.35;color:var(--ink-900);}
   .mc-nm small{display:block;color:var(--ink-400);font-size:11.5px;margin-top:2px;}
-  .mc-v{text-align:right;font-family:'Kanit',sans-serif;font-weight:600;font-size:18px;line-height:1.1;white-space:nowrap;}
-  .mc-v small{display:block;font-family:'Sarabun';font-size:11px;font-weight:400;color:var(--ink-600);}
+  .mc-v{flex:none;width:116px;text-align:right;font-family:'Kanit',sans-serif;font-weight:600;font-size:18px;line-height:28px;white-space:nowrap;}
+  .mc-v small{margin-left:4px;font-family:'Sarabun';font-size:11.5px;font-weight:400;color:var(--ink-600);}
   .mc-v.neg{color:var(--danger);}.mc-v.low{color:#a3350f;}.mc-v.ok{color:var(--success);}
-  .mc-go{border:0;background:var(--navy-900);color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;font-family:'Kanit',sans-serif;cursor:pointer;white-space:nowrap;}
+  .mc-go{flex:none;width:68px;height:28px;border:0;background:var(--navy-900);color:#fff;border-radius:8px;padding:0 6px;font-size:12px;font-family:'Kanit',sans-serif;cursor:pointer;white-space:nowrap;}
   .mc-go:hover{filter:brightness(1.15);}
+  .mc-go.soft{background:var(--paper-100,#eef1f4);color:var(--ink-600);border:1px solid var(--line);font-weight:400;}
+  .mc-go.soft:hover{filter:none;background:#e3e8ee;color:var(--navy-900);}
   .mc-mv{display:flex;gap:12px;flex-wrap:wrap;margin-top:9px;padding-top:8px;border-top:1px dashed var(--line);font-size:12px;color:var(--ink-600);}
   .mc-mv b{font-family:'Kanit',sans-serif;font-weight:600;}
   .mc-mv .in{color:var(--success);}.mc-mv .out{color:#a3350f;}
@@ -1225,7 +1224,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <div class="print-only" id="print-fuel"></div>
 <div class="print-only" id="print-ec1w"></div>
 <div class="print-only" id="print-vehreq"></div>
-<div class="print-only" id="print-p204"></div>
 
 <!-- ============ แก้ไขใบเบิกรับเข้า (จากแขวง) ============ -->
 <div class="modal-overlay hidden no-print" id="ib-edit-overlay">
@@ -1672,7 +1670,7 @@ function renderMaterialCols(){
       <div class="mc-l1">
         <div class="mc-nm">${esc(r.m.name)}<small>จุดสั่งซื้อ ${fmtNum(r.m.reorder,1)} ${esc(r.m.unit)}</small>${r.watch?'<span class="mc-watch">ใกล้ถึงจุดสั่งซื้อ</span>':''}${masterUsage==='all' && matUsage(r.m)==='สำนักงาน'?'<span class="mc-use">🗂 สำนักงาน</span>':''}</div>
         <div class="mc-v ${r.k}">${fmtNum(r.c,1)}<small>${esc(r.m.unit)}</small></div>
-        <button type="button" class="mc-go" onclick="${onclick}">${lab}</button>
+        <button type="button" class="mc-go${act==='history'?' soft':''}" onclick="${onclick}">${lab}</button>
       </div>
       <div class="mc-mv"><span>ยกมา <b>${fmtNum(r.s.opening,1)}</b></span><span class="in">รับเข้า <b>+${fmtNum(r.s.received,1)}</b></span><span class="out">เบิก <b>−${fmtNum(r.s.issued,1)}</b></span>${alt}${ed}</div>
     </div>`;
@@ -5640,7 +5638,7 @@ function printP204Month(mk){
     <tr><th rowspan="2" style="height:13.1mm;">รับ<br>งวดนี้</th><th rowspan="2">จ่าย<br>ในงวดนี้</th><th rowspan="2">ต่อหน่วย</th><th rowspan="2">รวมเป็น<br>เงิน</th></tr><tr></tr>`;
   const sheet = rows => {
     while(rows.length < P204_ROWS) rows.push(['','','','','','','','','','','']);
-    const body = rows.map(r=>'<tr>'+r.map((v,j)=>`<td${j===1||j===2?' class="l"':''}>${esc(String(v))}</td>`).join('')+'</tr>').join('');
+    const body = rows.map(r=>'<tr>'+r.map((v,j)=>`<td${j===1||j===2?' class="l"':''}>${v===''?'':'<span>'+esc(String(v))+'</span>'}</td>`).join('')+'</tr>').join('');
     return `<div class="p204-sheet">
       <div class="a t" style="right:110.5mm;top:15.2mm;">รายงานสรุปวัสดุประจำปี</div>
       <div class="a" style="left:111.6mm;top:15.9mm;"><span class="bx"></span>1.</div>
@@ -5660,8 +5658,38 @@ function printP204Month(mk){
       <div class="sg" style="left:183.1mm;"><i></i>หัวหน้าหน่วยงาน</div>
     </div>`;
   };
-  document.getElementById('print-p204').innerHTML = pages.map(sheet).join('');
-  printForm('print-p204');
+  p204PrintFrame('รายงานสรุปวัสดุ พ.2-04 พัสดุ'+acctType+' '+monthNamesTh[mo-1]+' '+be, pages.map(sheet).join(''));
+}
+/* พิมพ์ใน iframe แยก: บังคับกระดาษ A4 แนวตั้ง ไม่มีขอบ (ไม่ถูกเบราว์เซอร์ย่อ/ใช้กระดาษ Letter) และรอฟอนต์ Sarabun โหลดก่อนพิมพ์
+   ช่องที่ข้อความยังยาวเกิน (เช่น เครื่องใช้ฟอนต์สำรอง) ย่อขนาดตัวอักษรเฉพาะช่องนั้นจนพอดี แทนการถูกตัดหาย */
+function p204PrintFrame(title, body){
+  const rules = Array.from(document.styleSheets).flatMap(s=>{ try{ return Array.from(s.cssRules); }catch(e){ return []; } })
+    .filter(r=>r.selectorText && r.selectorText.includes('.p204-sheet')).map(r=>r.cssText).join('\n');
+  const old = document.getElementById('p204-frame'); if(old) old.remove();
+  const fr = document.createElement('iframe');
+  fr.id = 'p204-frame';
+  fr.style.cssText = 'position:fixed;right:0;bottom:0;width:210mm;height:297mm;border:0;visibility:hidden;pointer-events:none;';
+  document.body.appendChild(fr);
+  const d = fr.contentDocument;
+  d.open();
+  d.write(`<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>${esc(title)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+<style>@page{size:A4 portrait;margin:0;} *{box-sizing:border-box;} html,body{margin:0;padding:0;background:#fff;}
+${rules}</style></head><body>${body}</body></html>`);
+  d.close();
+  // วัดจาก <span> ในช่องเทียบกับความกว้างช่องหักระยะขอบ (ช่องตารางที่ overflow:hidden ค่า scrollWidth เชื่อไม่ได้)
+  const fit = ()=>d.querySelectorAll('.p204-sheet td > span').forEach(sp=>{
+    const td = sp.parentNode, cs = fr.contentWindow.getComputedStyle(td);
+    const room = td.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 1;
+    let fs = 8.5;
+    while(sp.getBoundingClientRect().width > room && fs > 5.5){ fs -= 0.25; sp.style.fontSize = fs+'pt'; }
+  });
+  const go = ()=>{ try{ fit(); fr.contentWindow.focus(); fr.contentWindow.print(); }catch(e){ console.error(e); } };
+  // รอ: stylesheet ของ Google Fonts โหลดเสร็จ → โหลดฟอนต์ Sarabun ปกติ/ตัวหนาจริง → ค่อยย่อช่องที่ยาวเกินแล้วพิมพ์ (กันไว้สูงสุด 4 วินาที)
+  const link = d.querySelector('link[rel=stylesheet]');
+  const cssReady = new Promise(r=>{ if(!link || link.sheet) r(); else { link.onload = r; link.onerror = r; } });
+  const fontReady = cssReady.then(()=>d.fonts ? Promise.all([d.fonts.load("8.5pt 'Sarabun'"), d.fonts.load("bold 8pt 'Sarabun'"), d.fonts.load("bold 13pt 'Sarabun'")]).then(()=>d.fonts.ready) : null);
+  Promise.race([fontReady, new Promise(r=>setTimeout(r,4000))]).catch(()=>{}).then(()=>setTimeout(go,150));
 }
 
 /* ============================================================
