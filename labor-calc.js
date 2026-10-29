@@ -27,8 +27,12 @@
   };
   // แผนที่ประเภทการลา (ระบบที่ 1) → รหัสลงเวลาที่ใช้ในตาราง ง.3-12
   const LEAVE_TYPE_CODE = { 'ป่วย': 'ป', 'กิจ': 'ก', 'พักผ่อน': 'พ', 'คลอดบุตร': 'ค', 'ไปราชการ': 'ร', 'ขาดงาน': 'ข' };
-  // มาปฏิบัติงานเต็มวัน + ลาที่ได้รับอนุมัติทุกประเภท นับเป็นวันทำงาน (ไม่รวม ข/ขาดงาน และ -/วันหยุด)
+  // มาปฏิบัติงานเต็มวัน + ลาที่ได้รับอนุมัติทุกประเภท นับเป็นวันทำงาน (ไม่รวม ข/ขาดงาน, ปx/ลาป่วยเกินสิทธิ์ และ -/วันหยุด)
   const WORKDAY_CODES = new Set(['1', 'ป', 'ก', 'พ', 'ค', 'ร']);
+  /* ลาป่วยได้รับค่าจ้างไม่เกิน 15 วันทำการต่อปีงบประมาณ (1 ต.ค. – 30 ก.ย.)
+     วันลาป่วยที่เกินสิทธิ์ใช้รหัส 'ปx' — แสดงในแบบฟอร์มเป็น "ป" แต่ไม่นับเป็นวันทำงาน/ไม่จ่ายค่าจ้าง */
+  const SICK_PAID_LIMIT = 15;
+  const UNPAID_SICK_CODE = 'ปx';
 
   /* หน้าที่ยาม = จ้างรวมวันเสาร์ (วันอาทิตย์หยุด) ตั้งแต่วันเริ่มปฏิบัติหน้าที่ยาม (dutyStart ว่าง = ทุกวัน) */
   function isGuard(emp) { return String(emp && emp.duty || '').includes('ยาม'); }
@@ -111,23 +115,50 @@
         startDate: s.startDate || null, endDate: s.status === 'ok' ? null : lastDayOf(s), rateHistory: rateHistoryOf(s) }));
   }
 
-  // รหัสลงเวลารายวันของแต่ละคนในรอบเดือน → { name: ['1','-','ป',...] }
+  // รหัสลงเวลาของวันหนึ่ง (ยังไม่คิดโควตาลาป่วย)
+  function rawDayCode(emp, y, m, d, holidays, leaves) {
+    const dateISO = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const dow = new Date(y, m - 1, d).getDay();
+    if ((emp.startDate && dateISO < emp.startDate) || (emp.endDate && dateISO > emp.endDate)) return '-'; // นอกช่วงที่ปฏิบัติงานจริง ไม่จ่ายค่าจ้าง
+    if (holidays.has(d)) return '1'; // วันหยุดนักขัตฤกษ์ จ่ายค่าจ้างเสมือนมาปฏิบัติงาน
+    if (dow === 0) return '-'; // อาทิตย์หยุดทุกตำแหน่ง
+    if (dow === 6 && !worksSaturday(emp, dateISO)) return '-'; // เสาร์หยุด ยกเว้นผู้ปฏิบัติหน้าที่ยาม
+    return leaveCodeForDay(leaves, emp.name, dateISO) || '1'; // ไม่มีคำขอลา → ถือว่ามาปฏิบัติงาน
+  }
+  // รอบเดือนก่อนหน้า cycleKey ในปีงบประมาณเดียวกัน (ต.ค. ถึงเดือนก่อน cycleKey)
+  function earlierCyclesInFy(cycleKey) {
+    const [y, m] = cycleKey.split('-').map(Number);
+    const list = [];
+    let cy = m >= 10 ? y : y - 1, cm = 10;
+    while (cy * 100 + cm < y * 100 + m) {
+      list.push(`${cy}-${String(cm).padStart(2, '0')}`);
+      cm++; if (cm === 13) { cm = 1; cy++; }
+    }
+    return list;
+  }
+
+  // รหัสลงเวลารายวันของแต่ละคนในรอบเดือน → { name: ['1','-','ป','ปx',...] }
   function attendanceOf(cycleKey, roster, leaves, publicHolidays) {
     const [y, m] = cycleKey.split('-').map(Number);
     const nDays = daysInCycle(cycleKey);
     const holidays = new Set(holidaysOf(cycleKey, publicHolidays).map(h => h.day));
     const lv = leaves || [];
+    const earlier = earlierCyclesInFy(cycleKey).map(k => {
+      const [ky, km] = k.split('-').map(Number);
+      return { ky, km, n: daysInCycle(k), hol: new Set(holidaysOf(k, publicHolidays).map(h => h.day)) };
+    });
     const map = {};
     (roster || []).forEach(emp => {
+      // วันลาป่วยที่ใช้ไปแล้วในปีงบประมาณนี้ก่อนเดือนนี้
+      let sickUsed = 0;
+      if (lv.some(r => r.name === emp.name && r.type === 'ป่วย')) {
+        earlier.forEach(e => { for (let d = 1; d <= e.n; d++) if (rawDayCode(emp, e.ky, e.km, d, e.hol, lv) === 'ป') sickUsed++; });
+      }
       const codes = [];
       for (let d = 1; d <= nDays; d++) {
-        const dateISO = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const dow = new Date(y, m - 1, d).getDay();
-        if ((emp.startDate && dateISO < emp.startDate) || (emp.endDate && dateISO > emp.endDate)) { codes.push('-'); continue; } // นอกช่วงที่ปฏิบัติงานจริง ไม่จ่ายค่าจ้าง
-        if (holidays.has(d)) { codes.push('1'); continue; } // วันหยุดนักขัตฤกษ์ จ่ายค่าจ้างเสมือนมาปฏิบัติงาน
-        if (dow === 0) { codes.push('-'); continue; } // อาทิตย์หยุดทุกตำแหน่ง
-        if (dow === 6 && !worksSaturday(emp, dateISO)) { codes.push('-'); continue; } // เสาร์หยุด ยกเว้นผู้ปฏิบัติหน้าที่ยาม
-        codes.push(leaveCodeForDay(lv, emp.name, dateISO) || '1'); // ไม่มีคำขอลา → ถือว่ามาปฏิบัติงาน
+        let c = rawDayCode(emp, y, m, d, holidays, lv);
+        if (c === 'ป' && ++sickUsed > SICK_PAID_LIMIT) c = UNPAID_SICK_CODE; // ลาป่วยเกินสิทธิ์ ไม่จ่ายค่าจ้าง
+        codes.push(c);
       }
       map[emp.name] = codes;
     });
@@ -149,5 +180,5 @@
     return (roster || []).reduce((sum, e) => sum + amountOf(e, att[e.name], cycleKey), 0);
   }
 
-  window.LaborCalc = { THAI_HOLIDAYS, LEAVE_TYPE_CODE, WORKDAY_CODES, isGuard, worksSaturday, daysInCycle, holidaysOf, leaveCodeForDay, normalizeStaff, rosterFrom, attendanceOf, workDays, spendOf, rateHistoryOf, rateOn, rateChangesIn, amountOf };
+  window.LaborCalc = { THAI_HOLIDAYS, LEAVE_TYPE_CODE, WORKDAY_CODES, SICK_PAID_LIMIT, UNPAID_SICK_CODE, isGuard, worksSaturday, daysInCycle, holidaysOf, leaveCodeForDay, normalizeStaff, rosterFrom, attendanceOf, workDays, spendOf, rateHistoryOf, rateOn, rateChangesIn, amountOf };
 })();

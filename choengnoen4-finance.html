@@ -815,12 +815,12 @@ function generateAttendance(cycleKey){
   return map;
 }
 function __clearAttendanceCache(){ attendanceCache = {}; }
-const WORKDAY_CODES = LaborCalc.WORKDAY_CODES; // มาปฏิบัติงานเต็มวัน + ลาที่ได้รับอนุมัติทุกประเภท นับเป็นวันทำงาน (ไม่รวม ข/ขาดงาน และ -/วันหยุด)
+const WORKDAY_CODES = LaborCalc.WORKDAY_CODES; // มาปฏิบัติงานเต็มวัน + ลาที่ได้รับอนุมัติทุกประเภท นับเป็นวันทำงาน (ไม่รวม ข/ขาดงาน, ปx/ลาป่วยเกินสิทธิ์ และ -/วันหยุด)
 function workDaysOf(cycleKey, name){
   const codes = generateAttendance(cycleKey)[name] || [];
   return codes.filter(c=>WORKDAY_CODES.has(c)).length;
 }
-function codeClass(c){ return c==='1'?'c-1':c==='ป'?'c-p':c==='พ'?'c-w':c==='ข'?'c-x':c==='ก'?'c-k':c==='ค'?'c-c':c==='ร'?'c-r':c==='-'?'c-off':''; }
+function codeClass(c){ return c==='1'?'c-1':c==='ป'?'c-p':c==='พ'?'c-w':(c==='ข'||c===LaborCalc.UNPAID_SICK_CODE)?'c-x':c==='ก'?'c-k':c==='ค'?'c-c':c==='ร'?'c-r':c==='-'?'c-off':''; }
 
 // รอบบิลที่มีให้เลือก (ย้อนหลัง 4 เดือนจากปัจจุบัน)
 function cycleList(){
@@ -1471,7 +1471,7 @@ function buildPaymentEvidenceSVG(cyc, mode){
 
   /* ---------- แถวรายชื่อ (วันทำงาน/วันหยุดนักขัตฤกษ์ = 1, วันลา = รหัสลา, วันหยุดประจำสัปดาห์ = ว่าง) ---------- */
   let sumDays = 0, sumAmt = 0, sumSS = 0, sumNet = 0;
-  const guards = [], rateNotes = [];
+  const guards = [], rateNotes = [], sickNotes = [];
   for(let i=0; i<nRows; i++){
     const y = base(G.HB + i*rh), emp = roster[i];
     if(!emp){ // แถวว่าง: ต้นฉบับแสดง 0 และ -
@@ -1493,7 +1493,14 @@ function buildPaymentEvidenceSVG(cyc, mode){
        + T(mid(C[2],C[3]), y, emp.bankAcc||'', {a:'middle', w:C[3]-C[2]-2})
        + T(mid(C[3],C[4]), y, laborPositionOf(emp, cycEnd), {a:'middle', w:C[4]-C[3]-2})
        + T(C[5]-1.2, y, fmtMoney(LaborCalc.rateOn(emp, rateDay)), {a:'end', w:C[5]-C[4]-2});
-    for(let d=1; d<=31; d++){ const c = codes[d-1]; if(c && c!=='-') s += T(dayX(d)+G.DAYW/2, y, c, {a:'middle', fs:7.6, w:G.DAYW-0.6}); }
+    /* ลาป่วยเกินสิทธิ์ (ปx) แสดงเป็น "ป" ในช่องวัน และระบุวันที่ไม่ได้รับค่าจ้างในหมายเหตุ */
+    const unpaidSick = [];
+    for(let d=1; d<=31; d++){
+      const c = codes[d-1]; if(!c || c==='-') continue;
+      if(c===LaborCalc.UNPAID_SICK_CODE) unpaidSick.push(d);
+      s += T(dayX(d)+G.DAYW/2, y, c===LaborCalc.UNPAID_SICK_CODE ? 'ป' : c, {a:'middle', fs:7.6, w:G.DAYW-0.6});
+    }
+    if(unpaidSick.length) sickNotes.push({no:i+1, days:unpaidSick});
     s += T(mid(R[0],R[1]), y, String(workDays), {a:'middle'}) + money(y,amount,R[1],R[2]) + money(y,ss,R[2],R[3]) + money(y,net,R[3],R[4]);
   }
   /* ---------- แถวรวม / ตัวอักษร ---------- */
@@ -1530,6 +1537,7 @@ function buildPaymentEvidenceSVG(cyc, mode){
     notes.push(`ลำดับที่ ${nos} ปฏิบัติหน้าที่ยามรักษาความปลอดภัย จ้างรวมวันเสาร์` + (from ? ` ตั้งแต่วันที่ ${from} ${MONTH_FULL[cm-1]} ${cy+543}` : ''));
   });
   rateNotes.forEach(({no, r})=>notes.push(`ลำดับที่ ${no} ปรับอัตราค่าจ้างเป็นวันละ ${fmtMoney(r.rate)} บาท${r.note ? ` (${r.note})` : ''} ตั้งแต่วันที่ ${+r.from.slice(8,10)} ${MONTH_FULL[cm-1]} ${cy+543}`));
+  sickNotes.forEach(({no, days})=>notes.push(`ลำดับที่ ${no} ลาป่วยเกิน ${LaborCalc.SICK_PAID_LIMIT} วันทำการในปีงบประมาณ ไม่ได้รับค่าจ้างวันที่ ${days.join(', ')} ${MONTH_FULL[cm-1]} ${cy+543}`));
   String(laborRemark||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean).forEach(x=>notes.push(x));
   notes.forEach((n,i)=>{
     const y = yb + 118.62 + i*12.1;
