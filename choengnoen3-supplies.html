@@ -551,6 +551,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .mc-act{display:flex;align-items:center;justify-content:flex-end;gap:2px;}
   .mc-go{flex:none;width:68px;height:28px;margin-left:4px;border:0;background:var(--navy-900);color:#fff;border-radius:8px;padding:0 6px;font-size:12px;font-family:'Kanit',sans-serif;cursor:pointer;white-space:nowrap;}
   .mc-go:hover{filter:brightness(1.15);}
+  /* ปุ่มรับเข้า (คอลัมน์ยอดติดลบ) / แจ้งซื้อ (คอลัมน์ต้องสั่งซื้อ) — โทนอ่อนตามสีคอลัมน์ */
+  .mc-go.recv{background:#fbd5cf;color:#9b2c1f;border:1px solid #f3b4aa;}
+  .mc-go.recv:hover{filter:none;background:#f8c3ba;}
+  .mc-go.buy{background:#fde0bf;color:#9a4f07;border:1px solid #f7c58e;}
+  .mc-go.buy:hover{filter:none;background:#fbd1a3;}
   .mc-go.soft{background:var(--paper-100,#eef1f4);color:var(--ink-600);border:1px solid var(--line);font-weight:400;}
   .mc-go.soft:hover{filter:none;background:#e3e8ee;color:var(--navy-900);}
   .mc-alt{margin-left:auto;color:var(--ink-600);text-decoration:underline;cursor:pointer;font-size:12px;}
@@ -1653,6 +1658,8 @@ function renderMaterialCols(){
       return {m, s, c, k, watch: k==='ok' && m.reorder>0 && c<=m.reorder*1.3};
     })
     .sort((a,b)=>a.m.name.localeCompare(b.m.name,'th'));
+  // ปุ่มบนการ์ด (รับเข้า/แจ้งซื้อ/ประวัติ + ไอคอนแก้ไข/ปรับยอด) แสดงเฉพาะผู้มีสิทธิ์แก้ไข — คนทั่วไปดูตัวเลขอย่างเดียว
+  const admin = isAdmin();
   const card = r=>{
     // ยอดติดลบ: ผู้ดูแลกด "รับเข้า" เปิดฟอร์มใบเบิกรับเข้าโดยเลือกวัสดุไว้ให้ (สาเหตุส่วนใหญ่คือของเข้าแล้วยังไม่ได้ลงใบเบิก)
     const act = !isCur ? 'history' : r.k==='neg' ? (isAdmin() ? 'recv' : 'check') : r.k==='low' ? 'buy' : 'history';
@@ -1670,7 +1677,7 @@ function renderMaterialCols(){
       <div class="mc-f in">+${fmtNum(r.s.received,1)}</div>
       <div class="mc-f out">−${fmtNum(r.s.issued,1)}</div>
       <div class="mc-v ${r.k}">${fmtNum(r.c,1)}<small>${esc(r.m.unit)}</small></div>
-      <div class="mc-act">${alt}${ed}<button type="button" class="mc-go${act==='history'?' soft':''}" onclick="${onclick}">${lab}</button></div>
+      <div class="mc-act">${admin ? `${alt}${ed}<button type="button" class="mc-go${act==='history'?' soft':act==='recv'?' recv':act==='buy'?' buy':''}" onclick="${onclick}">${lab}</button>` : ''}</div>
     </div>`;
   };
   const head = `<div class="mc-row mc-head"><span>รายการ</span><span>จุดสั่งซื้อ</span><span>ยกมา</span><span>รับเข้า</span><span>เบิก</span><span>คงเหลือ</span><span></span></div>`;
