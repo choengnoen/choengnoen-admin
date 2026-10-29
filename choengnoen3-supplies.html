@@ -791,10 +791,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fd-table td.fd-flags{white-space:nowrap;}
   .fd-table td.fd-flags .fd-fl{white-space:nowrap;margin:0;}
   /* ปุ่มลบรายการเบิกท้ายแถว (ตรวจรายวัน พ.1-02/พ.1-03) — ล้างจำนวนเป็นฉบับร่าง แล้วกด "บันทึก" เพื่อลบจริง */
-  .fd-table td.fd-flags .fd-del{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;margin-left:8px;vertical-align:middle;border-radius:8px;border:1px solid #f6d0d0;background:#fdeeee;color:#d33a3a;cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
+  .fd-table td.fd-flags .fd-flagrow{display:flex;align-items:center;gap:8px;}
+  .fd-table td.fd-flags .fd-del{display:inline-flex;align-items:center;justify-content:center;flex:none;width:30px;height:30px;margin-left:auto;border-radius:8px;border:1px solid #f6d0d0;background:#fdeeee;color:#d33a3a;cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
   .fd-table td.fd-flags .fd-del:hover{background:#d33a3a;color:#fff;border-color:#d33a3a;}
   .fd-table td.fd-c{text-align:center;}
   .fd-table td.fd-r{text-align:right;}
+  /* คงเหลือหลังเบิก (พ.1-02): ตัวเลขชิดขวาโดยให้หลักสุดท้ายตรงกับท้ายคำ "หลังเบิก" บนหัวตาราง (หัวตารางจัดกลาง กว้าง ~39px)
+     ใช้ flex-end ตัวเลขที่ยาวกว่าจึงยื่นออกทางซ้าย ขอบขวายังตรงเดิม */
+  .fd-table .md-bal{display:inline-flex;justify-content:flex-end;width:43px;white-space:nowrap;}
   .fd-table tfoot td{background:var(--paper-100);font-weight:700;color:var(--navy-900);}
   .fd-table tr.fd-rw td{background:#fffaf0;}
   .fd-table tr.fd-rb td{background:#fff3f1;}
@@ -4691,7 +4695,7 @@ function renderReportFuel(mk){
       <td class="fd-r">${r.hasMile?(r.mPrev?`<b>${fmtNum(r.mPrev.val,0)}</b><div class="fd-mut">${fuelShortDate(r.mPrev.date)}</div>`:'<span class="fd-mut">—</span>'):''}</td>
       <td class="fd-in-td">${miCell}</td>
       <td class="fd-c">${distTxt}</td>
-      <td class="fd-flags">${fuelFlagHtml(r)}${editable && (r.lit>0 || isDirty) ? fdDelBtn(`data-fdel-ft="${esc(r.ft)}" data-fdel="${esc(label)}"`) : ''}</td></tr>`;
+      <td class="fd-flags"><div class="fd-flagrow">${fuelFlagHtml(r)}${editable && (r.lit>0 || isDirty) ? fdDelBtn(`data-fdel-ft="${esc(r.ft)}" data-fdel="${esc(label)}"`) : ''}</div></td></tr>`;
   });
   if(!rows.length) body = `<tr><td colspan="10" class="fd-empty">วันนี้ไม่มีรายการเบิก${editable?' — เพิ่มรายการได้ที่ช่องด้านบน':''}</td></tr>`;
   const grand = rows.reduce((s,r)=>s+(r.lit||0),0);
@@ -5145,11 +5149,11 @@ function renderReportMaterialDay(mk){
       <td class="fd-c"><span class="fd-tag ${acct==='นอกบัญชี'?'fd-g':'fd-d'}">${acct}</span></td>
       <td class="fd-r">${r.last?`<b>${fmtNum(r.last.qty,1)}</b><div class="fd-mut">${fuelShortDate(r.last.date)}</div>`:'<span class="fd-mut">ไม่มีประวัติ</span>'}</td>
       <td class="fd-in-td">${qtyCell}</td>
-      <td class="fd-r"><b class="fd-big${r.after<0?' fd-neg':''}">${fmtNum(r.after,1)}</b></td>
-      <td class="fd-flags">${flagHtml}${editable ? fdDelBtn(`data-mdel="${esc(m.code)}"`) : ''}</td></tr>`;
+      <td class="fd-c"><span class="md-bal"><b class="fd-big${r.after<0?' fd-neg':''}">${fmtNum(r.after,1)}</b></span></td>
+      <td class="fd-flags"><div class="fd-flagrow">${flagHtml}${editable ? fdDelBtn(`data-mdel="${esc(m.code)}"`) : ''}</div></td></tr>`;
   });
   if(!rows.length) body = `<tr><td colspan="9" class="fd-empty">วันนี้ไม่มีรายการเบิก${editable?' — เพิ่มรายการได้ที่ช่องด้านบน':''}</td></tr>`;
-  const table = `<div class="fd-tablewrap"><table class="fd-table md-table"><colgroup><col style="width:5%"><col style="width:17%"><col style="width:24%"><col style="width:6%"><col style="width:9%"><col style="width:10%"><col style="width:9%"><col style="width:9%"><col style="width:11%"></colgroup><thead><tr>
+  const table = `<div class="fd-tablewrap"><table class="fd-table md-table"><colgroup><col style="width:5%"><col style="width:17%"><col style="width:21%"><col style="width:6%"><col style="width:9%"><col style="width:10%"><col style="width:9%"><col style="width:9%"><col style="width:14%"></colgroup><thead><tr>
     <th style="width:54px">ตรวจ<br>แล้ว</th><th>ผู้เบิก</th><th>ชื่อพัสดุ</th><th>หน่วย</th><th>ประเภทบัญชี</th><th>เบิกครั้งล่าสุด<br><small>จำนวน · วันที่</small></th><th class="fd-cur">เบิกวันนี้<br><small>(จำนวน)</small></th><th>คงเหลือ<br>หลังเบิก</th><th>ผลตรวจ</th></tr></thead>
     <tbody>${body}</tbody><tfoot><tr><td colspan="6" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${real.length} รายการ</td><td colspan="2"></td></tr></tfoot></table></div>`;
 
