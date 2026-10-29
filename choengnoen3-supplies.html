@@ -1044,7 +1044,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </div>
             <span class="mc-sp"></span>
             <div class="search-box mc-search" id="mat-search-box">🔍 <input id="mat-search" oninput="renderMaterials()" placeholder="ค้นหาชื่อวัสดุ"></div>
-            <button type="button" class="btn btn-ghost btn-ic hidden" id="mat-print-btn" data-ic="print" onclick="printP204()" data-tip="พิมพ์รายงานสรุปวัสดุ พ.2-04 ของเดือนที่เลือก"></button>
+            <button type="button" class="btn btn-ghost btn-ic hidden" id="mat-print-btn" data-ic="print" onclick="printP204()" data-tip="พิมพ์รายงานสรุปวัสดุ พ.2-04 (เลือกเดือนได้)"></button>
             <button type="button" class="btn btn-ghost btn-ic fuel-hist-btn-top hidden" id="fuel-hist-btn" data-ic="hist" onclick="openFuelHistoryModal()" data-tip="สรุปยอดน้ำมันรายเดือน (ดีเซล / เบนซิน)"></button>
           </div>
           <div class="mc-usagebar hidden" id="mat-usage-bar"></div>
@@ -5523,24 +5523,33 @@ function printMachinery(){
 
 /* ============================================================
    รายงานสรุปวัสดุประจำปี พ.2-04 (ปุ่มพิมพ์ในแท็บ พัสดุในบัญชี / พัสดุนอกบัญชี)
-   - ยอดใช้ materialMonthSummary() ของเดือนที่เลือกในหน้าทะเบียน (ชุดเดียวกับการ์ด) — ไม่สนตัวกรอง/คำค้น พิมพ์ทุกรายการของบัญชีนั้น
+   - กดปุ่ม → เลือกเดือน (สรุปสิ้นเดือนไหน) ในโมดัล → พิมพ์ ; ค่าเริ่มต้น = เดือนที่ดูอยู่ในหน้าทะเบียน
+   - ยอดใช้ materialMonthSummary() (ชุดเดียวกับการ์ด) — ไม่สนตัวกรอง/คำค้น พิมพ์ทุกรายการของบัญชีนั้น
    - แสดงเฉพาะรายการที่มีตัวเลข (ยกมา/รับ/จ่าย/คงเหลือ ไม่เป็น 0 ทั้งหมด) ค่า 0 แสดง "-" ตามต้นฉบับ
-   - ขนาดแยกจากชื่อเมื่อชื่อมี "บรรจุ..." / "Ø..." / "... นิ้ว|ซม.|มม." ต่อท้าย ; ข้อความยาวตัดขึ้นบรรทัดต่อไปเหมือนต้นฉบับ
+   - ขนาดแยกจากชื่อ: "บรรจุ/จุ/ขนาดจุ <เลข>..." , "ขนาด ..." , "Ø..." , "<เลข> นิ้ว|"|ซม.|มม." ; ข้อความยาวตัดขึ้นบรรทัดต่อไปเหมือนต้นฉบับ
    - เดือน มี.ค. / ก.ย. ติ๊กช่อง 31 มีนาคม / 30 กันยายน และเติมปีให้
    ============================================================ */
 const P204_ROWS = 27;
 function p204SplitName(name){
   name = String(name||'').trim();
-  const m = name.match(/^(.+?)\s+((?:บรรจุ|Ø|ขนาด)\s*.+|\d+(?:[.,/]\d+)?\s*(?:นิ้ว|ซม\.?|มม\.?|ม\.)(?:\s.*)?)$/);
-  return m ? [m[1].trim(), m[2].trim()] : [name, ''];
+  let m = name.match(/^(.+?)\s+((?:ขนาดบรรจุ|ขนาดจุ|บรรจุ|จุ)\s*\d.*|ขนาด\s.+|Ø.+)$/);
+  if(!m) m = name.match(/^(.+?)\s*(\d+(?:[.,/]\d+)?\s*(?:"|”|นิ้ว|ซม\.?|มม\.?)(?:\s.*)?)$/);
+  return m && m[1].trim() ? [m[1].trim(), m[2].trim()] : [name, ''];
 }
-/* ตัดข้อความยาวเป็นหลายบรรทัดตามความกว้างช่อง (มม.) — วัดด้วยฟอนต์จริง ตัดที่ขอบคำไทยด้วย Intl.Segmenter */
-let _p204Ctx = null;
+/* ตัดข้อความยาวเป็นหลายบรรทัดตามความกว้างช่อง (มม.) — วัดด้วย span ที่ใช้ฟอนต์/ขนาดเดียวกับตารางจริง
+   (ไม่ใช้ canvas เพราะถ้าฟอนต์ยังไม่ถูกใช้ ค่าที่วัดจะแคบกว่าของจริง → ข้อความล้นช่อง) ตัดที่ขอบคำไทยด้วย Intl.Segmenter */
+let _p204Meas = null;
 function p204Wrap(s, mm){
   if(!s) return [''];
-  if(!_p204Ctx){ _p204Ctx = document.createElement('canvas').getContext('2d'); }
-  _p204Ctx.font = "8.5pt 'Sarabun', sans-serif";
-  const max = mm*96/25.4, fits = t=>_p204Ctx.measureText(t).width<=max;
+  if(!_p204Meas){
+    const box = document.createElement('div');
+    box.className = 'p204-sheet';
+    box.style.cssText = 'position:absolute;left:-9999px;top:0;height:auto;visibility:hidden;';
+    box.innerHTML = '<span style="white-space:nowrap;"></span>';
+    document.body.appendChild(box);
+    _p204Meas = box.firstChild;
+  }
+  const max = mm*96/25.4, fits = t=>{ _p204Meas.textContent = t; return _p204Meas.getBoundingClientRect().width<=max; };
   if(fits(s)) return [s];
   // ตัดที่ช่องว่างก่อน — ตัดกลางคำไทยเฉพาะคำที่ยาวเกินช่องเอง
   const seg = window.Intl && Intl.Segmenter ? new Intl.Segmenter('th',{granularity:'word'}) : null;
@@ -5562,18 +5571,51 @@ function p204Num(n){
   if(Math.abs(n)<1e-9) return '-';
   return n.toLocaleString('en-US',{maximumFractionDigits:2});
 }
-function printP204(){
-  const off = currentMasterTab()==='nok', acctType = off ? 'นอกบัญชี' : 'ในบัญชี';
-  const mk = masterMk(), [y,mo] = mk.split('-').map(Number), be = y+543;
-  const items = materials
+function p204Acct(){ return currentMasterTab()==='nok' ? 'นอกบัญชี' : 'ในบัญชี'; }
+function p204Items(acctType, mk){
+  return materials
     .filter(m=>(m.accountType||'ในบัญชี')===acctType)
     .map(m=>({m, s:materialMonthSummary(m.code, mk)}))
     .filter(r=>r.s.opening||r.s.received||r.s.issued||r.s.closing); // เรียงตามลำดับในทะเบียน (ลำดับที่ลงไว้) เหมือนต้นฉบับ
+}
+/* ปุ่มพิมพ์ → โมดัลเลือกเดือน (ย้อนหลัง 24 เดือน) แสดงจำนวนรายการที่จะพิมพ์ของเดือนที่เลือก */
+function printP204(){
+  const acctType = p204Acct(), cur = currentMonthKey();
+  const keys = []; let k = cur;
+  for(let i=0;i<24;i++){ keys.push(k); k = prevMonthKey(k); }
+  const sel = masterMk();
+  if(!keys.includes(sel)) keys.push(sel);
+  document.getElementById('mat-act-icon').textContent = '🖨️';
+  document.getElementById('mat-act-title').textContent = 'พิมพ์รายงานสรุปวัสดุ พ.2-04 — พัสดุ'+acctType;
+  document.getElementById('mat-act-body').innerHTML = `<div class="f-row"><label>สรุปยอด ณ สิ้นเดือน</label>
+      <select id="p204-month" onchange="p204PickInfo()">${keys.map(o=>{ const [yy,mm] = o.split('-').map(Number);
+        return `<option value="${o}" ${o===sel?'selected':''}>${monthNamesTh[mm-1]} ${yy+543}${o===cur?' (เดือนนี้)':''}</option>`; }).join('')}</select></div>
+    <div class="ma-hint low" id="p204-info"></div>`;
+  document.getElementById('mat-act-foot').innerHTML = `<button type="button" class="btn btn-ghost" onclick="closeMatActModal()">ยกเลิก</button>
+    <button type="button" class="btn btn-primary" id="p204-go" onclick="p204Go()">🖨️ พิมพ์</button>`;
+  document.getElementById('mat-act-overlay').classList.remove('hidden');
+  p204PickInfo();
+}
+function p204PickInfo(){
+  const mk = document.getElementById('p204-month').value, n = p204Items(p204Acct(), mk).length;
+  document.getElementById('p204-info').innerHTML = n ? `จะพิมพ์ <b>${n}</b> รายการ (เฉพาะรายการที่มียอด)` : 'เดือนนี้ไม่มีรายการที่มียอด';
+  document.getElementById('p204-go').disabled = !n;
+}
+async function p204Go(){
+  const mk = document.getElementById('p204-month').value;
+  closeMatActModal();
+  try{ await document.fonts.load("8.5pt 'Sarabun'"); }catch(e){}
+  printP204Month(mk);
+}
+function printP204Month(mk){
+  const acctType = p204Acct();
+  const [y,mo] = mk.split('-').map(Number), be = y+543;
+  const items = p204Items(acctType, mk);
   if(!items.length){ showAlertModal('ไม่มีรายการพัสดุ'+acctType+'ที่มียอดในเดือน '+monthNamesTh[mo-1]+' '+be); return; }
-  // แปลงเป็นบรรทัด: แต่ละรายการ 1 บรรทัดขึ้นไป (บรรทัดต่อมีแต่ข้อความชื่อ/ขนาด)
+  // แปลงเป็นบรรทัด: แต่ละรายการ 1 บรรทัดขึ้นไป (บรรทัดต่อมีแต่ข้อความชื่อ/ขนาด) — ความกว้าง = ช่อง − ระยะขอบ 2 มม. − เผื่อ 0.6 มม.
   const blocks = items.map((r,i)=>{
     const [nm, sz] = p204SplitName(r.m.name);
-    const nl = p204Wrap(nm, 35), sl = p204Wrap(sz, 26), n = Math.max(nl.length, sl.length);
+    const nl = p204Wrap(nm, 34.8), sl = p204Wrap(sz, 25.5), n = Math.max(nl.length, sl.length);
     const price = r.m.unitPrice>0 ? r.m.unitPrice : 0;
     const rows = [];
     for(let k=0;k<n;k++){
@@ -5600,7 +5642,7 @@ function printP204(){
     while(rows.length < P204_ROWS) rows.push(['','','','','','','','','','','']);
     const body = rows.map(r=>'<tr>'+r.map((v,j)=>`<td${j===1||j===2?' class="l"':''}>${esc(String(v))}</td>`).join('')+'</tr>').join('');
     return `<div class="p204-sheet">
-      <div class="a t" style="left:62mm;top:15.2mm;">รายงานสรุปวัสดุประจำปี</div>
+      <div class="a t" style="right:110.5mm;top:15.2mm;">รายงานสรุปวัสดุประจำปี</div>
       <div class="a" style="left:111.6mm;top:15.9mm;"><span class="bx"></span>1.</div>
       <div class="a" style="left:126.7mm;top:15.9mm;">หน่วยงาน <span class="u">หมวดทางหลวงเชิงเนิน</span></div>
       <div class="a b" style="left:184.6mm;top:15.9mm;">พ.2-04</div>
