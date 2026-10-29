@@ -324,6 +324,28 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
     body:has(#print-vehreq.show-print) .app{display:none !important;}
     #print-vehreq.show-print{page:vehreqpage;}
   }
+  /* รายงานสรุปวัสดุประจำปี พ.2-04 ตามไฟล์ "พ.2-04.pdf" (A4 แนวตั้ง) — วางตำแหน่งเป็น มม. ตามต้นฉบับ ดู printP204()
+     1 หน้า = 27 บรรทัด ถ้ารายการเกินขึ้นหน้าใหม่ (หัวกระดาษ/ลายเซ็นซ้ำทุกหน้า) */
+  @page p204page{size:A4 portrait;margin:0;}
+  .p204-sheet{position:relative;width:210mm;height:297mm;overflow:hidden;background:#fff;color:#000;font-family:'Sarabun',sans-serif;font-size:8.5pt;line-height:1.2;break-after:page;page-break-after:always;}
+  .p204-sheet:last-child{break-after:auto;page-break-after:auto;}
+  .p204-sheet .a{position:absolute;white-space:nowrap;}
+  .p204-sheet .t{font-size:13pt;font-weight:700;}
+  .p204-sheet .b{font-weight:700;}
+  .p204-sheet .bx{display:inline-block;width:3.2mm;height:3.2mm;border:.25mm solid #000;vertical-align:-.4mm;margin-right:2.2mm;text-align:center;line-height:3mm;font-size:8pt;font-weight:700;}
+  .p204-sheet .u{text-decoration:underline;}
+  .p204-sheet table{position:absolute;left:26.1mm;top:45.8mm;width:168.7mm;border-collapse:collapse;table-layout:fixed;}
+  .p204-sheet th,.p204-sheet td{border:.3mm solid #000;padding:0 1mm;text-align:center;vertical-align:middle;overflow:hidden;white-space:nowrap;}
+  .p204-sheet th{font-weight:700;font-size:8pt;line-height:1.25;height:6.6mm;padding:0;}
+  .p204-sheet td{height:6.45mm;}
+  .p204-sheet td.l{text-align:left;}
+  .p204-sheet tr:last-child td{border-bottom:.3mm solid #000;}
+  .p204-sheet .sg{position:absolute;top:245mm;width:34mm;margin-left:-17mm;text-align:center;white-space:nowrap;}
+  .p204-sheet .sg i{display:block;width:20mm;margin:0 auto 2.2mm;border-top:.3mm dotted #000;}
+  @media print{
+    body:has(#print-p204.show-print) .app{display:none !important;}
+    #print-p204.show-print{page:p204page;}
+  }
   tr.mileage-row input.mi-decrease,tr.mileage-row td.mi-decrease{background:var(--danger-bg)!important;}
   tr.mileage-row input.mi-decrease{border-color:var(--danger)!important;color:var(--danger);font-weight:600;}
   tr.mileage-row input.mi-jump,tr.mileage-row td.mi-jump{background:#fff4e0!important;}
@@ -1022,6 +1044,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </div>
             <span class="mc-sp"></span>
             <div class="search-box mc-search" id="mat-search-box">🔍 <input id="mat-search" oninput="renderMaterials()" placeholder="ค้นหาชื่อวัสดุ"></div>
+            <button type="button" class="btn btn-ghost btn-ic hidden" id="mat-print-btn" data-ic="print" onclick="printP204()" data-tip="พิมพ์รายงานสรุปวัสดุ พ.2-04 ของเดือนที่เลือก"></button>
             <button type="button" class="btn btn-ghost btn-ic fuel-hist-btn-top hidden" id="fuel-hist-btn" data-ic="hist" onclick="openFuelHistoryModal()" data-tip="สรุปยอดน้ำมันรายเดือน (ดีเซล / เบนซิน)"></button>
           </div>
           <div class="mc-usagebar hidden" id="mat-usage-bar"></div>
@@ -1202,6 +1225,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <div class="print-only" id="print-fuel"></div>
 <div class="print-only" id="print-ec1w"></div>
 <div class="print-only" id="print-vehreq"></div>
+<div class="print-only" id="print-p204"></div>
 
 <!-- ============ แก้ไขใบเบิกรับเข้า (จากแขวง) ============ -->
 <div class="modal-overlay hidden no-print" id="ib-edit-overlay">
@@ -1564,6 +1588,7 @@ function renderMaterials(){
   document.getElementById('mat-search-box').classList.toggle('hidden', isFuel);
   document.getElementById('mat-usage-bar').classList.toggle('hidden', isFuel);
   document.getElementById('fuel-hist-btn').classList.toggle('hidden', !isFuel);
+  document.getElementById('mat-print-btn').classList.toggle('hidden', isFuel);
   if(isFuel){ renderMasterFuel(); return; }
   renderMatUsageBar();
   renderMaterialCols();
@@ -5494,6 +5519,107 @@ function printMachinery(){
   /* พิมพ์จากฟังก์ชันเดียวกับที่แสดงบนจอ = ได้แบบฟอร์ม EC 1-W ของกรมตรงทุกจุด (A4 แนวนอน ไม่มีช่องกรอก/คำแนะนำติดไป) */
   document.getElementById('print-ec1w').innerHTML = ec1wSheetHtml(vehicle, ec1wSelectedWeekDates(), false);
   printForm('print-ec1w');
+}
+
+/* ============================================================
+   รายงานสรุปวัสดุประจำปี พ.2-04 (ปุ่มพิมพ์ในแท็บ พัสดุในบัญชี / พัสดุนอกบัญชี)
+   - ยอดใช้ materialMonthSummary() ของเดือนที่เลือกในหน้าทะเบียน (ชุดเดียวกับการ์ด) — ไม่สนตัวกรอง/คำค้น พิมพ์ทุกรายการของบัญชีนั้น
+   - แสดงเฉพาะรายการที่มีตัวเลข (ยกมา/รับ/จ่าย/คงเหลือ ไม่เป็น 0 ทั้งหมด) ค่า 0 แสดง "-" ตามต้นฉบับ
+   - ขนาดแยกจากชื่อเมื่อชื่อมี "บรรจุ..." / "Ø..." / "... นิ้ว|ซม.|มม." ต่อท้าย ; ข้อความยาวตัดขึ้นบรรทัดต่อไปเหมือนต้นฉบับ
+   - เดือน มี.ค. / ก.ย. ติ๊กช่อง 31 มีนาคม / 30 กันยายน และเติมปีให้
+   ============================================================ */
+const P204_ROWS = 27;
+function p204SplitName(name){
+  name = String(name||'').trim();
+  const m = name.match(/^(.+?)\s+((?:บรรจุ|Ø|ขนาด)\s*.+|\d+(?:[.,/]\d+)?\s*(?:นิ้ว|ซม\.?|มม\.?|ม\.)(?:\s.*)?)$/);
+  return m ? [m[1].trim(), m[2].trim()] : [name, ''];
+}
+/* ตัดข้อความยาวเป็นหลายบรรทัดตามความกว้างช่อง (มม.) — วัดด้วยฟอนต์จริง ตัดที่ขอบคำไทยด้วย Intl.Segmenter */
+let _p204Ctx = null;
+function p204Wrap(s, mm){
+  if(!s) return [''];
+  if(!_p204Ctx){ _p204Ctx = document.createElement('canvas').getContext('2d'); }
+  _p204Ctx.font = "8.5pt 'Sarabun', sans-serif";
+  const max = mm*96/25.4, fits = t=>_p204Ctx.measureText(t).width<=max;
+  if(fits(s)) return [s];
+  // ตัดที่ช่องว่างก่อน — ตัดกลางคำไทยเฉพาะคำที่ยาวเกินช่องเอง
+  const seg = window.Intl && Intl.Segmenter ? new Intl.Segmenter('th',{granularity:'word'}) : null;
+  const words = [];
+  s.split(/(\s+)/).forEach(w=>{
+    if(seg && w.trim() && !fits(w)) words.push(...Array.from(seg.segment(w), x=>x.segment));
+    else words.push(w);
+  });
+  const out = []; let cur = '';
+  words.forEach(w=>{
+    if(cur.trim() && !fits(cur+w)){ out.push(cur.trim()); cur = w.trimStart(); }
+    else cur += w;
+  });
+  if(cur.trim()) out.push(cur.trim());
+  return out;
+}
+function p204Num(n){
+  n = Number(n)||0;
+  if(Math.abs(n)<1e-9) return '-';
+  return n.toLocaleString('en-US',{maximumFractionDigits:2});
+}
+function printP204(){
+  const off = currentMasterTab()==='nok', acctType = off ? 'นอกบัญชี' : 'ในบัญชี';
+  const mk = masterMk(), [y,mo] = mk.split('-').map(Number), be = y+543;
+  const items = materials
+    .filter(m=>(m.accountType||'ในบัญชี')===acctType)
+    .map(m=>({m, s:materialMonthSummary(m.code, mk)}))
+    .filter(r=>r.s.opening||r.s.received||r.s.issued||r.s.closing); // เรียงตามลำดับในทะเบียน (ลำดับที่ลงไว้) เหมือนต้นฉบับ
+  if(!items.length){ showAlertModal('ไม่มีรายการพัสดุ'+acctType+'ที่มียอดในเดือน '+monthNamesTh[mo-1]+' '+be); return; }
+  // แปลงเป็นบรรทัด: แต่ละรายการ 1 บรรทัดขึ้นไป (บรรทัดต่อมีแต่ข้อความชื่อ/ขนาด)
+  const blocks = items.map((r,i)=>{
+    const [nm, sz] = p204SplitName(r.m.name);
+    const nl = p204Wrap(nm, 35), sl = p204Wrap(sz, 26), n = Math.max(nl.length, sl.length);
+    const price = r.m.unitPrice>0 ? r.m.unitPrice : 0;
+    const rows = [];
+    for(let k=0;k<n;k++){
+      rows.push(k===0
+        ? [i+1, nl[0]||'', sl[0]||'', r.m.unit||'', p204Num(r.s.opening), p204Num(r.s.received), p204Num(r.s.issued), p204Num(r.s.closing),
+           price ? price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '',
+           price ? (r.s.closing*price).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '-', '']
+        : ['', nl[k]||'', sl[k]||'', '', '', '', '', '', '', '', '']);
+    }
+    return rows;
+  });
+  const pages = [[]];
+  blocks.forEach(b=>{
+    if(pages[pages.length-1].length + b.length > P204_ROWS) pages.push([]);
+    pages[pages.length-1].push(...b);
+  });
+  const isMar = mo===3, isSep = mo===9, yy = String(be).slice(2);
+  const col = [8.8,37.4,28.1,12.6,11.5,11.7,11.7,11.7,11.7,11.7,11.8];
+  const head = `<colgroup>${col.map(w=>`<col style="width:${w}mm">`).join('')}</colgroup>
+    <tr><th rowspan="3">ลำดับ<br>ที่</th><th rowspan="3">ประเภทและชื่อวัสดุ</th><th rowspan="3">ขนาด</th><th rowspan="3">หน่วย</th>
+      <th rowspan="3">ยอดยก<br>มาจาก<br>งวดก่อน</th><th colspan="2">จำนวน</th><th rowspan="3">ยอดคง<br>เหลือ</th><th colspan="2">ราคา</th><th rowspan="3">จำนวน<br>ขาดเกิน</th></tr>
+    <tr><th rowspan="2" style="height:13.1mm;">รับ<br>งวดนี้</th><th rowspan="2">จ่าย<br>ในงวดนี้</th><th rowspan="2">ต่อหน่วย</th><th rowspan="2">รวมเป็น<br>เงิน</th></tr><tr></tr>`;
+  const sheet = rows => {
+    while(rows.length < P204_ROWS) rows.push(['','','','','','','','','','','']);
+    const body = rows.map(r=>'<tr>'+r.map((v,j)=>`<td${j===1||j===2?' class="l"':''}>${esc(String(v))}</td>`).join('')+'</tr>').join('');
+    return `<div class="p204-sheet">
+      <div class="a t" style="left:62mm;top:15.2mm;">รายงานสรุปวัสดุประจำปี</div>
+      <div class="a" style="left:111.6mm;top:15.9mm;"><span class="bx"></span>1.</div>
+      <div class="a" style="left:126.7mm;top:15.9mm;">หน่วยงาน <span class="u">หมวดทางหลวงเชิงเนิน</span></div>
+      <div class="a b" style="left:184.6mm;top:15.9mm;">พ.2-04</div>
+      <div class="a" style="left:111.6mm;top:21.4mm;"><span class="bx"></span>2.</div>
+      <div class="a b" style="right:18.7mm;top:21.4mm;">กรมทางหลวง</div>
+      <div class="a" style="left:111.6mm;top:27mm;"><span class="bx">${isMar?'✓':''}</span>31</div>
+      <div class="a" style="left:126.7mm;top:27mm;">มีนาคม 25${isMar?yy:'.......'}</div>
+      <div class="a" style="right:110.5mm;top:32.5mm;">เมื่อวันที่</div>
+      <div class="a" style="left:111.6mm;top:32.5mm;"><span class="bx">${isSep?'✓':''}</span>30</div>
+      <div class="a" style="left:126.7mm;top:32.5mm;">กันยายน 25${isSep?yy:'.......'}</div>
+      <div class="a" style="left:40.9mm;top:41.6mm;">เดือน ${monthNamesTh[mo-1]} ${be}</div>
+      <table>${head}${body}</table>
+      <div class="sg" style="left:90.2mm;"><i></i>เจ้าหน้าที่บัญชีพัสดุ</div>
+      <div class="sg" style="left:136.4mm;"><i></i>หัวหน้าพัสดุ</div>
+      <div class="sg" style="left:183.1mm;"><i></i>หัวหน้าหน่วยงาน</div>
+    </div>`;
+  };
+  document.getElementById('print-p204').innerHTML = pages.map(sheet).join('');
+  printForm('print-p204');
 }
 
 /* ============================================================
