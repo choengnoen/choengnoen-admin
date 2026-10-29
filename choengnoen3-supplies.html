@@ -3968,7 +3968,9 @@ async function confirmCommitDraftReport(){
   __draftReviewKind = null;
   closeDraftReview();
   updateDraftChip(kind);
+  if(kind==='mat') matAddWho = '';   // บันทึกแล้ว → แถบเพิ่มรายการเริ่มใหม่ทั้งหมด (ช่องอื่นว่างเองเมื่อวาดใหม่)
   renderAll();
+  pickQuietFocus(document.getElementById(kind==='mat' ? 'mat-add-who' : 'fuel-add-veh'));
 }
 
 function monthKeyOf(dateStr){ return String(dateStr||'').slice(0,7); } // 'YYYY-MM' (ค.ศ.)
@@ -4568,7 +4570,7 @@ function addFuelDayRow(){
   const mi = Array.from(document.querySelectorAll('#rep-fuel-grid-wrap input.fd-mi')).find(i=>i.dataset.miVehicle===label);
   const tr = Array.from(document.querySelectorAll('#rep-fuel-grid-wrap tr[data-flabel]')).find(r=>r.dataset.flabel===label);
   if(tr){ tr.scrollIntoView({block:'nearest', behavior:'smooth'}); tr.classList.add('fd-hl'); setTimeout(()=>tr.classList.remove('fd-hl'), 1600); }
-  if(mi) mi.focus(); else { const n = document.getElementById('fuel-add-veh'); if(n) n.focus(); }
+  if(mi) mi.focus(); else pickQuietFocus(document.getElementById('fuel-add-veh'));
 }
 function setFuelCheckDay(day){ fuelCheckDay = day; fuelCheckDayMk = currentFuelMk(); renderReportFuel(fuelCheckDayMk); }
 /* แถบสัปดาห์ (จันทร์–อาทิตย์) หน้าตาเดียวกับใบสั่งการรายวัน — ไปยังวันที่ iso (ข้ามเดือนได้ โดยเปลี่ยนตัวเลือกปีงบ/เดือนให้ตรงกัน) */
@@ -5005,7 +5007,9 @@ function pickItems(kind, inp){
     inp.dispatchEvent(new Event('change', {bubbles:true}));
   }
   const isPick = el=>el && el.matches && el.matches('[data-pick]');
-  document.addEventListener('focusin', e=>{ if(isPick(e.target)){ typed = false; open(e.target); } });
+  // โปรแกรมย้ายเคอร์เซอร์มาเอง (หลังกด "เพิ่ม"/บันทึก) → ไม่เปิดรายการ รอให้ผู้ใช้พิมพ์หรือคลิกก่อน
+  window.pickQuietFocus = el=>{ if(!el) return; el.dataset.pickQuiet = '1'; el.focus({preventScroll:true}); delete el.dataset.pickQuiet; };
+  document.addEventListener('focusin', e=>{ if(isPick(e.target) && !e.target.dataset.pickQuiet){ typed = false; open(e.target); } });
   document.addEventListener('focusout', e=>{ if(e.target===cur) close(); });
   document.addEventListener('mousedown', e=>{ if(isPick(e.target) && e.target===document.activeElement && !(menu && menu.style.display!=='none')){ typed = false; open(e.target); } });
   document.addEventListener('input', e=>{ if(isPick(e.target) && e.isTrusted){ typed = true; open(e.target); } });
@@ -5048,7 +5052,7 @@ function addMatDayRow(){
   renderReportMaterial(currentMatMk());
   const tr = Array.from(document.querySelectorAll('#rep-mat-grid-wrap tr[data-mlabel]')).find(r=>r.dataset.mlabel===code);
   if(tr){ tr.scrollIntoView({block:'nearest', behavior:'smooth'}); tr.classList.add('fd-hl'); setTimeout(()=>tr.classList.remove('fd-hl'), 1600); }
-  const next = document.getElementById('mat-add-item'); if(next) next.focus();
+  pickQuietFocus(document.getElementById('mat-add-item'));
 }
 function renderReportMaterialDay(mk){
   const wrap = document.getElementById('rep-mat-grid-wrap');
