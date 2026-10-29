@@ -4953,7 +4953,7 @@ function pickItems(kind, inp){
     return staffWorkingOn(date).map(s=>({value:s.name,
       sub:[s.role||'', s.status==='retired'?'เกษียณอายุ':s.status==='resigned'?'ลาออก':''].filter(Boolean).join(' · ')}));
   }
-  if(kind==='mat') return Object.keys(matDayAddMap).map(k=>{ const m = materials.find(x=>x.code===matDayAddMap[k]); return {value:k, sub:m?((m.code||'')+' · '+(m.unit||'')):''}; });
+  if(kind==='mat') return Object.keys(matDayAddMap).map(k=>{ const m = materials.find(x=>x.code===matDayAddMap[k]); return {value:k, sub:m?((m.code||'')+' · '+(m.unit||'')):'', tag:m?(m.accountType==='นอกบัญชี'?'นอกบัญชี':'ในบัญชี'):''}; });
   if(kind==='veh') return Object.keys(fuelDayAddMap).map(k=>({value:k, sub:''}));
   return [];
 }
@@ -4991,7 +4991,7 @@ function pickItems(kind, inp){
     if(active<0 && typed && items.length) active = 0;
     menu.innerHTML = items.length ? items.map((x,i)=>{
       const sel = norm(x.value)===v && v;
-      return `<div class="dsel-item${sel?' sel':''}" data-i="${i}"><span>${esc(x.value)}${x.sub?`<small class="pick-sub">${esc(x.sub)}</small>`:''}</span>${sel?'<span class="dsel-tick">✓</span>':''}</div>`;
+      return `<div class="dsel-item${sel?' sel':''}" data-i="${i}"><span>${esc(x.value)}${x.sub?`<small class="pick-sub">${esc(x.sub)}</small>`:''}</span>${x.tag?`<span class="fd-tag ${x.tag==='นอกบัญชี'?'fd-g':'fd-d'}" style="margin-left:auto;flex:none;">${esc(x.tag)}</span>`:''}${sel?'<span class="dsel-tick">✓</span>':''}</div>`;
     }).join('') : `<div class="dsel-item off">${inp.dataset.pick==='staff'?'ไม่พบชื่อในทะเบียนบุคลากร — พิมพ์ต่อได้ถ้าเป็นบุคคลภายนอก':'ไม่พบรายการที่ตรงกับคำค้นหา'}</div>`;
     menu.style.display = '';
     place(); paint();
