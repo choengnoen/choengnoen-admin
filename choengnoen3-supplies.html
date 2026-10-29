@@ -727,9 +727,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .md-add .md-f{display:flex;align-items:center;gap:6px;margin:0;}
   .md-add .md-f span{font-weight:600;color:var(--ink-600);white-space:nowrap;}
   .md-add .md-f input{flex:1 1 auto;max-width:none;min-width:0;}
-  .md-add .md-f-who{flex:0 1 220px;} .md-add .md-f-item{flex:1 1 300px;} .md-add .md-f-qty{flex:0 0 150px;}
-  .md-add .md-f-qty input{text-align:center;font-family:'Kanit';font-weight:600;}
+  /* ช่องเพิ่มรายการเบิก: ผู้เบิก/พัสดุยืดตามพื้นที่ ช่องจำนวนแคบพอดีตัวเลข */
+  .md-add .md-f-who{flex:1 1 220px;max-width:300px;} .md-add .md-f-item{flex:2 1 320px;} .md-add .md-f-qty{flex:0 0 auto;}
+  .md-add .md-f-qty input{flex:0 0 80px;width:80px;text-align:center;font-family:'Kanit';font-weight:600;}
   .md-add .md-add-btn{height:34px;padding:0 18px;}
+  /* ช่องตัวเลข (เพิ่มรายการเบิก + เบิกวันนี้): ไม่แสดงปุ่มเลื่อนขึ้น-ลง พิมพ์ได้อย่างเดียว ตัวเลขจึงอยู่กึ่งกลางจริง */
+  .md-add input[type=number],.fd-in[type=number]{-moz-appearance:textfield;appearance:textfield;}
+  .md-add input[type=number]::-webkit-inner-spin-button,.md-add input[type=number]::-webkit-outer-spin-button,
+  .fd-in[type=number]::-webkit-inner-spin-button,.fd-in[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
   /* ช่องผู้เบิกในตาราง: ขึ้นบรรทัดใหม่ได้ 2 บรรทัด ให้เห็นชื่อ-นามสกุลครบ */
   /* ช่องผู้เบิกในตาราง: ข้อความตัวหนาแบบเดียวกับชื่อพัสดุ ขึ้นได้ไม่เกิน 2 บรรทัด (เห็นชื่อ-นามสกุลครบ แถวสูงเท่ากัน) — คลิกเพื่อแก้ */
   .fd-table td.fd-who-td{white-space:normal;padding-left:6px;padding-right:6px;}
@@ -5153,7 +5158,7 @@ function renderReportMaterialDay(mk){
       <td class="fd-flags"><div class="fd-flagrow">${flagHtml}${editable ? fdDelBtn(`data-mdel="${esc(m.code)}"`) : ''}</div></td></tr>`;
   });
   if(!rows.length) body = `<tr><td colspan="9" class="fd-empty">วันนี้ไม่มีรายการเบิก${editable?' — เพิ่มรายการได้ที่ช่องด้านบน':''}</td></tr>`;
-  const table = `<div class="fd-tablewrap"><table class="fd-table md-table"><colgroup><col style="width:5%"><col style="width:17%"><col style="width:21%"><col style="width:6%"><col style="width:9%"><col style="width:10%"><col style="width:9%"><col style="width:9%"><col style="width:14%"></colgroup><thead><tr>
+  const table = `<div class="fd-tablewrap"><table class="fd-table md-table"><colgroup><col style="width:5%"><col style="width:17%"><col style="width:24.5%"><col style="width:6%"><col style="width:9%"><col style="width:10%"><col style="width:9%"><col style="width:9%"><col style="width:10.5%"></colgroup><thead><tr>
     <th style="width:54px">ตรวจ<br>แล้ว</th><th>ผู้เบิก</th><th>ชื่อพัสดุ</th><th>หน่วย</th><th>ประเภทบัญชี</th><th>เบิกครั้งล่าสุด<br><small>จำนวน · วันที่</small></th><th class="fd-cur">เบิกวันนี้<br><small>(จำนวน)</small></th><th>คงเหลือ<br>หลังเบิก</th><th>ผลตรวจ</th></tr></thead>
     <tbody>${body}</tbody><tfoot><tr><td colspan="6" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${real.length} รายการ</td><td colspan="2"></td></tr></tfoot></table></div>`;
 
