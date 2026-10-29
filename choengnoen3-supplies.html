@@ -731,10 +731,16 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .md-add .md-f-qty input{text-align:center;font-family:'Kanit';font-weight:600;}
   .md-add .md-add-btn{height:34px;padding:0 18px;}
   /* ช่องผู้เบิกในตาราง: ขึ้นบรรทัดใหม่ได้ 2 บรรทัด ให้เห็นชื่อ-นามสกุลครบ */
-  /* สูงคงที่ 44px รับได้ 2 บรรทัด ทุกแถวจึงสูงเท่ากัน — ชื่อบรรทัดเดียวจัดกึ่งกลางด้วย fitWhoBoxes() */
-  .fd-in.fd-who{display:block;box-sizing:border-box;font-family:'Sarabun';font-size:13px;font-weight:600;line-height:16px;text-align:left;padding:5px 8px;height:44px;resize:none;overflow:hidden;white-space:normal;word-break:break-word;}
-  .fd-in.fd-who.one{padding-top:13px;padding-bottom:0;}
-  .fd-who-td{min-width:170px;}
+  /* ช่องผู้เบิกในตาราง: ข้อความตัวหนาแบบเดียวกับชื่อพัสดุ ขึ้นได้ไม่เกิน 2 บรรทัด (เห็นชื่อ-นามสกุลครบ แถวสูงเท่ากัน) — คลิกเพื่อแก้ */
+  .fd-table td.fd-who-td{white-space:normal;padding-left:6px;padding-right:6px;}
+  .fd-whobox{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-weight:700;font-size:13.5px;line-height:1.35;color:var(--navy-900);
+    padding:4px 7px;border:1px dashed transparent;border-radius:7px;cursor:text;word-break:break-word;}
+  .fd-whobox:not(.ro):hover,.fd-whobox:not(.ro):focus{border-color:#c9cfd6;background:#fff;outline:none;}
+  .fd-whobox.cell-dirty{background:#fff6e6;border:1px solid var(--amber-400);}
+  .fd-whobox.empty{color:var(--ink-400);font-weight:500;border-color:#c9cfd6;}
+  .fd-whobox.ro{cursor:default;}
+  .fd-whosub{display:inline-block;font-size:10.5px;font-weight:600;color:var(--orange-600);background:#fdefe3;border-radius:5px;padding:0 5px;vertical-align:1px;}
+  .fd-who-in{width:100%;box-sizing:border-box;height:36px;border:1.5px solid var(--orange-500);border-radius:8px;padding:0 8px;font-family:'Sarabun';font-size:13.5px;font-weight:600;color:var(--navy-900);box-shadow:0 0 0 3px rgba(224,98,15,.18);outline:none;}
   .pick-menu .dsel-item>span:first-child{display:flex;flex-direction:column;}
   .pick-menu .pick-sub{font-size:12px;color:#8792a0;font-weight:400;}
   /* แถบวันที่ — หน้าตาเดียวกับแถบสัปดาห์ของใบสั่งการรายวัน (วันทำการทั้งเดือน เลื่อนซ้าย-ขวาได้) */
@@ -4667,13 +4673,14 @@ function renderReportFuel(mk){
       : `<b>${r.mRaw!=null&&String(r.mRaw)!==''?esc(String(r.mRaw)):'—'}</b>`;
     const whoRaw = fuelEffWho(r.ft, label, date), who = whoRaw || r.v.note || '';
     const whoDirty = isDirty && whoRaw!==((fuelTransactions.find(t=>t.vehicle===label && t.date===date && t.kind==='issue' && t.fuelType===r.ft)||{}).requester||'');
+    const whoSub = whoRaw ? ` <span class="fd-whosub" title="เบิกแทนผู้รับผิดชอบรถ: ${esc(r.v.note||'—')}">แทน</span>` : '';
     const whoCell = editable
-      ? `<textarea rows="2" data-pick="staff" autocomplete="off" spellcheck="false" class="fd-in fd-who${whoDirty?' cell-dirty':''}" placeholder="ระบุชื่อ" data-f="who" data-fueltype="${r.ft}" data-vehicle="${esc(label)}" data-date="${date}" oninput="onFuelCellDraftInput(this)"${whoRaw?` title="ไม่ใช่ผู้รับผิดชอบรถ (${esc(r.v.note||'—')})"`:''}>${esc(who)}</textarea>`
-      : `<b>${esc(who||'—')}</b>`;
+      ? `<div class="fd-whobox${whoDirty?' cell-dirty':''}${who?'':' empty'}" tabindex="0" data-whoedit="fuel" data-val="${esc(who)}" data-f="who" data-fueltype="${r.ft}" data-vehicle="${esc(label)}" data-date="${date}" title="คลิกเพื่อแก้ชื่อผู้เบิก">${who?esc(who):'+ ระบุชื่อ'}${whoSub}</div>`
+      : `<div class="fd-whobox ro">${esc(who||'—')}${whoSub}</div>`;
     const distTxt = r.dist!=null ? `<b${r.dist<0?' class="fd-neg"':''}>${r.dist>=0?'+':''}${fmtNum(r.dist,0)} กม.</b>${r.kmpl?`<div class="fd-mut" title="${r.isIssue?'ระยะทางตั้งแต่เบิกครั้งก่อน ÷ ลิตรที่เบิกครั้งก่อน':''}">${fmtNum(r.kmpl,1)} กม./ล.${r.isIssue?' (รอบก่อน)':''}</div>`:''}` : '—';
     body += `<tr class="${cls}" data-flabel="${esc(label)}">
       <td class="fd-c"><div class="fd-cb${on?' on':''}${canCk&&!confirmed&&r.lit>0?' can':''}"${r.lit>0?` data-fck="${esc(label)}"`:''} title="${r.lit>0?(canCk?'ติ๊กเมื่อตรวจแล้ว':'เฉพาะผู้มีสิทธิ์ตรวจ'):''}">✔</div></td>
-      <td class="fd-who-td">${whoCell}${whoRaw?`<div class="fd-mut">แทน ${esc(r.v.note||'—')}</div>`:''}</td>
+      <td class="fd-who-td">${whoCell}</td>
       <td><b>${esc(vehicleShortName(label))}</b><div class="fd-mut">${esc(vehicleRegNo(label))}</div></td>
       <td class="fd-c"><span class="fd-tag ${r.ft==='ดีเซล'?'fd-d':'fd-g'}">น้ำมัน${r.ft}</span></td>
       <td class="fd-r">${r.last?`<b>${fmtNum(r.last.liters,1)} ล.</b><div class="fd-mut">${fuelShortDate(r.last.date)}</div>`:'<span class="fd-mut">ไม่มีประวัติ</span>'}</td>
@@ -4685,7 +4692,7 @@ function renderReportFuel(mk){
   });
   if(!rows.length) body = `<tr><td colspan="10" class="fd-empty">วันนี้ไม่มีรายการเบิก${editable?' — เพิ่มรายการได้ที่ช่องด้านบน':''}</td></tr>`;
   const grand = rows.reduce((s,r)=>s+(r.lit||0),0);
-  const table = `<div class="fd-tablewrap"><table class="fd-table"><colgroup><col style="width:54px"><col style="width:180px"><col style="width:200px"><col style="width:96px"><col style="width:110px"><col style="width:100px"><col style="width:96px"><col style="width:110px"><col style="width:90px"><col style="width:120px"></colgroup><thead><tr>
+  const table = `<div class="fd-tablewrap"><table class="fd-table"><colgroup><col style="width:5%"><col style="width:16%"><col style="width:16%"><col style="width:9%"><col style="width:9.5%"><col style="width:8.5%"><col style="width:8.5%"><col style="width:9.5%"><col style="width:7.5%"><col style="width:10.5%"></colgroup><thead><tr>
     <th style="width:54px">ตรวจ<br>แล้ว</th><th>ผู้เบิก</th><th>หมายเลขเครื่อง/รถ</th><th>ประเภท<br>พัสดุที่เบิก</th><th>เบิกครั้งล่าสุด<br><small>จำนวน · วันที่</small></th><th class="fd-cur">เบิกครั้งนี้<br><small>(ลิตร)</small></th><th>เลขไมล์<br>ครั้งก่อน</th><th class="fd-cur">เลขไมล์<br>ครั้งนี้</th><th>ระยะทาง</th><th>ผลตรวจ</th></tr></thead>
     <tbody>${body}</tbody><tfoot><tr><td colspan="5" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${fmtNum(grand,1)} ล.</td><td colspan="4"></td></tr></tfoot></table></div>`;
 
@@ -4698,7 +4705,6 @@ function renderReportFuel(mk){
     const t = Array.from(wrap.querySelectorAll('.fd-in')).find(i=> parts[0]==='M' ? i.dataset.miVehicle===parts[1] : (i.dataset.fueltype===parts[1] && i.dataset.vehicle===parts[2] && (i.dataset.f==='who')===(parts[0]==='W')));
     if(t) t.focus();
   }
-  fitWhoBoxes(wrap);
   updateDraftChip('fuel');
 }
 /* เหตุการณ์คลิก/คีย์บอร์ดของหน้าตรวจรายวัน (ผูกครั้งเดียว) */
@@ -4863,18 +4869,23 @@ let matAddWho = '';
    ใช้: <input data-pick="staff|mat|veh"> — พิมพ์เพื่อค้นได้, ↑↓ เลือก, Enter ยืนยัน, Esc ปิด
    เลือกแล้วจะยิง event input + change ให้ช่องนั้น (โค้ดเดิมที่ฟัง oninput/onchange ทำงานเหมือนเดิม)
    ============================================================ */
-/* ช่องผู้เบิกในตาราง: ชื่อที่ยาวไม่เกินบรรทัดเดียวให้อยู่กึ่งกลางแนวตั้ง (เพิ่มคลาส one) */
-function fitWhoBoxes(root){
-  root = root || document;
-  // ตารางที่ซ่อนอยู่ (แท็บอื่น) วัดขนาดไม่ได้ → คอยวัดใหม่ตอนแสดงขึ้นมา/ขนาดจอเปลี่ยน
-  if(root.nodeType===1 && !root.__whoRO && window.ResizeObserver){ root.__whoRO = new ResizeObserver(()=>fitWhoBoxes(root)); root.__whoRO.observe(root); }
-  root.querySelectorAll('textarea.fd-who').forEach(el=>{
-    if(!el.offsetWidth) return;
-    el.classList.remove('one');
-    if(el.scrollHeight <= 16+10+2) el.classList.add('one');
-  });
+/* ช่องผู้เบิกในตาราง: ปกติแสดงเป็นข้อความตัวหนา (ขึ้นได้ 2 บรรทัด เห็นชื่อ-นามสกุลครบ แถวสูงเท่ากันทุกแถว)
+   คลิก/กด Tab เข้า → กลายเป็นช่องพิมพ์พร้อมรายการเลือกรายชื่อ — Enter หรือคลิกที่อื่น = เสร็จ แล้ววาดตารางใหม่ */
+function startWhoEdit(box){
+  const kind = box.dataset.whoedit;
+  const inp = document.createElement('input');
+  inp.type = 'text'; inp.className = 'fd-who-in'; inp.autocomplete = 'off'; inp.placeholder = 'พิมพ์/เลือกชื่อ';
+  inp.dataset.pick = 'staff'; inp.dataset.f = 'who'; inp.dataset.date = box.dataset.date;
+  if(kind==='mat') inp.dataset.code = box.dataset.code; else { inp.dataset.fueltype = box.dataset.fueltype; inp.dataset.vehicle = box.dataset.vehicle; }
+  inp.value = box.dataset.val || '';
+  const rerender = ()=> kind==='mat' ? renderReportMaterial(currentMatMk()) : renderReportFuel(currentFuelMk());
+  inp.addEventListener('input', ()=> kind==='mat' ? onMatCellDraftInput(inp) : onFuelCellDraftInput(inp));
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter' || e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); inp.blur(); } });
+  inp.addEventListener('blur', ()=> setTimeout(rerender, 0));   // รอให้โฟกัสย้ายไปช่องถัดไปก่อน แล้วค่อยวาดใหม่ (วาดแล้วคืนโฟกัสให้เอง)
+  box.replaceWith(inp);
+  inp.focus(); inp.select();
 }
-document.addEventListener('input', e=>{ const el = e.target; if(el.matches && el.matches('textarea.fd-who')){ el.classList.remove('one'); if(el.scrollHeight <= 16+10+2) el.classList.add('one'); } });
+document.addEventListener('focusin', e=>{ const box = e.target.closest && e.target.closest('[data-whoedit]'); if(box) startWhoEdit(box); });
 function pickItems(kind){
   if(kind==='staff') return activeStaff().map(s=>({value:s.name, sub:s.role||''}));
   if(kind==='mat') return Object.keys(matDayAddMap).map(k=>{ const m = materials.find(x=>x.code===matDayAddMap[k]); return {value:k, sub:m?((m.code||'')+' · '+(m.unit||'')):''}; });
@@ -5091,8 +5102,8 @@ function renderReportMaterialDay(mk){
     const who = matEffWho(m.code, date);
     const whoDirty = isDirty && who!==((materialTransactions.find(t=>t.itemCode===m.code && t.date===date && t.kind==='issue')||{}).requester||'');
     const whoCell = editable
-      ? `<textarea rows="2" data-pick="staff" autocomplete="off" spellcheck="false" class="fd-in fd-who${whoDirty?' cell-dirty':''}" placeholder="ระบุชื่อ" data-f="who" data-code="${esc(m.code)}" data-date="${date}" oninput="onMatCellDraftInput(this)">${esc(who)}</textarea>`
-      : (who ? `<b>${esc(who)}</b>` : '<span class="fd-mut">ไม่ระบุ</span>');
+      ? `<div class="fd-whobox${whoDirty?' cell-dirty':''}${who?'':' empty'}" tabindex="0" data-whoedit="mat" data-val="${esc(who)}" data-f="who" data-code="${esc(m.code)}" data-date="${date}" title="คลิกเพื่อแก้ชื่อผู้เบิก">${who?esc(who):'+ ระบุชื่อ'}</div>`
+      : (who ? `<div class="fd-whobox ro">${esc(who)}</div>` : '<span class="fd-mut">ไม่ระบุ</span>');
     body += `<tr class="${cls}" data-mlabel="${esc(m.code)}">
       <td class="fd-c"><div class="fd-cb${on?' on':''}${canCk&&!confirmed&&r.qty>0?' can':''}"${r.qty>0?` data-mck="${esc(m.code)}"`:''} title="${r.qty>0?(canCk?'ติ๊กเมื่อตรวจแล้ว':'เฉพาะผู้มีสิทธิ์ตรวจ'):''}">✔</div></td>
       <td class="fd-who-td">${whoCell}</td>
@@ -5105,7 +5116,7 @@ function renderReportMaterialDay(mk){
       <td class="fd-flags">${flagHtml}</td></tr>`;
   });
   if(!rows.length) body = `<tr><td colspan="9" class="fd-empty">วันนี้ไม่มีรายการเบิก${editable?' — เพิ่มรายการได้ที่ช่องด้านบน':''}</td></tr>`;
-  const table = `<div class="fd-tablewrap"><table class="fd-table md-table"><colgroup><col style="width:54px"><col style="width:180px"><col style="width:280px"><col style="width:70px"><col style="width:96px"><col style="width:110px"><col style="width:100px"><col style="width:100px"><col style="width:120px"></colgroup><thead><tr>
+  const table = `<div class="fd-tablewrap"><table class="fd-table md-table"><colgroup><col style="width:5%"><col style="width:17%"><col style="width:24%"><col style="width:6%"><col style="width:9%"><col style="width:10%"><col style="width:9%"><col style="width:9%"><col style="width:11%"></colgroup><thead><tr>
     <th style="width:54px">ตรวจ<br>แล้ว</th><th>ผู้เบิก</th><th>ชื่อพัสดุ</th><th>หน่วย</th><th>ประเภทบัญชี</th><th>เบิกครั้งล่าสุด<br><small>จำนวน · วันที่</small></th><th class="fd-cur">เบิกวันนี้<br><small>(จำนวน)</small></th><th>คงเหลือ<br>หลังเบิก</th><th>ผลตรวจ</th></tr></thead>
     <tbody>${body}</tbody><tfoot><tr><td colspan="6" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${real.length} รายการ</td><td colspan="2"></td></tr></tfoot></table></div>`;
 
@@ -5114,7 +5125,6 @@ function renderReportMaterialDay(mk){
   const fdDays = wrap.querySelector('.fd-days'), fdSel = fdDays && fdDays.querySelector('.on');
   if(fdSel) fdDays.scrollLeft = fdSel.offsetLeft - (fdDays.clientWidth - fdSel.offsetWidth)/2;
   if(focusCode){ const t = Array.from(wrap.querySelectorAll('.fd-in')).find(i=>i.dataset.code===focusCode && (i.dataset.f||'')===focusF); if(t) t.focus(); }
-  fitWhoBoxes(wrap);
   updateDraftChip('mat');
 }
 /* เหตุการณ์ของมุมมองรายวัน (ผูกครั้งเดียว) — ใช้ mousedown กับแถบวัน เพราะช่องกรอกที่กำลังพิมพ์จะวาดใหม่ตอนเสียโฟกัส ทำให้ click หลุด */
