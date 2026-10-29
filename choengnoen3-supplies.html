@@ -3770,11 +3770,33 @@ function committedFuelIssueQty(fuelType, vehicle, date){
 }
 /* ฉบับร่าง 1 ช่อง = จำนวน (raw) + ชื่อผู้เบิก (who) — ถ้าทั้งสองค่าเท่ากับที่บันทึกไว้แล้ว ถือว่าไม่ได้แก้ (ลบออกจากฉบับร่าง)
    คืนค่า true ถ้ายังมีฉบับร่างค้างอยู่ */
-function setMatDraft(code, date, patch){
-  const key = code+'|'+date;
-  const tx = materialTransactions.find(t=>t.itemCode===code && t.date===date && t.kind==='issue');
+/* พัสดุเดียวกันเบิกได้หลายคนในวันเดียวกัน (2569-10-30) — 1 แถว = 1 "ช่อง" (slot) ลำดับที่ n ของรายการเบิกพัสดุนั้นในวันนั้น
+   ช่องแรก (n=0) ใช้คีย์เดิม "code|date" / รหัสแถวเดิม "code" (ข้อมูลเดิมใช้ต่อได้) ช่องถัดไปเป็น "code|date|n" / "code#n" */
+function matIssueTxs(code, date){
+  return materialTransactions.filter(t=>t.itemCode===code && t.date===date && t.kind==='issue').sort((a,b)=>(a.id>b.id)-(a.id<b.id));
+}
+function matDraftKey(code, date, n){ return n ? code+'|'+date+'|'+n : code+'|'+date; }
+function matSlotId(code, n){ return n ? code+'#'+n : code; }
+function matSlotParse(id){ const i = id.lastIndexOf('#'); return i>0 && /^\d+$/.test(id.slice(i+1)) ? {code:id.slice(0,i), n:+id.slice(i+1)} : {code:id, n:0}; }
+/* จำนวนช่องของพัสดุนั้นในวันนั้น (รายการที่บันทึกแล้ว + ฉบับร่าง + แถวที่กดเพิ่มไว้) */
+function matSlotCount(code, date){
+  let c = matIssueTxs(code, date).length;
+  Object.values(draftMatCells).forEach(d=>{ if(d.code===code && d.date===date) c = Math.max(c, (d.n||0)+1); });
+  (matDayAdded[date] || new Set()).forEach(id=>{ const s = matSlotParse(id); if(s.code===code) c = Math.max(c, s.n+1); });
+  return c;
+}
+function matSlotQty(code, date, n){
+  const d = draftMatCells[matDraftKey(code, date, n)];
+  if(d){ const v = parseFloat(d.raw); return (!isNaN(v) && v>0) ? v : 0; }
+  const tx = matIssueTxs(code, date)[n];
+  return tx ? (tx.qty||0) : 0;
+}
+function setMatDraft(code, date, patch, n){
+  n = n||0;
+  const key = matDraftKey(code, date, n);
+  const tx = matIssueTxs(code, date)[n];
   const base = {raw: tx ? String(tx.qty) : '', who: tx ? (tx.requester||'') : ''};
-  const cur = Object.assign({code, date}, base, draftMatCells[key]||{}, patch);
+  const cur = Object.assign({code, date, n}, base, draftMatCells[key]||{}, patch);
   if(cur.raw===base.raw && cur.who===base.who){ delete draftMatCells[key]; return false; }
   draftMatCells[key] = cur; return true;
 }
@@ -3787,9 +3809,9 @@ function setFuelDraft(fuelType, vehicle, date, patch){
   draftFuelCells[key] = cur; return true;
 }
 /* ชื่อผู้เบิกที่มีผล (รวมฉบับร่าง) */
-function matEffWho(code, date){
-  const d = draftMatCells[code+'|'+date]; if(d && d.who!=null) return d.who;
-  const tx = materialTransactions.find(t=>t.itemCode===code && t.date===date && t.kind==='issue');
+function matEffWho(code, date, n){
+  const d = draftMatCells[matDraftKey(code, date, n||0)]; if(d && d.who!=null) return d.who;
+  const tx = matIssueTxs(code, date)[n||0];
   return tx ? (tx.requester||'') : '';
 }
 function fuelEffWho(fuelType, vehicle, date){
@@ -3800,7 +3822,7 @@ function fuelEffWho(fuelType, vehicle, date){
 function onMatCellDraftInput(el){
   if(!isAdmin()) return;
   const patch = el.dataset.f==='who' ? {who: el.value.trim()} : {raw: el.value.trim()};
-  el.classList.toggle('cell-dirty', setMatDraft(el.dataset.code, el.dataset.date, patch));
+  el.classList.toggle('cell-dirty', setMatDraft(el.dataset.code, el.dataset.date, patch, +(el.dataset.n||0)));
   updateDraftChip('mat');
 }
 function onFuelCellDraftInput(el){
@@ -3837,8 +3859,9 @@ function updateDraftChip(kind){
 function updateDraftChips(){ updateDraftChip('mat'); updateDraftChip('fuel'); }
 function applyDraftToState(kind){
   if(!kind || kind==='mat'){
-    Object.values(draftMatCells).forEach(({code,date,raw,who})=>{
-      materialTransactions = materialTransactions.filter(t=>!(t.itemCode===code && t.date===date && t.kind==='issue'));
+    // จับคู่ฉบับร่างกับรายการเดิมของช่องนั้นก่อนแก้ (ลบรายการแล้วลำดับช่องจะเลื่อน)
+    Object.values(draftMatCells).map(d=>({d, existing: matIssueTxs(d.code, d.date)[d.n||0]})).forEach(({d:{code,date,raw,who}, existing})=>{
+      if(existing) materialTransactions = materialTransactions.filter(t=>t!==existing);
       const val = raw===''?NaN:parseFloat(raw);
       if(!isNaN(val) && val>0){
         materialTransactions.push({id:__matTxNextId++, date, itemCode:code, kind:'issue', qty:val, requester:who||'', note:'บันทึกจากตารางเบิกจ่ายรายวัน'});
@@ -3929,8 +3952,8 @@ async function confirmCommitDraftReport(){
   const total = draftCountFor(kind);
   try{
     if(kind==='mat'){
-      for(const {code,date,raw,who} of Object.values(draftMatCells)){
-        const existing = materialTransactions.find(t=>t.itemCode===code && t.date===date && t.kind==='issue');
+      const plan = Object.values(draftMatCells).map(d=>({d, existing: matIssueTxs(d.code, d.date)[d.n||0]}));   // จับคู่ช่องก่อนเริ่มลบ/เพิ่ม
+      for(const {d:{code,date,raw,who}, existing} of plan){
         const val = raw===''?NaN:parseFloat(raw);
         if(existing){
           // แก้ตัวเลขในตาราง = ลบของเดิมแล้วบันทึกใหม่ → ไม่ต้องเก็บของเดิมลงถังขยะ (ถ้าล้างช่องเป็นค่าว่าง จึงเก็บลงถังขยะ)
@@ -3945,6 +3968,7 @@ async function confirmCommitDraftReport(){
         done++;
       }
       draftMatCells = {};
+      matDayAdded = {};   // บันทึกแล้วลำดับช่องอาจเลื่อน — แถวที่เหลือแสดงตามรายการที่บันทึกจริง
     } else {
       for(const {fuelType,vehicle,date,raw,who} of Object.values(draftFuelCells)){
         const existing = fuelTransactions.find(t=>t.vehicle===vehicle && t.date===date && t.kind==='issue' && t.fuelType===fuelType);
@@ -4842,9 +4866,9 @@ function stepMatDay(n){
 }
 /* ปริมาณเบิกจริงของวัน (รวมฉบับร่างที่ยังไม่บันทึก) */
 function matEffQty(code, date){
-  const key = code+'|'+date;
-  if(Object.prototype.hasOwnProperty.call(draftMatCells, key)){ const v = parseFloat(draftMatCells[key].raw); return (!isNaN(v) && v>0) ? v : 0; }
-  return materialTransactions.filter(t=>t.itemCode===code && t.date===date && t.kind==='issue').reduce((s,t)=>s+(t.qty||0),0);
+  let s = 0;
+  for(let n=0, c=matSlotCount(code, date); n<c; n++) s += matSlotQty(code, date, n);
+  return s;
 }
 function matLastIssueBefore(code, date){
   let best = null;
@@ -4865,7 +4889,7 @@ function matBalanceAfter(m, mk, date){
   const recv = materialReceivedOverride[ovKey] !== undefined ? s.received
     : s.txs.filter(t=>t.kind==='receive' && t.date<=date).reduce((a,t)=>a+(t.qty||0),0);
   let issued = 0;
-  s.txs.forEach(t=>{ if(t.kind==='issue' && t.date<=date && !Object.prototype.hasOwnProperty.call(draftMatCells, m.code+'|'+t.date)) issued += (t.qty||0); });
+  s.txs.forEach(t=>{ if(t.kind==='issue' && t.date<=date && !Object.prototype.hasOwnProperty.call(draftMatCells, matDraftKey(m.code, t.date, matIssueTxs(m.code, t.date).indexOf(t)))) issued += (t.qty||0); });
   Object.values(draftMatCells).forEach(d=>{
     if(d.code!==m.code || d.date>date || monthKeyOf(d.date)!==mk) return;
     const v = parseFloat(d.raw); if(!isNaN(v) && v>0) issued += v;
@@ -4874,7 +4898,7 @@ function matBalanceAfter(m, mk, date){
 }
 function matDayInput(el){
   const date = el.dataset.date;
-  (matDayAdded[date] || (matDayAdded[date] = new Set())).add(el.dataset.code);
+  (matDayAdded[date] || (matDayAdded[date] = new Set())).add(matSlotId(el.dataset.code, +(el.dataset.n||0)));
   onMatCellDraftInput(el);
 }
 function matDayChange(){ setTimeout(()=>renderReportMaterial(currentMatMk()), 0); }  // คำนวณคงเหลือ/ผลตรวจใหม่หลังกรอกเสร็จ
@@ -4883,14 +4907,15 @@ function matDayChange(){ setTimeout(()=>renderReportMaterial(currentMatMk()), 0)
 function fdDelBtn(attrs){
   return `<button type="button" class="fd-del" ${attrs} title="ลบรายการนี้" aria-label="ลบรายการนี้"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`;
 }
-function delMatDayRow(code){
+function delMatDayRow(slotId){
   if(!isAdmin()) return;
+  const {code, n} = matSlotParse(slotId);
   const date = dateStrFor(currentMatMk(), matCheckDay);
   const m = materials.find(x=>x.code===code);
-  showConfirmModal('ยืนยันลบรายการ', `ลบรายการเบิก "${m?m.name:code}" ของวันนี้หรือไม่?\n(กด "บันทึก" ที่แถบด้านล่างเพื่อยืนยันการลบ — ถ้าเปลี่ยนใจกด "ล้างการแก้ไข")`, 'ลบรายการ', function(){
-    const tx = materialTransactions.find(t=>t.itemCode===code && t.date===date && t.kind==='issue');
-    if(tx) setMatDraft(code, date, {raw:''}); else delete draftMatCells[code+'|'+date];
-    if(matDayAdded[date]) matDayAdded[date].delete(code);
+  const who = matEffWho(code, date, n);
+  showConfirmModal('ยืนยันลบรายการ', `ลบรายการเบิก "${m?m.name:code}"${who?' ของ '+who:''} ในวันนี้หรือไม่?\n(กด "บันทึก" ที่แถบด้านล่างเพื่อยืนยันการลบ — ถ้าเปลี่ยนใจกด "ล้างการแก้ไข")`, 'ลบรายการ', function(){
+    if(matIssueTxs(code, date)[n]) setMatDraft(code, date, {raw:''}, n); else delete draftMatCells[matDraftKey(code, date, n)];
+    if(matDayAdded[date]) matDayAdded[date].delete(slotId);
     renderReportMaterial(currentMatMk());
   });
 }
@@ -4920,7 +4945,7 @@ function startWhoEdit(box){
   const inp = document.createElement('input');
   inp.type = 'text'; inp.className = 'fd-who-in'; inp.autocomplete = 'off'; inp.placeholder = 'พิมพ์/เลือกชื่อ';
   inp.dataset.pick = 'staff'; inp.dataset.f = 'who'; inp.dataset.date = box.dataset.date;
-  if(kind==='mat') inp.dataset.code = box.dataset.code; else { inp.dataset.fueltype = box.dataset.fueltype; inp.dataset.vehicle = box.dataset.vehicle; }
+  if(kind==='mat'){ inp.dataset.code = box.dataset.code; inp.dataset.n = box.dataset.n||'0'; } else { inp.dataset.fueltype = box.dataset.fueltype; inp.dataset.vehicle = box.dataset.vehicle; }
   inp.value = box.dataset.val || '';
   const rerender = ()=> kind==='mat' ? renderReportMaterial(currentMatMk()) : renderReportFuel(currentFuelMk());
   inp.addEventListener('input', ()=> kind==='mat' ? onMatCellDraftInput(inp) : onFuelCellDraftInput(inp));
@@ -5046,11 +5071,16 @@ function addMatDayRow(){
   const qty = parseFloat(raw);
   if(!(qty>0)){ showAlertModal('กรุณากรอกจำนวนที่เบิก (มากกว่า 0)'); qtyEl.focus(); return; }
   const date = dateStrFor(currentMatMk(), matCheckDay);
-  (matDayAdded[date] || (matDayAdded[date] = new Set())).add(code);
+  /* ผู้เบิกคนเดิม + พัสดุเดิม → แก้จำนวนแถวเดิม · ช่องแรกยังว่าง → ใช้ช่องนั้น · คนอื่นเบิกพัสดุเดียวกัน → เพิ่มแถวใหม่ */
+  const cnt = matSlotCount(code, date);
+  let n = -1;
+  for(let i=0;i<cnt;i++){ if(matEffWho(code, date, i)===who){ n = i; break; } }
+  if(n<0) n = (cnt && (matSlotQty(code, date, 0)>0 || matEffWho(code, date, 0))) ? cnt : 0;
+  (matDayAdded[date] || (matDayAdded[date] = new Set())).add(matSlotId(code, n));
   matAddWho = who;
-  setMatDraft(code, date, {raw:String(qty), who});
+  setMatDraft(code, date, {raw:String(qty), who}, n);
   renderReportMaterial(currentMatMk());
-  const tr = Array.from(document.querySelectorAll('#rep-mat-grid-wrap tr[data-mlabel]')).find(r=>r.dataset.mlabel===code);
+  const tr = Array.from(document.querySelectorAll('#rep-mat-grid-wrap tr[data-mlabel]')).find(r=>r.dataset.mlabel===matSlotId(code, n));
   if(tr){ tr.scrollIntoView({block:'nearest', behavior:'smooth'}); tr.classList.add('fd-hl'); setTimeout(()=>tr.classList.remove('fd-hl'), 1600); }
   pickQuietFocus(document.getElementById('mat-add-item'));
 }
@@ -5070,15 +5100,15 @@ function renderReportMaterialDay(mk){
   const added = matDayAdded[date] || new Set();
   const ae = document.activeElement;
   const focusCode = (ae && wrap.contains(ae) && ae.matches('.fd-in')) ? ae.dataset.code : null;
-  const focusF = focusCode ? (ae.dataset.f||'') : '';
+  const focusF = focusCode ? (ae.dataset.f||'') : '', focusN = focusCode ? (ae.dataset.n||'0') : '';
   const sx = wrap.scrollLeft, sy = wrap.scrollTop;
 
   // จำนวนรายการที่เบิกในแต่ละวัน (รวมฉบับร่าง) สำหรับแถบสัปดาห์
   const dayCodes = {};
-  materialTransactions.forEach(t=>{ if(t.kind==='issue' && t.qty>0) (dayCodes[t.date] || (dayCodes[t.date] = new Set())).add(t.itemCode); });
-  Object.values(draftMatCells).forEach(d=>{
+  materialTransactions.forEach(t=>{ if(t.kind==='issue' && t.qty>0) (dayCodes[t.date] || (dayCodes[t.date] = new Set())).add(matDraftKey(t.itemCode, t.date, matIssueTxs(t.itemCode, t.date).indexOf(t))); });
+  Object.entries(draftMatCells).forEach(([key, d])=>{
     const v = parseFloat(d.raw), set = dayCodes[d.date] || (dayCodes[d.date] = new Set());
-    if(!isNaN(v) && v>0) set.add(d.code); else set.delete(d.code);
+    if(!isNaN(v) && v>0) set.add(key); else set.delete(key);
   });
   const weekIsos = fuelWeekDays(date), todayIso = toLocalISODate(TODAY);
   const chips = weekIsos.map(iso=>{
@@ -5089,27 +5119,34 @@ function renderReportMaterialDay(mk){
       <small>${FUEL_WEEKDAY_FULL[wd]}${mon}</small><b>${dt.getDate()}</b><div class="n">${matDayRec(iso).confirmed?'🔒 ':''}${cnt?cnt+' รายการ':'&nbsp;'}</div></div>`;
   }).join('');
 
-  // รายการของวันนั้น: มีจำนวนเบิก หรือผู้ใช้กดเพิ่มไว้
-  const list = materials.filter(m=>{
-    if(added.has(m.code)) return true;
-    if(!(matEffQty(m.code, date)>0)) return false;
-    if(acctFilter!=='all' && (m.accountType||'ในบัญชี')!==acctFilter) return false;
-    if(!inUse(m)) return false;
-    if(q && !((m.name+' '+m.code).toLowerCase().includes(q))) return false;
-    return true;
-  }).sort((a,b)=>a.name.localeCompare(b.name,'th'));
+  // รายการของวันนั้น: 1 แถว = พัสดุ 1 ชนิดต่อผู้เบิก 1 คน (พัสดุเดียวกันหลายคนได้หลายแถว) — มีจำนวนเบิก หรือผู้ใช้กดเพิ่มไว้
+  const slots = [];
+  materials.forEach(m=>{
+    const cnt = matSlotCount(m.code, date);
+    for(let n=0;n<cnt;n++){
+      const id = matSlotId(m.code, n);
+      if(!added.has(id)){
+        if(!(matSlotQty(m.code, date, n)>0)) continue;
+        if(acctFilter!=='all' && (m.accountType||'ในบัญชี')!==acctFilter) continue;
+        if(!inUse(m)) continue;
+        if(q && !((m.name+' '+m.code).toLowerCase().includes(q))) continue;
+      }
+      slots.push({m, n, id});
+    }
+  });
+  slots.sort((a,b)=>a.m.name.localeCompare(b.m.name,'th') || a.n-b.n);
 
-  const rows = list.map(m=>{
-    const qty = matEffQty(m.code, date);
+  const rows = slots.map(({m, n, id})=>{
+    const qty = matSlotQty(m.code, date, n), dayQty = matEffQty(m.code, date);
     const last = matLastIssueBefore(m.code, date);
     const after = matBalanceAfter(m, mk, date);
     const flags = [];
     if(qty>0){
       if(after<0) flags.push({c:'b', t:'ยอดคงเหลือติดลบ ('+fmtNum(after,1)+' '+(m.unit||'')+') — เบิกมากกว่าที่มี หรือยังไม่ได้บันทึกรับเข้า', s:'ติดลบ'});
       const hist = matIssueHistory(m.code, date, 90);
-      if(hist.length>=3){ const avg = hist.reduce((s,x)=>s+x,0)/hist.length; if(qty>avg*2 || qty<avg*0.25) flags.push({c:'w', t:'ปริมาณต่างจากค่าเฉลี่ย 90 วัน ('+fmtNum(avg,1)+') มาก', s:'ปริมาณต่างมาก'}); }
+      if(hist.length>=3){ const avg = hist.reduce((s,x)=>s+x,0)/hist.length; if(dayQty>avg*2 || dayQty<avg*0.25) flags.push({c:'w', t:'ปริมาณต่างจากค่าเฉลี่ย 90 วัน ('+fmtNum(avg,1)+') มาก', s:'ปริมาณต่างมาก'}); }
     }
-    return {m, qty, last, after, flags};
+    return {m, n, id, qty, last, after, flags};
   });
   const real = rows.filter(r=>r.qty>0);
   const warnRows = real.filter(r=>r.flags.length);
@@ -5124,9 +5161,9 @@ function renderReportMaterialDay(mk){
       <div class="fd-stats"><div>ในบัญชี<b>${nNai} รายการ</b></div><div>นอกบัญชี<b>${nNok} รายการ</b></div></div></div>`;
 
   const alertsHtml = warnRows.length
-    ? `<div class="fd-alert"><b>⚠ ต้องดูเป็นพิเศษ ${warnRows.length} รายการ</b>${warnRows.map(r=>`<div class="fd-li" data-mgo="${esc(r.m.code)}"><b>${esc(r.m.name)}</b> — ${r.flags.map(f=>esc(f.t)).join(' · ')}</div>`).join('')}</div>`
+    ? `<div class="fd-alert"><b>⚠ ต้องดูเป็นพิเศษ ${warnRows.length} รายการ</b>${warnRows.map(r=>`<div class="fd-li" data-mgo="${esc(r.id)}"><b>${esc(r.m.name)}</b>${matEffWho(r.m.code, date, r.n)?' ('+esc(matEffWho(r.m.code, date, r.n))+')':''} —${r.flags.map(f=>esc(f.t)).join(' · ')}</div>`).join('')}</div>`
     : `<div class="fd-alert fd-alert-ok"><b>${real.length?'✔ ไม่พบความผิดปกติในวันนี้':'วันนี้ยังไม่มีรายการเบิก'}</b>${real.length?'<div>ปริมาณและยอดคงเหลือเหมาะสมเมื่อเทียบกับที่ผ่านมา</div>':''}</div>`;
-  const ckCount = real.filter(r=>ckSet.has(r.m.code)).length;
+  const ckCount = real.filter(r=>ckSet.has(r.id)).length;
   let sumHtml = `<div class="fd-prog"><b>ความคืบหน้าการตรวจ</b><div class="fd-pb"><i style="width:${real.length?ckCount/real.length*100:0}%"></i></div><span>ตรวจแล้ว <b>${ckCount}</b> / ${real.length} รายการ</span>`;
   if(confirmed){
     sumHtml += `<div class="fd-lock">🔒 ยืนยันตรวจครบแล้ว — ${esc(rec.confirmedBy||'')} · ${esc(fuelStamp(rec.confirmedAt))}${canCk?` <a href="#" data-munlock="1">ปลดล็อก</a>`:''}</div>`;
@@ -5157,24 +5194,24 @@ function renderReportMaterialDay(mk){
 
   let body = '';
   rows.forEach(r=>{
-    const m = r.m, key = m.code+'|'+date;
+    const m = r.m, n = r.n, key = matDraftKey(m.code, date, n);
     const isDirty = Object.prototype.hasOwnProperty.call(draftMatCells, key);
-    const on = ckSet.has(m.code);
+    const on = ckSet.has(r.id);
     const cls = !(r.qty>0) ? 'fd-off' : on ? 'fd-ck' : r.flags.some(f=>f.c==='b') ? 'fd-rb' : r.flags.length ? 'fd-rw' : '';
     const qtyCell = editable
-      ? `<input type="number" min="0" step="0.1" class="fd-in${isDirty?' cell-dirty':''}" value="${r.qty>0?r.qty:''}" placeholder="—" data-kind="mat" data-code="${esc(m.code)}" data-date="${date}" oninput="matDayInput(this)" onchange="matDayChange()">`
+      ? `<input type="number" min="0" step="0.1" class="fd-in${isDirty?' cell-dirty':''}" value="${r.qty>0?r.qty:''}" placeholder="—" data-kind="mat" data-code="${esc(m.code)}" data-n="${n}" data-date="${date}" oninput="matDayInput(this)" onchange="matDayChange()">`
       : `<b class="fd-big">${r.qty>0?fmtNum(r.qty,1):'—'}</b>`;
     const flagHtml = !(r.qty>0) ? '<span class="fd-fl fd-n">ยังไม่ได้เบิก</span>'
       : !r.flags.length ? '<span class="fd-fl fd-ok">✔ ปกติ</span>'
       : `<span class="fd-fl ${r.flags.some(f=>f.c==='b')?'fd-b':'fd-w'}" title="${esc(r.flags.map(f=>f.t).join(' · '))}">${r.flags[0].c==='b'?'⛔':'⚠'} ${esc(r.flags[0].s||r.flags[0].t)}${r.flags.length>1?' +'+(r.flags.length-1):''}</span>`;
     const acct = m.accountType==='นอกบัญชี' ? 'นอกบัญชี' : 'ในบัญชี';
-    const who = matEffWho(m.code, date);
-    const whoDirty = isDirty && who!==((materialTransactions.find(t=>t.itemCode===m.code && t.date===date && t.kind==='issue')||{}).requester||'');
+    const who = matEffWho(m.code, date, n);
+    const whoDirty = isDirty && who!==((matIssueTxs(m.code, date)[n]||{}).requester||'');
     const whoCell = editable
-      ? `<div class="fd-whobox${whoDirty?' cell-dirty':''}${who?'':' empty'}" tabindex="0" data-whoedit="mat" data-val="${esc(who)}" data-f="who" data-code="${esc(m.code)}" data-date="${date}" title="คลิกเพื่อแก้ชื่อผู้เบิก">${who?esc(who):'+ ระบุชื่อ'}</div>`
+      ? `<div class="fd-whobox${whoDirty?' cell-dirty':''}${who?'':' empty'}" tabindex="0" data-whoedit="mat" data-val="${esc(who)}" data-f="who" data-code="${esc(m.code)}" data-n="${n}" data-date="${date}" title="คลิกเพื่อแก้ชื่อผู้เบิก">${who?esc(who):'+ ระบุชื่อ'}</div>`
       : (who ? `<div class="fd-whobox ro">${esc(who)}</div>` : '<span class="fd-mut">ไม่ระบุ</span>');
-    body += `<tr class="${cls}" data-mlabel="${esc(m.code)}">
-      <td class="fd-c"><div class="fd-cb${on?' on':''}${canCk&&!confirmed&&r.qty>0?' can':''}"${r.qty>0?` data-mck="${esc(m.code)}"`:''} title="${r.qty>0?(canCk?'ติ๊กเมื่อตรวจแล้ว':'เฉพาะผู้มีสิทธิ์ตรวจ'):''}">✔</div></td>
+    body += `<tr class="${cls}" data-mlabel="${esc(r.id)}">
+      <td class="fd-c"><div class="fd-cb${on?' on':''}${canCk&&!confirmed&&r.qty>0?' can':''}"${r.qty>0?` data-mck="${esc(r.id)}"`:''} title="${r.qty>0?(canCk?'ติ๊กเมื่อตรวจแล้ว':'เฉพาะผู้มีสิทธิ์ตรวจ'):''}">✔</div></td>
       <td class="fd-who-td">${whoCell}</td>
       <td class="md-name" title="${esc(m.name)}"><b>${esc(m.name)}</b></td>
       <td class="fd-c">${esc(m.unit||'')}</td>
@@ -5182,7 +5219,7 @@ function renderReportMaterialDay(mk){
       <td class="fd-r">${r.last?`<b>${fmtNum(r.last.qty,1)}</b><div class="fd-mut">${fuelShortDate(r.last.date)}</div>`:'<span class="fd-mut">ไม่มีประวัติ</span>'}</td>
       <td class="fd-in-td">${qtyCell}</td>
       <td class="fd-c"><span class="md-bal"><b class="fd-big${r.after<0?' fd-neg':''}">${fmtNum(r.after,1)}</b></span></td>
-      <td class="fd-flags"><div class="fd-flagrow">${flagHtml}${editable ? fdDelBtn(`data-mdel="${esc(m.code)}"`) : ''}</div></td></tr>`;
+      <td class="fd-flags"><div class="fd-flagrow">${flagHtml}${editable ? fdDelBtn(`data-mdel="${esc(r.id)}"`) : ''}</div></td></tr>`;
   });
   if(!rows.length) body = `<tr><td colspan="9" class="fd-empty">วันนี้ไม่มีรายการเบิก${editable?' — เพิ่มรายการได้ที่ช่องด้านบน':''}</td></tr>`;
   const table = `<div class="fd-tablewrap"><table class="fd-table md-table"><colgroup><col style="width:5%"><col style="width:17%"><col style="width:24.5%"><col style="width:6%"><col style="width:9%"><col style="width:10%"><col style="width:9%"><col style="width:9%"><col style="width:10.5%"></colgroup><thead><tr>
@@ -5193,7 +5230,7 @@ function renderReportMaterialDay(mk){
   wrap.scrollLeft = sx; wrap.scrollTop = sy;
   const fdDays = wrap.querySelector('.fd-days'), fdSel = fdDays && fdDays.querySelector('.on');
   if(fdSel) fdDays.scrollLeft = fdSel.offsetLeft - (fdDays.clientWidth - fdSel.offsetWidth)/2;
-  if(focusCode){ const t = Array.from(wrap.querySelectorAll('.fd-in')).find(i=>i.dataset.code===focusCode && (i.dataset.f||'')===focusF); if(t) t.focus(); }
+  if(focusCode){ const t = Array.from(wrap.querySelectorAll('.fd-in')).find(i=>i.dataset.code===focusCode && (i.dataset.n||'0')===focusN && (i.dataset.f||'')===focusF); if(t) t.focus(); }
   updateDraftChip('mat');
 }
 /* เหตุการณ์ของมุมมองรายวัน (ผูกครั้งเดียว) — ใช้ mousedown กับแถบวัน เพราะช่องกรอกที่กำลังพิมพ์จะวาดใหม่ตอนเสียโฟกัส ทำให้ click หลุด */
