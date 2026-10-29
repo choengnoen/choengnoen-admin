@@ -790,6 +790,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fd-table td{padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:13px;white-space:nowrap;}
   .fd-table td.fd-flags{white-space:nowrap;}
   .fd-table td.fd-flags .fd-fl{white-space:nowrap;margin:0;}
+  /* ปุ่มลบรายการเบิกท้ายแถว (ตรวจรายวัน พ.1-02/พ.1-03) — ล้างจำนวนเป็นฉบับร่าง แล้วกด "บันทึก" เพื่อลบจริง */
+  .fd-table td.fd-flags .fd-del{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;margin-left:8px;vertical-align:middle;border-radius:8px;border:1px solid #f6d0d0;background:#fdeeee;color:#d33a3a;cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
+  .fd-table td.fd-flags .fd-del:hover{background:#d33a3a;color:#fff;border-color:#d33a3a;}
   .fd-table td.fd-c{text-align:center;}
   .fd-table td.fd-r{text-align:right;}
   .fd-table tfoot td{background:var(--paper-100);font-weight:700;color:var(--navy-900);}
@@ -4688,7 +4691,7 @@ function renderReportFuel(mk){
       <td class="fd-r">${r.hasMile?(r.mPrev?`<b>${fmtNum(r.mPrev.val,0)}</b><div class="fd-mut">${fuelShortDate(r.mPrev.date)}</div>`:'<span class="fd-mut">—</span>'):''}</td>
       <td class="fd-in-td">${miCell}</td>
       <td class="fd-c">${distTxt}</td>
-      <td class="fd-flags">${fuelFlagHtml(r)}</td></tr>`;
+      <td class="fd-flags">${fuelFlagHtml(r)}${editable && (r.lit>0 || isDirty) ? fdDelBtn(`data-fdel-ft="${esc(r.ft)}" data-fdel="${esc(label)}"`) : ''}</td></tr>`;
   });
   if(!rows.length) body = `<tr><td colspan="10" class="fd-empty">วันนี้ไม่มีรายการเบิก${editable?' — เพิ่มรายการได้ที่ช่องด้านบน':''}</td></tr>`;
   const grand = rows.reduce((s,r)=>s+(r.lit||0),0);
@@ -4711,6 +4714,10 @@ function renderReportFuel(mk){
 (function(){
   const wrap = document.getElementById('rep-fuel-grid-wrap');
   if(!wrap) return;
+  // ปุ่มลบใช้ mousedown + preventDefault: ช่องที่กำลังพิมพ์ไม่หลุดโฟกัส ตารางจึงไม่วาดใหม่ก่อนคลิก
+  wrap.addEventListener('mousedown', function(e){
+    const del = e.target.closest('[data-fdel]'); if(del){ e.preventDefault(); delFuelDayRow(del.dataset.fdelFt, del.dataset.fdel); }
+  });
   wrap.addEventListener('click', function(e){
     const chip = e.target.closest('[data-fdate]'); if(chip){ fuelGoDate(chip.dataset.fdate); return; }
     const st = e.target.closest('[data-fstep]'); if(st){ stepFuelCheckDay(+st.dataset.fstep); return; }
@@ -4860,6 +4867,32 @@ function matDayInput(el){
   onMatCellDraftInput(el);
 }
 function matDayChange(){ setTimeout(()=>renderReportMaterial(currentMatMk()), 0); }  // คำนวณคงเหลือ/ผลตรวจใหม่หลังกรอกเสร็จ
+/* ปุ่มลบท้ายแถว (ตรวจรายวัน พ.1-02/พ.1-03): ล้างจำนวนของแถวนั้นเป็นฉบับร่าง แล้วเอาแถวออก
+   ยังไม่ลบจากฐานข้อมูลจนกว่าจะกด "บันทึก" (รายการที่บันทึกไว้แล้วจะถูกย้ายไปถังขยะ กู้คืนได้) / "ล้างการแก้ไข" = ยกเลิกการลบ */
+function fdDelBtn(attrs){
+  return `<button type="button" class="fd-del" ${attrs} title="ลบรายการนี้" aria-label="ลบรายการนี้"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`;
+}
+function delMatDayRow(code){
+  if(!isAdmin()) return;
+  const date = dateStrFor(currentMatMk(), matCheckDay);
+  const m = materials.find(x=>x.code===code);
+  showConfirmModal('ยืนยันลบรายการ', `ลบรายการเบิก "${m?m.name:code}" ของวันนี้หรือไม่?\n(กด "บันทึก" ที่แถบด้านล่างเพื่อยืนยันการลบ — ถ้าเปลี่ยนใจกด "ล้างการแก้ไข")`, 'ลบรายการ', function(){
+    const tx = materialTransactions.find(t=>t.itemCode===code && t.date===date && t.kind==='issue');
+    if(tx) setMatDraft(code, date, {raw:''}); else delete draftMatCells[code+'|'+date];
+    if(matDayAdded[date]) matDayAdded[date].delete(code);
+    renderReportMaterial(currentMatMk());
+  });
+}
+function delFuelDayRow(fuelType, label){
+  if(!isAdmin()) return;
+  const date = dateStrFor(currentFuelMk(), fuelCheckDay);
+  showConfirmModal('ยืนยันลบรายการ', `ลบรายการเบิกน้ำมันของ "${label}" วันนี้หรือไม่?\n(กด "บันทึก" ที่แถบด้านล่างเพื่อยืนยันการลบ — ถ้าเปลี่ยนใจกด "ล้างการแก้ไข")`, 'ลบรายการ', function(){
+    const tx = fuelTransactions.find(t=>t.vehicle===label && t.date===date && t.kind==='issue' && t.fuelType===fuelType);
+    if(tx) setFuelDraft(fuelType, label, date, {raw:''}); else delete draftFuelCells[fuelType+'|'+label+'|'+date];
+    if(fuelDayAdded[date]) fuelDayAdded[date].delete(label);
+    renderReportFuel(currentFuelMk());
+  });
+}
 /* แถบเพิ่มรายการ: ผู้เบิก + พัสดุ + จำนวน → กด "เพิ่ม" (หรือ Enter ที่ช่องจำนวน)
    ชื่อผู้เบิกค้างไว้หลังเพิ่ม เพื่อเพิ่มพัสดุหลายรายการของคนเดียวกันต่อได้เลย */
 let matAddWho = '';
@@ -5113,7 +5146,7 @@ function renderReportMaterialDay(mk){
       <td class="fd-r">${r.last?`<b>${fmtNum(r.last.qty,1)}</b><div class="fd-mut">${fuelShortDate(r.last.date)}</div>`:'<span class="fd-mut">ไม่มีประวัติ</span>'}</td>
       <td class="fd-in-td">${qtyCell}</td>
       <td class="fd-r"><b class="fd-big${r.after<0?' fd-neg':''}">${fmtNum(r.after,1)}</b></td>
-      <td class="fd-flags">${flagHtml}</td></tr>`;
+      <td class="fd-flags">${flagHtml}${editable ? fdDelBtn(`data-mdel="${esc(m.code)}"`) : ''}</td></tr>`;
   });
   if(!rows.length) body = `<tr><td colspan="9" class="fd-empty">วันนี้ไม่มีรายการเบิก${editable?' — เพิ่มรายการได้ที่ช่องด้านบน':''}</td></tr>`;
   const table = `<div class="fd-tablewrap"><table class="fd-table md-table"><colgroup><col style="width:5%"><col style="width:17%"><col style="width:24%"><col style="width:6%"><col style="width:9%"><col style="width:10%"><col style="width:9%"><col style="width:9%"><col style="width:11%"></colgroup><thead><tr>
@@ -5135,6 +5168,7 @@ function renderReportMaterialDay(mk){
     if(matViewMode!=='day') return;
     const chip = e.target.closest('[data-mdate]'); if(chip){ matGoDate(chip.dataset.mdate); return; }
     const st = e.target.closest('[data-mstep]'); if(st){ stepMatDay(+st.dataset.mstep); return; }
+    const del = e.target.closest('[data-mdel]'); if(del){ e.preventDefault(); delMatDayRow(del.dataset.mdel); return; }
   });
   wrap.addEventListener('click', function(e){
     if(matViewMode!=='day') return;
