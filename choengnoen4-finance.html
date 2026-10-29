@@ -1245,9 +1245,9 @@ function renderLaborSummary(){
       <td class="num"><b>${fmtMoney(r.net)}</b></td>
       <td class="ctr">
         ${(()=>{ const un = laborSentInfo(r.cyc, true);
-          return statusPill(['ส่งแล้ว','เกินกำหนดส่ง','รอรอบส่ง'], r.info.label, r.info.cls, [
+          return statusPill(['ส่งแล้ว','เกินกำหนดส่ง','รอรอบส่ง'], r.info.label, r.info.cls, canSetLaborSent()?[
             {label:'ส่งแล้ว', cls:'pill-ok', js:`toggleLaborSentFor('${jsArg(r.cyc)}', true)`},
-            {label:un.label, cls:un.cls, js:`toggleLaborSentFor('${jsArg(r.cyc)}', false)`}]); })()}
+            {label:un.label, cls:un.cls, js:`toggleLaborSentFor('${jsArg(r.cyc)}', false)`}]:null); })()}
       </td>
       <td class="num no-print" style="white-space:nowrap;"><button class="btn btn-ghost btn-ic btn-sm" data-ic="eye" data-tip="ดูรายงาน" onclick="openLaborReport('${jsArg(r.cyc)}')"></button> <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์หลักฐานการจ่ายเงิน" onclick="printPaymentEvidence('${jsArg(r.cyc)}')"></button></td>
     </tr>`).join('');
@@ -1261,7 +1261,13 @@ function renderLaborSummary(){
 function markLaborSummaryViewing(cyc){
   document.querySelectorAll('#labor-summary-table tbody tr').forEach(tr=>tr.classList.toggle('is-viewing', tr.dataset.cyc===cyc));
 }
+/* "ส่งแล้ว" = หัวหน้างานตรวจหลักฐานและลงนามเสนอแขวงแล้ว จึงให้เปลี่ยนได้เฉพาะเจ้าของระบบ / หัวหน้าหมวด / ผู้ช่วยหมวด (ตามบทบาทบัญชี)
+   เจ้าหน้าที่ทุกคน (แม้มีสิทธิ์แก้ไขงานการเงิน) เห็นป้ายอย่างเดียว */
+function canSetLaborSent(){
+  return !!(window.FBL && FBL.user && ['owner','chief','assistant'].indexOf(FBL.user.role)!==-1);
+}
 function toggleLaborSentFor(cyc, checked){
+  if(!canSetLaborSent()) return;
   laborSentStatus[cyc] = checked;
   renderLaborSummary();
   if(document.getElementById('labor-cycle').value === cyc) renderLabor();
