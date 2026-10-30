@@ -1100,8 +1100,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 </div>
                 <div class="dw-group">
                   <div class="dw-group-title"><span class="dot"></span>คณะกรรมการตรวจรับ และผู้ควบคุมงาน</div>
-                  <div class="f-row"><label>คณะกรรมการตรวจรับพัสดุ (1 บรรทัดต่อ 1 คน)</label><textarea id="ct-committee" rows="3" placeholder="เช่น&#10;นายสมชาย ใจดี  ผอ.ขท.ระยอง  ประธานกรรมการ&#10;นายสมศักดิ์ รักงาน  รอ.ขท.(ว)ระยอง  กรรมการ"></textarea></div>
-                  <div class="f-row"><label>ผู้ควบคุมงาน</label><input id="ct-sup" placeholder="ชื่อ-สกุล ตำแหน่ง (ถ้ามี)"></div>
+                  <div class="f-row" style="margin-bottom:4px;"><label>คณะกรรมการตรวจรับพัสดุ <span style="color:var(--danger,#dc2626);">*</span> <span style="font-weight:400;font-size:12px;color:var(--ink-500);">(ประธาน 1 ท่าน + กรรมการอย่างน้อย 2 ท่าน)</span></label></div>
+                  <div id="ct-committee"></div>
+                  <button type="button" class="btn btn-ghost btn-sm" onclick="addCommitteeRow('กรรมการ')" style="margin-bottom:12px;">+ เพิ่มกรรมการ</button>
+                  <div class="f-row"><label>ผู้ควบคุมงาน <span style="color:var(--danger,#dc2626);">*</span></label><input id="ct-sup" placeholder="ชื่อ-สกุล ตำแหน่ง"></div>
                 </div>
                 <div class="dw-group">
                   <div class="dw-group-title"><span class="dot"></span>ส่งงาน ตรวจรับ และค้ำประกัน <span style="font-weight:400;font-size:12px;color:var(--ink-500);">(กรอกภายหลังเมื่อถึงขั้นตอน)</span></div>
@@ -3225,6 +3227,42 @@ function addContractRangeRow(r){
     <button type="button" class="btn btn-ghost btn-sm" title="ลบช่วงนี้" onclick="this.closest('.ct-range-row').remove();validateContractRanges()">✕</button>`;
   document.getElementById('ct-ranges').appendChild(div);
   validateContractRanges();
+}
+/* คณะกรรมการตรวจรับ: เก็บเป็นข้อความบรรทัดละคน "ชื่อ  ตำแหน่ง  บทบาท" (เข้ากับข้อมูลเดิม)
+   แถว 1 = ประธาน, แถว 2-3 = กรรมการ (บังคับ ลบไม่ได้), แถวถัดไปเพิ่ม/ลบได้ */
+function addCommitteeRow(role, m){
+  m = m || {name:'', pos:''};
+  const box = document.getElementById('ct-committee');
+  const fixed = box.children.length < 3;
+  const div = document.createElement('div');
+  div.className = 'ct-cm-row';
+  div.dataset.role = role;
+  div.style.cssText = 'display:grid;grid-template-columns:110px 1.4fr 1fr 34px;gap:8px;align-items:center;margin-bottom:8px;';
+  div.innerHTML = `<div style="font-size:13px;font-weight:600;color:var(--ink-700);">${role}${fixed?' <span style="color:var(--danger,#dc2626);">*</span>':''}</div>
+    <input class="ct-cm-name" placeholder="ชื่อ-สกุล" value="${esc(m.name)}">
+    <input class="ct-cm-pos" placeholder="ตำแหน่ง เช่น ผอ.ขท.ระยอง" value="${esc(m.pos)}">
+    ${fixed ? '<span></span>' : `<button type="button" class="btn btn-ghost btn-sm" title="ลบกรรมการท่านนี้" onclick="this.closest('.ct-cm-row').remove()">✕</button>`}`;
+  box.appendChild(div);
+}
+function setCommitteeRows(text){
+  document.getElementById('ct-committee').innerHTML = '';
+  const list = String(text||'').split('\n').map(s=>s.trim()).filter(Boolean).map(line=>{
+    line = line.replace(/\s+(ประธานกรรมการ|กรรมการ)$/,'').trim();
+    const parts = line.split(/\s{2,}/);
+    return {name:parts[0]||'', pos:parts.slice(1).join(' ')};
+  });
+  const n = Math.max(3, list.length);
+  for(let i=0;i<n;i++) addCommitteeRow(i===0?'ประธานกรรมการ':'กรรมการ', list[i]);
+}
+function collectCommittee(){
+  const lines = [], errors = [];
+  document.querySelectorAll('#ct-committee .ct-cm-row').forEach((row,i)=>{
+    const name = row.querySelector('.ct-cm-name').value.trim(), pos = row.querySelector('.ct-cm-pos').value.trim();
+    if(!name && !pos){ if(i<3) errors.push(`กรุณากรอก${row.dataset.role}${i?' ท่านที่ '+i:''}`); return; }
+    if(!name){ errors.push(`กรุณากรอกชื่อ${row.dataset.role}${i?' ท่านที่ '+i:''}`); return; }
+    lines.push([name, pos, row.dataset.role].filter(Boolean).join('  '));
+  });
+  return {text:lines.join('\n'), errors};
 }
 /* อ่านช่วงทั้งหมดในฟอร์ม → {ranges, errors(ต้องแก้), notes(แจ้งให้ทราบ ไม่ขวางการบันทึก)} */
 function collectContractRanges(){
