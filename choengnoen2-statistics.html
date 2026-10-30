@@ -3137,12 +3137,41 @@ function renderContracts(){
 /* ---- ช่วงทางหลวงในฟอร์ม ----
    เลือกได้ทุกสายทางในฐานข้อมูลกลาง และกรอก กม. ได้ทั้งสาย (ไม่จำกัดเฉพาะช่วงที่หมวดควบคุม)
    เพราะหมวด/ผู้ช่วยอาจเป็นผู้ควบคุมงานในช่วงทางของหมวดอื่นได้ */
+/* ตอนควบคุมทั้งหมดของแขวงทางหลวงระยอง (ทุกหมวด) — ที่มา: ขท.ระยอง_สายทาง-แบ่งหมวด.kmz (งานทรัพย์สิน)
+   ใช้เป็นรายการสายทางในฟอร์มสัญญาเท่านั้น ไม่ใช่สายทางที่หมวดควบคุม (ตารางนั้นคือ controlledRoutes) */
+const DISTRICT_ROUTE_SECTIONS = [
+  ['3','0501','พลูตาหลวง - มาบตาพุด',186.307,204.8], ['3','0502','มาบตาพุด - ระยอง',204.8,216.99],
+  ['3','0503','ระยอง - กะเฉด',223.65,248], ['3','0504','กะเฉด - ป่าเตียน',248,276.7],
+  ['36','0201','มะขามคู่ - มาบข่า',21.592,36.887], ['36','0202','มาบข่า - ทับมา',36.887,49.369], ['36','0203','ทับมา - ปลวกเกตุ',49.369,57.021],
+  ['344','0201','คลองเขต - ยุบชงโค',62.6,90.85], ['344','0202','ยุบชงโค - แกลง',90.85,102.181],
+  ['363','0100','ศูนย์ราชการระยอง - นิคมอุตสาหกรรมมาบตาพุด',0,7.949], ['364','0100','ทางเลี่ยงเมืองระยอง',0,3.909],
+  ['3139','0100','บ้านแลง - หาดใหญ่',0,21.234], ['3140','0100','ทางเข้าบ้านเพ',0,0.1], ['3143','0100','บ้านค่าย - หนองละลอก',0,14.041],
+  ['3145','0101','บ้านเพ - ท่าเรือแกลง',2.575,10.5], ['3145','0102','ท่าเรือแกลง - แหลมแม่พิมพ์',10.5,27.515],
+  ['3191','0101','มาบตาพุด - แยกนิคมพัฒนา',0,13.6], ['3191','0102','แยกนิคมพัฒนา - อ่างเก็บน้ำหนองปลาไหล',13.6,25.545],
+  ['3245','0100','อ่างเก็บน้ำหนองปลาไหล - ใต้สุน',0,22.142], ['3376','0100','บ้านฉาง - ถนนซอย 13 ของนิคมสร้างตนเองจังหวัดระยอง',1,30.742],
+  ['3471','0100','บางบุตร - ชุมแสง',0,30.416],
+  ['3574','0201','เขาคันทรง - บ้านค่าย',6.318,47.569], ['3574','0202','บ้านค่าย - ระยอง',47.569,57.161],
+  ['3575','0100','ทางเข้าบ้านค่าย',0,1.308], ['3575','0100','ทางเข้าบ้านค่าย',2.346,3.292],
+  ['3578','0100','ทางรอบอ่างเก็บน้ำหนองปลาไหล',0,6.04]
+].map(([routeNo,controlNo,section,k1,k2])=>({routeNo,controlNo,section,k1,k2}));
+/* ตอนควบคุมของแขวงที่ กม. นี้ตกอยู่ (ใช้หาเลขตอนตอนส่งออก CSV) */
+function districtSectionAt(routeNo, km){
+  return DISTRICT_ROUTE_SECTIONS.find(s=>s.routeNo===String(routeNo) && km >= s.k1-0.0011 && km <= s.k2+0.0011) || null;
+}
+/* ชื่อสายทางแบบย่อ: ตอนเดียว = ชื่อตอน, หลายตอน = ต้นทางตอนแรก - ปลายทางตอนสุดท้าย */
+function districtRouteName(routeNo){
+  const ss = DISTRICT_ROUTE_SECTIONS.filter(s=>s.routeNo===String(routeNo)).sort((a,b)=>a.k1-b.k1);
+  const names = [...new Set(ss.map(s=>s.section))];
+  if(names.length<=1) return names[0]||'';
+  return ss[0].section.split(' - ')[0] + ' - ' + ss[ss.length-1].section.split(' - ').pop() + ` (${names.length} ตอน)`;
+}
 function ctRouteOptions(sel){
-  const routeNos = [...new Set(controlledRoutes.map(r=>String(r.routeNo)))];
-  if(sel && !routeNos.includes(String(sel))) routeNos.push(String(sel)); // สายทางเดิมที่ไม่มีในฐานข้อมูลแล้ว ยังแสดงได้
+  const routeNos = [...new Set([...DISTRICT_ROUTE_SECTIONS.map(s=>s.routeNo), ...controlledRoutes.map(r=>String(r.routeNo))])]
+    .sort((a,b)=>Number(a)-Number(b));
+  if(sel && !routeNos.includes(String(sel))) routeNos.push(String(sel)); // สายทางเดิมที่ไม่มีในรายการแล้ว ยังแสดงได้
   return '<option value="">— เลือกสายทาง —</option>' + routeNos.map(no=>{
-    const r = findRoute(no);
-    return `<option value="${esc(no)}" ${String(sel)===no?'selected':''}>ทล.${esc(no)}${r&&r.section?' — '+esc(r.section):''}</option>`;
+    const r = findRoute(no), name = districtRouteName(no) || (r ? r.section : '');
+    return `<option value="${esc(no)}" ${String(sel)===no?'selected':''}>ทล.${esc(no)}${name?' — '+esc(name):''}</option>`;
   }).join('');
 }
 function addContractRangeRow(r){
@@ -3170,7 +3199,8 @@ function collectContractRanges(){
     if(k1===undefined || k2===undefined){ errors.push(n+': กรอก กม. ไม่ครบหรือรูปแบบไม่ถูกต้อง (ใช้ เช่น 229+000)'); return; }
     if(k2 <= k1){ errors.push(n+': กม.สิ้นสุดต้องมากกว่า กม.เริ่ม'); return; }
     const rt = findRoute(route);
-    if(rt && (!kmInRoute(rt,k1) || !kmInRoute(rt,k2))) notes.push(n+': อยู่นอกช่วงที่หมวดควบคุมของ ทล.'+route+' (ควบคุมงานในพื้นที่หมวดอื่น) — บันทึกได้ตามปกติ');
+    if(!rt) notes.push(n+': ทล.'+route+' เป็นสายทางของหมวดอื่น — บันทึกได้ตามปกติ');
+    else if(!kmInRoute(rt,k1) || !kmInRoute(rt,k2)) notes.push(n+': อยู่นอกช่วงที่หมวดควบคุมของ ทล.'+route+' (ควบคุมงานในพื้นที่หมวดอื่น) — บันทึกได้ตามปกติ');
     ranges.push({route:String(route), k1:Math.round(k1*1000)/1000, k2:Math.round(k2*1000)/1000});
   });
   return {ranges, errors, notes};
@@ -3317,8 +3347,8 @@ function exportContractsCsv(){
     const st = ctStatus(c).label;
     const rs = c.ranges.length ? c.ranges : [{route:'',k1:0,k2:0}];
     rs.forEach(r=>{
-      const rt = findRoute(r.route);
-      rows.push([c.name, c.contractNo, c.contractor, c.fiscalYear, r.route, rt?rt.controlNo||'':'', c.ranges.length?kmFmt(r.k1):'', c.ranges.length?kmFmt(r.k2):'', c.startDate, c.endDate, c.warrantyEnd, st, c.note,
+      const rt = findRoute(r.route), ds = c.ranges.length ? districtSectionAt(r.route, r.k1) : null;
+      rows.push([c.name, c.contractNo, c.contractor, c.fiscalYear, r.route, ds ? ds.controlNo : (rt?rt.controlNo||'':''), c.ranges.length?kmFmt(r.k1):'', c.ranges.length?kmFmt(r.k2):'', c.startDate, c.endDate, c.warrantyEnd, st, c.note,
         c.workQty, c.deliveryDate, c.acceptDate, c.workType, c.warrantyYears, ...[0,1].flatMap(i=>{ const r = ctReflDates(c)[i]||{}; return [r.date||'', r.done||'']; })]);
     });
   });
