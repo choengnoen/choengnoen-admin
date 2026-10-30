@@ -340,6 +340,54 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ct-dl dt{color:var(--ink-400);}
   .ct-dl dd{margin:0;color:var(--ink-900);}
   @media(max-width:560px){.ct-dl{grid-template-columns:1fr;gap:0 0;} .ct-dl dd{margin-bottom:8px;}}
+  /* โมดัลรายละเอียดสัญญา (แบบ 1: หัวสรุปยอดเงิน + ไทม์ไลน์วันสำคัญ) */
+  .ct-detail-head{flex-wrap:wrap;}
+  .ctv-hero{flex-basis:100%;min-width:0;padding-top:4px;}
+  .ctv-name{font-family:'Kanit';font-size:18px;font-weight:600;color:#fff;line-height:1.45;}
+  .ctv-contractor{color:#cbd5e1;font-size:13.5px;}
+  .ctv-money{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px dashed rgba(255,255,255,.2);}
+  .ctv-money .lb{font-size:12px;color:#94a3b8;}
+  .ctv-money .val{font-family:'Kanit';font-size:26px;font-weight:600;color:#fdba74;line-height:1.2;}
+  .ctv-money .val small{font-size:13px;color:#cbd5e1;font-weight:400;margin-left:4px;}
+  .ctv-chips{display:flex;gap:8px;flex-wrap:wrap;}
+  .ctv-chip{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:5px 10px;font-size:12.5px;color:#fff;line-height:1.45;}
+  .ctv-chip b{display:block;font-size:11px;color:#94a3b8;font-weight:500;}
+  .ctv-title{font-family:'Kanit';font-size:13.5px;font-weight:600;color:var(--navy-800);margin:0 0 10px;display:flex;align-items:center;gap:8px;}
+  .ctv-title::before{content:"";width:4px;height:15px;border-radius:3px;background:var(--orange-500);flex:none;}
+  .ctv-tl{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 8px 12px;margin-bottom:14px;overflow-x:auto;}
+  .ctv-track{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(80px,1fr);position:relative;min-width:420px;}
+  .ctv-line,.ctv-prog{position:absolute;top:11px;height:3px;border-radius:3px;}
+  .ctv-line{background:var(--line);}
+  .ctv-prog{background:linear-gradient(90deg,var(--orange-600),var(--amber-400));}
+  .ctv-step{text-align:center;position:relative;z-index:1;padding:0 2px;}
+  .ctv-dot{width:24px;height:24px;margin:0 auto 6px;border-radius:50%;background:#fff;border:3px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
+  .ctv-step.done .ctv-dot{background:var(--orange-500);border-color:var(--orange-500);}
+  .ctv-step.next .ctv-dot{border-color:var(--orange-500);}
+  .ctv-step.empty .ctv-dot{border-style:dashed;}
+  .ctv-lb{font-size:12px;color:var(--ink-600);}
+  .ctv-dt{font-family:'Kanit';font-size:13.5px;font-weight:500;color:var(--ink-900);}
+  .ctv-step.empty .ctv-dt{color:var(--ink-400);font-weight:400;}
+  .ctv-hint{font-size:11.5px;font-weight:600;line-height:1.3;}
+  .ctv-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+  .ctv-card{background:var(--paper-50);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0;}
+  .ctv-card.full{grid-column:1/-1;}
+  .ctv-kv{display:grid;gap:10px;margin:0;}
+  .ctv-kv dt{font-size:12px;color:var(--ink-400);}
+  .ctv-kv dd{margin:0;font-size:14px;font-weight:500;color:var(--ink-900);overflow-wrap:anywhere;}
+  .ctv-stamp{display:none;}
+  .ct-toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;background:#111827;color:#fff;padding:10px 18px;border-radius:12px;font-size:14px;z-index:9999;transition:.25s;pointer-events:none;max-width:calc(100vw - 32px);text-align:center;}
+  .ct-toast.show{opacity:1;transform:translate(-50%,0);}
+  @media(max-width:560px){.ctv-grid{grid-template-columns:1fr;} .ctv-money .val{font-size:22px;} .ctv-name{font-size:16px;}}
+  /* โหมดถ่ายรูป (ใช้เฉพาะในสำเนาที่ html2canvas วาดตอนกด "คัดลอกรูป"): แสดงเนื้อหาครบไม่ตัด ซ่อนปุ่ม */
+  html.ct-snap #ct-detail-overlay{position:static !important;display:block !important;padding:0 !important;background:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;animation:none !important;}
+  html.ct-snap #ct-detail-overlay .modal-box{max-height:none !important;box-shadow:none !important;border-radius:0 !important;animation:none !important;margin:0 !important;}
+  /* เส้นส้มเรืองแสงใช้ mask ที่ html2canvas วาดไม่ได้ (จะกลายเป็นแถบส้มทึบ) และ html2canvas อ่าน ::before จากหน้าจริง จึงต้องปิดบนกล่องจริงชั่วขณะ */
+  #ct-detail-overlay .modal-box.ct-snapping::before,#ct-detail-overlay .modal-box.ct-snapping::after{content:none !important;}
+  html.ct-snap #ct-detail-head{border-top:4px solid var(--orange-500);}
+  html.ct-snap #ct-detail-body{overflow:visible !important;flex:none !important;max-height:none !important;}
+  html.ct-snap #ct-detail-overlay .ctv-tl{overflow:visible;}
+  html.ct-snap #ct-detail-overlay .gmodal-footer,html.ct-snap #ct-detail-overlay .modal-close{display:none !important;}
+  html.ct-snap #ct-detail-overlay .ctv-stamp{display:flex;justify-content:space-between;gap:10px;padding:10px 22px;font-size:11.5px;color:var(--ink-400);border-top:1px solid var(--line);background:#fff;}
   #success-modal-overlay{align-items:center;}
   #success-modal-overlay .modal-box{max-width:380px;border-radius:20px;overflow:hidden;padding:0;text-align:center;}
   .success-modal-head{display:flex;justify-content:flex-end;padding:10px 10px 0;}
@@ -1152,20 +1200,23 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           </div>
           <div id="ct-detail-overlay" class="modal-overlay hidden no-print" onclick="if(event.target===this)closeContractDetail()">
             <div class="modal-box gmodal-box">
-              <div class="modal-head gmodal-head">
+              <div class="modal-head gmodal-head ct-detail-head" id="ct-detail-head">
                 <div class="gmodal-head-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></div>
                 <div>
                   <h3 id="ct-detail-title">รายละเอียดสัญญา</h3>
                   <div class="gmodal-subtitle" id="ct-detail-sub"></div>
                 </div>
                 <button class="modal-close" onclick="closeContractDetail()">✕</button>
+                <div class="ctv-hero" id="ct-detail-hero"></div>
               </div>
               <div class="modal-body" id="ct-detail-body"></div>
+              <div class="ctv-stamp"><span>หมวดทางหลวงเชิงเนิน · แขวงทางหลวงระยอง</span><span id="ct-detail-stamp-date"></span></div>
               <div class="gmodal-footer">
                 <div id="ct-detail-actions" style="display:flex;gap:8px;">
                   <button class="btn btn-ghost btn-ic-danger" data-ic="trash" onclick="const id=ctDetailId;closeContractDetail();deleteContract(id)">ลบ</button>
                 </div>
                 <div style="display:flex;gap:8px;margin-left:auto;">
+                  <button class="btn btn-ghost" id="ct-detail-copy" title="คัดลอกหน้าต่างนี้เป็นรูป แล้วกด Ctrl+V วางใน LINE / Word" onclick="copyContractImage(this)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg>คัดลอกรูป</button>
                   <button class="btn btn-ghost" onclick="closeContractDetail()">ปิด</button>
                   <button class="btn btn-primary" data-ic="pen" id="ct-detail-edit" onclick="const id=ctDetailId;closeContractDetail();openContractForm(id)">แก้ไข</button>
                 </div>
@@ -3070,26 +3121,107 @@ function openContractDetail(id){
   }).join('') : 'รอวันส่งงาน') : 'ไม่ต้องวัด';
   document.getElementById('ct-detail-title').textContent = c.contractNo ? 'สัญญาเลขที่ ' + c.contractNo : 'รายละเอียดสัญญา';
   document.getElementById('ct-detail-sub').innerHTML = `<span class="pill ${st.cls}" style="font-size:11px;">${st.label}</span>${c.fiscalYear?' &nbsp;ปีงบประมาณ '+esc(c.fiscalYear):''}`;
+  // หัวสรุป: ชื่องาน ผู้รับจ้าง เงินค่างาน
+  const chip = (k, val) => `<div class="ctv-chip"><b>${k}</b>${val}</div>`;
+  document.getElementById('ct-detail-hero').innerHTML =
+    `<div class="ctv-name">${c.name ? esc(c.name) : '—'}</div>` +
+    (c.contractor ? `<div class="ctv-contractor">ผู้รับจ้าง: ${esc(c.contractor)}</div>` : '') +
+    `<div class="ctv-money">
+       <div><div class="lb">เงินค่างาน</div><div class="val">${c.amount ? fmtNum(c.amount,2)+'<small>บาท</small>' : '—'}</div></div>
+       <div class="ctv-chips">${(c.workQty ? chip('ปริมาณงาน', esc(c.workQty)) : '') + chip('ช่วงทางหลวง', ctRangeText(c)) + (c.durationDays ? chip('ระยะเวลา', c.durationDays+' วัน') : '')}</div>
+     </div>`;
+  // ไทม์ไลน์วันสำคัญ: ผ่านมาแล้ว = จุดส้มทึบ · ถัดไป = วงส้ม · ยังไม่ระบุ = เส้นประ
+  const today = ctTodayIso();
+  const steps = [
+    c.signDate && {lb:'ลงนามสัญญา', iso:c.signDate},
+    {lb:'เริ่มสัญญา', iso:c.startDate},
+    {lb:'สิ้นสุดสัญญา', iso:c.endDate, hint: st.key==='running' && dEnd!==null && dEnd<=60 ? `<span style="color:var(--danger);">เหลือ ${dEnd} วัน</span>` : ''},
+    {lb:'ส่งงาน', iso:c.deliveryDate},
+    {lb:'ตรวจรับงาน', iso:c.acceptDate},
+    {lb:'คืนค้ำประกัน', iso:c.warrantyEnd, hint: wa ? `<span style="color:${wa.months===1?'var(--danger)':'#b7791f'};">⚠ เหลือ ${wa.days} วัน</span>` : ''}
+  ].filter(Boolean);
+  const n = steps.length; let last = -1, nextMarked = false;
+  steps.forEach((s,i) => { if(s.iso && s.iso <= today) last = i; });
+  const stepHtml = steps.map((s,i) => {
+    let cls = !s.iso ? 'empty' : s.iso <= today ? 'done' : '';
+    if(!cls && !nextMarked){ cls = 'next'; nextMarked = true; }
+    return `<div class="ctv-step ${cls}"><div class="ctv-dot">${cls==='done'?'✓':''}</div><div class="ctv-lb">${s.lb}</div><div class="ctv-dt">${s.iso ? fmtDateShort(s.iso) : '—'}</div>${s.hint ? `<div class="ctv-hint">${s.hint}</div>` : ''}</div>`;
+  }).join('');
+  const half = `calc(100% / ${n} / 2)`, span = `calc(100% - 100% / ${n})`;
+  const kv = (k, val) => `<div><dt>${k}</dt><dd>${val}</dd></div>`;
+  const card = (title, body, full) => `<div class="ctv-card${full?' full':''}"><div class="ctv-title">${title}</div><dl class="ctv-kv">${body}</dl></div>`;
+  const hasExtra = c.status || c.note || c.negotiateDate || c.notifyDate;
   document.getElementById('ct-detail-body').innerHTML =
-    `<div style="font-family:'Kanit';font-size:16px;font-weight:600;line-height:1.5;margin-bottom:4px;">${v(c.name)}</div>
-     <div style="color:var(--ink-600);font-size:13.5px;margin-bottom:14px;">${v(c.contractor)}</div>` +
-    grp('ข้อมูลสัญญา',
-      row('ปริมาณงาน', v(c.workQty)) + row('ช่วงทางหลวง', ctRangeText(c)) +
-      row('เงินค่างาน', c.amount ? fmtNum(c.amount,2)+' บาท' : dash) + row('ค่าปรับวันละ', c.penaltyPerDay ? fmtNum(c.penaltyPerDay,2)+' บาท' : dash) +
-      row('ผู้ควบคุมงาน', v(c.supervisor)) +
-      row('คณะกรรมการตรวจรับ', c.committee ? esc(c.committee).replace(/\n/g,'<br>') : dash)) +
-    grp('ระยะเวลา ส่งงาน และตรวจรับ',
-      row('วันลงนามสัญญา', d(c.signDate)) +
-      row('เริ่ม – สิ้นสุดสัญญา', d(c.startDate)+' – '+d(c.endDate) + (c.durationDays ? ` (${c.durationDays} วัน)` : '') + (st.key==='running' && dEnd!==null && dEnd<=60 ? ` <span style="color:var(--danger);">(เหลือ ${dEnd} วัน)</span>` : '')) +
-      row('วันที่ส่งงาน', d(c.deliveryDate)) + row('วันที่ตรวจรับงาน', d(c.acceptDate))) +
-    grp('ค้ำประกัน และวัดค่าสะท้อนแสง',
-      row('ประเภทงาน', c.workType ? 'งาน'+esc(c.workType) : dash) + row('กำหนดค้ำประกัน', c.warrantyYears ? c.warrantyYears+' ปี' : dash) +
-      row('คืนค้ำประกัน', d(c.warrantyEnd) + (wa ? ` <span style="color:${wa.months===1?'var(--danger)':'#b7791f'};font-weight:600;">⚠ ภายใน ${wa.months} เดือน (เหลือ ${wa.days} วัน)</span>` : '')) +
-      row('วัดค่าสะท้อนแสง', refl)) +
-    (c.status || c.note || c.negotiateDate || c.notifyDate ? grp('สถานะพิเศษและหมายเหตุ', (c.negotiateDate ? row('ต่อรองเป็นที่ยุติ', d(c.negotiateDate)) : '') + (c.notifyDate ? row('แจ้งทำสัญญา', d(c.notifyDate)) : '') + (c.status ? row('สถานะพิเศษ', esc(c.status)) : '') + (c.note ? row('หมายเหตุ', esc(c.note).replace(/\n/g,'<br>')) : '')) : '');
+    `<div class="ctv-title">ลำดับเหตุการณ์ของสัญญา</div>
+     <div class="ctv-tl"><div class="ctv-track">
+       <div class="ctv-line" style="left:${half};width:${span};"></div>
+       ${last > 0 ? `<div class="ctv-prog" style="left:${half};width:calc(${span} * ${last} / ${n-1});"></div>` : ''}
+       ${stepHtml}
+     </div></div>
+     <div class="ctv-grid">` +
+    card('ผู้รับผิดชอบ',
+      kv('ผู้ควบคุมงาน', v(c.supervisor)) +
+      kv('คณะกรรมการตรวจรับ', c.committee ? esc(c.committee).replace(/\n/g,'<br>') : dash) +
+      kv('ค่าปรับวันละ', c.penaltyPerDay ? fmtNum(c.penaltyPerDay,2)+' บาท' : dash)) +
+    card('ค้ำประกัน และวัดค่าสะท้อนแสง',
+      kv('ประเภทงาน', c.workType ? 'งาน'+esc(c.workType) : dash) + kv('กำหนดค้ำประกัน', c.warrantyYears ? c.warrantyYears+' ปี' : dash) +
+      kv('คืนค้ำประกัน', d(c.warrantyEnd) + (wa ? ` <span style="color:${wa.months===1?'var(--danger)':'#b7791f'};font-weight:600;">⚠ ภายใน ${wa.months} เดือน (เหลือ ${wa.days} วัน)</span>` : c.warrantyEnd && c.warrantyEnd < today ? ' <span style="color:var(--success);">· ครบกำหนดแล้ว</span>' : '')) +
+      kv('วัดค่าสะท้อนแสง', refl)) +
+    (hasExtra ? card('สถานะพิเศษและหมายเหตุ', (c.negotiateDate ? kv('ต่อรองเป็นที่ยุติ', d(c.negotiateDate)) : '') + (c.notifyDate ? kv('แจ้งทำสัญญา', d(c.notifyDate)) : '') + (c.status ? kv('สถานะพิเศษ', esc(c.status)) : '') + (c.note ? kv('หมายเหตุ', esc(c.note).replace(/\n/g,'<br>')) : ''), true) : '') +
+    `</div>`;
   document.getElementById('ct-detail-actions').style.display = isAdmin() ? 'flex' : 'none';
   document.getElementById('ct-detail-edit').style.display = isAdmin() ? '' : 'none';
   document.getElementById('ct-detail-overlay').classList.remove('hidden');
+}
+/* ปุ่ม "คัดลอกรูป" (ทุกคนใช้ได้): วาดโมดัลเป็นรูป PNG ครบทุกส่วน (ไม่ตัดส่วนที่ต้องเลื่อน ไม่มีปุ่ม) แล้วใส่คลิปบอร์ด
+   → กด Ctrl+V วางใน LINE / Word ได้ทันที · โหลด html2canvas ครั้งแรกที่กดเท่านั้น
+   · เครื่อง/เบราว์เซอร์ที่ไม่ยอมให้คัดลอกรูป จะบันทึกเป็นไฟล์ PNG ให้แทน */
+let h2cLoading = null;
+function loadHtml2Canvas(){
+  if(window.html2canvas) return Promise.resolve();
+  if(!h2cLoading) h2cLoading = new Promise((ok, fail) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload = ok; s.onerror = () => { h2cLoading = null; fail(new Error('โหลดตัวสร้างรูปไม่สำเร็จ (ตรวจอินเทอร์เน็ต)')); };
+    document.head.appendChild(s);
+  });
+  return h2cLoading;
+}
+function ctDetailSnapBlob(){
+  document.getElementById('ct-detail-stamp-date').textContent = 'ข้อมูล ณ ' + fmtDateShort(ctTodayIso());
+  const box = document.querySelector('#ct-detail-overlay .modal-box');
+  return loadHtml2Canvas()
+    .then(() => { box.classList.add('ct-snapping');
+      return html2canvas(box, {scale:2, backgroundColor:'#ffffff', useCORS:true, logging:false,
+        onclone: doc => doc.documentElement.classList.add('ct-snap')}); })
+    .finally(() => box.classList.remove('ct-snapping'))
+    .then(cv => new Promise((ok, fail) => cv.toBlob(b => b ? ok(b) : fail(new Error('สร้างรูปไม่สำเร็จ')), 'image/png')));
+}
+function ctToast(msg){
+  let t = document.getElementById('ct-toast');
+  if(!t){ t = document.createElement('div'); t.id = 'ct-toast'; t.className = 'ct-toast'; document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600);
+}
+async function copyContractImage(btn){
+  const c = contractsList.find(x=>String(x.id)===String(ctDetailId));
+  const fileName = 'สัญญา-' + ((c && c.contractNo) || 'รายละเอียด').replace(/[\\/:*?"<>|]/g, '-') + '.png';
+  const old = btn.innerHTML;
+  btn.disabled = true; btn.textContent = 'กำลังสร้างรูป…';
+  const blobP = ctDetailSnapBlob();
+  try{
+    await navigator.clipboard.write([new ClipboardItem({'image/png': blobP})]);
+    btn.textContent = '✓ คัดลอกแล้ว';
+    ctToast('คัดลอกรูปแล้ว — กด Ctrl+V วางใน LINE หรือ Word ได้เลย');
+  }catch(err){
+    const blob = await blobP.catch(e => { err = e; return null; });
+    if(blob){
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      ctToast('เครื่องนี้ไม่อนุญาตคัดลอกรูป จึงบันทึกเป็นไฟล์ ' + fileName + ' ให้แทน');
+    } else ctToast('สร้างรูปไม่สำเร็จ: ' + err.message);
+  }
+  setTimeout(() => { btn.innerHTML = old; btn.disabled = false; }, 1800);
 }
 async function loadContractsFromApi(){
   try{
