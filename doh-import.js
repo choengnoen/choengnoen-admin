@@ -370,9 +370,10 @@
       .dohi-sec-h b{font-family:'Kanit',sans-serif;font-size:14.5px;color:#182430;}
       .dohi-sec-h .n{margin-left:auto;background:#fbeae7;color:#c1402f;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap;}
       .dohi-sec.low .dohi-sec-h .n{background:#eef0ed;color:#4d5a66;}
-      .dohi-sec-h .cp{border:1px solid #dfe2dd;background:#fff;color:#4d5a66;border-radius:8px;padding:3px 10px;font-family:'Sarabun',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;}
-      .dohi-sec-h .cp:hover{border-color:#f07a1f;color:#e0620f;}
-      .dohi-sec-h .cp:disabled{opacity:.7;cursor:progress;}
+      .dohi-sec-h .cp{width:36px;height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid #dfe2dd;background:#fff;color:#4d5a66;border-radius:10px;cursor:pointer;flex:none;transition:.15s;}
+      .dohi-sec-h .cp svg{width:18px;height:18px;}
+      .dohi-sec-h .cp:hover{border-color:#f07a1f;color:#e0620f;background:#fff7f0;}
+      .dohi-sec-h .cp:disabled{opacity:.6;cursor:progress;}
       .dohi-sec-h .cp.ok{border-color:#1c8a53;color:#1c8a53;background:#e5f4ec;}
       .dohi-how{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:0;padding:9px 16px;background:#fafaf8;border-bottom:1px solid #eef0f2;font-size:12.5px;line-height:1.6;color:#4d5a66;}
       .dohi-how dt{font-weight:700;color:#182430;}
@@ -749,7 +750,7 @@
     let n = 0; const out = [];
     const sec = (title, count, how, body, low) => { n++;
       out.push('<div class="dohi-sec'+(low?' low':'')+'"><div class="dohi-sec-h"><i>'+n+'</i><b>'+title+'</b><span class="n">'+count+'</span>'
-        + '<button type="button" class="cp" title="คัดลอกกล่องนี้เป็นรูปภาพ ไปวางส่งให้เจ้าหน้าที่ที่เกี่ยวข้อง" onclick="DohImp.copySecImg(this)">🖼️ คัดลอกเป็นรูป</button></div>'
+        + '<button type="button" class="cp" title="คัดลอกกล่องนี้เป็นรูปภาพ ไปวางส่งให้เจ้าหน้าที่ที่เกี่ยวข้อง" aria-label="คัดลอกกล่องนี้เป็นรูป" onclick="DohImp.copySecImg(this)">'+IMG_ICON+'</button></div>'
         + (how ? '<dl class="dohi-how">'+how.map(h=>'<dt>'+h[0]+'</dt><dd>'+h[1]+'</dd>').join('')+'</dl>' : '')
         + '<div class="dohi-sec-b">'+body+'</div></div>');
       return n; };
@@ -834,6 +835,10 @@
   /* ปุ่มที่หัวกล่องแต่ละหัวข้อ — จับภาพกล่องนั้นเป็นรูป PNG แล้วคัดลอกลงคลิปบอร์ด (วางในไลน์ได้ทันที)
      ไลบรารี html2canvas โหลดจาก cdnjs เฉพาะตอนกดครั้งแรก · ในรูปซ่อนปุ่มเอง และเติมเดือนที่เทียบไว้ใต้หัวข้อ
      เบราว์เซอร์ที่คัดลอกรูปไม่ได้ → ดาวน์โหลดเป็นไฟล์ .png แทน */
+  /* ไอคอนปุ่มคัดลอกเป็นรูป (ชุดเดียวกับปุ่มในโมดัลรายละเอียดสัญญา) · ✓ = คัดลอกแล้ว · ลูกศรลง = บันทึกเป็นไฟล์ */
+  const icoSvg = (inner, w) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(w||2)+'" stroke-linecap="round" stroke-linejoin="round">'+inner+'</svg>';
+  const IMG_ICON = icoSvg('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/>');
+  const OK_ICON = icoSvg('<path d="m5 12 5 5 9-10"/>', 2.4), DL_ICON = icoSvg('<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>', 2.4);
   let h2cP = null;
   function loadH2C(){
     if(window.html2canvas) return Promise.resolve(window.html2canvas);
@@ -847,8 +852,8 @@
   async function copySecImg(btn){
     const box = btn && btn.closest('.dohi-sec');
     if(!box || btn.disabled) return;
-    const label = btn.textContent, done = (t, cls)=>{ btn.textContent = t; if(cls) btn.classList.add(cls); setTimeout(()=>{ btn.textContent = label; btn.classList.remove('ok'); btn.disabled = false; }, 1800); };
-    btn.disabled = true; btn.textContent = 'กำลังจับภาพ…';
+    const label = btn.innerHTML, tip = btn.title, done = (ico, cls, t)=>{ btn.innerHTML = ico; if(cls) btn.classList.add(cls); if(t) btn.title = t; setTimeout(()=>{ btn.innerHTML = label; btn.title = tip; btn.classList.remove('ok'); btn.disabled = false; }, 1800); };
+    btn.disabled = true; btn.title = 'กำลังจับภาพ…';
     try{
       const h2c = await loadH2C();
       box.setAttribute('data-dohi-cap', '1');
@@ -866,12 +871,12 @@
       const blob = await new Promise(r=>canvas.toBlob(r, 'image/png'));
       let copied = false;
       try{ if(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){ await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]); copied = true; } }catch(e){}
-      if(copied){ done('✓ คัดลอกรูปแล้ว', 'ok'); return; }
+      if(copied){ done(OK_ICON, 'ok', 'คัดลอกรูปแล้ว'); return; }
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = 'ผลเทียบ-rmms-'+S.importMk+'-'+((box.querySelector('.dohi-sec-h b')||{}).textContent||'หัวข้อ').trim()+'.png';
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
-      done('⬇ บันทึกเป็นไฟล์รูปแล้ว', 'ok');
+      done(DL_ICON, 'ok', 'บันทึกเป็นไฟล์รูปแล้ว');
     }catch(err){
       box.removeAttribute('data-dohi-cap');
       alert('คัดลอกเป็นรูปไม่สำเร็จ: '+err.message);

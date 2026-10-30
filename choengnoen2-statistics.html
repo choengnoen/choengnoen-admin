@@ -373,8 +373,15 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ctv-card.full{grid-column:1/-1;}
   .ctv-kv{display:grid;gap:10px;margin:0;}
   .ctv-kv dt{font-size:12px;color:var(--ink-400);}
-  .ctv-kv dd{margin:0;font-size:14px;font-weight:500;color:var(--ink-900);overflow-wrap:anywhere;}
+  .ctv-kv dd{margin:0;font-size:14px;font-weight:500;color:var(--ink-900);overflow-wrap:break-word;}
   .ctv-stamp{display:none;}
+  /* ปุ่มไอคอน "คัดลอกเป็นรูป" — หน้าตาเดียวกับปุ่มในโมดัลนำเข้า rmms (doh-import.js .dohi-sec-h .cp) */
+  .img-copy-btn{width:36px;height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid #dfe2dd;background:#fff;color:#4d5a66;border-radius:10px;cursor:pointer;flex:none;transition:.15s;}
+  .img-copy-btn:hover{border-color:#f07a1f;color:#e0620f;background:#fff7f0;}
+  .img-copy-btn svg{width:18px;height:18px;}
+  .img-copy-btn:disabled{opacity:.6;cursor:progress;}
+  .img-copy-btn.ok{border-color:#1c8a53;color:#1c8a53;background:#e5f4ec;}
+  .gmodal-footer .img-copy-btn{width:42px;height:42px;border-radius:12px;}
   .ct-toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;background:#111827;color:#fff;padding:10px 18px;border-radius:12px;font-size:14px;z-index:9999;transition:.25s;pointer-events:none;max-width:calc(100vw - 32px);text-align:center;}
   .ct-toast.show{opacity:1;transform:translate(-50%,0);}
   @media(max-width:560px){.ctv-grid{grid-template-columns:1fr;} .ctv-money .val{font-size:22px;} .ctv-name{font-size:16px;}}
@@ -383,7 +390,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   html.ct-snap #ct-detail-overlay .modal-box{max-height:none !important;box-shadow:none !important;border-radius:0 !important;animation:none !important;margin:0 !important;}
   /* เส้นส้มเรืองแสงใช้ mask ที่ html2canvas วาดไม่ได้ (จะกลายเป็นแถบส้มทึบ) และ html2canvas อ่าน ::before จากหน้าจริง จึงต้องปิดบนกล่องจริงชั่วขณะ */
   #ct-detail-overlay .modal-box.ct-snapping::before,#ct-detail-overlay .modal-box.ct-snapping::after{content:none !important;}
-  html.ct-snap #ct-detail-head{border-top:4px solid var(--orange-500);}
   html.ct-snap #ct-detail-body{overflow:visible !important;flex:none !important;max-height:none !important;}
   html.ct-snap #ct-detail-overlay .ctv-tl{overflow:visible;}
   html.ct-snap #ct-detail-overlay .gmodal-footer,html.ct-snap #ct-detail-overlay .modal-close{display:none !important;}
@@ -839,7 +845,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="labor-calc.js?v=20261026"></script>
 <script src="emoji-img.js" defer></script>
 <script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261024" defer></script><script src="table-scroll-standard.js?v=20261024" defer></script>
-<script src="doh-import.js" defer></script>
+<script src="doh-import.js?v=20261030" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
 .route-header .topbar-right{flex-direction:column;align-items:flex-end;gap:6px}
@@ -1216,7 +1222,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                   <button class="btn btn-ghost btn-ic-danger" data-ic="trash" onclick="const id=ctDetailId;closeContractDetail();deleteContract(id)">ลบ</button>
                 </div>
                 <div style="display:flex;gap:8px;margin-left:auto;">
-                  <button class="btn btn-ghost" id="ct-detail-copy" title="คัดลอกหน้าต่างนี้เป็นรูป แล้วกด Ctrl+V วางใน LINE / Word" onclick="copyContractImage(this)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg>คัดลอกรูป</button>
+                  <button type="button" class="img-copy-btn" id="ct-detail-copy" title="คัดลอกหน้าต่างนี้เป็นรูป แล้วกด Ctrl+V วางใน LINE / Word" aria-label="คัดลอกหน้าต่างนี้เป็นรูป" onclick="copyContractImage(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg></button>
                   <button class="btn btn-ghost" onclick="closeContractDetail()">ปิด</button>
                   <button class="btn btn-primary" data-ic="pen" id="ct-detail-edit" onclick="const id=ctDetailId;closeContractDetail();openContractForm(id)">แก้ไข</button>
                 </div>
@@ -3114,10 +3120,12 @@ function openContractDetail(id){
   const row = (k, val) => `<dt>${k}</dt><dd>${val}</dd>`;
   const grp = (title, body) => `<div class="dw-group"><div class="dw-group-title"><span class="dot"></span>${title}</div><dl class="ct-dl">${body}</dl></div>`;
   const dEnd = ctDaysTo(c.endDate);
+  // แต่ละท่อนห้ามตัดกลางคำ (nw) — ขึ้นบรรทัดใหม่ได้เฉพาะที่ " · "
+  const nw = s => `<span style="white-space:nowrap;">${s}</span>`;
   const refl = c.reflectNeeded ? (c.deliveryDate ? ctReflDates(c).map(r=>{
-    if(r.done) return `<div style="color:var(--success);">รอบ ${r.months} เดือน · กำหนด ${fmtDateShort(r.date)} · ✓ วัดแล้ว ${fmtDateShort(r.done)}</div>`;
+    if(r.done) return `<div style="color:var(--success);">${nw('รอบ '+r.months+' เดือน')} · ${nw('กำหนด '+fmtDateShort(r.date))} · ${nw('✓ วัดแล้ว '+fmtDateShort(r.done))}</div>`;
     const dd = ctDaysTo(r.date);
-    return `<div style="${dd<=30?'color:var(--danger);font-weight:600;':''}">รอบ ${r.months} เดือน · กำหนด ${fmtDateShort(r.date)} · ${dd<0?'เลยกำหนด '+(-dd)+' วัน (ยังไม่วัด)':'ยังไม่วัด'+(dd<=30?' (อีก '+dd+' วัน)':'')}</div>`;
+    return `<div style="${dd<=30?'color:var(--danger);font-weight:600;':''}">${nw('รอบ '+r.months+' เดือน')} · ${nw('กำหนด '+fmtDateShort(r.date))} · ${nw(dd<0?'เลยกำหนด '+(-dd)+' วัน (ยังไม่วัด)':'ยังไม่วัด'+(dd<=30?' (อีก '+dd+' วัน)':''))}</div>`;
   }).join('') : 'รอวันส่งงาน') : 'ไม่ต้องวัด';
   document.getElementById('ct-detail-title').textContent = c.contractNo ? 'สัญญาเลขที่ ' + c.contractNo : 'รายละเอียดสัญญา';
   document.getElementById('ct-detail-sub').innerHTML = `<span class="pill ${st.cls}" style="font-size:11px;">${st.label}</span>${c.fiscalYear?' &nbsp;ปีงบประมาณ '+esc(c.fiscalYear):''}`;
@@ -3206,22 +3214,23 @@ function ctToast(msg){
 async function copyContractImage(btn){
   const c = contractsList.find(x=>String(x.id)===String(ctDetailId));
   const fileName = 'สัญญา-' + ((c && c.contractNo) || 'รายละเอียด').replace(/[\\/:*?"<>|]/g, '-') + '.png';
-  const old = btn.innerHTML;
-  btn.disabled = true; btn.textContent = 'กำลังสร้างรูป…';
+  const old = btn.innerHTML, svg = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
+  btn.disabled = true;
   const blobP = ctDetailSnapBlob();
   try{
     await navigator.clipboard.write([new ClipboardItem({'image/png': blobP})]);
-    btn.textContent = '✓ คัดลอกแล้ว';
+    btn.classList.add('ok'); btn.innerHTML = svg('m5 12 5 5 9-10');
     ctToast('คัดลอกรูปแล้ว — กด Ctrl+V วางใน LINE หรือ Word ได้เลย');
   }catch(err){
     const blob = await blobP.catch(e => { err = e; return null; });
     if(blob){
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName; a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      btn.classList.add('ok'); btn.innerHTML = svg('M12 4v11M7 11l5 5 5-5M5 20h14');
       ctToast('เครื่องนี้ไม่อนุญาตคัดลอกรูป จึงบันทึกเป็นไฟล์ ' + fileName + ' ให้แทน');
     } else ctToast('สร้างรูปไม่สำเร็จ: ' + err.message);
   }
-  setTimeout(() => { btn.innerHTML = old; btn.disabled = false; }, 1800);
+  setTimeout(() => { btn.innerHTML = old; btn.classList.remove('ok'); btn.disabled = false; }, 1800);
 }
 async function loadContractsFromApi(){
   try{
