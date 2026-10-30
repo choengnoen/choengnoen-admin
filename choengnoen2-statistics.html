@@ -1063,35 +1063,54 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 <input type="hidden" id="ct-id">
                 <div class="dw-group">
                   <div class="dw-group-title"><span class="dot"></span>ข้อมูลสัญญา</div>
-                  <div class="f-row"><label>ชื่อโครงการ</label><input id="ct-name" placeholder="เช่น ซ่อมผิวทางแอสฟัลต์ ทล.3 ตอน ระยอง - กะเฉด"></div>
                   <div class="two-col">
-                    <div class="f-row"><label>เลขที่สัญญา</label><input id="ct-no" placeholder="เช่น 12/2569"></div>
+                    <div class="f-row"><label>เลขที่สัญญา</label><input id="ct-no" placeholder="เช่น รย.21/2567"></div>
                     <div class="f-row"><label>ปีงบประมาณ (พ.ศ.)</label><input type="number" id="ct-f-fy" placeholder="เช่น 2569"></div>
                   </div>
+                  <div class="f-row"><label>ชื่อโครงการ</label><input id="ct-name" placeholder="เช่น ปรับปรุงผิวทางแอสฟัลต์คอนกรีต ทล.364 ตอน ทางเลี่ยงเมืองระยอง ตอน 2"></div>
                   <div class="two-col">
+                    <div class="f-row"><label>ปริมาณงาน</label><input id="ct-qty" placeholder="เช่น 1 แห่ง (16,031 ตร.ม.)"></div>
                     <div class="f-row"><label>ผู้รับจ้าง</label><input id="ct-by" placeholder="ชื่อบริษัท / ห้างหุ้นส่วน"></div>
-                    <div class="f-row"><label>เงินค่างาน (บาท)</label><input type="number" step="0.01" id="ct-amount" placeholder="เช่น 4500000"></div>
-                  </div>
-                  <div class="two-col">
-                    <div class="f-row"><label>ปริมาณงาน</label><input id="ct-qty" placeholder="เช่น 12,500 ตร.ม. / โคมไฟ 40 ต้น"></div>
-                    <div class="f-row"><label>ผู้ควบคุมงาน</label><input id="ct-sup" placeholder="ชื่อ-สกุล (ถ้ามี)"></div>
                   </div>
                 </div>
                 <div class="dw-group">
-                  <div class="dw-group-title"><span class="dot"></span>ระยะเวลา ส่งงาน และตรวจรับ</div>
-                  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
-                    <div class="f-row"><label>วันเริ่มสัญญา</label>
-                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-start" class="thdate-native" onchange="thdateSync(this)"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
+                  <div class="dw-group-title"><span class="dot"></span>ช่วงทางหลวงที่สัญญาครอบคลุม</div>
+                  <div id="ct-ranges"></div>
+                  <button type="button" class="btn btn-ghost btn-sm" onclick="addContractRangeRow()" style="margin-bottom:12px;">+ เพิ่มช่วง</button>
+                  <div id="ct-range-msg" style="margin-bottom:10px;"></div>
+                </div>
+                <div class="dw-group">
+                  <div class="dw-group-title"><span class="dot"></span>วันที่ ระยะเวลา และเงินค่างาน</div>
+                  <div class="two-col">
+                    <div class="f-row"><label>วันลงนามสัญญา</label>
+                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-sign" class="thdate-native" onchange="thdateSync(this)"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
+                    <div class="f-row"><label>วันเริ่มสัญญา (เริ่มลงมือทำงาน)</label>
+                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-start" class="thdate-native" onchange="thdateSync(this);ctAutoEnd()"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
+                  </div>
+                  <div class="two-col">
+                    <div class="f-row"><label>กำหนดแล้วเสร็จภายใน (วัน)</label><input type="number" min="0" step="1" id="ct-days" placeholder="เช่น 90" oninput="ctAutoEnd()"></div>
                     <div class="f-row"><label>วันสิ้นสุดสัญญา</label>
-                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-end" class="thdate-native" onchange="thdateSync(this)"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
+                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-end" class="thdate-native" onchange="thdateSync(this);this.dataset.manual='1'"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
+                  </div>
+                  <div id="ct-end-msg" style="font-size:12px;color:var(--ink-500);line-height:1.7;margin:-4px 0 8px;"></div>
+                  <div class="two-col">
+                    <div class="f-row"><label>เงินค่างาน (บาท)</label><input type="number" step="0.01" id="ct-amount" placeholder="เช่น 9695000"></div>
+                    <div class="f-row"><label>ค่าปรับวันละ (บาท)</label><input type="number" step="0.01" id="ct-penalty" placeholder="เช่น 24237.50"></div>
+                  </div>
+                </div>
+                <div class="dw-group">
+                  <div class="dw-group-title"><span class="dot"></span>คณะกรรมการตรวจรับ และผู้ควบคุมงาน</div>
+                  <div class="f-row"><label>คณะกรรมการตรวจรับพัสดุ (1 บรรทัดต่อ 1 คน)</label><textarea id="ct-committee" rows="3" placeholder="เช่น&#10;นายสมชาย ใจดี  ผอ.ขท.ระยอง  ประธานกรรมการ&#10;นายสมศักดิ์ รักงาน  รอ.ขท.(ว)ระยอง  กรรมการ"></textarea></div>
+                  <div class="f-row"><label>ผู้ควบคุมงาน</label><input id="ct-sup" placeholder="ชื่อ-สกุล ตำแหน่ง (ถ้ามี)"></div>
+                </div>
+                <div class="dw-group">
+                  <div class="dw-group-title"><span class="dot"></span>ส่งงาน ตรวจรับ และค้ำประกัน <span style="font-weight:400;font-size:12px;color:var(--ink-500);">(กรอกภายหลังเมื่อถึงขั้นตอน)</span></div>
+                  <div class="two-col">
                     <div class="f-row"><label>วันที่ส่งงาน</label>
                       <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-deliver" class="thdate-native" onchange="thdateSync(this);ctAutoDates()"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
                     <div class="f-row"><label>วันที่ตรวจรับงาน</label>
                       <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-accept" class="thdate-native" onchange="thdateSync(this);ctAutoDates()"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
                   </div>
-                </div>
-                <div class="dw-group">
-                  <div class="dw-group-title"><span class="dot"></span>ค้ำประกัน และวัดค่าสะท้อนแสง</div>
                   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
                     <div class="f-row"><label>ประเภทงาน</label>
                       <select id="ct-type" onchange="ctTypeChanged()"><option value="">— เลือก —</option><option value="ไฟฟ้า">งานไฟฟ้า (ค้ำ 3 ปี)</option><option value="ผิวทาง">งานผิวทาง (ค้ำ 2 ปี)</option><option value="อื่น ๆ">อื่น ๆ</option></select></div>
@@ -1109,13 +1128,13 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                   <div id="ct-auto-msg" style="font-size:12px;color:var(--ink-500);line-height:1.7;"></div>
                 </div>
                 <div class="dw-group">
-                  <div class="dw-group-title"><span class="dot"></span>ช่วงทางหลวงที่สัญญาครอบคลุม</div>
-                  <div id="ct-ranges"></div>
-                  <button type="button" class="btn btn-ghost btn-sm" onclick="addContractRangeRow()" style="margin-bottom:12px;">+ เพิ่มช่วง</button>
-                  <div id="ct-range-msg" style="margin-bottom:10px;"></div>
-                </div>
-                <div class="dw-group">
                   <div class="dw-group-title"><span class="dot"></span>สถานะพิเศษและหมายเหตุ</div>
+                  <div class="two-col">
+                    <div class="f-row"><label>วันที่ต่อรองเป็นที่ยุติ</label>
+                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-negotiate" class="thdate-native" onchange="thdateSync(this)"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
+                    <div class="f-row"><label>วันที่แจ้งทำสัญญา</label>
+                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-notify" class="thdate-native" onchange="thdateSync(this)"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
+                  </div>
                   <div class="f-row"><label>สถานะพิเศษ (ปกติปล่อยว่าง — ระบบคำนวณจากวันที่ให้เอง)</label>
                     <select id="ct-status"><option value="">— ไม่มี (คำนวณจากวันที่) —</option><option value="ระงับงาน">ระงับงาน</option><option value="ยกเลิกสัญญา">ยกเลิกสัญญา</option></select></div>
                   <div class="f-row"><label>หมายเหตุ</label><textarea id="ct-note" placeholder="เช่น ขยายเวลา / เลขที่หนังสืออ้างอิง"></textarea></div>
@@ -2966,6 +2985,8 @@ function ctFromApi(row){
     workQty:row.workQty||'', deliveryDate:String(row.deliveryDate||'').slice(0,10), acceptDate:String(row.acceptDate||'').slice(0,10),
     workType:row.workType||'', warrantyYears:Number(row.warrantyYears)||'', reflectNeeded:row.reflectNeeded===true || row.reflectNeeded==='true',
     refl12Done:String(row.refl12Done||'').slice(0,10), refl24Done:String(row.refl24Done||'').slice(0,10),
+    signDate:String(row.signDate||'').slice(0,10), durationDays:Number(row.durationDays)||'', penaltyPerDay:Number(row.penaltyPerDay)||0,
+    committee:row.committee||'', negotiateDate:String(row.negotiateDate||'').slice(0,10), notifyDate:String(row.notifyDate||'').slice(0,10),
     ranges: ranges.map(r=>({route:String(r.route==null?'':r.route), k1:Number(r.k1)||0, k2:Number(r.k2)||0})) };
 }
 function ctToApi(c){
@@ -2974,6 +2995,8 @@ function ctToApi(c){
     workQty:c.workQty||'', deliveryDate:c.deliveryDate||'', acceptDate:c.acceptDate||'', workType:c.workType||'',
     warrantyYears:c.warrantyYears===''?'':c.warrantyYears, reflectNeeded:!!c.reflectNeeded,
     refl12Done:c.refl12Done||'', refl24Done:c.refl24Done||'',
+    signDate:c.signDate||'', durationDays:c.durationDays===''?'':c.durationDays, penaltyPerDay:c.penaltyPerDay||0,
+    committee:c.committee||'', negotiateDate:c.negotiateDate||'', notifyDate:c.notifyDate||'',
     rangesJson:c.ranges };
 }
 /* บวกเดือนแบบปฏิทิน (31 ม.ค. + 1 เดือน = 28/29 ก.พ.) */
@@ -2983,6 +3006,20 @@ function ctAddMonths(iso, n){
   const last = new Date(y, m-1+n+1, 0).getDate();
   const r = new Date(y, m-1+n, Math.min(d,last));
   return r.getFullYear()+'-'+String(r.getMonth()+1).padStart(2,'0')+'-'+String(r.getDate()).padStart(2,'0');
+}
+/* วันสิ้นสุดสัญญาตามสูตร = วันเริ่ม + จำนวนวัน − 1 (นับวันเริ่มเป็นวันที่ 1 เช่น 17 พ.ค. + 90 วัน = 14 ส.ค.) */
+function ctCalcEnd(start, days){
+  if(!start || !(Number(days)>0)) return '';
+  const r = new Date(start+'T00:00:00'); r.setDate(r.getDate() + Number(days) - 1);
+  return r.getFullYear()+'-'+String(r.getMonth()+1).padStart(2,'0')+'-'+String(r.getDate()).padStart(2,'0');
+}
+/* เติมวันสิ้นสุดสัญญาให้เองจากวันเริ่ม + กำหนดวัน (ถ้าผู้ใช้เลือกวันสิ้นสุดเองไว้แล้ว จะไม่คำนวณทับ) */
+function ctAutoEnd(){
+  const endEl = document.getElementById('ct-end');
+  const calc = ctCalcEnd(document.getElementById('ct-start').value, document.getElementById('ct-days').value);
+  if(calc && !endEl.dataset.manual){ endEl.value = calc; thdateSync(endEl); }
+  document.getElementById('ct-end-msg').innerHTML = calc && endEl.value && endEl.value!==calc
+    ? `วันสิ้นสุดตามสูตร: <b>${fmtDateShort(calc)}</b> (วันเริ่ม + กำหนดวัน) · <a href="#" onclick="document.getElementById('ct-end').dataset.manual='';ctAutoEnd();return false;">ใช้วันที่ตามสูตร</a>` : '';
 }
 /* วันนับค้ำประกัน = วันตรวจรับงาน (ถ้ายังไม่มี ใช้วันส่งงาน) */
 function ctWarrantyBase(c){ return c.acceptDate || c.deliveryDate || ''; }
@@ -3035,16 +3072,19 @@ function openContractDetail(id){
     `<div style="font-family:'Kanit';font-size:16px;font-weight:600;line-height:1.5;margin-bottom:4px;">${v(c.name)}</div>
      <div style="color:var(--ink-600);font-size:13.5px;margin-bottom:14px;">${v(c.contractor)}</div>` +
     grp('ข้อมูลสัญญา',
-      row('เงินค่างาน', c.amount ? fmtNum(c.amount,2)+' บาท' : dash) + row('ปริมาณงาน', v(c.workQty)) +
-      row('ผู้ควบคุมงาน', v(c.supervisor)) + row('ช่วงทางหลวง', ctRangeText(c))) +
+      row('ปริมาณงาน', v(c.workQty)) + row('ช่วงทางหลวง', ctRangeText(c)) +
+      row('เงินค่างาน', c.amount ? fmtNum(c.amount,2)+' บาท' : dash) + row('ค่าปรับวันละ', c.penaltyPerDay ? fmtNum(c.penaltyPerDay,2)+' บาท' : dash) +
+      row('ผู้ควบคุมงาน', v(c.supervisor)) +
+      row('คณะกรรมการตรวจรับ', c.committee ? esc(c.committee).replace(/\n/g,'<br>') : dash)) +
     grp('ระยะเวลา ส่งงาน และตรวจรับ',
-      row('เริ่ม – สิ้นสุดสัญญา', d(c.startDate)+' – '+d(c.endDate) + (st.key==='running' && dEnd!==null && dEnd<=60 ? ` <span style="color:var(--danger);">(เหลือ ${dEnd} วัน)</span>` : '')) +
+      row('วันลงนามสัญญา', d(c.signDate)) +
+      row('เริ่ม – สิ้นสุดสัญญา', d(c.startDate)+' – '+d(c.endDate) + (c.durationDays ? ` (${c.durationDays} วัน)` : '') + (st.key==='running' && dEnd!==null && dEnd<=60 ? ` <span style="color:var(--danger);">(เหลือ ${dEnd} วัน)</span>` : '')) +
       row('วันที่ส่งงาน', d(c.deliveryDate)) + row('วันที่ตรวจรับงาน', d(c.acceptDate))) +
     grp('ค้ำประกัน และวัดค่าสะท้อนแสง',
       row('ประเภทงาน', c.workType ? 'งาน'+esc(c.workType) : dash) + row('กำหนดค้ำประกัน', c.warrantyYears ? c.warrantyYears+' ปี' : dash) +
       row('คืนค้ำประกัน', d(c.warrantyEnd) + (wa ? ` <span style="color:${wa.months===1?'var(--danger)':'#b7791f'};font-weight:600;">⚠ ภายใน ${wa.months} เดือน (เหลือ ${wa.days} วัน)</span>` : '')) +
       row('วัดค่าสะท้อนแสง', refl)) +
-    (c.status || c.note ? grp('สถานะพิเศษและหมายเหตุ', (c.status ? row('สถานะพิเศษ', esc(c.status)) : '') + (c.note ? row('หมายเหตุ', esc(c.note).replace(/\n/g,'<br>')) : '')) : '');
+    (c.status || c.note || c.negotiateDate || c.notifyDate ? grp('สถานะพิเศษและหมายเหตุ', (c.negotiateDate ? row('ต่อรองเป็นที่ยุติ', d(c.negotiateDate)) : '') + (c.notifyDate ? row('แจ้งทำสัญญา', d(c.notifyDate)) : '') + (c.status ? row('สถานะพิเศษ', esc(c.status)) : '') + (c.note ? row('หมายเหตุ', esc(c.note).replace(/\n/g,'<br>')) : '')) : '');
   document.getElementById('ct-detail-actions').style.display = isAdmin() ? 'flex' : 'none';
   document.getElementById('ct-detail-edit').style.display = isAdmin() ? '' : 'none';
   document.getElementById('ct-detail-overlay').classList.remove('hidden');
@@ -3255,8 +3295,17 @@ function openContractForm(id){
   document.getElementById('ct-amount').value = c && c.amount ? c.amount : '';
   document.getElementById('ct-qty').value = c ? c.workQty : '';
   document.getElementById('ct-sup').value = c ? c.supervisor : '';
+  document.getElementById('ct-sign').value = c ? c.signDate : '';
   document.getElementById('ct-start').value = c ? c.startDate : '';
-  document.getElementById('ct-end').value = c ? c.endDate : '';
+  document.getElementById('ct-days').value = c ? c.durationDays : '';
+  const endEl = document.getElementById('ct-end');
+  endEl.value = c ? c.endDate : '';
+  // วันสิ้นสุดที่ไม่ตรงกับสูตร (กรอกเองไว้เดิม) → ถือว่ากรอกเอง ไม่คำนวณทับ
+  endEl.dataset.manual = (c && c.endDate && c.endDate !== ctCalcEnd(c.startDate, c.durationDays)) ? '1' : '';
+  document.getElementById('ct-penalty').value = c && c.penaltyPerDay ? c.penaltyPerDay : '';
+  document.getElementById('ct-committee').value = c ? c.committee : '';
+  document.getElementById('ct-negotiate').value = c ? c.negotiateDate : '';
+  document.getElementById('ct-notify').value = c ? c.notifyDate : '';
   document.getElementById('ct-deliver').value = c ? c.deliveryDate : '';
   document.getElementById('ct-accept').value = c ? c.acceptDate : '';
   document.getElementById('ct-type').value = c ? c.workType : '';
@@ -3269,7 +3318,8 @@ function openContractForm(id){
   warrEl.value = c ? c.warrantyEnd : '';
   // วันคืนค้ำที่ไม่ตรงกับสูตร (กรอกเองไว้เดิม) → ถือว่ากรอกเอง ไม่คำนวณทับ
   warrEl.dataset.manual = (c && c.warrantyEnd && c.warrantyEnd !== ctCalcWarrEnd(ctWarrantyBase(c), c.warrantyYears)) ? '1' : '';
-  ['ct-start','ct-end','ct-deliver','ct-accept','ct-warr'].forEach(i=>thdateSync(document.getElementById(i)));
+  ['ct-sign','ct-start','ct-end','ct-deliver','ct-accept','ct-warr','ct-negotiate','ct-notify'].forEach(i=>thdateSync(document.getElementById(i)));
+  ctAutoEnd();
   ctAutoDates();
   document.getElementById('ct-status').value = c ? c.status : '';
   document.getElementById('ct-note').value = c ? c.note : '';
@@ -3287,6 +3337,8 @@ async function saveContract(){
   if(!ranges.length){ alert('กรุณาเพิ่มช่วงทางหลวงที่สัญญาครอบคลุมอย่างน้อย 1 ช่วง'); return; }
   const start = g('ct-start'), end = g('ct-end'), warr = g('ct-warr');
   if(start && end && end < start){ alert('วันสิ้นสุดสัญญาต้องไม่ก่อนวันเริ่มสัญญา'); return; }
+  const sign = g('ct-sign');
+  if(sign && start && sign > start && !confirm('วันลงนามสัญญาอยู่หลังวันเริ่มสัญญา\nต้องการบันทึกต่อหรือไม่?')) return;
   const deliver = g('ct-deliver'), accept = g('ct-accept');
   if(start && deliver && deliver < start){ alert('วันที่ส่งงานต้องไม่ก่อนวันเริ่มสัญญา'); return; }
   if(deliver && accept && accept < deliver){ alert('วันที่ตรวจรับงานต้องไม่ก่อนวันที่ส่งงาน'); return; }
@@ -3305,6 +3357,8 @@ async function saveContract(){
     workQty:g('ct-qty'), deliveryDate:deliver, acceptDate:accept, workType:g('ct-type'),
     warrantyYears: g('ct-wyears') ? Number(g('ct-wyears')) : '', reflectNeeded:document.getElementById('ct-refl').checked,
     refl12Done:r12, refl24Done:r24,
+    signDate:sign, durationDays: g('ct-days') ? Number(g('ct-days')) : '', penaltyPerDay: parseFloat(g('ct-penalty'))||0,
+    committee:g('ct-committee'), negotiateDate:g('ct-negotiate'), notifyDate:g('ct-notify'),
     status:document.getElementById('ct-status').value, note:g('ct-note'), ranges
   };
   const saveBtn = document.getElementById('ct-save-btn'), cancelBtn = document.getElementById('ct-cancel-btn');
@@ -3342,14 +3396,15 @@ function deleteContract(id){
 function exportContractsCsv(){
   if(!contractsList.length){ alert('ยังไม่มีข้อมูลสัญญา'); return; }
   const cell = v => { v = v==null?'':String(v); return /[",\r\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
-  const rows = [['ชื่อโครงการ','เลขที่สัญญา','ผู้รับจ้าง','ปีงบ','ทล.','ตอน','กม.เริ่ม','กม.สิ้นสุด','วันเริ่มสัญญา','วันสิ้นสุดสัญญา','ค้ำประกันถึง','สถานะ','หมายเหตุ','ปริมาณงาน','วันส่งงาน','วันตรวจรับงาน','ประเภทงาน','ค้ำประกัน(ปี)','วัดค่าสะท้อนแสง 12 ด.','วัดแล้ว 12 ด.','วัดค่าสะท้อนแสง 24 ด.','วัดแล้ว 24 ด.']];
+  const rows = [['ชื่อโครงการ','เลขที่สัญญา','ผู้รับจ้าง','ปีงบ','ทล.','ตอน','กม.เริ่ม','กม.สิ้นสุด','วันเริ่มสัญญา','วันสิ้นสุดสัญญา','ค้ำประกันถึง','สถานะ','หมายเหตุ','ปริมาณงาน','วันส่งงาน','วันตรวจรับงาน','ประเภทงาน','ค้ำประกัน(ปี)','วัดค่าสะท้อนแสง 12 ด.','วัดแล้ว 12 ด.','วัดค่าสะท้อนแสง 24 ด.','วัดแล้ว 24 ด.','วันลงนามสัญญา','กำหนดแล้วเสร็จ(วัน)','คณะกรรมการตรวจรับ','ผู้ควบคุมงาน','วันต่อรองเป็นที่ยุติ','วันแจ้งทำสัญญา']];
   contractsList.forEach(c=>{
     const st = ctStatus(c).label;
     const rs = c.ranges.length ? c.ranges : [{route:'',k1:0,k2:0}];
     rs.forEach(r=>{
       const rt = findRoute(r.route), ds = c.ranges.length ? districtSectionAt(r.route, r.k1) : null;
       rows.push([c.name, c.contractNo, c.contractor, c.fiscalYear, r.route, ds ? ds.controlNo : (rt?rt.controlNo||'':''), c.ranges.length?kmFmt(r.k1):'', c.ranges.length?kmFmt(r.k2):'', c.startDate, c.endDate, c.warrantyEnd, st, c.note,
-        c.workQty, c.deliveryDate, c.acceptDate, c.workType, c.warrantyYears, ...[0,1].flatMap(i=>{ const r = ctReflDates(c)[i]||{}; return [r.date||'', r.done||'']; })]);
+        c.workQty, c.deliveryDate, c.acceptDate, c.workType, c.warrantyYears, ...[0,1].flatMap(i=>{ const r = ctReflDates(c)[i]||{}; return [r.date||'', r.done||'']; }),
+        c.signDate, c.durationDays, c.committee.replace(/\n/g,' / '), c.supervisor, c.negotiateDate, c.notifyDate]);
     });
   });
   const csv = '﻿' + rows.map(r=>r.map(cell).join(',')).join('\r\n');
