@@ -3134,9 +3134,16 @@ function renderContracts(){
       <li>เพิ่ม/แก้/ลบได้เฉพาะผู้มีสิทธิ์แก้ไขส่วนงานที่ 2</li>
     </ol>`;
 }
-/* ---- ช่วงทางหลวงในฟอร์ม ---- */
+/* ---- ช่วงทางหลวงในฟอร์ม ----
+   เลือกได้ทุกสายทางในฐานข้อมูลกลาง และกรอก กม. ได้ทั้งสาย (ไม่จำกัดเฉพาะช่วงที่หมวดควบคุม)
+   เพราะหมวด/ผู้ช่วยอาจเป็นผู้ควบคุมงานในช่วงทางของหมวดอื่นได้ */
 function ctRouteOptions(sel){
-  return '<option value="">— เลือกสายทาง —</option>' + controlledRoutes.map(r=>`<option value="${esc(r.routeNo)}" ${String(sel)===String(r.routeNo)?'selected':''}>ทล.${esc(r.routeNo)} — ${esc(r.section)} (${routeRangeLabel(r)})</option>`).join('');
+  const routeNos = [...new Set(controlledRoutes.map(r=>String(r.routeNo)))];
+  if(sel && !routeNos.includes(String(sel))) routeNos.push(String(sel)); // สายทางเดิมที่ไม่มีในฐานข้อมูลแล้ว ยังแสดงได้
+  return '<option value="">— เลือกสายทาง —</option>' + routeNos.map(no=>{
+    const r = findRoute(no);
+    return `<option value="${esc(no)}" ${String(sel)===no?'selected':''}>ทล.${esc(no)}${r&&r.section?' — '+esc(r.section):''}</option>`;
+  }).join('');
 }
 function addContractRangeRow(r){
   r = r || {route:'', k1:null, k2:null};
@@ -3150,9 +3157,9 @@ function addContractRangeRow(r){
   document.getElementById('ct-ranges').appendChild(div);
   validateContractRanges();
 }
-/* อ่านช่วงทั้งหมดในฟอร์ม → {ranges, errors(ต้องแก้), warns(เตือน)} */
+/* อ่านช่วงทั้งหมดในฟอร์ม → {ranges, errors(ต้องแก้), notes(แจ้งให้ทราบ ไม่ขวางการบันทึก)} */
 function collectContractRanges(){
-  const ranges=[], errors=[], warns=[];
+  const ranges=[], errors=[], notes=[];
   document.querySelectorAll('#ct-ranges .ct-range-row').forEach((row,i)=>{
     const route = row.querySelector('.ct-r-route').value;
     const t1 = row.querySelector('.ct-r-k1').value.trim(), t2 = row.querySelector('.ct-r-k2').value.trim();
@@ -3163,18 +3170,18 @@ function collectContractRanges(){
     if(k1===undefined || k2===undefined){ errors.push(n+': กรอก กม. ไม่ครบหรือรูปแบบไม่ถูกต้อง (ใช้ เช่น 229+000)'); return; }
     if(k2 <= k1){ errors.push(n+': กม.สิ้นสุดต้องมากกว่า กม.เริ่ม'); return; }
     const rt = findRoute(route);
-    if(rt && (!kmInRoute(rt,k1) || !kmInRoute(rt,k2))) warns.push(n+': กม. อยู่นอกช่วงที่หมวดควบคุมของ ทล.'+route+' ('+routeRangeLabel(rt)+')');
+    if(rt && (!kmInRoute(rt,k1) || !kmInRoute(rt,k2))) notes.push(n+': อยู่นอกช่วงที่หมวดควบคุมของ ทล.'+route+' (ควบคุมงานในพื้นที่หมวดอื่น) — บันทึกได้ตามปกติ');
     ranges.push({route:String(route), k1:Math.round(k1*1000)/1000, k2:Math.round(k2*1000)/1000});
   });
-  return {ranges, errors, warns};
+  return {ranges, errors, notes};
 }
 function validateContractRanges(){
   const msg = document.getElementById('ct-range-msg'); if(!msg) return;
-  const {ranges, errors, warns} = collectContractRanges();
+  const {ranges, errors, notes} = collectContractRanges();
   let h = '';
   if(errors.length) h += `<div class="hazard" style="font-size:12px;white-space:normal;">⚠ ${errors.map(esc).join('<br>⚠ ')}</div>`;
-  if(warns.length) h += `<div style="color:var(--danger);font-size:12px;margin-top:4px;">⚠ ${warns.map(esc).join('<br>⚠ ')}</div>`;
-  if(!errors.length && !warns.length) h = ranges.length ? '<span style="color:var(--success);font-size:12px;">✓ ช่วงทางหลวงอยู่ในขอบเขตที่หมวดควบคุม</span>' : '<span style="color:var(--ink-400);font-size:12px;">ยังไม่มีช่วงทางหลวง — เพิ่มอย่างน้อย 1 ช่วง</span>';
+  if(notes.length) h += `<div style="color:var(--ink-500);font-size:12px;margin-top:4px;">ℹ ${notes.map(esc).join('<br>ℹ ')}</div>`;
+  if(!errors.length && !notes.length) h = ranges.length ? '<span style="color:var(--success);font-size:12px;">✓ ช่วงทางหลวงถูกต้อง</span>' : '<span style="color:var(--ink-400);font-size:12px;">ยังไม่มีช่วงทางหลวง — เพิ่มอย่างน้อย 1 ช่วง</span>';
   msg.innerHTML = h;
 }
 function closeContractForm(){ document.getElementById('ct-form-overlay').classList.add('hidden'); }
@@ -3245,7 +3252,7 @@ async function saveContract(){
   const g = id => document.getElementById(id).value.trim();
   const name = g('ct-name'), no = g('ct-no');
   if(!name && !no){ alert('กรุณาระบุชื่อโครงการหรือเลขที่สัญญาอย่างน้อย 1 อย่าง'); return; }
-  const {ranges, errors, warns} = collectContractRanges();
+  const {ranges, errors} = collectContractRanges();
   if(errors.length){ alert('ช่วงทางหลวงยังไม่ถูกต้อง\n• ' + errors.join('\n• ')); return; }
   if(!ranges.length){ alert('กรุณาเพิ่มช่วงทางหลวงที่สัญญาครอบคลุมอย่างน้อย 1 ช่วง'); return; }
   const start = g('ct-start'), end = g('ct-end'), warr = g('ct-warr');
@@ -3259,7 +3266,6 @@ async function saveContract(){
   if((r12 && r12 < deliver) || (r24 && r24 < deliver)){ alert('วันที่วัดค่าสะท้อนแสงต้องไม่ก่อนวันที่ส่งงาน'); return; }
   if(r12 && r24 && r24 < r12){ alert('วันที่วัดรอบ 24 เดือน ต้องไม่ก่อนรอบ 12 เดือน'); return; }
   if(deliver && end && deliver > end && !confirm('วันที่ส่งงานเลยวันสิ้นสุดสัญญา (ส่งงานล่าช้า)\nต้องการบันทึกต่อหรือไม่?')) return;
-  if(warns.length && !confirm('ระบบตรวจพบว่าบางช่วง กม. อยู่นอกขอบเขตที่หมวดควบคุม:\n• ' + warns.join('\n• ') + '\n\nต้องการบันทึกต่อหรือไม่?')) return;
   const id = g('ct-id');
   const dupNo = no && contractsList.find(x=>String(x.contractNo).trim()===no && String(x.id)!==String(id));
   if(dupNo && !confirm('เลขที่สัญญา "'+no+'" มีอยู่แล้ว ('+(dupNo.name||'ไม่มีชื่อ')+')\nต้องการบันทึกซ้ำหรือไม่?')) return;
