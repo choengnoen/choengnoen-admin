@@ -29,7 +29,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .route-header .clock{color:#9DA0A8;}
   .brand{display:flex;align-items:flex-start;align-self:flex-start;gap:14px;}
   .brand-mark{width:50px;height:50px;flex-shrink:0;margin-top:3px;}
-  .brand-text .t1{font-family:'Kanit';font-size:21px;font-weight:700;color:#fff;line-height:1.55;margin:0 0 3px;letter-spacing:-.01em;}
+  .brand-text .t1{font-family:'Kanit',sans-serif;font-size:21px;font-weight:700;color:#fff;line-height:1.55;margin:0 0 3px;letter-spacing:-.01em;}
   .brand-text .t2{font-size:13px;color:#9DA0A8;line-height:1.55;margin:0 0 14px;}
   .tabs-nav{display:flex;max-width:1180px;margin:14px auto 0;overflow-x:auto;border-top:1px solid rgba(255,255,255,.08);scrollbar-width:none;}
   .tabs-nav::-webkit-scrollbar{display:none;}
@@ -52,13 +52,13 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .crumb{font-size:13px;color:var(--ink-400);}
   .crumb b{color:var(--ink-900);font-weight:600;}
   .topbar-right{display:flex;align-items:center;gap:18px;}
-  .clock{font-size:13px;color:var(--ink-600);font-family:'Kanit';}
-  .avatar{width:34px;height:34px;border-radius:50%;background:var(--orange-600);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Kanit';font-weight:600;font-size:13px;}
+  .clock{font-size:13px;color:var(--ink-600);font-family:'Kanit',sans-serif;}
+  .avatar{width:34px;height:34px;border-radius:50%;background:var(--orange-600);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Kanit',sans-serif;font-weight:600;font-size:13px;}
   /* เมนูผู้ใช้ที่ซ่อนอยู่หลังรูปโปรไฟล์ — กดรูปเพื่อเปิด แสดงชื่อ/ตำแหน่ง/ปุ่มออกจากระบบ แทนที่จะแสดงตลอดเวลาบน topbar */
   .user-menu-wrap{position:relative;}
   .user-menu-panel{position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 16px 34px -10px rgba(7,27,48,.3);padding:10px;min-width:230px;display:flex;flex-direction:column;gap:4px;z-index:60;}
   .user-menu-panel.hidden{display:none;}
-  .user-menu-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border:none;background:transparent;border-radius:9px;font-family:'Sarabun';font-size:13px;text-align:left;cursor:pointer;color:var(--ink-900);width:100%;}
+  .user-menu-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border:none;background:transparent;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:13px;text-align:left;cursor:pointer;color:var(--ink-900);width:100%;}
   .user-menu-item:hover{background:var(--paper-50);}
   .user-menu-item.danger{color:var(--danger);}
   /* ชื่อ/ตำแหน่งผู้ใช้ในเมนูลอย แสดง 2 บรรทัด (ชื่อ / ตำแหน่ง) แทนการยัดรวมบรรทัดเดียวแบบ pill ทั่วไป */
@@ -77,7 +77,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
   .stat-card{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;position:relative;overflow:hidden;}
   .stat-card .label{font-size:12.5px;color:var(--ink-600);margin-bottom:8px;}
-  .stat-card .val{font-family:'Kanit';font-size:28px;font-weight:600;color:var(--navy-900);}
+  .stat-card .val{font-family:'Kanit',sans-serif;font-size:28px;font-weight:600;color:var(--navy-900);}
   .stat-card .sub{font-size:11.5px;color:var(--ink-400);margin-top:4px;}
   .stat-card.warn .val{color:var(--orange-600);}
   .stat-card .bar{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--navy-800);}
@@ -89,11 +89,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ov-card-head{display:flex;align-items:center;gap:10px;margin-bottom:13px;}
   .ov-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .ov-icon svg{width:18px;height:18px;}
-  .ov-card-head h3{font-family:'Kanit';font-size:14px;font-weight:600;color:var(--navy-900);margin:0;letter-spacing:.1px;}
+  .ov-card-head h3{font-family:'Kanit',sans-serif;font-size:14px;font-weight:600;color:var(--navy-900);margin:0;letter-spacing:.1px;}
   .ov-card-head .ov-note{margin-left:auto;font-size:11px;color:var(--ink-400);font-weight:400;}
   .ov-metrics{display:flex;gap:8px;flex-wrap:wrap;}
   .ov-metric{flex:1 1 84px;background:var(--paper-100);border-radius:9px;padding:9px 11px;min-width:84px;}
-  .ov-metric-val{font-family:'Kanit';font-size:21px;font-weight:600;color:var(--navy-900);line-height:1.15;}
+  .ov-metric-val{font-family:'Kanit',sans-serif;font-size:21px;font-weight:600;color:var(--navy-900);line-height:1.15;}
   .ov-metric.warn{background:var(--danger-bg);}
   .ov-metric.warn .ov-metric-val{color:var(--orange-600);}
   .ov-metric.ok{background:var(--success-bg);}
@@ -203,8 +203,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .foot-note{font-size:12px;color:var(--ink-400);padding:12px 20px;border-top:1px solid var(--paper-100);background:var(--paper-50);}
   .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
   .search-box{display:flex;align-items:center;gap:7px;background:var(--paper-50);border:1px solid var(--line);border-radius:7px;padding:6px 11px;font-size:13px;color:var(--ink-600);min-width:190px;}
-  .search-box input{border:none;background:none;outline:none;font-family:'Sarabun';font-size:13px;color:var(--ink-900);width:100%;}
-  select, .edit-input{font-family:'Sarabun';font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink-900);}
+  .search-box input{border:none;background:none;outline:none;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--ink-900);width:100%;}
+  select, .edit-input{font-family:'Sarabun',sans-serif;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink-900);}
   .edit-input{width:100%;}
   .hidden{display:none !important;}
 
@@ -215,7 +215,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .banner-danger{background:var(--danger-bg);color:var(--danger);border:1px solid #f2c5bd;}
   tr.row-latest{background:rgba(242,169,48,.14);box-shadow:inset 3px 0 0 var(--orange-600);}
   tr.row-latest td{font-weight:600;}
-  .banner b{font-family:'Kanit';}
+  .banner b{font-family:'Kanit',sans-serif;}
 
   /* ตารางค่าสาธารณูปโภครายเดือน — กดแถวเดือนเพื่อเปิดดูบิลรายใบ */
   #util-report-table{table-layout:fixed;min-width:960px;} /* ความกว้างคอลัมน์ตาม colgroup ไม่ยืดตามเนื้อหาแถวย่อย */
@@ -249,7 +249,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .form-card h3{margin:0 0 12px;font-size:14px;color:var(--navy-900);}
   .f-row{margin-bottom:14px;}
   .f-row label{display:block;font-size:12px;color:var(--ink-600);margin-bottom:6px;font-weight:600;}
-  .f-row select,.f-row input,.f-row textarea{width:100%;padding:10px 13px;border:1px solid var(--line);border-radius:10px;font-family:'Sarabun';font-size:13.5px;background:#fff;color:var(--ink-900);transition:border-color .15s ease,box-shadow .15s ease;}
+  .f-row select,.f-row input,.f-row textarea{width:100%;padding:10px 13px;border:1px solid var(--line);border-radius:10px;font-family:'Sarabun',sans-serif;font-size:13.5px;background:#fff;color:var(--ink-900);transition:border-color .15s ease,box-shadow .15s ease;}
   .f-row select:focus,.f-row input:focus,.f-row textarea:focus{outline:none;border-color:var(--orange-500);box-shadow:0 0 0 3px rgba(224,98,15,.12);}
   .f-row textarea{resize:vertical;min-height:56px;}
   .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -266,7 +266,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   @keyframes modalPopIn{from{opacity:0;transform:translateY(10px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
   .modal-box{background:#fff;border-radius:20px;width:100%;max-width:640px;max-height:none;box-shadow:0 28px 64px -14px rgba(7,27,48,.45),0 10px 26px -10px rgba(7,27,48,.22);overflow:hidden;animation:modalPopIn .18s cubic-bezier(.22,.9,.32,1.2);}
   .modal-head{display:flex;align-items:center;gap:12px;padding:18px 22px;background:var(--modal-head-bg);}
-  .modal-head h3{margin:0;font-size:15.5px;font-family:'Kanit';font-weight:600;color:#fff;}
+  .modal-head h3{margin:0;font-size:15.5px;font-family:'Kanit',sans-serif;font-weight:600;color:#fff;}
   .modal-head-icon{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .modal-head-icon svg{width:19px;height:19px;}
   .modal-close{background:none;border:none;font-size:15px;color:#a9bbcc;cursor:pointer;line-height:1;padding:4px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:auto;transition:background .15s ease,color .15s ease;}
@@ -281,7 +281,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   /* attendance grid (labor wage) */
   .att-table thead th{text-align:center;}
   .att-table td.att-cell{padding:2px 0;text-align:center;width:24px;min-width:24px;}
-  .att-cell button, .att-chip{width:22px;height:22px;margin:0 auto;border:none;border-radius:6px;cursor:default;font-family:'Kanit';font-weight:700;font-size:11px;display:inline-flex;align-items:center;justify-content:center;opacity:1;}
+  .att-cell button, .att-chip{width:22px;height:22px;margin:0 auto;border:none;border-radius:6px;cursor:default;font-family:'Kanit',sans-serif;font-weight:700;font-size:11px;display:inline-flex;align-items:center;justify-content:center;opacity:1;}
   .att-cell button:disabled{opacity:1;-webkit-text-fill-color:currentColor;}
   .att-cell button.c-1{background:transparent;color:var(--success);}
   .att-chip.c-1{background:var(--success-bg);color:var(--success);}
@@ -387,7 +387,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .print-only{display:none;}
   .official-form{font-family:'Sarabun',sans-serif;font-size:14px;color:#000;line-height:1.7;max-width:210mm;margin:0 auto;}
   .official-form .form-code{text-align:right;font-weight:600;}
-  .official-form .form-title{text-align:center;font-family:'Kanit';font-size:17px;font-weight:600;margin-bottom:2px;}
+  .official-form .form-title{text-align:center;font-family:'Kanit',sans-serif;font-size:17px;font-weight:600;margin-bottom:2px;}
   .official-form .form-org{text-align:center;font-size:14px;margin-bottom:10px;}
   .official-form .writeline{text-align:right;margin-bottom:14px;}
   .official-form p{margin:6px 0;}
@@ -1278,7 +1278,7 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeStatusMenu()
 window.addEventListener('scroll', closeStatusMenu, true);
 window.addEventListener('resize', closeStatusMenu);
 function renderLaborSummary(){
-  const fy = Number(document.getElementById('labor-fy').value) || currentFiscalYear();
+  const fy =Number(document.getElementById('labor-fy').value) || currentFiscalYear();
   // เรียงจากเดือนแรกของปีงบประมาณลงไปเดือนล่าสุด
   const rows = cyclesInFiscalYear(fy).map(cyc=>{
     const att = generateAttendance(cyc);
@@ -1295,8 +1295,8 @@ function renderLaborSummary(){
   });
   const viewing = document.getElementById('labor-cycle').value;
   const thead = `<thead><tr><th>รอบเดือน</th><th class="ctr">คน / วันทำงาน</th><th class="num">ยอดเงินรวม</th><th class="num">หัก ปกส. 5%</th><th class="num">ยอดรับจริงรวม</th><th class="ctr">สถานะการส่ง</th><th class="ctr">บันทึกการตรวจ</th><th class="no-print"></th></tr></thead>`;
-  const tbody = rows.map(r=>`<tr data-cyc="${esc(r.cyc)}"${r.cyc===viewing?' class="is-viewing"':''}>
-      <td><b>${cycleLabel(r.cyc)}</b></td>
+  const tbody = rows.map(r=>`<tr data-cyc="${esc(r.cyc)}" class="util-month${auditOpenCyc===r.cyc?' open':''}${r.cyc===viewing?' is-viewing':''}" onclick="toggleLaborMonth(event,'${jsArg(r.cyc)}')" title="กดเพื่อ${auditOpenCyc===r.cyc?'ซ่อน':'ดู'}บันทึกการตรวจ">
+      <td><span class="util-caret no-print">▶</span><b>${cycleLabel(r.cyc)}</b></td>
       <td class="ctr">${r.people} คน / ${r.days} วัน</td>
       <td class="num">${fmtMoney(r.total)}</td>
       <td class="num">${r.ss.toLocaleString('en-US')}</td>
@@ -1348,12 +1348,15 @@ function canEditAuditNotes(){ return canSetLaborSent(); }
 function auditStatusOf(v){ return AUDIT_STATUS.find(s=>s.v===v) || AUDIT_STATUS[0]; }
 function auditBadgeHTML(cyc){
   const list = laborAuditNotes[cyc] || [];
-  const open = auditOpenCyc===cyc ? ' ▲' : ' ▼';
-  if(!list.length) return canEditAuditNotes() ? `<button type="button" class="pill audit-btn empty" onclick="toggleAuditRow('${jsArg(cyc)}')" title="เปิดเพื่อเพิ่มบันทึกการตรวจ">—${open}</button>` : '<span style="color:var(--ink-400)">—</span>';
+  if(!list.length) return canEditAuditNotes() ? `<button type="button" class="pill audit-btn empty" onclick="toggleAuditRow('${jsArg(cyc)}')" title="เปิดเพื่อเพิ่มบันทึกการตรวจ">—</button>` : '<span style="color:var(--ink-400)">—</span>';
   const pending = list.some(n=>n.status!=='done');
-  return `<button type="button" class="pill audit-btn ${pending?'pill-warn':'pill-ok'}" onclick="toggleAuditRow('${jsArg(cyc)}')" title="${pending?'มีเรื่องที่ยังไม่ปิด':'ทุกเรื่องชดเชยครบแล้ว'}">${list.length} เรื่อง${open}</button>`;
+  return `<button type="button" class="pill audit-btn ${pending?'pill-warn':'pill-ok'}" onclick="toggleAuditRow('${jsArg(cyc)}')" title="${pending?'มีเรื่องที่ยังไม่ปิด':'ทุกเรื่องชดเชยครบแล้ว'}">${list.length} เรื่อง</button>`;
 }
 function toggleAuditRow(cyc){ auditOpenCyc = auditOpenCyc===cyc ? '' : cyc; renderLaborSummary(); }
+// กดแถวเดือนเพื่อกาง/ซ่อนบันทึกการตรวจ — ยกเว้นกดโดนปุ่มในแถว (สถานะ / บันทึกการตรวจ / ดูรายงาน / พิมพ์)
+function toggleLaborMonth(ev, cyc){
+  if(!ev.target.closest('button')) toggleAuditRow(cyc);
+}
 function auditNotesHTML(cyc){
   const list = laborAuditNotes[cyc] || [], edit = canEditAuditNotes();
   const cards = list.map(n=>{
@@ -1716,7 +1719,7 @@ function buildPaymentEvidenceSVG(cyc, mode){
     s += (i===0 ? T(76.9, y, 'หมายเหตุ :') + T(106.2, y, n, {w:640}) : T(109.7, y, n, {w:640}));
   });
 
-  const fam = th ? `'TH SarabunPSK','TH Sarabun New','TH SarabunIT๙'` : `'Sarabun'`;
+  const fam = th ? `'TH SarabunPSK','TH Sarabun New','TH SarabunIT๙','Sarabun',sans-serif` : `'Sarabun',sans-serif`;
   const inner = `<g stroke="#000" stroke-width="0.5" stroke-linecap="square">${g}</g>${s}`;
   /* พิมพ์: กระดาษ A4 แนวนอน 842 x 595 pt วางต้นฉบับ Letter (792 x 612) ไว้กลางกระดาษที่ขนาดจริง / หน้าเว็บ: ตัดขอบกระดาษว่างออก ย่อตามความกว้างกรอบ */
   return mode==='print'
