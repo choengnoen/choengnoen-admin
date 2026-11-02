@@ -804,13 +804,18 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fd-table td.fd-flags{white-space:nowrap;}
   .fd-table td.fd-flags .fd-fl{white-space:nowrap;margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;}
   /* พ.1-03: ชื่อรถบรรทัดบน / ทะเบียน + ประเภทน้ำมันบรรทัดล่าง — รวมคอลัมน์ประเภทไว้ตรงนี้เพื่อคืนความกว้างให้ระยะทางและผลตรวจ */
-  table.fd-table.fd-fuel{min-width:940px;}
-  .fd-table.fd-fuel td.fd-in-td{padding-left:6px;padding-right:6px;}
+  table.fd-table.fd-fuel{min-width:1000px;}
+  .fd-table.fd-fuel td.fd-in-td{padding-left:6px;padding-right:6px;text-align:center;}
   .fd-table.fd-fuel td.fd-flags{padding-left:6px;padding-right:6px;}
   .fd-table .fd-vname{display:block;overflow:hidden;text-overflow:ellipsis;}
   .fd-table .fd-vsub{display:flex;align-items:center;gap:6px;margin-top:2px;}
   .fd-table .fd-vsub .fd-mut{min-width:0;overflow:hidden;text-overflow:ellipsis;}
   .fd-table .fd-vsub .fd-tag{flex:none;}
+  /* พ.1-03: หมายเลขเครื่อง/รถอยู่กึ่งกลางคอลัมน์ · ชื่อผู้เบิกบรรทัดเดียว ไม่ตัดขึ้นบรรทัดใหม่ */
+  .fd-table.fd-fuel td.fd-veh-td{text-align:center;}
+  .fd-table.fd-fuel td.fd-veh-td .fd-vsub{justify-content:center;}
+  .fd-table.fd-fuel td.fd-who-td{white-space:nowrap;}
+  .fd-table.fd-fuel .fd-whobox{display:block;white-space:nowrap;word-break:normal;text-overflow:ellipsis;}
   /* ปุ่มลบรายการเบิกท้ายแถว (ตรวจรายวัน พ.1-02/พ.1-03) — ล้างจำนวนเป็นฉบับร่าง แล้วกด "บันทึก" เพื่อลบจริง */
   .fd-table td.fd-flags .fd-flagrow{display:flex;align-items:center;gap:8px;}
   .fd-table td.fd-flags .fd-del{display:inline-flex;align-items:center;justify-content:center;flex:none;width:30px;height:30px;margin-left:auto;border-radius:8px;border:1px solid #f6d0d0;background:#fdeeee;color:#d33a3a;cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
@@ -4846,7 +4851,7 @@ function renderReportFuel(mk){
     body += `<tr class="${cls}" data-flabel="${esc(label)}">
       <td class="fd-c"><div class="fd-cb${on?' on':''}${canCk&&!confirmed&&r.lit>0?' can':''}"${r.lit>0?` data-fck="${esc(label)}"`:''} title="${r.lit>0?(canCk?'ติ๊กเมื่อตรวจแล้ว':'เฉพาะผู้มีสิทธิ์ตรวจ'):''}">✔</div></td>
       <td class="fd-who-td">${whoCell}</td>
-      <td title="${esc(vehicleShortName(label))} ${esc(vehicleRegNo(label))} (น้ำมัน${r.ft})"><b class="fd-vname">${esc(vehicleShortName(label))}</b><div class="fd-vsub"><span class="fd-mut">${esc(vehicleRegNo(label))}</span><span class="fd-tag ${r.ft==='ดีเซล'?'fd-d':'fd-g'}">${r.ft}</span></div></td>
+      <td class="fd-veh-td" title="${esc(vehicleShortName(label))} ${esc(vehicleRegNo(label))} (น้ำมัน${r.ft})"><b class="fd-vname">${esc(vehicleShortName(label))}</b><div class="fd-vsub"><span class="fd-mut">${esc(vehicleRegNo(label))}</span><span class="fd-tag ${r.ft==='ดีเซล'?'fd-d':'fd-g'}">${r.ft}</span></div></td>
       <td class="fd-r">${r.last?`<b>${fmtNum(r.last.liters,1)} ล.</b><div class="fd-mut">${fuelShortDate(r.last.date)}</div>`:'<span class="fd-mut">ไม่มีประวัติ</span>'}</td>
       <td class="fd-in-td">${litCell}</td>
       <td class="fd-r">${r.hasMile?(r.mPrev?`<b>${fmtNum(r.mPrev.val,0)}</b><div class="fd-mut">${fuelShortDate(r.mPrev.date)}</div>`:'<span class="fd-mut">—</span>'):''}</td>
@@ -4856,7 +4861,7 @@ function renderReportFuel(mk){
   });
   if(!rows.length) body = `<tr><td colspan="9" class="fd-empty">วันนี้ไม่มีรายการเบิก${editable?' — เพิ่มรายการได้ที่ช่องด้านบน':''}</td></tr>`;
   const grand = rows.reduce((s,r)=>s+(r.lit||0),0);
-  const table = `<div class="fd-tablewrap"><table class="fd-table fd-fuel"><colgroup><col style="width:5.2%"><col style="width:14.3%"><col style="width:16.5%"><col style="width:9%"><col style="width:8.5%"><col style="width:8.5%"><col style="width:9%"><col style="width:10%"><col style="width:19%"></colgroup><thead><tr>
+  const table = `<div class="fd-tablewrap"><table class="fd-table fd-fuel"><colgroup><col style="width:5.4%"><col style="width:23%"><col style="width:15.5%"><col style="width:8.5%"><col style="width:8%"><col style="width:8%"><col style="width:8.5%"><col style="width:9.3%"><col style="width:13.8%"></colgroup><thead><tr>
     <th style="width:54px">ตรวจ<br>แล้ว</th><th>ผู้เบิก</th><th>หมายเลขเครื่อง/รถ<br><small>ทะเบียน · ชนิดน้ำมัน</small></th><th>เบิกครั้งล่าสุด<br><small>จำนวน · วันที่</small></th><th class="fd-cur">เบิกครั้งนี้<br><small>(ลิตร)</small></th><th>เลขไมล์<br>ครั้งก่อน</th><th class="fd-cur">เลขไมล์<br>ครั้งนี้</th><th>ระยะทาง</th><th>ผลตรวจ</th></tr></thead>
     <tbody>${body}</tbody><tfoot><tr><td colspan="4" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${fmtNum(grand,1)} ล.</td><td colspan="4"></td></tr></tfoot></table></div>`;
 
