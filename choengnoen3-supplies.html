@@ -4861,7 +4861,7 @@ function renderReportFuel(mk){
   });
   if(!rows.length) body = `<tr><td colspan="9" class="fd-empty">วันนี้ไม่มีรายการเบิก${editable?' — เพิ่มรายการได้ที่ช่องด้านบน':''}</td></tr>`;
   const grand = rows.reduce((s,r)=>s+(r.lit||0),0);
-  const table = `<div class="fd-tablewrap"><table class="fd-table fd-fuel"><colgroup><col style="width:5.4%"><col style="width:23%"><col style="width:15.5%"><col style="width:8.5%"><col style="width:8%"><col style="width:8%"><col style="width:8.5%"><col style="width:9.3%"><col style="width:13.8%"></colgroup><thead><tr>
+  const table = `<div class="fd-tablewrap"><table class="fd-table fd-fuel"><colgroup><col style="width:5.4%"><col style="width:20.2%"><col style="width:15.5%"><col style="width:8.5%"><col style="width:8%"><col style="width:8%"><col style="width:8.5%"><col style="width:9.3%"><col style="width:16.6%"></colgroup><thead><tr>
     <th style="width:54px">ตรวจ<br>แล้ว</th><th>ผู้เบิก</th><th>หมายเลขเครื่อง/รถ<br><small>ทะเบียน · ชนิดน้ำมัน</small></th><th>เบิกครั้งล่าสุด<br><small>จำนวน · วันที่</small></th><th class="fd-cur">เบิกครั้งนี้<br><small>(ลิตร)</small></th><th>เลขไมล์<br>ครั้งก่อน</th><th class="fd-cur">เลขไมล์<br>ครั้งนี้</th><th>ระยะทาง</th><th>ผลตรวจ</th></tr></thead>
     <tbody>${body}</tbody><tfoot><tr><td colspan="4" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${fmtNum(grand,1)} ล.</td><td colspan="4"></td></tr></tfoot></table></div>`;
 
