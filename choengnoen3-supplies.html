@@ -5474,6 +5474,8 @@ function pickItems(kind, inp){
     else { menu.style.bottom = ''; menu.style.top = (r.bottom + 4)+'px'; }
   }
   function open(inp){
+    // มีหน้าต่างแจ้งเตือน/ยืนยันค้างอยู่ (เช่น กด "เพิ่ม" โดยยังไม่เลือกข้อมูล แล้วโค้ดย้ายเคอร์เซอร์มาที่ช่อง) → ไม่เปิดรายการทับหน้าต่าง
+    if(['notice-modal-overlay','confirm-modal-overlay'].some(id=>{ const o = document.getElementById(id); return o && !o.classList.contains('hidden'); })) return;
     cur = inp; ensure();
     const all = pickItems(inp.dataset.pick, inp), v = norm(inp.value);
     items = (typed && v) ? all.filter(x=>norm(x.value+' '+x.sub).includes(v)) : all;
