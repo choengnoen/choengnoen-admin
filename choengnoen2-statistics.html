@@ -343,17 +343,17 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ct-dl dd{margin:0;color:var(--ink-900);}
   @media(max-width:560px){.ct-dl{grid-template-columns:1fr;gap:0 0;} .ct-dl dd{margin-bottom:8px;}}
   /* โมดัลรายละเอียดสัญญา (แบบ 1: หัวสรุปยอดเงิน + ไทม์ไลน์วันสำคัญ) */
-  #ct-detail-overlay .modal-box{max-width:980px;} /* ไซส์ L เท่าฟอร์มสัญญา */ .ct-detail-head{flex-wrap:wrap;}
-  .ctv-hero{flex-basis:100%;min-width:0;padding-top:4px;}
-  .ctv-name{font-family:'Kanit';font-size:18px;font-weight:600;color:#fff;line-height:1.45;}
-  .ctv-contractor{color:#cbd5e1;font-size:13.5px;}
-  .ctv-money{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px dashed rgba(255,255,255,.2);}
-  .ctv-money .lb{font-size:12px;color:#94a3b8;}
-  .ctv-money .val{font-family:'Kanit';font-size:26px;font-weight:600;color:#fdba74;line-height:1.2;}
+  #ct-detail-overlay .modal-box{max-width:980px;} /* ไซส์ L เท่าฟอร์มสัญญา */ .ct-detail-head{flex-wrap:wrap;padding:12px 20px !important;row-gap:8px !important;} .ct-detail-head .gmodal-head-icon{width:32px;height:32px;border-radius:9px;} .ct-detail-head .gmodal-head-icon svg{width:17px;height:17px;} .ct-detail-head > div:nth-child(2){display:flex;align-items:center;flex-wrap:wrap;gap:2px 10px;min-width:0;flex:1;} .ct-detail-head .gmodal-subtitle{margin:0;}
+  .ctv-hero{flex-basis:100%;min-width:0;display:grid;gap:8px;} .ctv-top{display:flex;align-items:center;justify-content:space-between;gap:16px;} .ctv-who{min-width:0;}
+  .ctv-name{font-family:'Kanit';font-size:16px;font-weight:600;color:#fff;line-height:1.4;}
+  .ctv-contractor{color:#cbd5e1;font-size:13px;}
+  .ctv-money{flex:none;text-align:right;}
+  .ctv-money .lb{font-size:11.5px;color:#94a3b8;}
+  .ctv-money .val{font-family:'Kanit';font-size:22px;font-weight:600;white-space:nowrap;color:#fdba74;line-height:1.2;}
   .ctv-money .val small{font-size:13px;color:#cbd5e1;font-weight:400;margin-left:4px;}
   .ctv-chips{display:flex;gap:8px;flex-wrap:wrap;}
-  .ctv-chip{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:5px 10px;font-size:12.5px;color:#fff;line-height:1.45;}
-  .ctv-chip b{display:block;font-size:11px;color:#94a3b8;font-weight:500;}
+  .ctv-chip{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:2px 9px;font-size:12.5px;color:#fff;line-height:1.45;}
+  .ctv-chip b{font-size:11px;color:#94a3b8;font-weight:500;margin-right:6px;}
   .ctv-title{font-family:'Kanit';font-size:13.5px;font-weight:600;color:var(--navy-800);margin:0 0 10px;display:flex;align-items:center;gap:8px;}
   .ctv-title::before{content:"";width:4px;height:15px;border-radius:3px;background:var(--orange-500);flex:none;}
   .ctv-tl{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 8px 12px;margin-bottom:14px;overflow-x:auto;}
@@ -386,7 +386,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .gmodal-footer .img-copy-btn{width:42px;height:42px;border-radius:12px;}
   .ct-toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;background:#111827;color:#fff;padding:10px 18px;border-radius:12px;font-size:14px;z-index:9999;transition:.25s;pointer-events:none;max-width:calc(100vw - 32px);text-align:center;}
   .ct-toast.show{opacity:1;transform:translate(-50%,0);}
-  @media(max-width:560px){.ctv-grid{grid-template-columns:1fr;} .ctv-money .val{font-size:22px;} .ctv-name{font-size:16px;}}
+  @media(max-width:560px){.ctv-grid{grid-template-columns:1fr;} .ctv-top{flex-direction:column;align-items:flex-start;gap:6px;} .ctv-money{text-align:left;} .ctv-money .val{font-size:20px;} .ctv-name{font-size:15px;}}
   /* โหมดถ่ายรูป (ใช้เฉพาะในสำเนาที่ html2canvas วาดตอนกด "คัดลอกรูป"): แสดงเนื้อหาครบไม่ตัด ซ่อนปุ่ม */
   html.ct-snap #ct-detail-overlay{position:static !important;display:block !important;padding:0 !important;background:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;animation:none !important;}
   html.ct-snap #ct-detail-overlay .modal-box{max-height:none !important;box-shadow:none !important;border-radius:0 !important;animation:none !important;margin:0 !important;}
@@ -3237,11 +3237,11 @@ function openContractDetail(id){
   // หัวสรุป: ชื่องาน ผู้รับจ้าง เงินค่างาน
   const chip = (k, val) => `<div class="ctv-chip"><b>${k}</b>${val}</div>`;
   document.getElementById('ct-detail-hero').innerHTML =
-    `<div class="ctv-name">${c.name ? esc(c.name) : '—'}</div>` +
-    (c.contractor ? `<div class="ctv-contractor">ผู้รับจ้าง: ${esc(c.contractor)}</div>` : '') +
+    `<div class="ctv-top"><div class="ctv-who"><div class="ctv-name">${c.name ? esc(c.name) : '—'}</div>` +
+    (c.contractor ? `<div class="ctv-contractor">ผู้รับจ้าง: ${esc(c.contractor)}</div>` : '') + `</div>` +
     `<div class="ctv-money">
-       <div><div class="lb">เงินค่างาน</div><div class="val">${c.amount ? fmtNum(c.amount,2)+'<small>บาท</small>' : '—'}</div></div>
-       <div class="ctv-chips">${(c.workQty ? chip('ปริมาณงาน', esc(c.workQty)) : '') + chip('ช่วงทางหลวง', ctRangeText(c)) + (c.durationDays ? chip('ระยะเวลา', c.durationDays+' วัน') : '')}</div>
+       <div class="lb">เงินค่างาน</div><div class="val">${c.amount ? fmtNum(c.amount,2)+'<small>บาท</small>' : '—'}</div></div></div>
+       <div class="ctv-chips">${(c.workQty ? chip('ปริมาณงาน', esc(c.workQty)) : '') + chip('ช่วงทางหลวง', ctRangeText(c)) + (c.durationDays ? chip('ระยะเวลา', c.durationDays+' วัน') : '')}
      </div>`;
   // ไทม์ไลน์วันสำคัญ: ผ่านมาแล้ว = จุดส้มทึบ · ถัดไป = วงส้ม · ยังไม่ระบุ = เส้นประ
   const today = ctTodayIso();
