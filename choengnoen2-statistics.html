@@ -1193,6 +1193,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </h2>
             <div class="toolbar">
               <select id="ct-fy" data-fy onchange="renderContracts()"></select>
+              <select id="ct-area" aria-label="กรองตามพื้นที่" onchange="renderContracts()"><option value="">ทุกพื้นที่</option><option value="in">ในพื้นที่</option><option value="part">บางส่วน</option><option value="out">นอกพื้นที่</option></select>
 <div class="search-box">🔍 <input id="ct-search" placeholder="ค้นหาเลขที่สัญญา / โครงการ / สายทาง / ผู้รับจ้าง"></div>
               <span class="tb-sep"></span><button class="btn btn-ghost btn-ic" data-ic="down" data-tip="ส่งออก CSV (ให้เครื่องมือแผนที่)" onclick="exportContractsCsv()"></button>
               <button class="btn btn-primary" data-ic="plus" onclick="openContractForm(null)">เพิ่มสัญญา</button>
@@ -2523,6 +2524,7 @@ let controlledRoutes = [];
 async function loadControlledRoutesFromApi(){
   try{
     controlledRoutes = (await apiGet('controlled_routes')).map(routeFromApi);
+    if(window.CNMaster && CNMaster.loadDistrictRoutes) CNMaster.loadDistrictRoutes(); // รายการสายทางของฟอร์มสัญญา ไม่ต้องรอ
   }catch(err){
     console.error('โหลดข้อมูลสายทางควบคุมจากฐานข้อมูลกลางล้มเหลว', err);
     alert('โหลดข้อมูลสายทางควบคุมจากฐานข้อมูลกลางไม่สำเร็จ: ' + err.message + '\nกรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วรีเฟรชหน้าใหม่');
@@ -3119,7 +3121,7 @@ document.getElementById('enc-search').addEventListener('input', ()=>renderEnc())
 
 /* ============================================================
    งานสัญญา (เพิ่ม 17 ต.ค. 2569) — ตาราง contracts (ส่วนงาน s2)
-   1 สัญญา = 1 รายการ · ช่วงทางหลวงหลายช่วงเก็บใน ranges = [{route, k1, k2, qty}] (กม. เป็นกิโลเมตรทศนิยม เหมือน controlled_routes)
+   1 สัญญา = 1 รายการ · ช่วงทางหลวงหลายช่วงเก็บใน ranges = [{route, controlNo, k1, k2, qty}] (กม. เป็นกิโลเมตรทศนิยม เหมือน controlled_routes)
    qty = ปริมาณงานของช่วงนั้น (ข้อความ ไม่บังคับ) สำหรับสัญญาที่ทำหลายสายทาง · workQty = ปริมาณงานรวมทั้งสัญญา
    แก้ไข/เพิ่ม/ลบได้เฉพาะผู้มีสิทธิ์แก้ไขระบบที่ 2 (isAdmin) · คนอื่นดูอย่างเดียว · ลบแล้วเข้าถังขยะ
    ============================================================ */
@@ -3134,7 +3136,7 @@ function ctFromApi(row){
     refl12Done:String(row.refl12Done||'').slice(0,10), refl24Done:String(row.refl24Done||'').slice(0,10),
     signDate:String(row.signDate||'').slice(0,10), durationDays:Number(row.durationDays)||'', penaltyPerDay:Number(row.penaltyPerDay)||0,
     committee:row.committee||'', negotiateDate:String(row.negotiateDate||'').slice(0,10), notifyDate:String(row.notifyDate||'').slice(0,10),
-    ranges: ranges.map(r=>({route:String(r.route==null?'':r.route), k1:Number(r.k1)||0, k2:Number(r.k2)||0, qty:String(r.qty||'')})) };
+    ranges: ranges.map(r=>({route:String(r.route==null?'':r.route), controlNo:String(r.controlNo||''), k1:Number(r.k1)||0, k2:Number(r.k2)||0, qty:String(r.qty||'')})) };
 }
 function ctToApi(c){
   return { id:c.id, fiscalYear:c.fiscalYear===''?'':c.fiscalYear, contractNo:c.contractNo, name:c.name, contractor:c.contractor, amount:c.amount||0,
@@ -3242,7 +3244,7 @@ function openContractDetail(id){
     (c.contractor ? `<div class="ctv-contractor">ผู้รับจ้าง: ${esc(c.contractor)}</div>` : '') + `</div>` +
     `<div class="ctv-money">
        <div class="lb">เงินค่างาน</div><div class="val">${c.amount ? fmtNum(c.amount,2)+'<small>บาท</small>' : '—'}</div></div></div>
-       <div class="ctv-chips">${(c.workQty ? chip('ปริมาณงาน', esc(c.workQty)) : '') + chip('ช่วงทางหลวง', ctRangeText(c)) + (c.durationDays ? chip('ระยะเวลา', c.durationDays+' วัน') : '')}
+       <div class="ctv-chips">${(c.workQty ? chip('ปริมาณงาน', esc(c.workQty)) : '') + chip('ช่วงทางหลวง', ctRangeText(c)) + (ctArea(c).text ? chip('พื้นที่', esc(ctArea(c).text)) : '') + (c.durationDays ? chip('ระยะเวลา', c.durationDays+' วัน') : '')}
      </div>`;
   // ไทม์ไลน์วันสำคัญ: ผ่านมาแล้ว = จุดส้มทึบ · ถัดไป = วงส้ม · ยังไม่ระบุ = เส้นประ
   const today = ctTodayIso();
@@ -3369,6 +3371,20 @@ function ctStatus(c){
   if(c.warrantyEnd && t <= c.warrantyEnd) return {key:'warranty', label:'ในระยะค้ำประกัน', cls:'pill-warn'};
   return {key:'done', label:'สิ้นสุดแล้ว', cls:'pill-neutral'};
 }
+/* พื้นที่ของสัญญา: เทียบช่วง กม. กับช่วงที่หมวดดูแลจริง (controlledRoutes) เปลี่ยนตามฐานกลางเอง ไม่ได้บันทึกในสัญญา */
+const CT_KM_TOL = 0.0022; // ต่างกันไม่เกินประมาณ 2 เมตร ถือว่าตรงกัน
+function ctKmInArea(route, k1, k2){
+  return controlledRoutes.filter(r=>String(r.routeNo)===String(route)).flatMap(r=>r.ranges)
+    .reduce((s,[a,b])=>s+Math.max(0,Math.min(k2,b)-Math.max(k1,a)),0);
+}
+function ctArea(c){
+  const rs = c.ranges||[];
+  const total = rs.reduce((s,r)=>s+(r.k2-r.k1),0), inside = rs.reduce((s,r)=>s+ctKmInArea(r.route,r.k1,r.k2),0);
+  if(!controlledRoutes.length || total<=0) return {key:'none', label:'', text:'', cls:''};
+  if(inside<=CT_KM_TOL) return {key:'out', label:'นอกพื้นที่', text:'นอกพื้นที่หมวด', cls:'pill-neutral'};
+  if(total-inside<=CT_KM_TOL*rs.length) return {key:'in', label:'ในพื้นที่', text:'ในพื้นที่หมวดทั้งหมด', cls:'pill-ok'};
+  return {key:'part', label:'บางส่วน', text:`ในพื้นที่หมวดบางส่วน ${inside.toFixed(3)} จาก ${total.toFixed(3)} กม.`, cls:'pill-warn'};
+}
 function ctRangeText(c){
   return (c.ranges||[]).map(r=>`ทล.${esc(r.route)} กม.${kmFmt(r.k1)} – ${kmFmt(r.k2)}${r.qty?' · '+esc(r.qty):''}`).join('<br>') || '<span style="color:var(--ink-400);">— ไม่ระบุช่วง —</span>';
 }
@@ -3407,8 +3423,10 @@ function renderContracts(){
     kpi('วัดค่าสะท้อนแสง ใกล้ถึง / เลยกำหนด', reflSoon.length+' สัญญา', reflSoon.length?(reflOver?'<span style="color:var(--danger);">เลยกำหนด '+reflOver+' สัญญา</span> · ':'')+esc(reflSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี');
   const ctKey = c=> Number(c.fiscalYear) || fyKey(c.startDate);
   const ctFy = statFyFilter('ct-fy', contractsList.map(ctKey));
+  const areaFilter = document.getElementById('ct-area')?.value || '';
   let rows = withSt.filter(x=>{
     if(ctFy && String(ctKey(x.c))!==ctFy) return false;
+    if(areaFilter && ctArea(x.c).key!==areaFilter) return false;
     if(filter==='running') return x.st.key==='running';
     if(filter==='warranty') return x.st.key==='warranty';
     if(filter==='done') return x.st.key==='done' || x.st.key==='cancel';
@@ -3422,6 +3440,7 @@ function renderContracts(){
     const endHint = (st.key==='running' && dEnd!==null && dEnd<=60) ? `<div style="font-size:11px;color:var(--danger);">เหลือ ${dEnd} วัน</div>` : '';
     const wa = ctWarrAlert(c);
     const wHint = wa ? `<div style="font-size:11px;color:${wa.months===1?'var(--danger)':'var(--warn,#b7791f)'};">⚠ ภายใน ${wa.months} เดือน (เหลือ ${wa.days} วัน)</div>` : '';
+    const area = ctArea(c);
     return `<tr data-ct="${esc(c.id)}" onclick="openContractDetail('${jsArg(c.id)}')" title="กดเพื่อดูรายละเอียด">
       <td style="white-space:nowrap;">${esc(c.contractNo)||'—'}</td>
       <td><div class="ct-name" title="${esc(c.name)}">${esc(c.name)||'—'}</div>${ctRangeCell(c)}<div class="ct-by" title="${esc(c.contractor)}">${esc(c.contractor)}</div></td>
@@ -3429,7 +3448,7 @@ function renderContracts(){
       <td style="white-space:nowrap;">${fmtDateShort(c.endDate)}${endHint}</td>
       <td style="white-space:nowrap;">${fmtDateShort(c.warrantyEnd)}${wHint}</td>
       <td style="font-size:12.5px;white-space:nowrap;">${ctReflCell(c)}</td>
-      <td><span class="pill ${st.cls}">${st.label}</span></td>
+      <td><span class="pill ${st.cls}">${st.label}</span>${area.label?`<div style="margin-top:4px;"><span class="pill ${area.cls}" title="${esc(area.text)}">${area.label}</span></div>`:''}</td>
     </tr>`;
   }).join('') : `<tr><td colspan="7" style="text-align:center;color:var(--ink-400);padding:22px;">${contractsList.length?'ไม่พบรายการตามเงื่อนไข':'ยังไม่มีข้อมูลสัญญา'+(can?' — กด "+ เพิ่มสัญญา" เพื่อเริ่มบันทึก':'')}</td></tr>`;
   document.getElementById('ct-foot').innerHTML = `<ol style="margin:0;padding-left:20px;line-height:1.7;">
@@ -3437,56 +3456,43 @@ function renderContracts(){
       <li>ในระยะค้ำประกัน = ส่งงาน/ตรวจรับแล้ว แต่ยังไม่ถึงวันคืนค้ำประกัน</li>
       <li>แจ้งเตือนคืนค้ำประกันล่วงหน้า 3 / 2 / 1 เดือน</li>
       <li>วัดค่าสะท้อนแสง 12 และ 24 เดือน นับจากวันส่งงาน</li>
+      <li>ในพื้นที่ / บางส่วน / นอกพื้นที่ = ระบบเทียบช่วง กม. ของสัญญากับช่วงที่หมวดดูแลให้เอง</li>
       <li>เพิ่ม/แก้/ลบได้เฉพาะผู้มีสิทธิ์แก้ไขส่วนงานที่ 2</li>
     </ol>`;
 }
 /* ---- ช่วงทางหลวงในฟอร์ม ----
    เลือกได้ทุกสายทางในฐานข้อมูลกลาง และกรอก กม. ได้ทั้งสาย (ไม่จำกัดเฉพาะช่วงที่หมวดควบคุม)
    เพราะหมวด/ผู้ช่วยอาจเป็นผู้ควบคุมงานในช่วงทางของหมวดอื่นได้ */
-/* ตอนควบคุมทั้งหมดของแขวงทางหลวงระยอง (ทุกหมวด) — ที่มา: ขท.ระยอง_สายทาง-แบ่งหมวด.kmz (งานทรัพย์สิน)
-   ใช้เป็นรายการสายทางในฟอร์มสัญญาเท่านั้น ไม่ใช่สายทางที่หมวดควบคุม (ตารางนั้นคือ controlledRoutes) */
-const DISTRICT_ROUTE_SECTIONS = [
-  ['3','0501','พลูตาหลวง - มาบตาพุด',186.307,204.8], ['3','0502','มาบตาพุด - ระยอง',204.8,216.99],
-  ['3','0503','ระยอง - กะเฉด',223.65,248], ['3','0504','กะเฉด - ป่าเตียน',248,276.7],
-  ['36','0201','มะขามคู่ - มาบข่า',21.592,36.887], ['36','0202','มาบข่า - ทับมา',36.887,49.369], ['36','0203','ทับมา - ปลวกเกตุ',49.369,57.021],
-  ['344','0201','คลองเขต - ยุบชงโค',62.6,90.85], ['344','0202','ยุบชงโค - แกลง',90.85,102.181],
-  ['363','0100','ศูนย์ราชการระยอง - นิคมอุตสาหกรรมมาบตาพุด',0,7.949], ['364','0100','ทางเลี่ยงเมืองระยอง',0,3.909],
-  ['3139','0100','บ้านแลง - หาดใหญ่',0,21.234], ['3140','0100','ทางเข้าบ้านเพ',0,0.1], ['3143','0100','บ้านค่าย - หนองละลอก',0,14.041],
-  ['3145','0101','บ้านเพ - ท่าเรือแกลง',2.575,10.5], ['3145','0102','ท่าเรือแกลง - แหลมแม่พิมพ์',10.5,27.515],
-  ['3191','0101','มาบตาพุด - แยกนิคมพัฒนา',0,13.6], ['3191','0102','แยกนิคมพัฒนา - อ่างเก็บน้ำหนองปลาไหล',13.6,25.545],
-  ['3245','0100','อ่างเก็บน้ำหนองปลาไหล - ใต้สุน',0,22.142], ['3376','0100','บ้านฉาง - ถนนซอย 13 ของนิคมสร้างตนเองจังหวัดระยอง',1,30.742],
-  ['3471','0100','บางบุตร - ชุมแสง',0,30.416],
-  ['3574','0201','เขาคันทรง - บ้านค่าย',6.318,47.569], ['3574','0202','บ้านค่าย - ระยอง',47.569,57.161],
-  ['3575','0100','ทางเข้าบ้านค่าย',0,1.308], ['3575','0100','ทางเข้าบ้านค่าย',2.346,3.292],
-  ['3578','0100','ทางรอบอ่างเก็บน้ำหนองปลาไหล',0,6.04]
-].map(([routeNo,controlNo,section,k1,k2])=>({routeNo,controlNo,section,k1,k2}));
-/* ตอนควบคุมของแขวงที่ กม. นี้ตกอยู่ (ใช้หาเลขตอนตอนส่งออก CSV) */
-function districtSectionAt(routeNo, km){
-  return DISTRICT_ROUTE_SECTIONS.find(s=>s.routeNo===String(routeNo) && km >= s.k1-0.0011 && km <= s.k2+0.0011) || null;
+/* ตอนควบคุมทั้งแขวงจากฐานข้อมูลกลาง (แท็บสายทาง > ทั้งแขวงทางหลวงระยอง) ไม่รวมตอนที่โอนออกนอกแขวง ใช้เป็นรายการสายทางในแท็บสัญญาเท่านั้น
+   ยังไม่มีข้อมูลทั้งแขวง = ใช้สายทางของหมวดจากฐานกลาง / อ่านฐานกลางไม่ได้ = ใช้ตารางสายทางที่หมวดควบคุม (controlledRoutes) */
+function ctSections(){
+  const dist = window.CNMaster && CNMaster.districtRoutes ? CNMaster.districtRoutes().filter(r=>r.status!=='transferred') : [];
+  const list = dist.length ? dist : (window.CNMaster ? CNMaster.routes() : []);
+  const rows = list.length
+    ? list.map(r=>({routeNo:String(r.highway), controlNo:String(r.controlNo||''), section:r.section||'', ranges:(r.kmRanges||[]).map(p=>[p[0]/1000,p[1]/1000])}))
+    : controlledRoutes.map(r=>({routeNo:String(r.routeNo), controlNo:String(r.controlNo||''), section:r.section||'', ranges:r.ranges}));
+  return rows.sort((a,b)=>Number(a.routeNo)-Number(b.routeNo) || a.controlNo.localeCompare(b.controlNo));
 }
-/* ชื่อสายทางแบบย่อ: ตอนเดียว = ชื่อตอน, หลายตอน = ต้นทางตอนแรก - ปลายทางตอนสุดท้าย */
-function districtRouteName(routeNo){
-  const ss = DISTRICT_ROUTE_SECTIONS.filter(s=>s.routeNo===String(routeNo)).sort((a,b)=>a.k1-b.k1);
-  const names = [...new Set(ss.map(s=>s.section))];
-  if(names.length<=1) return names[0]||'';
-  return ss[0].section.split(' - ')[0] + ' - ' + ss[ss.length-1].section.split(' - ').pop() + ` (${names.length} ตอน)`;
+/* ตอนควบคุมที่ กม. นี้ตกอยู่ (สัญญาเดิมที่ยังไม่ได้เก็บเลขตอน และชื่อโครงการที่ระบบอ่านให้) */
+function ctSectionAt(routeNo, km){
+  return ctSections().find(s=>s.routeNo===String(routeNo) && kmInRoute(s,km)) || null;
 }
-function ctRouteOptions(sel){
-  const routeNos = [...new Set([...DISTRICT_ROUTE_SECTIONS.map(s=>s.routeNo), ...controlledRoutes.map(r=>String(r.routeNo))])]
-    .sort((a,b)=>Number(a)-Number(b));
-  if(sel && !routeNos.includes(String(sel))) routeNos.push(String(sel)); // สายทางเดิมที่ไม่มีในรายการแล้ว ยังแสดงได้
-  return '<option value="">— เลือกสายทาง —</option>' + routeNos.map(no=>{
-    const r = findRoute(no), name = districtRouteName(no) || (r ? r.section : '');
-    return `<option value="${esc(no)}" ${String(sel)===no?'selected':''}>ทล.${esc(no)}${name?' — '+esc(name):''}</option>`;
-  }).join('');
+/* ค่าของตัวเลือก = "เลขทางหลวง|เลขตอน" */
+function ctRouteOptions(sel, ctl){
+  const secs = ctSections(), val = sel ? sel+'|'+(ctl||'') : '';
+  const opt = (v,text)=>`<option value="${esc(v)}" ${v===val?'selected':''}>${esc(text)}</option>`;
+  const items = secs.map(s=>opt(s.routeNo+'|'+s.controlNo, `ทล.${s.routeNo} ตอน ${s.controlNo}${s.section?' — '+s.section:''}`));
+  if(val && !secs.some(s=>s.routeNo+'|'+s.controlNo===val)) items.push(opt(val, `ทล.${sel}${ctl?' ตอน '+ctl:''}`)); // ตอนเดิมที่ไม่มีในรายการแล้ว ยังแสดงได้
+  return '<option value="">— เลือกสายทาง —</option>' + items.join('');
 }
 const CT_TRASH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg>';
 /* noSync = ตอนเปิดฟอร์มกำลังเติมหลายแถว ยังไม่ต้องจัดช่องปริมาณงาน */
 function addContractRangeRow(r, noSync){
-  r = r || {route:'', k1:null, k2:null, qty:''};
+  r = r || {route:'', controlNo:'', k1:null, k2:null, qty:''};
+  const ctl = r.controlNo || (r.route ? (ctSectionAt(r.route,r.k1)||{}).controlNo : '') || '';
   const div = document.createElement('div');
   div.className = 'ct-range-row';
-  div.innerHTML = `<div class="f-row ct-c-route"><label>สายทาง</label><select class="ct-r-route" aria-label="สายทาง" onchange="validateContractRanges()">${ctRouteOptions(r.route)}</select></div>
+  div.innerHTML = `<div class="f-row ct-c-route"><label>สายทาง</label><select class="ct-r-route" aria-label="สายทาง" onchange="validateContractRanges()">${ctRouteOptions(r.route,ctl)}</select></div>
     <div class="f-row"><label>กม.เริ่ม</label><input class="ct-r-k1" aria-label="กม.เริ่ม" placeholder="229+000" value="${r.k1==null?'':kmFmt(r.k1)}" oninput="validateContractRanges()"></div>
     <div class="f-row"><label>กม.สิ้นสุด</label><input class="ct-r-k2" aria-label="กม.สิ้นสุด" placeholder="231+500" value="${r.k2==null?'':kmFmt(r.k2)}" oninput="validateContractRanges()"></div>
     <div class="f-row ct-c-qty"><label class="ct-r-qty-lbl">ปริมาณงานช่วงนี้ (ไม่บังคับ)</label><input class="ct-r-qty" aria-label="ปริมาณงาน" placeholder="เช่น 8,000 ตร.ม." value="${esc(r.qty||'')}"></div>
@@ -3529,9 +3535,13 @@ function ctParseName(){
   const isAuto = r=>r.dataset.autoRow==='1' && [...r.querySelectorAll('input,select')].every(e=>!e.value||e.dataset.auto==='1');
   while(box.children.length>need && isAuto(box.lastElementChild)){ box.lastElementChild.remove(); ctRefreshRanges(); }
   [...box.children].forEach((r,i)=>{
-    const sel = r.querySelector('.ct-r-route');
-    if(!sel.value || sel.dataset.auto==='1'){ sel.innerHTML = ctRouteOptions(route); sel.value = route; sel.dataset.auto = route?'1':''; }
-    const p = pairs[i];
+    const sel = r.querySelector('.ct-r-route'), p = pairs[i];
+    if(!sel.value || sel.dataset.auto==='1'){
+      // เลขตอนหาจาก กม. ในชื่อโครงการ · สายที่มีตอนเดียวใช้ตอนนั้นเลย · หาไม่ได้ให้เจ้าหน้าที่เลือกตอนเอง
+      const same = ctSections().filter(s=>s.routeNo===route);
+      const s = (p && ctSectionAt(route, extractAllKm(p[1])[0])) || (same.length===1 ? same[0] : null), ctl = s ? s.controlNo : '';
+      sel.innerHTML = ctRouteOptions(route, ctl); sel.value = route ? route+'|'+ctl : ''; sel.dataset.auto = route?'1':'';
+    }
     ctAutoFill(r.querySelector('.ct-r-k1'), p?p[1]:'');
     ctAutoFill(r.querySelector('.ct-r-k2'), p?p[2]:'');
   });
@@ -3652,7 +3662,7 @@ function collectPeople(kind){
 function collectContractRanges(){
   const ranges=[], errors=[], notes=[];
   document.querySelectorAll('#ct-ranges .ct-range-row').forEach((row,i)=>{
-    const route = row.querySelector('.ct-r-route').value;
+    const [route, controlNo=''] = row.querySelector('.ct-r-route').value.split('|');
     const t1 = row.querySelector('.ct-r-k1').value.trim(), t2 = row.querySelector('.ct-r-k2').value.trim();
     const qty = row.querySelector('.ct-r-qty').value.trim();
     if(!route && !t1 && !t2 && !qty) return; // แถวว่าง ข้าม
@@ -3661,10 +3671,12 @@ function collectContractRanges(){
     const k1 = extractAllKm(t1)[0], k2 = extractAllKm(t2)[0];
     if(k1===undefined || k2===undefined){ errors.push(n+': กรอก กม. ไม่ครบหรือรูปแบบไม่ถูกต้อง (ใช้ เช่น 229+000)'); return; }
     if(k2 <= k1){ errors.push(n+': กม.สิ้นสุดต้องมากกว่า กม.เริ่ม'); return; }
-    const rt = findRoute(route);
-    if(!rt) notes.push(n+': ทล.'+route+' เป็นสายทางของหมวดอื่น — บันทึกได้ตามปกติ');
-    else if(!kmInRoute(rt,k1) || !kmInRoute(rt,k2)) notes.push(n+': อยู่นอกช่วงที่หมวดควบคุมของ ทล.'+route+' (ควบคุมงานในพื้นที่หมวดอื่น) — บันทึกได้ตามปกติ');
-    ranges.push({route:String(route), k1:Math.round(k1*1000)/1000, k2:Math.round(k2*1000)/1000, qty});
+    if(controlledRoutes.length){
+      const inside = ctKmInArea(route,k1,k2), total = k2-k1;
+      if(inside<=CT_KM_TOL) notes.push(n+': อยู่นอกพื้นที่หมวด — บันทึกได้ตามปกติ');
+      else if(total-inside>CT_KM_TOL) notes.push(n+': อยู่ในพื้นที่หมวดบางส่วน ('+inside.toFixed(3)+' จาก '+total.toFixed(3)+' กม.) — บันทึกได้ตามปกติ');
+    }
+    ranges.push({route:String(route), controlNo, k1:Math.round(k1*1000)/1000, k2:Math.round(k2*1000)/1000, qty});
   });
   return {ranges, errors, notes};
 }
@@ -3844,8 +3856,8 @@ function exportContractsCsv(){
     const st = ctStatus(c).label;
     const rs = c.ranges.length ? c.ranges : [{route:'',k1:0,k2:0}];
     rs.forEach(r=>{
-      const rt = findRoute(r.route), ds = c.ranges.length ? districtSectionAt(r.route, r.k1) : null;
-      rows.push([c.name, c.contractNo, c.contractor, c.fiscalYear, r.route, ds ? ds.controlNo : (rt?rt.controlNo||'':''), c.ranges.length?kmFmt(r.k1):'', c.ranges.length?kmFmt(r.k2):'', c.startDate, c.endDate, c.warrantyEnd, st, c.note,
+      const rt = findRoute(r.route), ds = c.ranges.length ? ctSectionAt(r.route, r.k1) : null;
+      rows.push([c.name, c.contractNo, c.contractor, c.fiscalYear, r.route, r.controlNo || (ds ? ds.controlNo : (rt?rt.controlNo||'':'')), c.ranges.length?kmFmt(r.k1):'', c.ranges.length?kmFmt(r.k2):'', c.startDate, c.endDate, c.warrantyEnd, st, c.note,
         r.qty || c.workQty, c.deliveryDate, c.acceptDate, c.workType, c.warrantyYears, ...[0,1].flatMap(i=>{ const r = ctReflDates(c)[i]||{}; return [r.date||'', r.done||'']; }),
         c.signDate, c.durationDays, c.committee.replace(/\n/g,' / '), c.supervisor.replace(/\n/g,' / '), c.negotiateDate, c.notifyDate]);
     });
