@@ -5019,7 +5019,7 @@ function dwVehSortKey(div){
   const vehId = +document.getElementById('dw-veh-id-'+idx)?.value || null;
   if(!vehId) return null;
   const v = getVehiclesX().find(x=>x.id===vehId);
-  const m = v && /\(([\d-]+)\)/.exec(v.label||'');
+  const m = v && /\(([\d-]+)\)/.exec(vehicleBaseName(v));
   return m ? m[1].split('-').map(s=>+s) : null;
 }
 function cmpDwVehKey(a,b){
@@ -5050,12 +5050,13 @@ function removeDwVehicleRow(idx){
 /* เครื่องตัดหญ้า = ป้ายชื่อขึ้นต้นด้วย "เครื่องตัดหญ้า" หรือรหัสครุภัณฑ์ขึ้นต้น 04- (เช่น 04-1490-23-3) */
 function isMowerVehicle(v){
   if(!v || !v.label) return false;
-  return v.label.startsWith('เครื่องตัดหญ้า') || /\(04-/.test(v.label);
+  const name = vehicleBaseName(v);
+  return name.startsWith('เครื่องตัดหญ้า') || /\(04-/.test(name);
 }
 /* เลื่อยยนต์ = ป้ายชื่อขึ้นต้นด้วย "เลื่อยยนต์" */
 function isChainsawVehicle(v){
   if(!v || !v.label) return false;
-  return v.label.startsWith('เลื่อยยนต์');
+  return vehicleBaseName(v).startsWith('เลื่อยยนต์');
 }
 /* ไอคอน SVG เลื่อยยนต์ — ทรงเลื่อยยนต์มองด้านข้าง (ห่วงจับด้านหลัง+ตัวเรือน+ใบเลื่อยฟันด้านบน) 2 โทนสี (ส้ม+เทาเหล็ก) ให้ดูมีมิติกว่าซิลูเอตสี่เหลี่ยมเรียบๆ เดิม */
 const CHAINSAW_ICON_SVG = `<svg viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
@@ -5112,8 +5113,12 @@ function vehicleOperatorName(v, date){
 }
 /* ข้อความแสดงเครื่องจักร พร้อมชื่อผู้รับผิดชอบ ณ วันที่ date — v.label เป็นตัวเชื่อมข้อมูลน้ำมัน/เลขไมล์ จึงไม่เปลี่ยนตามคน ชื่อท้ายป้ายอาจเป็นคนเดิม ห้ามนำมาแสดงตรง ๆ */
 function vehicleLabelOn(v, date){
-  const op = vehicleOperatorName(v, date), base = String(v.label||'').split(' — ')[0];
+  const op = vehicleOperatorName(v, date), base = vehicleBaseName(v);
   return op ? base+' — '+op : base;
+}
+/* ชื่อ+รหัสที่ใช้แสดง — ป้ายไม่เปลี่ยนตลอดอายุรายการ ถ้าแก้ประเภท/รหัสในระบบ 3 ค่าใหม่จะอยู่ใน vehicleType/regNumber */
+function vehicleBaseName(v){
+  return v.vehicleType && v.regNumber ? `${v.vehicleType} (${v.regNumber})` : String(v.label||'').split(' — ')[0];
 }
 /* ผู้รับผิดชอบเครื่องจักรตามทะเบียน มีบันทึกการลาคลุมวันที่เลือกหรือไม่ (ใช้ leaveHistory ชุดเดียวกับ checkDwLeaveConflict) */
 function staffHasApprovedLeaveOnDate(name, date){
@@ -5231,7 +5236,7 @@ function suggestRentCost(){
   const parts = rows.map(r=>{
     const daily = r.vehicle.monthlyRent/dim;
     sum += daily;
-    return `${esc(r.vehicle.label.split(' — ')[0])} ${fmtNum(daily,2)}`;
+    return `${esc(vehicleBaseName(r.vehicle))} ${fmtNum(daily,2)}`;
   });
   const totalLine = `ค่าเช่าเฉลี่ยต่อวัน (อัตราแขวง ÷ ${dim} วันของเดือนนี้) รวม <b>${fmtNum(sum,2)}</b> บาท (${rows.length} รายการ, ดึงอัตโนมัติแล้ว — แก้ไขเองได้ถ้าไม่ตรง)`;
   /* หลายเครื่อง (เช่น เบิกเครื่องตัดหญ้าพร้อมกันหลายเครื่อง) ทำให้บรรทัดคำนวณยาวมาก — ย่อไว้เป็นค่าเริ่มต้น กดดูรายละเอียดเพื่อขยาย */
