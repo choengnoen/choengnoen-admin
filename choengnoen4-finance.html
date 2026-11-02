@@ -710,6 +710,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </h2>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
               <button class="btn btn-primary no-print" data-ic="plus" onclick="toggleWaterForm(true)">บันทึกข้อมูลประจำเดือน</button>
+              <button class="btn btn-ghost btn-ic no-print" data-ic="print" data-tip="พิมพ์รายงานค่าน้ำประปา" onclick="printWaterReport()"></button>
             </div>
           </div>
           <div id="water-filter-tabs" class="tabs"></div>
@@ -2540,6 +2541,57 @@ function renderWaterTable(){
       <td>${totalDue?`ค้าง ${fmtMoney(totalDue)}`:''}</td><td class="no-print"></td>
     </tr></tfoot>` : '';
   document.getElementById('water-table').innerHTML = `<thead><tr><th>เดือน</th><th class="num">หน่วยใช้น้ำ</th><th class="num">ยอดชำระตามบิล</th><th class="num">ยอด สนง.</th><th class="num wtr-a">T23787</th><th class="num wtr-b">W23791</th><th>สถานะเงินคืน</th><th class="no-print">การดำเนินการ</th></tr></thead><tbody>${trs || `<tr><td colspan="8" style="text-align:center;color:var(--ink-400);padding:20px;">${allRows.length?'ไม่มีข้อมูลตามเงื่อนไขที่เลือก':'ยังไม่มีข้อมูล'}</td></tr>`}</tbody>${totalRow}`;
+}
+// รายงานค่าน้ำประปาเสนอหัวหน้าหมวด (A4 แนวนอน) — พิมพ์ครบ 12 เดือนของปีงบที่เลือก ไม่ขึ้นกับแท็บกรองบนหน้าจอ
+function printWaterReport(){
+  const fy = selectedUtilFY;
+  const MONTH_FULL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const byCycle = {};
+  computeWaterRows().forEach(r=>{ byCycle[r.cycle] = r; });
+  const startCycle = `${fy-544}-10`;
+  const months = Array.from({length:12},(_,i)=>{
+    const cycle = addMonthsToCycle(startCycle,i);
+    const [y,m] = cycle.split('-').map(Number);
+    return {label:`${MONTH_FULL[m-1]} ${y+543}`, r:byCycle[cycle]||{}};
+  });
+  const val = v=>v!=null?v:'';
+  const unit = v=>v!=null?v.toLocaleString('en-US'):'';
+  const money = v=>v!=null?fmtMoney(v):'';
+  const paid = (cost,date)=>date?`<td class="c">${fmtDateShortTH(date)}</td>`:(cost!=null?'<td class="owe">ค้าง</td>':'<td></td>');
+  // สีไฮไลท์ตามตารางเดิม (ประปา เม.ย. 69.pdf) — ระบายเฉพาะเดือนที่มียอดบิลแล้ว ช่องค้างเป็นสีชมพูเข้มและยังมีคำว่า "ค้าง" เผื่อพิมพ์ขาวดำ
+  const trs = months.map(({label,r})=>`<tr class="${r.billAmount!=null?'has':''}"><td class="l m">${label}</td><td>${val(r.mainReading)}</td><td>${unit(r.mainUsage)}</td><td class="p">${r.unitPrice!=null?r.unitPrice.toFixed(2):''}</td><td class="bill">${money(r.billAmount)}</td><td>${val(r.subA)}</td><td class="a">${unit(r.subAUsage)}</td><td class="a">${money(r.subACost)}</td>${paid(r.subACost,r.subAPaid)}<td>${val(r.subB)}</td><td class="b">${unit(r.subBUsage)}</td><td class="b">${money(r.subBCost)}</td>${paid(r.subBCost,r.subBPaid)}<td class="m">${money(r.officeCost)}</td></tr>`).join('');
+  const rows = months.map(x=>x.r);
+  const sum = k=>rows.reduce((s,r)=>s+(r[k]||0),0);
+  const billed = rows.filter(r=>r.billAmount!=null).length;
+  const owes = rows.flatMap(r=>[(!r.subAPaid&&r.subACost!=null)?r.subACost:null,(!r.subBPaid&&r.subBCost!=null)?r.subBCost:null]).filter(v=>v!=null);
+  const oweTotal = owes.reduce((s,v)=>s+v,0);
+  const css = `@page{size:A4 landscape;margin:12mm 11mm 10mm;}
+    html,body{margin:0;background:#fff;color:#000;font-family:'Sarabun',sans-serif;}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    h1{font-size:18px;font-weight:700;text-align:center;margin:0;}
+    .meta{display:grid;grid-template-columns:auto 1fr;gap:0 10px;font-size:13px;margin:10px 0 8px;}
+    .meta b{font-weight:700;}
+    table{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums;}
+    th,td{border:1px solid #555;padding:0 5px;text-align:right;white-space:nowrap;}
+    th{font-weight:700;text-align:center;background:#eef0f3;line-height:1.25;}
+    td{height:26px;}
+    td.l{text-align:left;} td.c{text-align:center;}
+    td.owe{font-weight:700;text-align:center;background:#ff6699;}
+    tr.has td.m{background:#d9e1f2;}
+    tr.has td.a{background:#fff2cc;}
+    tr.has td.b{background:#fce4d6;}
+    td.p{color:#e00000;font-weight:700;}
+    td.bill{font-weight:700;}
+    tfoot td{font-weight:700;background:#eef0f3;}
+    .sum{display:flex;gap:24px;font-size:13px;margin-top:10px;}`;
+  const body = `<h1>ค่าน้ำประปาประจำปีงบประมาณ ${fy}</h1>
+    <div class="meta"><b>เลขที่ผู้ใช้น้ำ</b><span>11120040099</span><b>ชื่อผู้ใช้น้ำ</b><span>หมวดการทางระยอง (หมวดทางหลวงเชิงเนิน)</span><b>ตัดรอบ</b><span>ทุกวันที่ 1 ของเดือน</span></div>
+    <table><thead><tr><th rowspan="2">เดือน</th><th colspan="4">บิลรวม (มิเตอร์หลัก)</th><th colspan="4">ธนิภา (T23787)</th><th colspan="4">ชุลีพร (W23791)</th><th rowspan="2">ส่วนของ<br>สนง. (บาท)</th></tr>
+      <tr><th>เลขมิเตอร์</th><th>หน่วย</th><th>ราคา/หน่วย</th><th>ยอดบิล</th><th>เลขมิเตอร์</th><th>หน่วย</th><th>เงิน</th><th>วันที่ชำระ</th><th>เลขมิเตอร์</th><th>หน่วย</th><th>เงิน</th><th>วันที่ชำระ</th></tr></thead>
+      <tbody>${trs}</tbody>
+      <tfoot><tr><td class="l">รวม ${billed} เดือน</td><td></td><td>${unit(sum('mainUsage'))}</td><td></td><td>${fmtMoney(sum('billAmount'))}</td><td></td><td>${unit(sum('subAUsage'))}</td><td>${fmtMoney(sum('subACost'))}</td><td></td><td></td><td>${unit(sum('subBUsage'))}</td><td>${fmtMoney(sum('subBCost'))}</td><td></td><td>${fmtMoney(sum('officeCost'))}</td></tr></tfoot></table>
+    <div class="sum"><span>ส่วนของ สนง. สะสม <b>${fmtMoney(sum('officeCost'))}</b> บาท</span><span>เงินค้างคืนจากผู้ใช้น้ำย่อย <b>${fmtMoney(oweTotal)}</b> บาท (${owes.length} รายการ)</span></div>`;
+  __printInFrame(`ค่าน้ำประปาประจำปีงบประมาณ ${fy}`, css, body);
 }
 
 /* ============================================================
