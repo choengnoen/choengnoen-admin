@@ -713,7 +713,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                     <div class="f-row"><label>เลขมิเตอร์ สนง.</label><input type="number" step="any" id="water-main"></div>
                     <div class="f-row"><label>ยอดชำระตามบิล</label><input type="number" step="any" id="water-amount"></div>
                   </div>
-                  <div class="f-row"><label>หมายเหตุ</label><input type="text" id="water-note" placeholder="เช่น ซ่อมท่อ / เปลี่ยนมิเตอร์"></div>
+                  <div class="three-col">
+                    <div class="f-row"><label><span>หน่วยใช้น้ำ<br>(กรอกเองหากไม่ถูกต้อง)</span></label><input type="number" step="any" id="water-main-override" placeholder="เว้นว่างไว้ตามปกติ"></div>
+                    <div class="f-row" style="grid-column:span 2;"><label>หมายเหตุ</label><input type="text" id="water-note" placeholder="เช่น ซ่อมท่อ / เปลี่ยนมิเตอร์"></div>
+                  </div>
                 </div>
                 <div class="dw-group">
                   <div class="dw-group-title"><span class="dot"></span>มิเตอร์ T23787</div>
@@ -1037,7 +1040,7 @@ async function loadUtilityBillsFromApi(){
    deleteWater(cycle)) เก็บ __backendId ไว้คู่กันสำหรับ update/delete ที่ backend ต้องใช้ id จริง */
 function waterFromApi(row){
   const n = v => (v!==''&&v!=null) ? Number(v) : null;
-  return { __backendId:row.id, cycle:row.cycle, mainReading:n(row.mainReading), billAmount:n(row.billAmount),
+  return { __backendId:row.id, cycle:row.cycle, mainReading:n(row.mainReading), mainUsageOverride:n(row.usageOverrideMain), billAmount:n(row.billAmount),
     subA:n(row.subAReading), subAPaid:row.paidDateA||null, subAUsageOverride:n(row.usageOverrideA),
     subB:n(row.subBReading), subBPaid:row.paidDateB||null, subBUsageOverride:n(row.usageOverrideB),
     note:row.note||'' };
@@ -1045,7 +1048,7 @@ function waterFromApi(row){
 function waterToApi(r){
   return { id:r.__backendId, cycle:r.cycle, mainReading:r.mainReading, subAReading:r.subA, subBReading:r.subB,
     billAmount:r.billAmount, paidDateA:r.subAPaid, paidDateB:r.subBPaid,
-    usageOverrideA:r.subAUsageOverride, usageOverrideB:r.subBUsageOverride, note:r.note||'' };
+    usageOverrideA:r.subAUsageOverride, usageOverrideB:r.subBUsageOverride, usageOverrideMain:r.mainUsageOverride, note:r.note||'' };
 }
 /* ข้อมูลมิเตอร์น้ำจริงย้ายไปอยู่ที่ Google Sheets แท็บ "water_meter_log" แล้ว
    หน้านี้โหลดจาก API ตอนเปิดหน้าเสมอ ดูฟังก์ชัน loadWaterMeterLogFromApi() ด้านล่าง */
@@ -2289,7 +2292,7 @@ function addMonthsToCycle(cycle, n){
 }
 function toggleWaterForm(forceNew){
   if(forceNew){
-    ['water-cycle','water-main','water-amount','water-suba','water-suba-override','water-subb','water-subb-override','water-note'].forEach(id=>document.getElementById(id).value='');
+    ['water-cycle','water-main','water-main-override','water-amount','water-suba','water-suba-override','water-subb','water-subb-override','water-note'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('water-cycle').disabled = false;
     document.getElementById('water-save-btn').textContent = 'บันทึก';
     document.getElementById('water-modal-title').textContent = 'บันทึกข้อมูลมิเตอร์น้ำประจำเดือน';
@@ -2314,6 +2317,7 @@ function editWater(cycle){
   document.getElementById('water-cycle').value = r.cycle;
   document.getElementById('water-cycle').disabled = true; // แก้ไขได้เฉพาะตัวเลข ไม่เปลี่ยนรอบบิล (ป้องกันการสร้างรายการซ้ำ)
   document.getElementById('water-main').value = r.mainReading!=null ? r.mainReading : '';
+  document.getElementById('water-main-override').value = r.mainUsageOverride!=null ? r.mainUsageOverride : '';
   document.getElementById('water-amount').value = r.billAmount!=null ? r.billAmount : '';
   document.getElementById('water-suba').value = r.subA;
   document.getElementById('water-suba-paid').value = r.subAPaid||'';
@@ -2343,6 +2347,7 @@ async function deleteWater(cycle){
 async function saveWaterMeter(){
   const cycle = document.getElementById('water-cycle').value;
   const mainReadingRaw = parseFloat(document.getElementById('water-main').value);
+  const mainOverrideRaw = parseFloat(document.getElementById('water-main-override').value);
   const billAmountRaw = parseFloat(document.getElementById('water-amount').value);
   const subARaw = parseFloat(document.getElementById('water-suba').value);
   const subAPaid = document.getElementById('water-suba-paid').value || null;
@@ -2353,6 +2358,7 @@ async function saveWaterMeter(){
   const note = document.getElementById('water-note').value.trim();
   if(!cycle){ alert('กรุณาเลือกรอบบิลประจำเดือน'); return; }
   const mainReading = isNaN(mainReadingRaw) ? null : mainReadingRaw;
+  const mainUsageOverride = isNaN(mainOverrideRaw) ? null : mainOverrideRaw;
   const billAmount = isNaN(billAmountRaw) ? null : billAmountRaw;
   const subA = isNaN(subARaw) ? null : subARaw;
   const subB = isNaN(subBRaw) ? null : subBRaw;
@@ -2360,7 +2366,7 @@ async function saveWaterMeter(){
   const subBUsageOverride = isNaN(subBOverrideRaw) ? null : subBOverrideRaw;
   const existingIdx = waterMeterLog.findIndex(w=>w.cycle===cycle);
   const rec = {__backendId: existingIdx>=0 ? waterMeterLog[existingIdx].__backendId : undefined,
-    cycle, mainReading, billAmount, subA, subAPaid, subAUsageOverride, subB, subBPaid, subBUsageOverride, note};
+    cycle, mainReading, mainUsageOverride, billAmount, subA, subAPaid, subAUsageOverride, subB, subBPaid, subBUsageOverride, note};
 
   const saveBtn = document.getElementById('water-save-btn');
   const cancelBtn = document.getElementById('water-cancel-btn');
@@ -2401,7 +2407,7 @@ async function saveWaterMeter(){
   if(cancelBtn) cancelBtn.disabled = false;
   document.getElementById('water-cycle').disabled = false;
   document.getElementById('water-save-btn').textContent = 'บันทึก';
-  ['water-main','water-amount','water-suba','water-suba-paid','water-suba-override','water-subb','water-subb-paid','water-subb-override','water-note'].forEach(id=>document.getElementById(id).value='');
+  ['water-main','water-main-override','water-amount','water-suba','water-suba-paid','water-suba-override','water-subb','water-subb-paid','water-subb-override','water-note'].forEach(id=>document.getElementById(id).value='');
   toggleWaterForm();
   selectedUtilFY = cycleFiscalYearBE(cycle);
   renderAll();
@@ -2413,7 +2419,11 @@ function computeWaterRows(){
   const rows = [...waterMeterLog].sort((a,b)=>a.cycle.localeCompare(b.cycle));
   return rows.map((r,i)=>{
     const prev = i>0 ? rows[i-1] : null;
-    const mainUsage = (prev && r.mainReading!=null && prev.mainReading!=null) ? Math.round((r.mainReading - prev.mainReading)*1000)/1000 : null;
+    // เดือนที่ซ่อม/เปลี่ยนมิเตอร์ สนง. เลขมิเตอร์จะไม่ต่อเนื่องกับเดือนก่อน ให้กรอกหน่วยใช้น้ำจริงตามบิลผ่าน mainUsageOverride
+    // เลขมิเตอร์จริงยังเก็บไว้ตามเดิม เดือนถัดไปจึงคำนวณต่อจากเลขนี้ได้ถูกต้อง
+    const mainOverridden = r.mainUsageOverride!=null;
+    const rawMain = (prev && r.mainReading!=null && prev.mainReading!=null) ? Math.round((r.mainReading - prev.mainReading)*1000)/1000 : null;
+    const mainUsage = mainOverridden ? r.mainUsageOverride : rawMain;
     const unitPrice = (mainUsage!=null && mainUsage>0 && r.billAmount!=null) ? r.billAmount/mainUsage : null;
     const rawSubA = (prev && prev.subA!=null && r.subA!=null) ? Math.floor(r.subA - prev.subA) : null;
     const rawSubB = (prev && prev.subB!=null && r.subB!=null) ? Math.floor(r.subB - prev.subB) : null;
@@ -2431,7 +2441,7 @@ function computeWaterRows(){
     const subACost = (subAUsage!=null && unitPrice!=null) ? subAUsage*unitPrice : null;
     const subBCost = (subBUsage!=null && unitPrice!=null) ? subBUsage*unitPrice : null;
     const officeCost = (subACost!=null && subBCost!=null && r.billAmount!=null) ? r.billAmount - subACost - subBCost : null;
-    return {...r, mainUsage, unitPrice, subAUsage, subBUsage, subACost, subBCost, officeCost, anomaly, subAOverridden, subBOverridden, subADuplicate, subBDuplicate};
+    return {...r, mainUsage, mainOverridden, unitPrice, subAUsage, subBUsage, subACost, subBCost, officeCost, anomaly, subAOverridden, subBOverridden, subADuplicate, subBDuplicate};
   });
 }
 // isWaterRowPaid / แท็บกรอง ที่นี่ติดตามการ "เก็บเงินคืนจากผู้ใช้น้ำย่อย" (T23787/W23791)
@@ -2452,7 +2462,7 @@ function waterDetailRow(r){
       ${kv('เลขมิเตอร์', reading!=null?reading:'—')}${kv('หน่วยใช้น้ำ', usage(u,ov))}${kv('เงิน', cost!=null?fmtMoney(cost):'—')}${kv('วันที่ชำระ', paid?fmtDateShortTH(paid):'—')}</div>`;
   const flag = (r.subADuplicate||r.subBDuplicate)?' <span class="pill pill-danger">⚠️ เลขมิเตอร์ซ้ำเดือนก่อน น่าจะยังไม่ได้อัปเดตค่าที่อ่านจริง</span>':(r.anomaly?' <span class="pill pill-danger">ตรวจสอบเลขมิเตอร์</span>':'');
   return `<tr class="wtr-detail"><td colspan="8"><div class="wtr-dgrid">
-      <div class="wtr-box"><h4>บิลรวม (มิเตอร์ สนง.)</h4>${kv('เลขมิเตอร์', r.mainReading!=null?r.mainReading:'รอบิล')}${kv('หน่วยใช้น้ำ', r.mainUsage!=null?r.mainUsage.toLocaleString('th-TH'):'รอข้อมูล')}${kv('ราคาต่อหน่วย', r.unitPrice!=null?r.unitPrice.toFixed(2):'—')}${kv('ยอดชำระตามบิล', r.billAmount!=null?fmtMoney(r.billAmount):'—')}${kv('ยอด สนง.', r.officeCost!=null?fmtMoney(r.officeCost):'—')}</div>
+      <div class="wtr-box"><h4>บิลรวม (มิเตอร์ สนง.)</h4>${kv('เลขมิเตอร์', r.mainReading!=null?r.mainReading:'รอบิล')}${kv('หน่วยใช้น้ำ', usage(r.mainUsage,r.mainOverridden))}${kv('ราคาต่อหน่วย', r.unitPrice!=null?r.unitPrice.toFixed(2):'—')}${kv('ยอดชำระตามบิล', r.billAmount!=null?fmtMoney(r.billAmount):'—')}${kv('ยอด สนง.', r.officeCost!=null?fmtMoney(r.officeCost):'—')}</div>
       ${sub('a','T23787',r.subA,r.subAUsage,r.subAOverridden,r.subACost,r.subAPaid)}
       ${sub('b','W23791',r.subB,r.subBUsage,r.subBOverridden,r.subBCost,r.subBPaid)}
     </div>${(r.note||flag)?`<div class="wtr-note">${r.note?'หมายเหตุ: '+esc(r.note):''}${flag}</div>`:''}</td></tr>`;
@@ -2485,7 +2495,7 @@ function renderWaterTable(){
     const flag = (r.subADuplicate||r.subBDuplicate)?' <span class="pill pill-danger" title="เลขมิเตอร์เท่ากับเดือนก่อนเป๊ะ น่าจะยังไม่ได้อัปเดตค่าที่อ่านจริงของเดือนนี้">⚠️ เลขซ้ำ</span>':(r.anomaly?' <span class="pill pill-danger" title="ตรวจสอบเลขมิเตอร์">⚠️</span>':'');
     return `<tr class="util-month${open?' open':''}" onclick="toggleWaterMonth('${jsArg(r.cycle)}')" title="กดเพื่อ${open?'ซ่อน':'ดู'}เลขมิเตอร์และวันที่ชำระ">
       <td><span class="util-caret no-print">▶</span>${cycleLabel(r.cycle)}${flag}</td>
-      <td class="num">${r.mainUsage!=null?r.mainUsage.toLocaleString('th-TH'):'<span class="pill pill-neutral">รอข้อมูล</span>'}</td>
+      <td class="num">${r.mainUsage!=null?r.mainUsage.toLocaleString('th-TH')+(r.mainOverridden?'<span class="wtr-sub">ปรับเอง</span>':''):'<span class="pill pill-neutral">รอข้อมูล</span>'}</td>
       <td class="num">${r.billAmount!=null?`<b>${fmtMoney(r.billAmount)}</b>`:'<span class="pill pill-neutral">รอบิล</span>'}${r.unitPrice!=null?`<span class="wtr-sub">${r.unitPrice.toFixed(2)} บ./หน่วย</span>`:''}</td>
       <td class="num">${r.officeCost!=null?fmtMoney(r.officeCost):'—'}</td>
       <td class="num wtr-a">${r.subACost!=null?fmtMoney(r.subACost):'—'}${usageSub(r.subAUsage,r.subAOverridden)}</td>
