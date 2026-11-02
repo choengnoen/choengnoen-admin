@@ -335,6 +335,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   #ct-body tr[data-ct]{cursor:pointer;}
   #ct-body tr[data-ct]:hover td{background:#f4f7fa;}
   .ct-name{font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:340px;}
+  .ct-route{font-size:12.5px;color:var(--ink-600);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:340px;}
+  .ct-route.empty{color:var(--ink-400);}
   .ct-by{font-size:12px;color:var(--ink-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:340px;}
   .ct-dl{display:grid;grid-template-columns:140px 1fr;gap:6px 12px;font-size:13.5px;margin:0 0 10px;}
   .ct-dl dt{color:var(--ink-400);}
@@ -496,18 +498,97 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .radio-group{display:flex;gap:14px;flex-wrap:wrap;}
   .radio-group label{display:flex;align-items:center;gap:6px;font-weight:400;font-size:13px;color:var(--ink-900);white-space:nowrap;}
   .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-  /* แถวบุคคลในฟอร์มสัญญา: บทบาท | ชื่อ | นามสกุล | ตำแหน่ง | ลบ */
-  .ct-person-row{display:grid;grid-template-columns:120px 1fr 1fr 1.3fr 34px;gap:8px;align-items:end;margin-bottom:10px;}
-  .ct-person-row .f-row{margin:0;}
-  .ct-person-row .f-row label{font-weight:400;font-size:11.5px;color:var(--ink-500);margin-bottom:4px;}
-  .ct-person-role{font-size:13px;font-weight:600;color:var(--ink-700);padding-bottom:11px;}
-  .ct-person-row .btn{height:40px;}
-  .ct-person-row:not(:first-child) .f-row label{display:none;}
-  @media (max-width:640px){
-    .ct-person-row:not(:first-child) .f-row label{display:block;}
-    .ct-person-row{grid-template-columns:1fr 1fr 34px;}
-    .ct-person-role{grid-column:1 / -1;padding-bottom:0;}
-    .ct-person-row .ct-p-pos-wrap{grid-column:1 / 3;}
+  /* ฟอร์มสัญญาไซส์ L: กว้างสุด 980px หัวและท้ายอยู่กับที่ เลื่อนเฉพาะเนื้อหา */
+  #ct-form-overlay{align-items:center;overflow:hidden;padding:16px;}
+  #ct-form-overlay .modal-box{max-width:980px;max-height:100%;display:flex;flex-direction:column;}
+  #ct-form-overlay .modal-head,#ct-form-overlay .gmodal-footer{flex:none;}
+  #ct-form-overlay .modal-body{flex:1;min-height:0;overflow-y:auto;padding:18px 22px 6px;}
+  #ct-form-overlay .gmodal-footer{padding:14px 22px;}
+  #ct-form-overlay .dw-group{padding:15px 24px 18px;}
+  #ct-form-overlay .dw-group-title{font-size:13px;margin-bottom:13px;text-transform:none;letter-spacing:0;}
+  #ct-form-overlay .f-row{margin:0;}
+  #ct-form-overlay .f-row label{margin-bottom:5px;}
+  #ct-form-overlay .f-row input,#ct-form-overlay .f-row select,#ct-form-overlay .thdate-box{min-height:42px;}
+  #ct-form-overlay .f-row textarea{display:block;}
+  .ct-g-no{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--orange-500),var(--orange-600));color:#fff;font-family:'Kanit';font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 2px 6px rgba(224,98,15,.3);}
+  .ct-g-note{font-weight:400;font-size:12px;color:var(--ink-500);}
+  .ct-req{color:var(--danger,#dc2626);}
+  /* ทุกกลุ่มใช้ตาราง 4 ช่องเดียวกัน ขอบช่องจึงตรงกันทั้งฟอร์ม */
+  .ct-g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px 12px;}
+  .ct-s2{grid-column:span 2;} .ct-s4{grid-column:span 4;}
+  .ct-g5{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:13px 12px;}
+  .ct-sub{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:13px;font-weight:600;color:var(--ink-900);}
+  .ct-sub small{font-weight:400;font-size:12px;color:var(--ink-500);}
+  .ct-sub-action{margin-left:auto;}
+  .ct-divider{border:none;border-top:1px dashed var(--line);margin:16px 0;}
+  .ct-btn-add{font-family:'Kanit';font-size:12px;font-weight:600;padding:5px 11px;border-radius:7px;background:#fff;color:var(--orange-600);border:1px solid var(--line);cursor:pointer;white-space:nowrap;}
+  .ct-btn-add:hover{border-color:var(--orange-500);}
+  .ct-msg{font-size:12px;color:var(--ink-500);line-height:1.7;margin-top:8px;}
+  .ct-msg:empty{display:none;}
+  .ct-auto-tag{display:inline-block;margin-left:5px;padding:0 6px;border-radius:5px;background:#eaf6ee;color:#1a6d3f;font-size:10.5px;font-weight:600;}
+  .ct-auto-tag[hidden]{display:none;}
+  .ct-qty-total{margin-top:12px;}
+  .ct-money{position:relative;}
+  #ct-form-overlay .ct-money input{padding-right:44px;text-align:right;font-variant-numeric:tabular-nums;}
+  .ct-money span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--ink-500);pointer-events:none;}
+  /* ผู้รับจ้าง: เลือกจากประวัติหรือพิมพ์ใหม่ */
+  .ct-combo{position:relative;}
+  #ct-form-overlay .ct-combo input{padding-right:34px;}
+  .ct-combo-chev{position:absolute;right:12px;top:13px;width:16px;height:16px;color:var(--ink-500);pointer-events:none;}
+  .ct-combo-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:20;max-height:220px;overflow-y:auto;padding:4px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(10,37,64,.14);}
+  .ct-combo-list[hidden]{display:none;}
+  .ct-combo-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:7px;cursor:pointer;font-size:13.5px;color:var(--ink-900);}
+  .ct-combo-item .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ct-combo-item .un{flex:none;font-size:11.5px;color:var(--ink-400);}
+  .ct-combo-item:hover,.ct-combo-item.on{background:var(--paper-100);}
+  /* แถวช่วงทางหลวงและแถวบุคคล: หัวคอลัมน์แสดงเฉพาะแถวแรก */
+  #ct-ranges,#ct-committee,#ct-sup-list{display:grid;gap:8px;}
+  .ct-range-row,.ct-person-row{position:relative;display:grid;gap:8px;align-items:end;}
+  .ct-range-row{grid-template-columns:minmax(0,2.5fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.7fr);}
+  .ct-person-row{grid-template-columns:150px minmax(0,1fr) minmax(0,1fr) minmax(0,1.35fr);}
+  .ct-range-row:not(:first-child) .f-row label,.ct-person-row:not(:first-child) .f-row label{display:none;}
+  .ct-person-role{align-self:end;min-height:42px;display:flex;align-items:center;gap:3px;font-size:13px;font-weight:600;color:var(--navy-800);}
+  /* ปุ่มลบ: ถังขยะสีแดงเล็ก ลอยอยู่ในขอบขวาของกลุ่ม ไม่กินพื้นที่ ช่องกรอกจึงกว้างคงที่เสมอ */
+  .ct-x{position:absolute;right:-22px;bottom:11px;width:20px;height:20px;padding:0;display:flex;align-items:center;justify-content:center;border:none;border-radius:5px;background:none;color:var(--danger,#dc2626);cursor:pointer;}
+  .ct-x svg{width:15px;height:15px;}
+  .ct-x:hover{background:#fde8e8;}
+  .ct-x[hidden]{display:none;}
+  /* กลุ่มที่กรอกภายหลัง ย่อ/ขยายได้ */
+  .ct-toggle{width:100%;display:flex;align-items:center;gap:9px;margin:0;padding:0;border:none;background:none;font-family:inherit;text-align:left;cursor:pointer;font-size:13px;font-weight:700;color:var(--navy-800);}
+  .ct-chev{margin-left:auto;width:18px;height:18px;color:var(--ink-500);transition:transform .15s;flex:none;}
+  #ct-later.closed .ct-collapsible{display:none;}
+  #ct-later:not(.closed) .ct-chev{transform:rotate(180deg);}
+  .ct-collapsible{margin-top:13px;}
+  .ct-check{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;cursor:pointer;}
+  #ct-form-overlay .ct-check input{width:16px;height:16px;min-height:0;margin:0;padding:0;accent-color:var(--orange-600);flex:none;}
+  /* การวัดค่าสะท้อนแสง: แยกการ์ดตามรอบ ติ๊กวัดแล้วจึงเลือกวันที่ได้ */
+  .ct-round{grid-column:span 2;padding:11px 13px 13px;border:1px solid var(--line);border-radius:12px;background:#fff;transition:opacity .15s;}
+  .ct-round.off{opacity:.6;}
+  .ct-round-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;font-size:13px;}
+  .ct-round-head b{color:var(--navy-800);}
+  .ct-due{font-size:12px;color:var(--ink-500);text-align:right;}
+  .ct-due.on{font-weight:600;color:var(--navy-800);}
+  .ct-due.late{font-weight:600;color:var(--danger,#dc2626);}
+  .ct-round-body{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;}
+  .ct-round:not(.done) .thdate-wrap{pointer-events:none;opacity:.55;}
+  .ct-round:not(.done) .thdate-box{background:var(--paper-50);}
+  @media (max-width:760px){
+    #ct-form-overlay{padding:8px;}
+    #ct-form-overlay .modal-head,#ct-form-overlay .gmodal-footer{padding-left:16px;padding-right:16px;}
+    #ct-form-overlay .modal-body{padding:14px 12px 4px;}
+    #ct-form-overlay .dw-group{padding:14px 13px 15px;}
+    .ct-g4,.ct-g5{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .ct-g5 > :last-child{grid-column:span 2;}
+    #ct-name{min-height:104px;}
+    .ct-range-row,.ct-person-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);padding-bottom:10px;border-bottom:1px dashed var(--line);}
+    .ct-range-row:last-child,.ct-person-row:last-child{padding-bottom:0;border-bottom:none;}
+    .ct-range-row:not(:first-child) .f-row label,.ct-person-row:not(:first-child) .f-row label{display:block;}
+    .ct-c-route,.ct-c-qty,.ct-p-pos-wrap,.ct-person-role{grid-column:1 / -1;}
+    .ct-person-role{min-height:26px;}
+    /* จอแคบไม่มีขอบขวาพอ ปุ่มลบจึงลอยมุมขวาบนของแถวแทน */
+    .ct-x{right:0;top:0;bottom:auto;width:26px;height:26px;}
+    .ct-sub{flex-wrap:wrap;}
+    .ct-sub small{order:3;flex-basis:100%;}
   }
   .stat-mini{background:var(--paper-100);border-radius:8px;padding:10px 14px;font-size:12.5px;color:var(--ink-600);margin-top:4px;}
 
@@ -1111,7 +1192,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </h2>
             <div class="toolbar">
               <select id="ct-fy" data-fy onchange="renderContracts()"></select>
-<div class="search-box">🔍 <input id="ct-search" placeholder="ค้นหาเลขที่สัญญา / โครงการ / ผู้รับจ้าง"></div>
+<div class="search-box">🔍 <input id="ct-search" placeholder="ค้นหาเลขที่สัญญา / โครงการ / สายทาง / ผู้รับจ้าง"></div>
               <span class="tb-sep"></span><button class="btn btn-ghost btn-ic" data-ic="down" data-tip="ส่งออก CSV (ให้เครื่องมือแผนที่)" onclick="exportContractsCsv()"></button>
               <button class="btn btn-primary" data-ic="plus" onclick="openContractForm(null)">เพิ่มสัญญา</button>
             </div>
@@ -1122,85 +1203,83 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 <div class="gmodal-head-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></div>
                 <div>
                   <h3 id="ct-form-title">เพิ่มสัญญา</h3>
-                  <div class="gmodal-subtitle">ข้อมูลสัญญา ช่วงทางหลวง ระยะเวลา และค้ำประกัน</div>
+                  <div class="gmodal-subtitle">กรอกตามลำดับจากบนลงล่าง เรียงเหมือนกระดาษปะหน้าสัญญา</div>
                 </div>
                 <button class="modal-close" onclick="closeContractForm()">✕</button>
               </div>
-              <div class="modal-body">
+              <div class="modal-body" id="ct-form-body">
                 <input type="hidden" id="ct-id">
-                <div class="dw-group">
-                  <div class="dw-group-title"><span class="dot"></span>ข้อมูลสัญญา</div>
-                  <div class="two-col">
-                    <div class="f-row"><label>เลขที่สัญญา</label><input id="ct-no" placeholder="เช่น รย.21/2567"></div>
-                    <div class="f-row"><label>ปีงบประมาณ (พ.ศ.)</label><input type="number" id="ct-f-fy" placeholder="เช่น 2569"></div>
+                <div class="dw-group" id="ct-g1" oninput="ctMarkManual(event)" onchange="ctMarkManual(event)">
+                  <div class="dw-group-title"><span class="ct-g-no">1</span>ข้อมูลสัญญาและช่วงทางหลวง</div>
+                  <div class="ct-g4">
+                    <div class="f-row"><label for="ct-no">เลขที่สัญญา</label><input id="ct-no" placeholder="เช่น รย.21/2567"></div>
+                    <div class="f-row"><label for="ct-f-fy">ปีงบประมาณ (พ.ศ.)</label><input type="number" id="ct-f-fy" placeholder="เช่น 2569"></div>
+                    <div class="f-row ct-s2"><label for="ct-by">ผู้รับจ้าง</label>
+                      <div class="ct-combo"><input id="ct-by" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ct-by-list" placeholder="เลือกจากประวัติ หรือพิมพ์ชื่อใหม่" onfocus="ctByOpen()" oninput="ctByOpen()" onclick="ctByOpen()" onblur="ctByClose()" onkeydown="ctByKey(event)"><svg class="ct-combo-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg><div class="ct-combo-list" id="ct-by-list" role="listbox" hidden></div></div></div>
+                    <div class="f-row ct-s4"><label for="ct-name">ชื่อโครงการ</label><textarea id="ct-name" rows="2" oninput="ctParseName()" placeholder="พิมพ์หรือวางข้อความจากหัวสัญญา เช่น ปรับปรุงผิวทาง ทางหลวงหมายเลข 364 ระหว่าง กม.1+610 - กม.2+307 ปริมาณงาน 1 แห่ง (16,031 ตร.ม.)"></textarea></div>
                   </div>
-                  <div class="f-row"><label>ชื่อโครงการ</label><input id="ct-name" placeholder="เช่น ปรับปรุงผิวทางแอสฟัลต์คอนกรีต ทล.364 ตอน ทางเลี่ยงเมืองระยอง ตอน 2"></div>
-                  <div class="two-col">
-                    <div class="f-row"><label>ปริมาณงานรวม</label><input id="ct-qty" placeholder="เช่น 1 แห่ง (16,031 ตร.ม.)"></div>
-                    <div class="f-row"><label>ผู้รับจ้าง</label><input id="ct-by" placeholder="ชื่อบริษัท / ห้างหุ้นส่วน"></div>
-                  </div>
-                </div>
-                <div class="dw-group">
-                  <div class="dw-group-title"><span class="dot"></span>ช่วงทางหลวงที่สัญญาครอบคลุม</div>
+                  <hr class="ct-divider">
+                  <div class="ct-sub">ช่วงทางหลวงที่สัญญาครอบคลุม <span class="ct-req">*</span>
+                    <button type="button" class="ct-btn-add ct-sub-action" onclick="addContractRangeRow()">+ เพิ่มช่วง</button></div>
                   <div id="ct-ranges"></div>
-                  <button type="button" class="btn btn-ghost btn-sm" onclick="addContractRangeRow()" style="margin-bottom:12px;">+ เพิ่มช่วง</button>
-                  <div id="ct-range-msg" style="margin-bottom:10px;"></div>
+                  <div id="ct-range-msg" class="ct-msg"></div>
+                  <div class="f-row ct-qty-total" id="ct-qty-total" hidden><label for="ct-qty">ปริมาณงานรวมทั้งสัญญา</label><input id="ct-qty" placeholder="เช่น 2 แห่ง (24,031 ตร.ม.)"></div>
                 </div>
                 <div class="dw-group">
-                  <div class="dw-group-title"><span class="dot"></span>วันที่ ระยะเวลา และเงินค่างาน</div>
-                  <div class="two-col">
+                  <div class="dw-group-title"><span class="ct-g-no">2</span>วันที่ ระยะเวลา และเงินค่างาน</div>
+                  <div class="ct-g4">
                     <div class="f-row"><label>วันลงนามสัญญา</label>
                       <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-sign" class="thdate-native" onchange="thdateSync(this)"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
-                    <div class="f-row"><label>วันเริ่มสัญญา (เริ่มลงมือทำงาน)</label>
+                    <div class="f-row"><label>วันเริ่มลงมือทำงาน</label>
                       <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-start" class="thdate-native" onchange="thdateSync(this);ctAutoEnd('start')"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
-                  </div>
-                  <div class="two-col">
-                    <div class="f-row"><label>กำหนดแล้วเสร็จภายใน (วัน)</label><input type="number" min="0" step="1" id="ct-days" placeholder="เช่น 90" oninput="ctAutoEnd('days')"></div>
-                    <div class="f-row"><label>วันสิ้นสุดสัญญา</label>
+                    <div class="f-row"><label for="ct-days">กำหนดแล้วเสร็จ (วัน)</label><input type="number" min="0" step="1" id="ct-days" placeholder="เช่น 90" oninput="ctAutoEnd('days')"></div>
+                    <div class="f-row"><label>วันสิ้นสุดสัญญา<span class="ct-auto-tag" id="ct-end-tag" hidden>คำนวณให้</span></label>
                       <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-end" class="thdate-native" onchange="thdateSync(this);ctAutoEnd('end')"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
-                  </div>
-                  <div id="ct-end-msg" style="font-size:12px;color:var(--ink-500);line-height:1.7;margin:-4px 0 8px;"></div>
-                  <div class="two-col">
-                    <div class="f-row"><label>เงินค่างาน (บาท)</label><input type="number" step="0.01" id="ct-amount" placeholder="เช่น 9695000"></div>
-                    <div class="f-row"><label>ค่าปรับวันละ (บาท)</label><input type="number" step="0.01" id="ct-penalty" placeholder="เช่น 24237.50"></div>
+                    <div class="ct-s4 ct-msg" id="ct-end-msg" style="margin-top:0;"></div>
+                    <div class="f-row ct-s2"><label for="ct-amount">เงินค่างาน</label><div class="ct-money"><input id="ct-amount" inputmode="decimal" placeholder="เช่น 9,695,000.00" onblur="ctMoneyBlur(this)"><span>บาท</span></div></div>
+                    <div class="f-row ct-s2"><label for="ct-penalty">ค่าปรับวันละ</label><div class="ct-money"><input id="ct-penalty" inputmode="decimal" placeholder="เช่น 24,237.50" onblur="ctMoneyBlur(this)"><span>บาท</span></div></div>
                   </div>
                 </div>
                 <div class="dw-group">
-                  <div class="dw-group-title"><span class="dot"></span>คณะกรรมการตรวจรับ และผู้ควบคุมงาน</div>
-                  <div class="f-row" style="margin-bottom:4px;"><label>คณะกรรมการตรวจรับพัสดุ <span style="color:var(--danger,#dc2626);">*</span> <span style="font-weight:400;font-size:12px;color:var(--ink-500);">(ประธาน 1 ท่าน + กรรมการอย่างน้อย 2 ท่าน)</span></label></div>
+                  <div class="dw-group-title"><span class="ct-g-no">3</span>คณะกรรมการตรวจรับ และผู้ควบคุมงาน</div>
+                  <div class="ct-sub">คณะกรรมการตรวจรับพัสดุ <span class="ct-req">*</span> <small>ประธาน 1 ท่าน + กรรมการอย่างน้อย 2 ท่าน</small>
+                    <button type="button" class="ct-btn-add ct-sub-action" onclick="addPersonRow('committee')">+ เพิ่มกรรมการ</button></div>
                   <div id="ct-committee"></div>
-                  <button type="button" class="btn btn-ghost btn-sm" onclick="addPersonRow('committee')" style="margin-bottom:16px;">+ เพิ่มกรรมการ</button>
-                  <div class="f-row" style="margin-bottom:4px;"><label>ผู้ควบคุมงาน <span style="color:var(--danger,#dc2626);">*</span> <span style="font-weight:400;font-size:12px;color:var(--ink-500);">(ผู้ควบคุมงาน 1 ท่าน + ผู้ช่วยควบคุมงาน ถ้ามี)</span></label></div>
+                  <hr class="ct-divider">
+                  <div class="ct-sub">ผู้ควบคุมงาน <span class="ct-req">*</span> <small>ผู้ควบคุมงาน 1 ท่าน + ผู้ช่วย (ถ้ามี)</small>
+                    <button type="button" class="ct-btn-add ct-sub-action" onclick="addPersonRow('sup')">+ เพิ่มผู้ช่วย</button></div>
                   <div id="ct-sup-list"></div>
-                  <button type="button" class="btn btn-ghost btn-sm" onclick="addPersonRow('sup')" style="margin-bottom:4px;">+ เพิ่มผู้ช่วยควบคุมงาน</button>
+                </div>
+                <div class="dw-group" id="ct-later">
+                  <button type="button" class="ct-toggle" onclick="document.getElementById('ct-later').classList.toggle('closed')" aria-controls="ct-later-body">
+                    <span class="ct-g-no">4</span>ส่งงาน ตรวจรับ และค้ำประกัน <span class="ct-g-note">กรอกภายหลังเมื่อถึงขั้นตอน</span>
+                    <svg class="ct-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                  <div class="ct-collapsible" id="ct-later-body">
+                    <div class="ct-g5">
+                      <div class="f-row"><label>วันที่ส่งงาน</label>
+                        <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-deliver" class="thdate-native" onchange="thdateSync(this);ctAutoDates()"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
+                      <div class="f-row"><label>วันที่ตรวจรับงาน</label>
+                        <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-accept" class="thdate-native" onchange="thdateSync(this);ctAutoDates()"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
+                      <div class="f-row"><label for="ct-type">ประเภทงาน</label>
+                        <select id="ct-type" onchange="ctTypeChanged()"><option value="">— เลือก —</option><option value="ไฟฟ้า">งานไฟฟ้า (ค้ำ 3 ปี)</option><option value="ผิวทาง">งานผิวทาง (ค้ำ 2 ปี)</option><option value="อื่น ๆ">อื่น ๆ</option></select></div>
+                      <div class="f-row"><label for="ct-wyears">กำหนดค้ำประกัน (ปี)</label><input type="number" min="0" step="1" id="ct-wyears" placeholder="เช่น 2" oninput="ctAutoDates()"></div>
+                      <div class="f-row"><label>วันคืนค้ำประกัน<span class="ct-auto-tag" id="ct-warr-tag" hidden>คำนวณให้</span></label>
+                        <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-warr" class="thdate-native" onchange="thdateSync(this);this.dataset.manual='1';ctAutoDates()"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
+                    </div>
+                    <div id="ct-auto-msg" class="ct-msg"></div>
+                    <hr class="ct-divider">
+                    <div class="ct-sub">การวัดค่าสะท้อนแสง <small>นับจากวันที่ส่งงาน</small>
+                      <label class="ct-check ct-sub-action"><input type="checkbox" id="ct-refl" onchange="ctReflToggled()"> สัญญานี้ต้องวัด</label></div>
+                    <div class="ct-g4">
+                      <div class="ct-round" id="ct-round12"><div class="ct-round-head"><b>รอบ 12 เดือน</b><span class="ct-due" id="ct-due12"></span></div><div class="ct-round-body"><label class="ct-check"><input type="checkbox" id="ct-done12" onchange="ctReflDoneChanged(12,this)"> วัดแล้ว</label><div class="f-row"><div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-refl12" class="thdate-native" onchange="thdateSync(this);ctAutoDates()"><div class="thdate-box"><span class="thdate-text placeholder" data-placeholder="ยังไม่วัด">ยังไม่วัด</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div></div></div>
+                      <div class="ct-round" id="ct-round24"><div class="ct-round-head"><b>รอบ 24 เดือน</b><span class="ct-due" id="ct-due24"></span></div><div class="ct-round-body"><label class="ct-check"><input type="checkbox" id="ct-done24" onchange="ctReflDoneChanged(24,this)"> วัดแล้ว</label><div class="f-row"><div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-refl24" class="thdate-native" onchange="thdateSync(this);ctAutoDates()"><div class="thdate-box"><span class="thdate-text placeholder" data-placeholder="ยังไม่วัด">ยังไม่วัด</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div></div></div>
+                    </div>
+                  </div>
                 </div>
                 <div class="dw-group">
-                  <div class="dw-group-title"><span class="dot"></span>ส่งงาน ตรวจรับ และค้ำประกัน <span style="font-weight:400;font-size:12px;color:var(--ink-500);">(กรอกภายหลังเมื่อถึงขั้นตอน)</span></div>
-                  <div class="two-col">
-                    <div class="f-row"><label>วันที่ส่งงาน</label>
-                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-deliver" class="thdate-native" onchange="thdateSync(this);ctAutoDates()"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
-                    <div class="f-row"><label>วันที่ตรวจรับงาน</label>
-                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-accept" class="thdate-native" onchange="thdateSync(this);ctAutoDates()"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
-                  </div>
-                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
-                    <div class="f-row"><label>ประเภทงาน</label>
-                      <select id="ct-type" onchange="ctTypeChanged()"><option value="">— เลือก —</option><option value="ไฟฟ้า">งานไฟฟ้า (ค้ำ 3 ปี)</option><option value="ผิวทาง">งานผิวทาง (ค้ำ 2 ปี)</option><option value="อื่น ๆ">อื่น ๆ</option></select></div>
-                    <div class="f-row"><label>กำหนดค้ำประกัน (ปี)</label><input type="number" min="0" step="1" id="ct-wyears" placeholder="เช่น 2" oninput="ctAutoDates()"></div>
-                    <div class="f-row"><label>วันที่ครบกำหนดคืนค้ำประกัน</label>
-                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-warr" class="thdate-native" onchange="thdateSync(this);this.dataset.manual='1'"><div class="thdate-box"><span class="thdate-text placeholder">เลือกวันที่</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
-                  </div>
-                  <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0 8px;"><input type="checkbox" id="ct-refl" onchange="ctAutoDates()"> ต้องวัดค่าสะท้อนแสง (รอบ 12 เดือน และ 24 เดือน ถัดจากวันส่งงาน)</label>
-                  <div id="ct-refl-done" style="display:none;grid-template-columns:repeat(2,1fr);gap:12px;">
-                    <div class="f-row"><label>วันที่วัดแล้ว รอบ 12 เดือน</label>
-                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-refl12" class="thdate-native" onchange="thdateSync(this)"><div class="thdate-box"><span class="thdate-text placeholder">ยังไม่วัด</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
-                    <div class="f-row"><label>วันที่วัดแล้ว รอบ 24 เดือน</label>
-                      <div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-refl24" class="thdate-native" onchange="thdateSync(this)"><div class="thdate-box"><span class="thdate-text placeholder">ยังไม่วัด</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div>
-                  </div>
-                  <div id="ct-auto-msg" style="font-size:12px;color:var(--ink-500);line-height:1.7;"></div>
-                </div>
-                <div class="dw-group">
-                  <div class="dw-group-title"><span class="dot"></span>หมายเหตุ</div>
-                  <div class="f-row"><label>หมายเหตุ</label><textarea id="ct-note" placeholder="เช่น ขยายเวลา / เลขที่หนังสืออ้างอิง"></textarea></div>
+                  <div class="dw-group-title"><span class="ct-g-no">5</span>หมายเหตุ</div>
+                  <div class="f-row"><textarea id="ct-note" rows="2" aria-label="หมายเหตุ" placeholder="เช่น วันที่ต่อรองเป็นที่ยุติ / วันที่แจ้งทำสัญญา / ขยายเวลา / เลขที่หนังสืออ้างอิง"></textarea></div>
                 </div>
               </div>
               <div class="gmodal-footer">
@@ -1243,7 +1322,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div class="tab" data-cttab="done">สิ้นสุดแล้ว</div>
           </div>
           <div class="table-wrap"><table>
-            <thead><tr><th>เลขที่สัญญา</th><th>โครงการ / ผู้รับจ้าง</th><th>เงินค่างาน (บาท)</th><th>สิ้นสุดสัญญา</th><th>คืนค้ำประกัน</th><th>วัดค่าสะท้อนแสง</th><th>สถานะ</th></tr></thead>
+            <thead><tr><th>เลขที่สัญญา</th><th>โครงการ / สายทาง / ผู้รับจ้าง</th><th>เงินค่างาน (บาท)</th><th>สิ้นสุดสัญญา</th><th>คืนค้ำประกัน</th><th>วัดค่าสะท้อนแสง</th><th>สถานะ</th></tr></thead>
             <tbody id="ct-body"></tbody>
           </table></div>
           <div class="legend-block" id="ct-foot-block">
@@ -3099,9 +3178,8 @@ function ctAutoEnd(src){
   }
   const calc = ctCalcEnd(start, daysEl.value);
   const msg = document.getElementById('ct-end-msg');
-  if(!start && Number(daysEl.value)>0)
-    msg.innerHTML = 'เลือก <b>วันเริ่มสัญญา</b> ก่อน ระบบจะคำนวณวันสิ้นสุดสัญญาให้อัตโนมัติ (วันเริ่ม + กำหนดวัน − 1)';
-  else if(start && endEl.value && endEl.value < start)
+  document.getElementById('ct-end-tag').hidden = !(calc && endEl.value===calc);
+  if(start && endEl.value && endEl.value < start)
     msg.innerHTML = '<span style="color:var(--red-600,#dc2626)">วันสิ้นสุดสัญญาอยู่ก่อนวันเริ่มสัญญา</span>';
   else if(calc && endEl.value && endEl.value!==calc)
     msg.innerHTML = `วันสิ้นสุดตามสูตร: <b>${fmtDateShort(calc)}</b> (วันเริ่ม + กำหนดวัน − 1) · <a href="#" onclick="ctAutoEnd('days');return false;">ใช้วันที่ตามสูตร</a>`;
@@ -3290,6 +3368,20 @@ function ctStatus(c){
 function ctRangeText(c){
   return (c.ranges||[]).map(r=>`ทล.${esc(r.route)} กม.${kmFmt(r.k1)} – ${kmFmt(r.k2)}${r.qty?' · '+esc(r.qty):''}`).join('<br>') || '<span style="color:var(--ink-400);">— ไม่ระบุช่วง —</span>';
 }
+/* ช่องตาราง: แสดงบรรทัดเดียว เฉพาะช่วงแรก ที่เหลือบอกจำนวน (รายการครบอยู่ในโมดัลรายละเอียด) */
+function ctRangeCell(c){
+  const rs = c.ranges||[];
+  if(!rs.length) return '<div class="ct-route empty">— ไม่ระบุช่วง —</div>';
+  const r = rs[0], text = `ทล.${r.route} กม.${kmFmt(r.k1)} – ${kmFmt(r.k2)}`;
+  return `<div class="ct-route" title="${esc(rs.map(x=>`ทล.${x.route} กม.${kmFmt(x.k1)} – ${kmFmt(x.k2)}`).join(' , '))}">${esc(text)}${rs.length>1?` · +อีก ${rs.length-1} ช่วง`:''}</div>`;
+}
+/* ค้นหาสัญญา: "ทล.3" = ตรงเลขสายทางเท่านั้น (ไม่รวม ทล.36, ทล.3139) · คำอื่นค้นแบบมีคำนั้นอยู่ในข้อความ */
+function ctMatchesSearch(c, q){
+  const m = q.match(/^ทล\.?\s*(\S+)$/);
+  if(m) return (c.ranges||[]).some(r=>r.route.toLowerCase()===m[1]);
+  const routes = (c.ranges||[]).map(r=>'ทล.'+r.route).join(' ');
+  return (c.contractNo+' '+c.name+' '+c.contractor+' '+c.supervisor+' '+c.workQty+' '+routes).toLowerCase().includes(q);
+}
 function renderContracts(){
   const body = document.getElementById('ct-body'); if(!body) return;
   const filter = document.querySelector('[data-cttab].active')?.dataset.cttab || 'all';
@@ -3318,7 +3410,7 @@ function renderContracts(){
     if(filter==='done') return x.st.key==='done' || x.st.key==='cancel';
     return true;
   });
-  if(q) rows = rows.filter(x=> (x.c.contractNo+' '+x.c.name+' '+x.c.contractor+' '+x.c.supervisor+' '+x.c.workQty).toLowerCase().includes(q));
+  if(q) rows = rows.filter(x=> ctMatchesSearch(x.c, q));
   rows.sort((a,b)=> String(b.c.startDate||'').localeCompare(String(a.c.startDate||'')) || String(b.c.contractNo).localeCompare(String(a.c.contractNo)));
   const can = isAdmin();
   body.innerHTML = rows.length ? rows.map(({c,st})=>{
@@ -3328,7 +3420,7 @@ function renderContracts(){
     const wHint = wa ? `<div style="font-size:11px;color:${wa.months===1?'var(--danger)':'var(--warn,#b7791f)'};">⚠ ภายใน ${wa.months} เดือน (เหลือ ${wa.days} วัน)</div>` : '';
     return `<tr data-ct="${esc(c.id)}" onclick="openContractDetail('${jsArg(c.id)}')" title="กดเพื่อดูรายละเอียด">
       <td style="white-space:nowrap;">${esc(c.contractNo)||'—'}</td>
-      <td><div class="ct-name" title="${esc(c.name)}">${esc(c.name)||'—'}</div><div class="ct-by" title="${esc(c.contractor)}">${esc(c.contractor)}</div></td>
+      <td><div class="ct-name" title="${esc(c.name)}">${esc(c.name)||'—'}</div>${ctRangeCell(c)}<div class="ct-by" title="${esc(c.contractor)}">${esc(c.contractor)}</div></td>
       <td class="num">${c.amount?fmtNum(c.amount,2):'—'}</td>
       <td style="white-space:nowrap;">${fmtDateShort(c.endDate)}${endHint}</td>
       <td style="white-space:nowrap;">${fmtDateShort(c.warrantyEnd)}${wHint}</td>
@@ -3384,18 +3476,117 @@ function ctRouteOptions(sel){
     return `<option value="${esc(no)}" ${String(sel)===no?'selected':''}>ทล.${esc(no)}${name?' — '+esc(name):''}</option>`;
   }).join('');
 }
-function addContractRangeRow(r){
+const CT_TRASH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg>';
+/* noSync = ตอนเปิดฟอร์มกำลังเติมหลายแถว ยังไม่ต้องจัดช่องปริมาณงาน */
+function addContractRangeRow(r, noSync){
   r = r || {route:'', k1:null, k2:null, qty:''};
   const div = document.createElement('div');
   div.className = 'ct-range-row';
-  div.style.cssText = 'display:grid;grid-template-columns:2.2fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--line,#e5e7eb);';
-  div.innerHTML = `<div class="f-row" style="margin:0;"><label>สายทาง</label><select class="ct-r-route" onchange="validateContractRanges()">${ctRouteOptions(r.route)}</select></div>
-    <div class="f-row" style="margin:0;"><label>กม.เริ่ม</label><input class="ct-r-k1" placeholder="229+000" value="${r.k1==null?'':kmFmt(r.k1)}" oninput="validateContractRanges()"></div>
-    <div class="f-row" style="margin:0;"><label>กม.สิ้นสุด</label><input class="ct-r-k2" placeholder="231+500" value="${r.k2==null?'':kmFmt(r.k2)}" oninput="validateContractRanges()"></div>
-    <button type="button" class="btn btn-ghost btn-sm" title="ลบช่วงนี้" onclick="this.closest('.ct-range-row').remove();validateContractRanges()">✕</button>
-    <div class="f-row" style="margin:0;grid-column:1 / 4;"><label>ปริมาณงานของช่วงนี้ <small style="color:var(--ink-400);font-weight:400;">(ไม่บังคับ)</small></label><input class="ct-r-qty" placeholder="เช่น 8,000 ตร.ม. / 2.500 กม." value="${esc(r.qty||'')}"></div>`;
+  div.innerHTML = `<div class="f-row ct-c-route"><label>สายทาง</label><select class="ct-r-route" aria-label="สายทาง" onchange="validateContractRanges()">${ctRouteOptions(r.route)}</select></div>
+    <div class="f-row"><label>กม.เริ่ม</label><input class="ct-r-k1" aria-label="กม.เริ่ม" placeholder="229+000" value="${r.k1==null?'':kmFmt(r.k1)}" oninput="validateContractRanges()"></div>
+    <div class="f-row"><label>กม.สิ้นสุด</label><input class="ct-r-k2" aria-label="กม.สิ้นสุด" placeholder="231+500" value="${r.k2==null?'':kmFmt(r.k2)}" oninput="validateContractRanges()"></div>
+    <div class="f-row ct-c-qty"><label class="ct-r-qty-lbl">ปริมาณงานช่วงนี้ (ไม่บังคับ)</label><input class="ct-r-qty" aria-label="ปริมาณงาน" placeholder="เช่น 8,000 ตร.ม." value="${esc(r.qty||'')}"></div>
+    <button type="button" class="ct-x" title="ลบช่วงนี้" aria-label="ลบช่วงนี้" onclick="this.closest('.ct-range-row').remove();ctRefreshRanges()">${CT_TRASH_ICON}</button>`;
   document.getElementById('ct-ranges').appendChild(div);
+  if(!noSync) ctRefreshRanges();
+}
+function ctRefreshRanges(){
+  const rows = [...document.getElementById('ct-ranges').children];
+  rows.forEach(row=>{ row.querySelector('.ct-x').hidden = rows.length===1; });
+  ctSyncQty();
   validateContractRanges();
+}
+/* ช่วงเดียว: ปริมาณงานในแถวคือปริมาณรวม / หลายช่วง: เปิดช่องปริมาณรวม แล้วย้ายค่าที่กรอกไว้ไปให้ ไม่ต้องพิมพ์ใหม่
+   สัญญาเดิมที่มีทั้งปริมาณรวมและปริมาณของช่วง จะแสดงทั้งสองช่อง ข้อมูลจึงไม่หาย */
+function ctSyncQty(){
+  const rows = [...document.getElementById('ct-ranges').children], multi = rows.length>1;
+  const total = document.getElementById('ct-qty'), box = document.getElementById('ct-qty-total');
+  if(!rows.length) return;
+  const first = rows[0].querySelector('.ct-r-qty');
+  const move = (a,b)=>{ b.value = a.value; b.dataset.auto = a.dataset.auto||''; a.value = ''; a.dataset.auto = ''; };
+  if(multi && box.hidden && first.value) move(first, total);
+  if(!multi && !box.hidden && total.value && !first.value) move(total, first);
+  box.hidden = !multi && !(total.value && first.value);
+  rows[0].querySelector('.ct-r-qty-lbl').textContent = box.hidden ? 'ปริมาณงาน' : 'ปริมาณงานช่วงนี้ (ไม่บังคับ)';
+  first.placeholder = box.hidden ? 'เช่น 1 แห่ง (16,031 ตร.ม.)' : 'เช่น 8,000 ตร.ม.';
+}
+/* อ่านชื่อโครงการแล้วเติมสายทาง กม. และปริมาณงานให้ (ค่าที่เจ้าหน้าที่แก้เองจะไม่ถูกเขียนทับ) */
+function ctMarkManual(e){ if(e.target.id!=='ct-name') e.target.dataset.auto = ''; }
+function ctAutoFill(el, val){ if(!el.value || el.dataset.auto==='1'){ el.value = val||''; el.dataset.auto = val?'1':''; } }
+function ctParseName(){
+  const THAI = '๐๑๒๓๔๕๖๗๘๙';
+  const raw = document.getElementById('ct-name').value.replace(/[๐-๙]/g,d=>THAI.indexOf(d)).replace(/\s+/g,' ').trim();
+  const route = (raw.match(/(?:ทางหลวงหมายเลข|ทล\.?)\s*(\d+)/)||[])[1]||'';
+  const pairs = [...raw.matchAll(/กม\.?\s*(\d+\+\d+)\s*(?:-|–|ถึง)\s*(?:กม\.?\s*)?(\d+\+\d+)/g)];
+  const qty = (raw.match(/ปริมาณงาน\s*(.+)$/)||[])[1]||'';
+  const box = document.getElementById('ct-ranges'), need = Math.max(1,pairs.length);
+  while(box.children.length<need){ addContractRangeRow(); box.lastElementChild.dataset.autoRow = '1'; }
+  // ลบเฉพาะแถวที่ระบบเติมเอง แถวที่เจ้าหน้าที่เพิ่มหรือกรอกเองจะคงไว้
+  const isAuto = r=>r.dataset.autoRow==='1' && [...r.querySelectorAll('input,select')].every(e=>!e.value||e.dataset.auto==='1');
+  while(box.children.length>need && isAuto(box.lastElementChild)){ box.lastElementChild.remove(); ctRefreshRanges(); }
+  [...box.children].forEach((r,i)=>{
+    const sel = r.querySelector('.ct-r-route');
+    if(!sel.value || sel.dataset.auto==='1'){ sel.innerHTML = ctRouteOptions(route); sel.value = route; sel.dataset.auto = route?'1':''; }
+    const p = pairs[i];
+    ctAutoFill(r.querySelector('.ct-r-k1'), p?p[1]:'');
+    ctAutoFill(r.querySelector('.ct-r-k2'), p?p[2]:'');
+  });
+  ctAutoFill(box.children.length>1 ? document.getElementById('ct-qty') : box.children[0].querySelector('.ct-r-qty'), qty);
+  ctSyncQty();
+  validateContractRanges();
+}
+/* เงิน: ใส่จุลภาคให้เองเมื่อออกจากช่อง */
+function ctNum(s){ return parseFloat(String(s).replace(/,/g,''))||0; }
+function ctMoney(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function ctMoneyBlur(el){ const n = ctNum(el.value); el.value = n ? ctMoney(n) : ''; }
+/* ผู้รับจ้าง: เลือกจากชื่อในสัญญาที่บันทึกไว้หรือพิมพ์ใหม่ เรียงจากที่เคยใช้บ่อย ชื่อใหม่จึงเข้าประวัติเองหลังบันทึก */
+let ctByItems = [], ctByOn = -1;
+function ctByNorm(s){ return String(s||'').trim().replace(/\s+/g,' ').toLowerCase(); }
+function ctByHistory(){
+  const map = new Map();
+  contractsList.forEach(c=>{
+    const key = ctByNorm(c.contractor); if(!key) return;
+    const h = map.get(key) || {name:String(c.contractor).trim().replace(/\s+/g,' '), n:0};
+    h.n++; map.set(key,h);
+  });
+  return [...map.values()].sort((a,b)=>b.n-a.n);
+}
+function ctByClose(){
+  document.getElementById('ct-by-list').hidden = true;
+  document.getElementById('ct-by').setAttribute('aria-expanded','false');
+  ctByOn = -1;
+}
+function ctByOpen(){
+  const input = document.getElementById('ct-by'), list = document.getElementById('ct-by-list');
+  const q = ctByNorm(input.value), hist = ctByHistory();
+  // ชื่อตรงกับประวัติพอดี แสดงทั้งหมดให้เปลี่ยนได้ / ไม่ตรงเลยแปลว่าพิมพ์ชื่อใหม่ จึงไม่ต้องขึ้นรายการ
+  ctByItems = hist.some(h=>ctByNorm(h.name)===q) ? hist : hist.filter(h=>ctByNorm(h.name).includes(q));
+  ctByOn = -1; list.innerHTML = '';
+  ctByItems.forEach(h=>{
+    const it = document.createElement('div'); it.className = 'ct-combo-item'; it.setAttribute('role','option');
+    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = h.name;
+    const un = document.createElement('span'); un.className = 'un'; un.textContent = h.n+' สัญญา';
+    it.append(nm,un);
+    it.onmousedown = e=>{ e.preventDefault(); ctByPick(h.name); };
+    list.append(it);
+  });
+  list.hidden = !ctByItems.length;
+  input.setAttribute('aria-expanded', String(!list.hidden));
+}
+function ctByPick(name){ document.getElementById('ct-by').value = name; ctByClose(); }
+function ctByMove(step){
+  const list = document.getElementById('ct-by-list');
+  if(list.hidden) ctByOpen();
+  const rows = [...list.children]; if(!rows.length) return;
+  ctByOn = (ctByOn+step+rows.length)%rows.length;
+  rows.forEach((r,i)=>r.classList.toggle('on',i===ctByOn));
+  rows[ctByOn].scrollIntoView({block:'nearest'});
+}
+function ctByKey(e){
+  if(e.key==='ArrowDown'){ e.preventDefault(); ctByMove(1); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); ctByMove(-1); }
+  else if(e.key==='Enter' && ctByOn>=0){ e.preventDefault(); ctByPick(ctByItems[ctByOn].name); }
+  else if(e.key==='Escape') ctByClose();
 }
 /* คณะกรรมการตรวจรับ / ผู้ควบคุมงาน: แต่ละท่านกรอก ชื่อ / นามสกุล / ตำแหน่ง แยกช่อง
    เก็บเป็นข้อความบรรทัดละคน "ชื่อ นามสกุล  ตำแหน่ง  บทบาท" (เข้ากับข้อมูลเดิม)
@@ -3415,10 +3606,10 @@ function addPersonRow(kind, m){
   div.dataset.fixed = fixed ? '1' : '';
   div.dataset.role = fixed ? cfg.fixed[box.children.length][1] : cfg.extra;
   div.innerHTML = `<div class="ct-person-role"></div>
-    <div class="f-row"><label>ชื่อ</label><input class="ct-p-first" placeholder="ชื่อ" value="${esc(m.first)}"></div>
-    <div class="f-row"><label>นามสกุล</label><input class="ct-p-last" placeholder="นามสกุล" value="${esc(m.last)}"></div>
-    <div class="f-row ct-p-pos-wrap"><label>ตำแหน่ง</label><input class="ct-p-pos" placeholder="ตำแหน่ง" value="${esc(m.pos)}"></div>
-    ${fixed ? '<span></span>' : `<button type="button" class="btn btn-ghost btn-sm" title="ลบท่านนี้" onclick="this.closest('.ct-person-row').remove();ctPersonLabels('${kind}')">✕</button>`}`;
+    <div class="f-row"><label>ชื่อ</label><input class="ct-p-first" aria-label="ชื่อ" placeholder="ชื่อ" value="${esc(m.first)}"></div>
+    <div class="f-row"><label>นามสกุล</label><input class="ct-p-last" aria-label="นามสกุล" placeholder="นามสกุล" value="${esc(m.last)}"></div>
+    <div class="f-row ct-p-pos-wrap"><label>ตำแหน่ง</label><input class="ct-p-pos" aria-label="ตำแหน่ง" placeholder="ตำแหน่ง" value="${esc(m.pos)}"></div>
+    ${fixed ? '' : `<button type="button" class="ct-x" title="ลบท่านนี้" aria-label="ลบท่านนี้" onclick="this.closest('.ct-person-row').remove();ctPersonLabels('${kind}')">${CT_TRASH_ICON}</button>`}`;
   box.appendChild(div);
   ctPersonLabels(kind);
 }
@@ -3475,11 +3666,10 @@ function collectContractRanges(){
 }
 function validateContractRanges(){
   const msg = document.getElementById('ct-range-msg'); if(!msg) return;
-  const {ranges, errors, notes} = collectContractRanges();
+  const {errors, notes} = collectContractRanges();
   let h = '';
   if(errors.length) h += `<div class="hazard" style="font-size:12px;white-space:normal;">⚠ ${errors.map(esc).join('<br>⚠ ')}</div>`;
   if(notes.length) h += `<div style="color:var(--ink-500);font-size:12px;margin-top:4px;">ℹ ${notes.map(esc).join('<br>ℹ ')}</div>`;
-  if(!errors.length && !notes.length) h = ranges.length ? '<span style="color:var(--success);font-size:12px;">✓ ช่วงทางหลวงถูกต้อง</span>' : '<span style="color:var(--ink-400);font-size:12px;">ยังไม่มีช่วงทางหลวง — เพิ่มอย่างน้อย 1 ช่วง</span>';
   msg.innerHTML = h;
 }
 function closeContractForm(){ document.getElementById('ct-form-overlay').classList.add('hidden'); }
@@ -3492,9 +3682,22 @@ function ctTypeChanged(){
   if(t==='ผิวทาง') document.getElementById('ct-refl').checked = true;
   if(t==='ไฟฟ้า') document.getElementById('ct-refl').checked = false;
   document.getElementById('ct-warr').dataset.manual = '';
+  ctReflToggled();
+}
+function ctSetRefl(m, iso){ const el = document.getElementById('ct-refl'+m); el.value = iso; thdateSync(el); }
+/* ปิด "ต้องวัด" แล้ววันที่วัดของทั้งสองรอบไม่มีความหมาย จึงล้างทิ้ง */
+function ctReflToggled(){
+  if(!document.getElementById('ct-refl').checked){ ctSetRefl(12,''); ctSetRefl(24,''); }
   ctAutoDates();
 }
-/* คำนวณวันคืนค้ำประกัน (วันตรวจรับ + ปี; ยังไม่ตรวจรับใช้วันส่งงาน) และแสดงกำหนดวัดค่าสะท้อนแสง */
+/* ติ๊กวัดแล้ว = ใส่วันนี้ให้ (แก้เป็นวันวัดจริงได้) · เอาติ๊กออก = ล้างวันที่ */
+function ctReflDoneChanged(m, el){
+  if(el.checked && !document.getElementById('ct-deliver').value){ el.checked = false; alert('กรุณากรอกวันที่ส่งงานก่อน'); return; }
+  ctSetRefl(m, el.checked ? ctTodayIso() : '');
+  if(el.checked) document.getElementById('ct-refl').checked = true;
+  ctAutoDates();
+}
+/* คำนวณวันคืนค้ำประกัน (วันตรวจรับ + ปี; ยังไม่ตรวจรับใช้วันส่งงาน) และแสดงกำหนดวัดค่าสะท้อนแสงของแต่ละรอบ */
 function ctAutoDates(){
   const v = id => document.getElementById(id).value;
   const c = {deliveryDate:v('ct-deliver'), acceptDate:v('ct-accept'), reflectNeeded:document.getElementById('ct-refl').checked};
@@ -3502,13 +3705,22 @@ function ctAutoDates(){
   const warrEl = document.getElementById('ct-warr');
   const calc = ctCalcWarrEnd(base, yrs);
   if(calc && !warrEl.dataset.manual){ warrEl.value = calc; thdateSync(warrEl); }
-  const msg = [];
-  if(calc) msg.push(`วันคืนค้ำประกันตามสูตร: <b>${fmtDateShort(calc)}</b> (${c.acceptDate?'วันตรวจรับ':'วันส่งงาน'} + ${yrs} ปี)${warrEl.dataset.manual && warrEl.value!==calc?` · <a href="#" onclick="document.getElementById('ct-warr').dataset.manual='';ctAutoDates();return false;">ใช้วันที่ตามสูตร</a>`:''}`);
-  else if(Number(yrs)>0) msg.push('กรอกวันส่งงานหรือวันตรวจรับ เพื่อคำนวณวันคืนค้ำประกันอัตโนมัติ');
-  if(warrEl.value) msg.push(`แจ้งเตือนคืนค้ำประกัน: ${[3,2,1].map(m=>fmtDateShort(ctAddMonths(warrEl.value,-m))+' ('+m+' ด.)').join(' · ')}`);
-  document.getElementById('ct-refl-done').style.display = (c.reflectNeeded && c.deliveryDate) ? 'grid' : 'none';
-  if(c.reflectNeeded) msg.push(c.deliveryDate ? 'วัดค่าสะท้อนแสง: ' + ctReflDates(c).map(r=>`รอบ ${r.months} เดือน ${fmtDateShort(r.date)}`).join(' · ') : 'วัดค่าสะท้อนแสง: กรอกวันส่งงานเพื่อคำนวณกำหนด');
-  document.getElementById('ct-auto-msg').innerHTML = msg.join('<br>');
+  document.getElementById('ct-warr-tag').hidden = !(calc && warrEl.value===calc);
+  document.getElementById('ct-auto-msg').innerHTML = (calc && warrEl.value!==calc)
+    ? `วันคืนค้ำประกันตามสูตร: <b>${fmtDateShort(calc)}</b> (${c.acceptDate?'วันตรวจรับ':'วันส่งงาน'} + ${yrs} ปี) · <a href="#" onclick="document.getElementById('ct-warr').dataset.manual='';ctAutoDates();return false;">ใช้วันที่ตามสูตร</a>` : '';
+  // ไม่มีวันส่งงาน ระบบไม่บันทึกวันที่วัด จึงล้างให้เห็นตรงกัน
+  if(!c.deliveryDate){ ctSetRefl(12,''); ctSetRefl(24,''); }
+  const dues = ctReflDates(c), today = ctTodayIso();
+  [12,24].forEach(m=>{
+    const el = document.getElementById('ct-due'+m), box = document.getElementById('ct-round'+m);
+    const done = !!v('ct-refl'+m), due = (dues.find(r=>r.months===m)||{}).date||'';
+    el.textContent = due ? 'กำหนด '+fmtDateShort(due) : (c.reflectNeeded ? 'รอวันที่ส่งงาน' : 'ไม่ต้องวัด');
+    el.classList.toggle('on', !!due);
+    el.classList.toggle('late', !!due && !done && due<today);
+    document.getElementById('ct-done'+m).checked = done;
+    box.classList.toggle('done', done);
+    box.classList.toggle('off', !c.reflectNeeded);
+  });
 }
 function openContractForm(id){
   if(!requireAdmin()) return;
@@ -3520,7 +3732,7 @@ function openContractForm(id){
   document.getElementById('ct-no').value = c ? c.contractNo : '';
   document.getElementById('ct-f-fy').value = c ? c.fiscalYear : (TODAY.getMonth()>=9 ? TODAY.getFullYear()+544 : TODAY.getFullYear()+543);
   document.getElementById('ct-by').value = c ? c.contractor : '';
-  document.getElementById('ct-amount').value = c && c.amount ? c.amount : '';
+  document.getElementById('ct-amount').value = c && c.amount ? ctMoney(c.amount) : '';
   document.getElementById('ct-qty').value = c ? c.workQty : '';
   setPersonRows('sup', c ? c.supervisor : '');
   document.getElementById('ct-sign').value = c ? c.signDate : '';
@@ -3528,7 +3740,7 @@ function openContractForm(id){
   document.getElementById('ct-days').value = c ? c.durationDays : '';
   const endEl = document.getElementById('ct-end');
   endEl.value = c ? c.endDate : '';
-  document.getElementById('ct-penalty').value = c && c.penaltyPerDay ? c.penaltyPerDay : '';
+  document.getElementById('ct-penalty').value = c && c.penaltyPerDay ? ctMoney(c.penaltyPerDay) : '';
   setPersonRows('committee', c ? c.committee : '');
   document.getElementById('ct-deliver').value = c ? c.deliveryDate : '';
   document.getElementById('ct-accept').value = c ? c.acceptDate : '';
@@ -3547,13 +3759,13 @@ function openContractForm(id){
   ctAutoDates();
   document.getElementById('ct-note').value = c ? c.note : '';
   document.getElementById('ct-ranges').innerHTML = '';
-  if(c && c.ranges.length) c.ranges.forEach(r=>addContractRangeRow(r)); else addContractRangeRow();
-  document.getElementById('ct-form-overlay').classList.remove('hidden');
+  if(c && c.ranges.length) c.ranges.forEach(r=>addContractRangeRow(r,true)); else addContractRangeRow(null,true); document.getElementById('ct-qty').dataset.auto = ''; document.getElementById('ct-qty-total').hidden = false; ctRefreshRanges(); ctByClose();
+  document.getElementById('ct-later').classList.toggle('closed', !(c && (c.deliveryDate||c.acceptDate||c.workType||c.warrantyYears||c.warrantyEnd||c.reflectNeeded))); document.getElementById('ct-form-overlay').classList.remove('hidden'); document.getElementById('ct-form-body').scrollTop = 0;
 }
 async function saveContract(){
   if(!isAdmin()) return;
   const g = id => document.getElementById(id).value.trim();
-  const name = g('ct-name'), no = g('ct-no');
+  const name = g('ct-name').replace(/\s*\n\s*/g,' '), no = g('ct-no'); // วางข้อความจากหัวสัญญาอาจมีขึ้นบรรทัดใหม่
   if(!name && !no){ alert('กรุณาระบุชื่อโครงการหรือเลขที่สัญญาอย่างน้อย 1 อย่าง'); return; }
   const {ranges, errors} = collectContractRanges();
   if(errors.length){ alert('ช่วงทางหลวงยังไม่ถูกต้อง\n• ' + errors.join('\n• ')); return; }
@@ -3577,14 +3789,14 @@ async function saveContract(){
   const dupNo = no && contractsList.find(x=>String(x.contractNo).trim()===no && String(x.id)!==String(id));
   if(dupNo && !confirm('เลขที่สัญญา "'+no+'" มีอยู่แล้ว ('+(dupNo.name||'ไม่มีชื่อ')+')\nต้องการบันทึกซ้ำหรือไม่?')) return;
   // ช่องต่อรอง/แจ้งทำสัญญา/สถานะพิเศษ ไม่มีในฟอร์มแล้ว → แก้ไขสัญญาเดิมให้คงค่าเดิมไว้
-  const prev = id ? (contractsList.find(x=>String(x.id)===String(id)) || {}) : {};
+  const prev = id ? (contractsList.find(x=>String(x.id)===String(id)) || {}) : {}; let workQty = g('ct-qty'); if(ranges.length===1 && !workQty){ workQty = ranges[0].qty; ranges[0].qty = ''; } // ช่วงเดียว: ปริมาณในแถวคือปริมาณรวม
   const c = {
     id: id || undefined, fiscalYear: g('ct-f-fy') ? Number(g('ct-f-fy')) : '', contractNo:no, name, contractor:g('ct-by'),
-    amount: parseFloat(g('ct-amount'))||0, startDate:start, endDate:end, warrantyEnd:warr, supervisor:sup.text,
-    workQty:g('ct-qty'), deliveryDate:deliver, acceptDate:accept, workType:g('ct-type'),
+    amount: ctNum(g('ct-amount')), startDate:start, endDate:end, warrantyEnd:warr, supervisor:sup.text,
+    workQty, deliveryDate:deliver, acceptDate:accept, workType:g('ct-type'),
     warrantyYears: g('ct-wyears') ? Number(g('ct-wyears')) : '', reflectNeeded:document.getElementById('ct-refl').checked,
     refl12Done:r12, refl24Done:r24,
-    signDate:sign, durationDays: g('ct-days') ? Number(g('ct-days')) : '', penaltyPerDay: parseFloat(g('ct-penalty'))||0,
+    signDate:sign, durationDays: g('ct-days') ? Number(g('ct-days')) : '', penaltyPerDay: ctNum(g('ct-penalty')),
     committee:cm.text, negotiateDate:prev.negotiateDate||'', notifyDate:prev.notifyDate||'',
     status:prev.status||'', note:g('ct-note'), ranges
   };
