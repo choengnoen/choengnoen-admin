@@ -346,13 +346,28 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .audit-btn.empty{background:transparent;color:var(--ink-400);font-weight:500;}
   .sum-table tr.audit-row > td{white-space:normal;background:var(--paper-50);padding:6px 14px 14px;}
   /* ตารางสรุปเลื่อนซ้าย-ขวาได้ — ให้กล่องบันทึกค้างอยู่ในส่วนที่มองเห็น ไม่ยืดตามความกว้างตาราง */
-  .audit-inner{position:sticky;left:14px;max-width:min(900px, calc(100vw - 96px));}
-  .audit-card{border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 14px;margin-top:8px;font-size:13px;line-height:1.65;}
-  .audit-card .ah{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
-  .audit-card .ah b{color:var(--navy-900);}
-  .audit-card .ah .acts{margin-left:auto;display:flex;gap:4px;}
-  .audit-card .lb{color:var(--ink-600);}
+  .audit-inner{position:sticky;left:14px;max-width:calc(100vw - 96px);}
+  .audit-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .audit-head b{color:var(--navy-900);}
+  .audit-head .hint{color:var(--ink-400);font-size:12px;}
+  .audit-head .btn{margin-left:auto;}
+  .audit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px;}
+  @media (max-width:820px){ .audit-grid{grid-template-columns:minmax(0,1fr);} }
+  /* แถบสีด้านซ้ายบอกสถานะ — เขียว = ชดเชยครบ, ส้ม = ยังค้าง, เทา = รอตรวจสอบ */
+  .audit-card{display:flex;flex-direction:column;border:1px solid var(--line);border-left:3px solid var(--ink-400);border-radius:10px;background:#fff;padding:12px 14px 10px;font-size:13px;line-height:1.6;}
+  .audit-card.st-open{border-left-color:#d98a12;}
+  .audit-card.st-done{border-left-color:var(--success);}
+  .audit-card .ah{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .audit-card .who{min-width:0;flex:1;}
+  .audit-card .who b{display:block;color:var(--navy-900);font-size:14px;line-height:1.35;}
+  .audit-card .who small{color:var(--ink-600);font-size:12px;}
+  .audit-card .ah .pill{flex:none;}
+  .audit-card .rows{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:3px 12px;margin-bottom:10px;}
+  .audit-card .lb{color:var(--ink-400);font-size:12px;line-height:1.75;}
+  .audit-card .foot{display:flex;align-items:baseline;justify-content:space-between;gap:6px 14px;flex-wrap:wrap;margin-top:auto;padding-top:8px;border-top:1px dashed var(--line);}
   .audit-card .meta{color:var(--ink-400);font-size:12px;}
+  .audit-card .amt{margin-left:auto;color:var(--navy-900);font-weight:700;font-variant-numeric:tabular-nums;}
+  .audit-card .amt span{color:var(--ink-600);font-weight:500;}
   .audit-link{background:none;border:none;padding:0;color:var(--navy-700);text-decoration:underline;cursor:pointer;font:inherit;}
   .audit-empty{color:var(--ink-400);font-size:13px;padding:8px 0 2px;}
   .labor-summary{display:flex;gap:14px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid var(--line);}
@@ -1361,21 +1376,21 @@ function auditNotesHTML(cyc){
   const list = laborAuditNotes[cyc] || [], edit = canEditAuditNotes();
   const cards = list.map(n=>{
     const st = auditStatusOf(n.status);
-    const money = (n.days || n.amount) ? `<div><span class="lb">จำนวน:</span> ${n.days ? `${n.days} วัน` : ''}${n.days && n.amount ? ' = ' : ''}${n.amount ? `${fmtMoney(n.amount)} บาท` : ''}</div>` : '';
+    const money = (n.days || n.amount) ? `<div class="amt">${n.days ? `<span>${n.days} วัน${n.amount ? ' = ' : ''}</span>` : ''}${n.amount ? `${fmtMoney(n.amount)} บาท` : ''}</div>` : '';
     const link = n.linkCyc ? ` <button type="button" class="audit-link" onclick="toggleAuditRow('${jsArg(n.linkCyc)}')">→ ดูบันทึกเดือน${cycleLabel(n.linkCyc)}</button>` : '';
-    return `<div class="audit-card">
-      <div class="ah"><b>${esc(n.staff || 'ไม่ระบุชื่อ')}</b><span class="pill pill-neutral">${esc(n.kind || '')}</span><span class="pill ${st.cls}">${esc(st.label)}</span>
-        ${edit ? `<span class="acts"><button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="openAuditModal('${jsArg(cyc)}','${jsArg(n.id)}')"></button></span>` : ''}</div>
-      ${n.fact ? `<div><span class="lb">ข้อเท็จจริง:</span> ${esc(n.fact)}</div>` : ''}
-      ${money}
-      ${(n.fix || link) ? `<div><span class="lb">การแก้ไข:</span> ${esc(n.fix || '')}${link}</div>` : ''}
-      ${n.ref ? `<div><span class="lb">อ้างอิง:</span> ${esc(n.ref)}</div>` : ''}
-      <div class="meta">บันทึกโดย ${esc(n.by || '—')} · ${fmtDateTH(n.at)}</div>
+    const rows = (n.fact ? `<span class="lb">ข้อเท็จจริง</span><div>${esc(n.fact)}</div>` : '')
+      + ((n.fix || link) ? `<span class="lb">การแก้ไข</span><div>${esc(n.fix || '')}${link}</div>` : '')
+      + (n.ref ? `<span class="lb">อ้างอิง</span><div>${esc(n.ref)}</div>` : '');
+    return `<div class="audit-card st-${esc(st.v)}">
+      <div class="ah"><div class="who"><b>${esc(n.staff || 'ไม่ระบุชื่อ')}</b>${n.kind ? `<small>${esc(n.kind)}</small>` : ''}</div><span class="pill ${st.cls}">${esc(st.label)}</span>
+        ${edit ? `<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="openAuditModal('${jsArg(cyc)}','${jsArg(n.id)}')"></button>` : ''}</div>
+      ${rows ? `<div class="rows">${rows}</div>` : ''}
+      <div class="foot"><div class="meta">บันทึกโดย ${esc(n.by || '—')} · ${fmtDateTH(n.at)}</div>${money}</div>
     </div>`;
   }).join('');
-  return `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><b style="color:var(--navy-900)">บันทึกการตรวจสอบ ${cycleLabel(cyc)}</b><span style="color:var(--ink-400);font-size:12px;">แสดงบนหน้าจอเท่านั้น ไม่พิมพ์ลงแบบ ง.3-26</span>
-      ${edit ? `<button class="btn btn-ghost btn-sm" data-ic="plus" style="margin-left:auto;" onclick="openAuditModal('${jsArg(cyc)}')">เพิ่มบันทึก</button>` : ''}</div>`
-    + (cards || '<div class="audit-empty">ยังไม่มีบันทึกการตรวจของเดือนนี้</div>');
+  return `<div class="audit-head"><b>บันทึกการตรวจสอบ ${cycleLabel(cyc)}</b><span class="hint">แสดงบนหน้าจอเท่านั้น ไม่พิมพ์ลงแบบ ง.3-26</span>
+      ${edit ? `<button class="btn btn-ghost btn-sm" data-ic="plus" onclick="openAuditModal('${jsArg(cyc)}')">เพิ่มบันทึก</button>` : ''}</div>`
+    + (cards ? `<div class="audit-grid">${cards}</div>` : '<div class="audit-empty">ยังไม่มีบันทึกการตรวจของเดือนนี้</div>');
 }
 function openAuditModal(cyc, id){
   if(!canEditAuditNotes()) return;
