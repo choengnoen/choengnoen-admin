@@ -4534,7 +4534,14 @@ function fuelShortDate(ds){
   const d = new Date(ds+'T00:00:00');
   return DOW_TH[d.getDay()]+' '+(+ds.slice(8,10))+' '+FUEL_SHORT_MONTH[+ds.slice(5,7)-1];
 }
-function fuelStamp(iso){ return String(iso||'').slice(0,16).replace('T',' '); }
+/* วันเวลาแบบไทยตามเวลาเครื่อง เช่น 3 พ.ย. 69 เวลา 00:15 น. (ค่าที่เก็บเป็น ISO เวลาสากล) */
+function fuelStamp(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  if(isNaN(d)) return String(iso);
+  const p = n=>String(n).padStart(2,'0');
+  return d.getDate()+' '+FUEL_SHORT_MONTH[d.getMonth()]+' '+p((d.getFullYear()+543)%100)+' เวลา '+p(d.getHours())+':'+p(d.getMinutes())+' น.';
+}
 async function saveFuelDayCheck(date, patch){
   const next = Object.assign({checked:[], checkedBy:'', checkedAt:'', confirmed:false, confirmedBy:'', confirmedAt:''}, fuelDayChecks[date]||{}, patch);
   await apiPost('update', 'fuel_day_checks', {dayKey:date, checkedJson:next.checked, checkedBy:next.checkedBy, checkedAt:next.checkedAt,
