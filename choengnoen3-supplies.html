@@ -789,7 +789,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fd-pb{height:12px;background:#e4e8ec;border-radius:6px;overflow:hidden;margin:6px 0;}
   .fd-pb i{display:block;height:100%;background:#3fae6c;transition:width .25s;}
   .fd-lock{background:var(--success-bg);color:var(--success);border-radius:8px;padding:7px 10px;margin-top:8px;font-weight:600;}
-  .fd-lock a{font-weight:400;margin-left:6px;color:var(--ink-600);}
+  .fd-lock a{font-weight:400;margin-left:6px;color:var(--ink-600);white-space:nowrap;}
+  .fd-lock .fd-nb{white-space:nowrap;}
   .fd-mut{color:var(--ink-400);font-size:11.5px;}
   .fd-noneed{background:var(--paper-100);color:var(--ink-600);border-radius:8px;padding:7px 10px;margin-top:8px;font-weight:600;text-align:center;}
   .fd-prog .btn[disabled]{background:var(--paper-100);color:var(--ink-400);box-shadow:none;cursor:not-allowed;}
@@ -4800,7 +4801,7 @@ function renderReportFuel(mk){
     : `<div class="fd-alert fd-alert-ok"><b>${real.length?'✔ ไม่พบความผิดปกติในวันนี้':'วันนี้ยังไม่มีรายการเบิก'}</b>${real.length?'<div>ปริมาณและเลขไมล์เหมาะสมเมื่อเทียบกับครั้งก่อน</div>':''}</div>`;
   let progHtml = `<div class="fd-prog"><b>ความคืบหน้าการตรวจ</b><div class="fd-pb"><i style="width:${real.length?ckCount/real.length*100:0}%"></i></div><span>ตรวจแล้ว <b>${ckCount}</b> / ${real.length} รายการ</span>`;
   if(confirmed){
-    progHtml += `<div class="fd-lock">🔒 ยืนยันตรวจครบแล้ว — ${esc(rec.confirmedBy||'')} · ${esc(fuelStamp(rec.confirmedAt))}${canCk?` <a href="#" data-funlock="1">ปลดล็อก</a>`:''}</div>`;
+    progHtml += `<div class="fd-lock">🔒 ยืนยันตรวจครบแล้ว — <span class="fd-nb">${esc(rec.confirmedBy||'')}</span> · <span class="fd-nb">${esc(fuelStamp(rec.confirmedAt))}</span>${canCk?` <a href="#" data-funlock="1">ปลดล็อก</a>`:''}</div>`;
   } else if(!real.length){
     progHtml += `<div class="fd-noneed">ไม่มีรายการเบิก — ไม่ต้องยืนยัน</div>`;
   } else if(canCk){
@@ -5394,7 +5395,7 @@ function renderReportMaterialDay(mk){
   const ckCount = real.filter(r=>ckSet.has(r.id)).length;
   let sumHtml = `<div class="fd-prog"><b>ความคืบหน้าการตรวจ</b><div class="fd-pb"><i style="width:${real.length?ckCount/real.length*100:0}%"></i></div><span>ตรวจแล้ว <b>${ckCount}</b> / ${real.length} รายการ</span>`;
   if(confirmed){
-    sumHtml += `<div class="fd-lock">🔒 ยืนยันตรวจครบแล้ว — ${esc(rec.confirmedBy||'')} · ${esc(fuelStamp(rec.confirmedAt))}${canCk?` <a href="#" data-munlock="1">ปลดล็อก</a>`:''}</div>`;
+    sumHtml += `<div class="fd-lock">🔒 ยืนยันตรวจครบแล้ว — <span class="fd-nb">${esc(rec.confirmedBy||'')}</span> · <span class="fd-nb">${esc(fuelStamp(rec.confirmedAt))}</span>${canCk?` <a href="#" data-munlock="1">ปลดล็อก</a>`:''}</div>`;
   } else if(!real.length){
     sumHtml += `<div class="fd-noneed">ไม่มีรายการเบิก — ไม่ต้องยืนยัน</div>`;
   } else if(canCk){
