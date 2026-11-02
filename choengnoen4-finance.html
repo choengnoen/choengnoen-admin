@@ -433,6 +433,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="print-standard.js?v=20261102"></script>
 <script src="dsel.js"></script>
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s4"></script>
@@ -1574,26 +1575,33 @@ function __hasThSarabun(){
     return c.measureText(t).width!==a;
   }catch(e){ return false; }
 }
-/* พิมพ์ผ่าน iframe แยก เพื่อตั้งกระดาษ A4 แนวนอนเฉพาะแบบนี้ (ไม่กระทบแบบฟอร์มอื่นที่พิมพ์แนวตั้ง) */
-function __printInFrame(title, css, body){
-  const old = document.getElementById('__print-frame'); if(old) old.remove();
-  const fr = document.createElement('iframe');
-  fr.id = '__print-frame';
-  fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
-  document.body.appendChild(fr);
-  const d = fr.contentDocument;
-  d.open();
-  d.write(`<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>${esc(title)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
-<style>${css}</style></head><body>${body}</body></html>`);
-  d.close();
-  // ข้อความที่ยาวเกินช่อง (ชื่อยาว/ยอดเงินหลักล้าน) บีบเฉพาะข้อความนั้นให้พอดีช่อง แทนการล้นทับเส้นตาราง
-  const fit = ()=>d.querySelectorAll('text[data-w]').forEach(el=>{
-    const w = Number(el.getAttribute('data-w'));
-    if(el.getComputedTextLength() > w){ el.setAttribute('textLength', w); el.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
-  });
-  const go = ()=>{ try{ fit(); fr.contentWindow.focus(); fr.contentWindow.print(); }catch(e){ console.error(e); } };
-  const ready = (d.fonts && d.fonts.ready) ? d.fonts.ready : Promise.resolve();
+/* พิมพ์ฟอร์ม A4 แนวนอนจากหน้าหลัก (ไม่ใช้ iframe — ดู print-standard.js) ; css/body อยู่ใน Shadow DOM สไตล์จึงไม่ปนกับหน้าเว็บ */
+function __printLandscape(title, css, body){
+  let box = document.getElementById('print-landscape');
+  if(!box){ box = document.createElement('div'); box.id = 'print-landscape'; box.className = 'print-only print-a4-landscape'; document.body.appendChild(box); box.attachShadow({mode:'open'}); }
+  const root = box.shadowRoot;
+  root.innerHTML = `<style>${css}</style>${body}`;
+  // ข้อความที่ยาวเกินช่อง (ชื่อยาว/ยอดเงินหลักล้าน) บีบเฉพาะข้อความนั้นให้พอดีช่อง แทนการล้นทับเส้นตาราง — วัดตอนวางนอกจอ
+  const fit = ()=>{
+    box.style.cssText = 'display:block;position:absolute;left:-99999px;top:0;';
+    root.querySelectorAll('text[data-w]').forEach(el=>{
+      const w = Number(el.getAttribute('data-w'));
+      if(el.getComputedTextLength() > w){ el.setAttribute('textLength', w); el.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
+    });
+    box.style.cssText = '';
+  };
+  const go = ()=>{
+    try{
+      fit();
+      document.querySelectorAll('.print-only').forEach(p=>p.classList.remove('show-print'));
+      box.classList.add('show-print');
+      const oldTitle = document.title; document.title = title; // ชื่อไฟล์ตอนบันทึกเป็น PDF
+      const done = ()=>{ document.title = oldTitle; box.classList.remove('show-print'); root.innerHTML = ''; window.removeEventListener('afterprint', done); };
+      window.addEventListener('afterprint', done);
+      window.print();
+    }catch(e){ console.error(e); }
+  };
+  const ready = document.fonts ? document.fonts.ready : Promise.resolve();
   // รอฟอนต์โหลดครบก่อนพิมพ์ (สูงสุด 2.5 วินาที) ไม่งั้นตัวอักษรในกระดาษจะเป็นฟอนต์สำรอง
   Promise.race([ready, new Promise(r=>setTimeout(r,2500))]).then(()=>setTimeout(go,150));
 }
@@ -1753,8 +1761,9 @@ function __fitSvgText(root){
 // cyc ส่งมาจากปุ่มพิมพ์ในแถวตารางสรุป — ถ้าไม่ส่ง (ปุ่มในหน้าต่างรายงาน) ใช้รอบที่เลือกอยู่
 function printPaymentEvidence(cyc){
   cyc = cyc || document.getElementById('labor-cycle').value || currentCycle();
-  const css = `@page{size:A4 landscape;margin:0;} html,body{margin:0;padding:0;background:#fff;} svg{display:block;} ${GRF_CSS}`;
-  __printInFrame('หลักฐานการจ่ายเงินค่าจ้าง ง.3-26 ' + cycleLabel(cyc), css, buildPaymentEvidenceSVG(cyc, 'print'));
+  // สูงต่ำกว่า A4 เล็กน้อยกันหน้าว่างตามหลัง
+  const css = `.sheet{width:297mm;height:209.5mm;overflow:hidden;background:#fff;} svg{display:block;} ${GRF_CSS}`;
+  __printLandscape('หลักฐานการจ่ายเงินค่าจ้าง ง.3-26 ' + cycleLabel(cyc), css, `<div class="sheet">${buildPaymentEvidenceSVG(cyc, 'print')}</div>`);
 }
 
 /* ============================================================
@@ -2565,8 +2574,7 @@ function printWaterReport(){
   const billed = rows.filter(r=>r.billAmount!=null).length;
   const owes = rows.flatMap(r=>[(!r.subAPaid&&r.subACost!=null)?r.subACost:null,(!r.subBPaid&&r.subBCost!=null)?r.subBCost:null]).filter(v=>v!=null);
   const oweTotal = owes.reduce((s,v)=>s+v,0);
-  const css = `@page{size:A4 landscape;margin:12mm 11mm 10mm;}
-    html,body{margin:0;background:#fff;color:#000;font-family:'Sarabun',sans-serif;}
+  const css = `.sheet{box-sizing:border-box;padding:12mm 11mm 10mm;background:#fff;color:#000;font-family:'Sarabun',sans-serif;-webkit-box-decoration-break:clone;box-decoration-break:clone;}
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     h1{font-size:22px;font-weight:700;text-align:center;margin:0;}
     .meta{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:15px;margin:12px 0 10px;}
@@ -2584,14 +2592,14 @@ function printWaterReport(){
     td.bill{font-weight:700;}
     tfoot td{font-weight:700;background:#eef0f3;}
     .sum{display:flex;gap:24px;font-size:15px;margin-top:12px;}`;
-  const body = `<h1>ค่าน้ำประปาประจำปีงบประมาณ ${fy}</h1>
+  const body = `<div class="sheet"><h1>ค่าน้ำประปาประจำปีงบประมาณ ${fy}</h1>
     <div class="meta"><b>เลขที่ผู้ใช้น้ำ</b><span>11120040099</span><b>ชื่อผู้ใช้น้ำ</b><span>หมวดการทางระยอง (หมวดทางหลวงเชิงเนิน)</span><b>ตัดรอบ</b><span>ทุกวันที่ 1 ของเดือน</span></div>
     <table><thead><tr><th rowspan="2">เดือน</th><th colspan="4">บิลรวม (มิเตอร์หลัก)</th><th colspan="4">T23787</th><th colspan="4">W23791</th><th rowspan="2">ส่วนของ<br>สนง. (บาท)</th></tr>
       <tr><th>เลขมิเตอร์</th><th>หน่วย</th><th>ราคา/หน่วย</th><th>ยอดบิล</th><th>เลขมิเตอร์</th><th>หน่วย</th><th>เงิน</th><th>วันที่ชำระ</th><th>เลขมิเตอร์</th><th>หน่วย</th><th>เงิน</th><th>วันที่ชำระ</th></tr></thead>
       <tbody>${trs}</tbody>
       <tfoot><tr><td class="l">รวม ${billed} เดือน</td><td></td><td>${unit(sum('mainUsage'))}</td><td></td><td>${fmtMoney(sum('billAmount'))}</td><td></td><td>${unit(sum('subAUsage'))}</td><td>${fmtMoney(sum('subACost'))}</td><td></td><td></td><td>${unit(sum('subBUsage'))}</td><td>${fmtMoney(sum('subBCost'))}</td><td></td><td>${fmtMoney(sum('officeCost'))}</td></tr></tfoot></table>
-    <div class="sum"><span>ส่วนของ สนง. สะสม <b>${fmtMoney(sum('officeCost'))}</b> บาท</span><span>เงินค้างคืนจากผู้ใช้น้ำย่อย <b>${fmtMoney(oweTotal)}</b> บาท (${owes.length} รายการ)</span></div>`;
-  __printInFrame(`ค่าน้ำประปาประจำปีงบประมาณ ${fy}`, css, body);
+    <div class="sum"><span>ส่วนของ สนง. สะสม <b>${fmtMoney(sum('officeCost'))}</b> บาท</span><span>เงินค้างคืนจากผู้ใช้น้ำย่อย <b>${fmtMoney(oweTotal)}</b> บาท (${owes.length} รายการ)</span></div></div>`;
+  __printLandscape(`ค่าน้ำประปาประจำปีงบประมาณ ${fy}`, css, body);
 }
 
 /* ============================================================

@@ -560,6 +560,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="print-standard.js?v=20261102"></script>
 <script src="dsel.js"></script>
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="main"></script>
@@ -1471,7 +1472,6 @@ function printExecReport(){
       <h3>4. พัสดุ — วัสดุคงเหลือ</h3>
       <table class="of-table"><thead><tr><th>รายการ</th><th>คงเหลือ</th><th>จุดสั่งซื้อ</th><th>สถานะ</th></tr></thead>
         <tbody>${mats.map(m=>`<tr><td style="text-align:left;">${esc(m.name)}</td><td>${m.stock} ${esc(m.unit)}</td><td>${m.reorder} ${esc(m.unit)}</td><td>${matStatus(m)==='low'?'ต่ำกว่าจุดสั่งซื้อ':(matStatus(m)==='watch'?'ใกล้ถึงจุดสั่งซื้อ':'ปกติ')}</td></tr>`).join('')}</tbody></table>
-      <p style="margin-top:26px;">จัดทำโดยระบบงานบริหารหมวด — หมวดทางหลวงเชิงเนิน (รวมข้อมูลจากทั้ง 4 ระบบรอง)</p>
     </div>`;
   const el = document.getElementById('print-exec-report');
   el.classList.add('show-print'); window.print(); setTimeout(()=>el.classList.remove('show-print'), 500);
