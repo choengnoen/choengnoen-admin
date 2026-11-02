@@ -2568,13 +2568,13 @@ function printWaterReport(){
   const css = `@page{size:A4 landscape;margin:12mm 11mm 10mm;}
     html,body{margin:0;background:#fff;color:#000;font-family:'Sarabun',sans-serif;}
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    h1{font-size:18px;font-weight:700;text-align:center;margin:0;}
-    .meta{display:grid;grid-template-columns:auto 1fr;gap:0 10px;font-size:13px;margin:10px 0 8px;}
+    h1{font-size:22px;font-weight:700;text-align:center;margin:0;}
+    .meta{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:15px;margin:12px 0 10px;}
     .meta b{font-weight:700;}
-    table{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums;}
+    table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums;}
     th,td{border:1px solid #555;padding:0 5px;text-align:right;white-space:nowrap;}
-    th{font-weight:700;text-align:center;background:#eef0f3;line-height:1.25;}
-    td{height:26px;}
+    th{font-weight:700;text-align:center;background:#eef0f3;line-height:1.3;height:34px;padding:4px 5px;}
+    td{height:29px;}
     td.l{text-align:left;} td.c{text-align:center;}
     td.owe{font-weight:700;text-align:center;background:#ff6699;}
     tr.has td.m{background:#d9e1f2;}
@@ -2583,10 +2583,10 @@ function printWaterReport(){
     td.p{color:#e00000;font-weight:700;}
     td.bill{font-weight:700;}
     tfoot td{font-weight:700;background:#eef0f3;}
-    .sum{display:flex;gap:24px;font-size:13px;margin-top:10px;}`;
+    .sum{display:flex;gap:24px;font-size:15px;margin-top:12px;}`;
   const body = `<h1>ค่าน้ำประปาประจำปีงบประมาณ ${fy}</h1>
     <div class="meta"><b>เลขที่ผู้ใช้น้ำ</b><span>11120040099</span><b>ชื่อผู้ใช้น้ำ</b><span>หมวดการทางระยอง (หมวดทางหลวงเชิงเนิน)</span><b>ตัดรอบ</b><span>ทุกวันที่ 1 ของเดือน</span></div>
-    <table><thead><tr><th rowspan="2">เดือน</th><th colspan="4">บิลรวม (มิเตอร์หลัก)</th><th colspan="4">ธนิภา (T23787)</th><th colspan="4">ชุลีพร (W23791)</th><th rowspan="2">ส่วนของ<br>สนง. (บาท)</th></tr>
+    <table><thead><tr><th rowspan="2">เดือน</th><th colspan="4">บิลรวม (มิเตอร์หลัก)</th><th colspan="4">T23787</th><th colspan="4">W23791</th><th rowspan="2">ส่วนของ<br>สนง. (บาท)</th></tr>
       <tr><th>เลขมิเตอร์</th><th>หน่วย</th><th>ราคา/หน่วย</th><th>ยอดบิล</th><th>เลขมิเตอร์</th><th>หน่วย</th><th>เงิน</th><th>วันที่ชำระ</th><th>เลขมิเตอร์</th><th>หน่วย</th><th>เงิน</th><th>วันที่ชำระ</th></tr></thead>
       <tbody>${trs}</tbody>
       <tfoot><tr><td class="l">รวม ${billed} เดือน</td><td></td><td>${unit(sum('mainUsage'))}</td><td></td><td>${fmtMoney(sum('billAmount'))}</td><td></td><td>${unit(sum('subAUsage'))}</td><td>${fmtMoney(sum('subACost'))}</td><td></td><td></td><td>${unit(sum('subBUsage'))}</td><td>${fmtMoney(sum('subBCost'))}</td><td></td><td>${fmtMoney(sum('officeCost'))}</td></tr></tfoot></table>
