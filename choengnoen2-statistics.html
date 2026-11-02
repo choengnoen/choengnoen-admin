@@ -365,6 +365,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ctv-dot{width:24px;height:24px;margin:0 auto 6px;border-radius:50%;background:#fff;border:3px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
   .ctv-step.done .ctv-dot{background:var(--orange-500);border-color:var(--orange-500);}
   .ctv-step.next .ctv-dot{border-color:var(--orange-500);}
+  .ctv-step.late .ctv-dot{border-color:var(--danger);}
   .ctv-step.empty .ctv-dot{border-style:dashed;}
   .ctv-lb{font-size:12px;color:var(--ink-600);}
   .ctv-dt{font-family:'Kanit';font-size:13.5px;font-weight:500;color:var(--ink-900);}
@@ -3233,7 +3234,7 @@ function openContractDetail(id){
     return `<div style="${dd<=30?'color:var(--danger);font-weight:600;':''}">${nw('รอบ '+r.months+' เดือน')} · ${nw('กำหนด '+fmtDateShort(r.date))} · ${nw(dd<0?'เลยกำหนด '+(-dd)+' วัน (ยังไม่วัด)':'ยังไม่วัด'+(dd<=30?' (อีก '+dd+' วัน)':''))}</div>`;
   }).join('') : 'รอวันส่งงาน') : 'ไม่ต้องวัด';
   document.getElementById('ct-detail-title').textContent = c.contractNo ? 'สัญญาเลขที่ ' + c.contractNo : 'รายละเอียดสัญญา';
-  document.getElementById('ct-detail-sub').innerHTML = `<span class="pill ${st.cls}" style="font-size:11px;">${st.label}</span>${c.fiscalYear?' &nbsp;ปีงบประมาณ '+esc(c.fiscalYear):''}`;
+  document.getElementById('ct-detail-sub').innerHTML = `<span class="pill ${st.cls}" style="font-size:11px;">${st.label}</span>${c.fiscalYear && !c.contractNo?' &nbsp;ปีงบประมาณ '+esc(c.fiscalYear):''}`;
   // หัวสรุป: ชื่องาน ผู้รับจ้าง เงินค่างาน
   const chip = (k, val) => `<div class="ctv-chip"><b>${k}</b>${val}</div>`;
   document.getElementById('ct-detail-hero').innerHTML =
@@ -3253,10 +3254,13 @@ function openContractDetail(id){
     {lb:'ตรวจรับงาน', iso:c.acceptDate},
     {lb:'คืนค้ำประกัน', iso:c.warrantyEnd, hint: wa ? `<span style="color:${wa.months===1?'var(--danger)':'#b7791f'};">⚠ เหลือ ${wa.days} วัน</span>` : ''}
   ].filter(Boolean);
+  // รอบวัดแสง (เฉพาะสัญญาที่ต้องวัดและมีวันส่งงาน) เรียงตามวันที่ร่วมกับคืนค้ำประกัน · เลยกำหนดแล้วยังไม่วัด = วงแดง
+  const reflSteps = ctReflDates(c).map(r => { const dd = ctDaysTo(r.date); return {lb:'วัดแสง รอบ '+r.months+' เดือน', iso:r.date, refl:true, done:r.done, hint: r.done ? `<span style="color:var(--success);">✓ วัดแล้ว ${fmtDateShort(r.done)}</span>` : dd<0 ? `<span style="color:var(--danger);">เลยกำหนด ${-dd} วัน</span>` : dd<=30 ? `<span style="color:var(--danger);">อีก ${dd} วัน</span>` : ''}; });
+  steps.push(...[...reflSteps, steps.pop()].sort((a,b) => (a.iso||'9') < (b.iso||'9') ? -1 : 1));
   const n = steps.length; let last = -1, nextMarked = false;
-  steps.forEach((s,i) => { if(s.iso && s.iso <= today) last = i; });
+  steps.forEach((s,i) => { if(s.iso && (s.done || s.iso <= today)) last = i; });
   const stepHtml = steps.map((s,i) => {
-    let cls = !s.iso ? 'empty' : s.iso <= today ? 'done' : '';
+    let cls = !s.iso ? 'empty' : s.done ? 'done' : s.iso > today ? '' : s.refl ? 'late' : 'done';
     if(!cls && !nextMarked){ cls = 'next'; nextMarked = true; }
     return `<div class="ctv-step ${cls}"><div class="ctv-dot">${cls==='done'?'✓':''}</div><div class="ctv-lb">${s.lb}</div><div class="ctv-dt">${s.iso ? fmtDateShort(s.iso) : '—'}</div>${s.hint ? `<div class="ctv-hint">${s.hint}</div>` : ''}</div>`;
   }).join('');
