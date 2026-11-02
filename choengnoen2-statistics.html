@@ -2258,7 +2258,7 @@ function ucFormulaTableHtml(r){
   }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--ink-400);">ไม่มีข้อมูล</td></tr>';
   const vehRows = (r.vehicleRows||[]).map(x=>{
     const v = getVehiclesX().find(vv=>vv.id===x.vehId);
-    return `<tr><td>${esc(v?v.label:'—')}</td><td class="num">${fmtNum(x.liters,2)}</td><td class="num">${fmtNum(x.fuelPrice,2)}</td><td class="num">${fmtNum(x.liters*x.fuelPrice,2)}</td><td class="num">${fmtNum(x.rentPerDay,2)}</td></tr>`;
+    return `<tr><td>${esc(v?vehicleLabelOn(v):'—')}</td><td class="num">${fmtNum(x.liters,2)}</td><td class="num">${fmtNum(x.fuelPrice,2)}</td><td class="num">${fmtNum(x.liters*x.fuelPrice,2)}</td><td class="num">${fmtNum(x.rentPerDay,2)}</td></tr>`;
   }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--ink-400);">ไม่มีข้อมูล</td></tr>';
   return `
     <div style="display:flex;gap:20px;margin-bottom:12px;flex-wrap:wrap;">
@@ -4565,7 +4565,8 @@ let __subsys3Materials = [];
 let __subsys3FuelTx = [];
 let __subsys3MaterialTx = [];
 function subsys3VehicleFromApi(row){
-  return { id:row.id, label:row.label, fuelType:row.fuelType||'', note:row.operatorName||'', regNumber:row.regNumber||'', vehicleType:row.vehicleType||'',
+  const operatorHistory = Array.isArray(row.operatorHistoryJson) ? row.operatorHistoryJson : [];
+  return { id:row.id, label:row.label, fuelType:row.fuelType||'', note:FBL.operatorOnDate(operatorHistory, row.operatorName), operatorHistory, regNumber:row.regNumber||'', vehicleType:row.vehicleType||'',
     monthlyRent: row.monthlyRent!==''&&row.monthlyRent!=null?Number(row.monthlyRent):undefined,
     maxKmPerDay: row.mileageThresholdOverride!==''&&row.mileageThresholdOverride!=null?Number(row.mileageThresholdOverride):undefined,
     fuelRate: row.fuelRate!==''&&row.fuelRate!=null?Number(row.fuelRate):undefined, fuelRateUnit:row.fuelRateUnit||undefined };
@@ -5002,11 +5003,12 @@ function addDwVehForOperator(name, mowerOnly){
   const n = normName(name);
   if(!n) return;
   const used = new Set(dwUsedVehicleIds(-1));
-  getVehiclesX().filter(v=> normName(vehicleOperatorName(v))===n && !used.has(v.id) && (!mowerOnly || isMowerVehicle(v))).forEach(v=>{
+  const date = document.getElementById('dw-date')?.value;
+  getVehiclesX().filter(v=> normName(vehicleOperatorName(v, date))===n && !used.has(v.id) && (!mowerOnly || isMowerVehicle(v))).forEach(v=>{
     const idx = __dwVehCount;
     addDwVehicleRow();
     document.getElementById('dw-veh-id-'+idx).value = v.id;
-    document.getElementById('dw-veh-search-'+idx).value = v.label;
+    document.getElementById('dw-veh-search-'+idx).value = vehicleLabelOn(v, date);
     used.add(v.id);
   });
 }
@@ -5091,20 +5093,27 @@ function renderDwVehSuggest(idx){
   const box = document.getElementById('dw-veh-suggest-'+idx);
   const q = (document.getElementById('dw-veh-search-'+idx).value||'').trim().toLowerCase();
   const used = dwUsedVehicleIds(idx);
+  const date = document.getElementById('dw-date')?.value;
   let matches = getVehiclesX().filter(v=> !used.includes(v.id));
-  if(q) matches = matches.filter(v=> v.label.toLowerCase().includes(q) || (v.note||'').toLowerCase().includes(q));
+  if(q) matches = matches.filter(v=> vehicleLabelOn(v, date).toLowerCase().includes(q));
   matches = matches.slice(0,30);
-  box.innerHTML = matches.length ? matches.map(v=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectDwVeh(${idx},${v.id})">${esc(v.label)}</div>`).join('')
+  box.innerHTML = matches.length ? matches.map(v=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectDwVeh(${idx},${v.id})">${esc(vehicleLabelOn(v, date))}</div>`).join('')
     : `<div style="padding:9px 12px;color:var(--ink-400);font-size:13px;">ไม่พบรายการที่ตรงกับคำค้น หรือเพิ่มไว้แล้วทุกเครื่อง</div>`;
   box.classList.remove('hidden');
 }
 function hideDwVehSuggest(idx){ document.getElementById('dw-veh-suggest-'+idx)?.classList.add('hidden'); }
-/* ชื่อผู้รับผิดชอบเครื่องจักร — ใช้ v.note ถ้ามี (ฟิลด์จริงจากระบบรองที่ 3) ไม่งั้น fallback ไปแกะจากป้าย "... — ชื่อ" */
-function vehicleOperatorName(v){
+/* ชื่อผู้รับผิดชอบเครื่องจักร ณ วันที่ date (ไม่ระบุ = วันนี้) — มีประวัติการเปลี่ยนคน ใช้ตามวันที่มีผล ไม่งั้นใช้ v.note (ฟิลด์จริงจากระบบรองที่ 3) แล้วค่อย fallback ไปแกะจากป้าย "... — ชื่อ" */
+function vehicleOperatorName(v, date){
   if(!v) return '';
+  if(v.operatorHistory && v.operatorHistory.length) return FBL.operatorOnDate(v.operatorHistory, v.note, date);
   if(v.note && String(v.note).trim()) return String(v.note).trim();
   const m = /—\s*(.+)$/.exec(v.label||'');
   return m ? m[1].trim() : '';
+}
+/* ข้อความแสดงเครื่องจักร พร้อมชื่อผู้รับผิดชอบ ณ วันที่ date — v.label เป็นตัวเชื่อมข้อมูลน้ำมัน/เลขไมล์ จึงไม่เปลี่ยนตามคน ชื่อท้ายป้ายอาจเป็นคนเดิม ห้ามนำมาแสดงตรง ๆ */
+function vehicleLabelOn(v, date){
+  const op = vehicleOperatorName(v, date), base = String(v.label||'').split(' — ')[0];
+  return op ? base+' — '+op : base;
 }
 /* ผู้รับผิดชอบเครื่องจักรตามทะเบียน มีบันทึกการลาคลุมวันที่เลือกหรือไม่ (ใช้ leaveHistory ชุดเดียวกับ checkDwLeaveConflict) */
 function staffHasApprovedLeaveOnDate(name, date){
@@ -5117,7 +5126,7 @@ function updateDwVehOperatorHint(idx, v){
   const hintEl = document.getElementById('dw-veh-hint-'+idx);
   if(!hintEl) return;
   const date = document.getElementById('dw-date')?.value;
-  const opName = vehicleOperatorName(v);
+  const opName = vehicleOperatorName(v, date);
   if(opName && staffHasApprovedLeaveOnDate(opName, date)){
     hintEl.innerHTML = `<div class="op-warn-box">
       <span class="op-warn-icon">⚠️</span>
@@ -5135,7 +5144,10 @@ function refreshAllDwVehOperatorHints(){
     const idx = div.id.replace('dw-veh-','');
     const vehId = +document.getElementById('dw-veh-id-'+idx)?.value || null;
     const v = vehId ? getVehiclesX().find(x=>x.id===vehId) : null;
-    if(v) updateDwVehOperatorHint(idx, v);
+    if(v){
+      document.getElementById('dw-veh-search-'+idx).value = vehicleLabelOn(v, document.getElementById('dw-date')?.value);
+      updateDwVehOperatorHint(idx, v);
+    }
   });
 }
 /* เลือกเครื่องจักรแล้วดึงชื่อผู้รับผิดชอบมาเติมในช่องเจ้าหน้าที่ผู้ปฏิบัติงานให้อัตโนมัติ ลดการพิมพ์ชื่อซ้ำ
@@ -5145,14 +5157,14 @@ function refreshAllDwVehOperatorHints(){
 function selectDwVeh(idx, id){
   const v = getVehiclesX().find(x=>x.id===id);
   if(!v) return;
+  const date = document.getElementById('dw-date')?.value;
   document.getElementById('dw-veh-id-'+idx).value = v.id;
-  document.getElementById('dw-veh-search-'+idx).value = v.label;
+  document.getElementById('dw-veh-search-'+idx).value = vehicleLabelOn(v, date);
   hideDwVehSuggest(idx);
   renumberDwVehicleRows();
   suggestFuelCost();
   suggestRentCost();
-  const opName = vehicleOperatorName(v);
-  const date = document.getElementById('dw-date')?.value;
+  const opName = vehicleOperatorName(v, date);
   if(opName && !staffHasApprovedLeaveOnDate(opName, date)) selectDwStaff(opName);
   updateDwVehOperatorHint(idx, v);
 }
@@ -5471,7 +5483,7 @@ function addUcVehicleRow(data){
   if(data){
     document.getElementById('uc-veh-id-'+idx).value = data.vehId||'';
     const v = getVehiclesX().find(x=>x.id===data.vehId);
-    document.getElementById('uc-veh-search-'+idx).value = v ? v.label : '';
+    document.getElementById('uc-veh-search-'+idx).value = v ? vehicleLabelOn(v) : '';
     document.getElementById('uc-veh-liters-'+idx).value = data.liters||'';
     document.getElementById('uc-veh-fuelprice-'+idx).value = data.fuelPrice!=null ? data.fuelPrice : ((v && latestFuelPriceX(v.fuelType))||'');
     document.getElementById('uc-veh-rent-'+idx).value = data.rentPerDay!=null ? data.rentPerDay : ((v&&v.monthlyRent)?(v.monthlyRent/30).toFixed(2):'');
@@ -5481,9 +5493,9 @@ function renderUcVehSuggest(idx){
   const box = document.getElementById('uc-veh-suggest-'+idx);
   const q = (document.getElementById('uc-veh-search-'+idx).value||'').trim().toLowerCase();
   let matches = getVehiclesX();
-  if(q) matches = matches.filter(v=> v.label.toLowerCase().includes(q));
+  if(q) matches = matches.filter(v=> vehicleLabelOn(v).toLowerCase().includes(q));
   matches = matches.slice(0,30);
-  box.innerHTML = matches.length ? matches.map(v=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectUcVeh(${idx},${v.id})">${esc(v.label)}</div>`).join('')
+  box.innerHTML = matches.length ? matches.map(v=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectUcVeh(${idx},${v.id})">${esc(vehicleLabelOn(v))}</div>`).join('')
     : `<div style="padding:9px 12px;color:var(--ink-400);font-size:13px;">ไม่พบรายการที่ตรงกับคำค้น</div>`;
   box.classList.remove('hidden');
 }
@@ -5492,7 +5504,7 @@ function selectUcVeh(idx, id){
   const v = getVehiclesX().find(x=>x.id===id);
   if(!v) return;
   document.getElementById('uc-veh-id-'+idx).value = v.id;
-  document.getElementById('uc-veh-search-'+idx).value = v.label;
+  document.getElementById('uc-veh-search-'+idx).value = vehicleLabelOn(v);
   const fp = document.getElementById('uc-veh-fuelprice-'+idx);
   if(!fp.value){ const p = latestFuelPriceX(v.fuelType); if(p) fp.value = p; }
   const rp = document.getElementById('uc-veh-rent-'+idx);
@@ -5959,7 +5971,7 @@ function dwEquipHtml(d){
     rows.push('<tr class="grp"><td colspan="4">เครื่องจักร/รถ (น้ำมันที่เบิก)</td></tr>');
     veh.forEach(v=>{
       const m = getVehiclesX().find(x=>x.label===v.label);
-      rows.push(`<tr><td>${esc((m && m.vehicleType) || v.label)}</td><td class="id">${esc((m && m.regNumber) || '—')}</td><td class="n">${v.liters ? fmtQtyShort(v.liters) : '—'}</td><td>${v.liters ? 'ลิตร' : ''}</td></tr>`);
+      rows.push(`<tr><td>${esc((m && (m.vehicleType || vehicleLabelOn(m, d.date))) || v.label)}</td><td class="id">${esc((m && m.regNumber) || '—')}</td><td class="n">${v.liters ? fmtQtyShort(v.liters) : '—'}</td><td>${v.liters ? 'ลิตร' : ''}</td></tr>`);
     });
   }
   if(parts.length){
@@ -6181,7 +6193,7 @@ function editDailyEntry(no){
     const idx = __dwVehCount-1;
     const match = getVehiclesX().find(x=>x.label===v.label);
     document.getElementById('dw-veh-id-'+idx).value = match ? match.id : '';
-    document.getElementById('dw-veh-search-'+idx).value = v.label;
+    document.getElementById('dw-veh-search-'+idx).value = match ? vehicleLabelOn(match, rec.date) : v.label;
     document.getElementById('dw-veh-liters-'+idx).value = v.liters||0;
   });
   renumberDwVehicleRows();

@@ -691,7 +691,7 @@
   function fuelTable(rows){
     return '<div style="overflow:auto"><table class="dohi-table"><thead><tr><th>เครื่องจักร</th><th style="text-align:right">ระบบเรา (ลิตร)</th><th style="text-align:right">กรม (ลิตร)</th><th style="text-align:right">ต่าง</th></tr></thead><tbody>'
       + rows.map(r=>{ const b = Math.abs(r.diff)>0.05, open = S.fuelOpen===r.i;
-          return '<tr onclick="DohImp.togFuel('+r.i+')" style="cursor:pointer;'+(b?'background:#fdf1d9':'')+'" title="กดดูรายวัน"><td>'+(open?'▾ ':'▸ ')+H(r.label)+'</td><td style="text-align:right">'+r.sys+'</td><td style="text-align:right">'+r.dept+'</td><td style="text-align:right;'+(b?'color:#c1402f;font-weight:700':'')+'">'+(r.diff>0?'+':'')+r.diff+'</td></tr>'
+          return '<tr onclick="DohImp.togFuel('+r.i+')" style="cursor:pointer;'+(b?'background:#fdf1d9':'')+'" title="กดดูรายวัน"><td>'+(open?'▾ ':'▸ ')+H(String(r.label).split(' — ')[0])+'</td><td style="text-align:right">'+r.sys+'</td><td style="text-align:right">'+r.dept+'</td><td style="text-align:right;'+(b?'color:#c1402f;font-weight:700':'')+'">'+(r.diff>0?'+':'')+r.diff+'</td></tr>'
             + (open ? '<tr><td colspan="4" style="background:#fff">'+fuelDetail(r.label)+'</td></tr>' : ''); }).join('')
       + '</tbody></table></div>';
   }
@@ -799,7 +799,7 @@
       m.leave.map(p=>p.name.replace(/\s+/g,' ')+': '+p.dates.map(d=>dayNoYr(d)+(p.days[d].codes.length?' (รหัส '+p.days[d].codes.join(', ')+')':'')).join(', ')
         +(p.dept && nDept<m.leave.length?' (rmms มีชื่อ)':'')));   // บอกเฉพาะตอนที่บางคนมีในกรม บางคนไม่มี
     sec('fuel', 'น้ำมันรวมต่อเครื่องทั้งเดือนไม่ตรง (ลิตร ระบบเรา / กรม)',
-      m.fuelBad.map(r=>r.label+': '+r.sys+' / '+r.dept+' (ต่าง '+(r.diff>0?'+':'')+r.diff+')'));
+      m.fuelBad.map(r=>String(r.label).split(' — ')[0]+': '+r.sys+' / '+r.dept+' (ต่าง '+(r.diff>0?'+':'')+r.diff+')'));
     const dayL = [];
     m.day.forEach(x=>{ if(x.dept) dayL.push(x.c.label+': กรมลงวันที่ '+dates(x.dept.dates)+' แต่ระบบไม่มีใบ'); if(x.sys) dayL.push(x.c.label+': ระบบมีใบวันที่ '+dates(x.sys.sheets.map(s=>s.date))+' แต่กรมไม่ได้ลง'); });
     sec('day', 'วันปฏิบัติงานไม่ตรงกัน', dayL);
