@@ -753,6 +753,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fd-who-in{width:100%;box-sizing:border-box;height:36px;border:1.5px solid var(--orange-500);border-radius:8px;padding:0 8px;font-family:'Sarabun',sans-serif;font-size:13.5px;font-weight:600;color:var(--navy-900);box-shadow:0 0 0 3px rgba(224,98,15,.18);outline:none;}
   .pick-menu .dsel-item>span:first-child{display:flex;flex-direction:column;}
   .pick-menu .pick-sub{font-size:12px;color:#8792a0;font-weight:400;}
+  .fd-tag.pick-leave{background:var(--danger-bg);color:var(--danger);}
   /* แถบวันที่ — หน้าตาเดียวกับแถบสัปดาห์ของใบสั่งการรายวัน (วันทำการทั้งเดือน เลื่อนซ้าย-ขวาได้) */
   .dwk-bar{display:flex;align-items:stretch;background:var(--paper-50);border:solid var(--line);border-width:1px 0;border-radius:0;overflow:hidden;margin:0 -20px 14px;box-shadow:none;}
   .dwk-arr{width:42px;border:0;background:transparent;cursor:pointer;font-size:16px;color:var(--ink-600);flex:none;}
@@ -998,6 +999,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="print-standard.js?v=20261102"></script>
 <script src="dsel.js"></script>
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s3"></script>
@@ -4614,7 +4616,11 @@ function onFuelAddVehicle(el){
   const label = fuelDayAddMap[el.value.trim()];
   const v = label && vehicles.find(x=>x.label===label);
   const whoEl = document.getElementById('fuel-add-who');
-  if(v && whoEl) whoEl.value = v.note||'';
+  if(!v || !whoEl) return;
+  // ผู้รับผิดชอบรถลาในวันนี้ → ไม่เติมชื่อให้ ต้องเลือกผู้เบิกแทน
+  const onLeave = approvedLeaveOnDate(v.note, dateStrFor(currentFuelMk(), fuelCheckDay));
+  whoEl.value = onLeave ? '' : (v.note||'');
+  whoEl.placeholder = onLeave ? v.note+' ลาวันนี้ — เลือกผู้เบิกแทน' : 'ขึ้นอัตโนมัติเมื่อเลือกรถ';
 }
 function addFuelDayRow(){
   const vEl = document.getElementById('fuel-add-veh'), whoEl = document.getElementById('fuel-add-who'), litEl = document.getElementById('fuel-add-lit');
@@ -4622,6 +4628,7 @@ function addFuelDayRow(){
   const label = fuelDayAddMap[item];
   if(!label){ showAlertModal(item ? 'ไม่พบรถ/เครื่องจักร "'+item+'" — เลือกจากรายการที่ขึ้นให้' : 'กรุณาเลือกรถ/เครื่องจักรที่เบิก'); vEl.focus(); return; }
   if(!who){ showAlertModal('กรุณาระบุชื่อผู้เบิก'); whoEl.focus(); return; }
+  if(approvedLeaveOnDate(who, dateStrFor(currentFuelMk(), fuelCheckDay))){ showAlertModal('"'+who+'" ลางานในวันนี้ — เลือกผู้เบิกคนอื่น'); whoEl.focus(); return; }
   if(!(lit>0)){ showAlertModal('กรุณากรอกจำนวนลิตรที่เบิก (มากกว่า 0)'); litEl.focus(); return; }
   const v = vehicles.find(x=>x.label===label);
   const date = dateStrFor(currentFuelMk(), fuelCheckDay);
@@ -4988,7 +4995,17 @@ function startWhoEdit(box){
   const rerender = ()=> kind==='mat' ? renderReportMaterial(currentMatMk()) : renderReportFuel(currentFuelMk());
   inp.addEventListener('input', ()=> kind==='mat' ? onMatCellDraftInput(inp) : onFuelCellDraftInput(inp));
   inp.addEventListener('keydown', e=>{ if(e.key==='Enter' || e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); inp.blur(); } });
-  inp.addEventListener('blur', ()=> setTimeout(rerender, 0));   // รอให้โฟกัสย้ายไปช่องถัดไปก่อน แล้วค่อยวาดใหม่ (วาดแล้วคืนโฟกัสให้เอง)
+  const orig = inp.value;
+  inp.addEventListener('blur', ()=>{
+    // พิมพ์ชื่อคนที่ลาในวันนี้เอง → คืนชื่อเดิม (ชื่อเดิมที่บันทึกไว้แล้วยังคงไว้ได้)
+    const val = inp.value.trim();
+    if(val && val!==orig.trim() && approvedLeaveOnDate(val, inp.dataset.date)){
+      inp.value = orig;
+      if(kind==='mat') onMatCellDraftInput(inp); else onFuelCellDraftInput(inp);
+      showAlertModal('"'+val+'" ลางานในวันนี้ — เลือกผู้เบิกคนอื่น');
+    }
+    setTimeout(rerender, 0);   // รอให้โฟกัสย้ายไปช่องถัดไปก่อน แล้วค่อยวาดใหม่ (วาดแล้วคืนโฟกัสให้เอง)
+  });
   box.replaceWith(inp);
   inp.focus(); inp.select();
 }
@@ -5015,8 +5032,13 @@ function pickItems(kind, inp){
   if(kind==='staff'){
     const date = (inp && inp.dataset.date) || (inp && inp.id==='mat-add-who' ? dateStrFor(currentMatMk(), matCheckDay)
                : inp && inp.id==='fuel-add-who' ? dateStrFor(currentFuelMk(), fuelCheckDay) : '');
-    return staffWorkingOn(date).map(s=>({value:s.name,
-      sub:[s.role||'', s.status==='retired'?'เกษียณอายุ':s.status==='resigned'?'ลาออก':''].filter(Boolean).join(' · ')}));
+    // คนที่ลาในวันนั้น: แสดงในรายการพร้อมป้าย "ลา" ให้รู้เท่านั้น เลือกไม่ได้ (off)
+    return staffWorkingOn(date).map(s=>{
+      const onLeave = !!approvedLeaveOnDate(s.name, date);
+      return {value:s.name,
+        sub:[s.role||'', s.status==='retired'?'เกษียณอายุ':s.status==='resigned'?'ลาออก':''].filter(Boolean).join(' · '),
+        tag:onLeave?'ลา':'', off:onLeave};
+    });
   }
   if(kind==='mat') return Object.keys(matDayAddMap).map(k=>{ const m = materials.find(x=>x.code===matDayAddMap[k]); return {value:k, sub:m?((m.code||'')+' · '+(m.unit||'')):'', tag:m?(m.accountType==='นอกบัญชี'?'นอกบัญชี':'ในบัญชี'):''}; });
   if(kind==='veh') return Object.keys(fuelDayAddMap).map(k=>({value:k, sub:''}));
@@ -5031,7 +5053,7 @@ function pickItems(kind, inp){
     menu.className = 'dsel-menu pick-menu'; menu.style.display = 'none';
     menu.addEventListener('mousedown', e=>e.preventDefault());   // กดในรายการแล้วช่องไม่หลุดโฟกัส
     menu.addEventListener('click', e=>{ const el = e.target.closest('.dsel-item'); if(el) choose(+el.dataset.i); });
-    menu.addEventListener('mousemove', e=>{ const el = e.target.closest('.dsel-item'); if(el && +el.dataset.i!==active){ active = +el.dataset.i; paint(false); } });
+    menu.addEventListener('mousemove', e=>{ const el = e.target.closest('.dsel-item'); if(el && !el.classList.contains('off') && +el.dataset.i!==active){ active = +el.dataset.i; paint(false); } });
     document.body.appendChild(menu);
     return menu;
   }
@@ -5052,18 +5074,18 @@ function pickItems(kind, inp){
     cur = inp; ensure();
     const all = pickItems(inp.dataset.pick, inp), v = norm(inp.value);
     items = (typed && v) ? all.filter(x=>norm(x.value+' '+x.sub).includes(v)) : all;
-    active = items.findIndex(x=>norm(x.value)===v);
-    if(active<0 && typed && items.length) active = 0;
+    active = items.findIndex(x=>!x.off && norm(x.value)===v);
+    if(active<0 && typed) active = items.findIndex(x=>!x.off);
     menu.innerHTML = items.length ? items.map((x,i)=>{
-      const sel = norm(x.value)===v && v;
-      return `<div class="dsel-item${sel?' sel':''}" data-i="${i}"><span>${esc(x.value)}${x.sub?`<small class="pick-sub">${esc(x.sub)}</small>`:''}</span>${x.tag?`<span class="fd-tag ${x.tag==='นอกบัญชี'?'fd-g':'fd-d'}" style="margin-left:auto;flex:none;">${esc(x.tag)}</span>`:''}${sel?'<span class="dsel-tick">✓</span>':''}</div>`;
+      const sel = !x.off && norm(x.value)===v && v;
+      return `<div class="dsel-item${sel?' sel':''}${x.off?' off':''}" data-i="${i}"><span>${esc(x.value)}${x.sub?`<small class="pick-sub">${esc(x.sub)}</small>`:''}</span>${x.tag?`<span class="fd-tag ${x.off?'pick-leave':x.tag==='นอกบัญชี'?'fd-g':'fd-d'}" style="margin-left:auto;flex:none;">${esc(x.tag)}</span>`:''}${sel?'<span class="dsel-tick">✓</span>':''}</div>`;
     }).join('') : `<div class="dsel-item off">${inp.dataset.pick==='staff'?'ไม่พบชื่อในทะเบียนบุคลากร — พิมพ์ต่อได้ถ้าเป็นบุคคลภายนอก':'ไม่พบรายการที่ตรงกับคำค้นหา'}</div>`;
     menu.style.display = '';
     place(); paint();
   }
   function close(){ if(menu) menu.style.display = 'none'; cur = null; items = []; active = -1; }
   function choose(i){
-    const x = items[i], inp = cur; if(!x || !inp) return;
+    const x = items[i], inp = cur; if(!x || x.off || !inp) return;
     inp.value = x.value;
     close();
     inp.dispatchEvent(new Event('input', {bubbles:true}));
@@ -5082,7 +5104,10 @@ function pickItems(kind, inp){
     if(e.key==='ArrowDown' || e.key==='ArrowUp'){
       e.preventDefault();
       if(!items.length) return;
-      active = e.key==='ArrowDown' ? Math.min(active+1, items.length-1) : Math.max(active-1, 0);
+      const dir = (e.key==='ArrowDown' || active<0) ? 1 : -1;   // ข้ามรายการที่เลือกไม่ได้ (ผู้ลา)
+      let i = active+dir;
+      while(i>=0 && i<items.length && items[i].off) i += dir;
+      if(i>=0 && i<items.length) active = i;
       paint();
     } else if(e.key==='Enter'){
       if(active>=0) choose(active); else close();
@@ -5105,6 +5130,7 @@ function addMatDayRow(){
   const who = whoEl.value.trim(), item = itemEl.value.trim(), raw = qtyEl.value.trim();
   const code = matDayAddMap[item];
   if(!who){ showAlertModal('กรุณาระบุชื่อผู้เบิก'); whoEl.focus(); return; }
+  if(approvedLeaveOnDate(who, dateStrFor(currentMatMk(), matCheckDay))){ showAlertModal('"'+who+'" ลางานในวันนี้ — เลือกผู้เบิกคนอื่น'); whoEl.focus(); return; }
   if(!code){ showAlertModal(item ? 'ไม่พบพัสดุชื่อ "'+item+'" — เลือกจากรายการที่ขึ้นให้' : 'กรุณาเลือกพัสดุที่เบิก'); itemEl.focus(); return; }
   const qty = parseFloat(raw);
   if(!(qty>0)){ showAlertModal('กรุณากรอกจำนวนที่เบิก (มากกว่า 0)'); qtyEl.focus(); return; }
@@ -6181,8 +6207,8 @@ function __personNamesMatch(a,b){
 function approvedLeaveOnDate(operatorName, dateStr){
   if(!operatorName || !dateStr) return null;
   const list = getSharedLeaveRequests();
-  // ตัดขั้นตอนอนุมัติดิจิทัลออกทั้งระบบแล้ว (2569-09-18) — คำขอลาที่ยื่นเข้าระบบ = ลาจริง ยกเว้นที่ยกเลิก (เหมือนระบบ 1/4)
-  return list.find(r=> r && r.status!=='cancelled' && __personNamesMatch(r.name, operatorName) && dateStr >= r.from && dateStr <= r.to) || null;
+  // นับเป็นลาทุกใบ ยกเว้นที่ยกเลิกหรือไม่อนุมัติ (เหมือนหน้าหลัก) — สถานะอนุมัติจริงอยู่ที่ r.approval ไม่ใช่ r.status
+  return list.find(r=> r && r.status!=='cancelled' && r.approval!=='rejected' && __personNamesMatch(r.name, operatorName) && dateStr >= r.from && dateStr <= r.to) || null;
 }
 function extractAllKm(text){
   const re = /(\d+)\s*\+\s*(\d{1,3})/g;
