@@ -576,11 +576,16 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ib-kpi .warn{background:var(--danger-bg);border-color:#f0b9b0;color:var(--danger);}
   .ib-kpi .warn b{color:var(--danger);}
   .ib-list{padding:14px 20px 8px;}
-  /* เลื่อนขึ้น-ลงในกรอบแบบเดียวกับตารางฐานข้อมูลบุคลากร — หัวตารางตรึงไว้ แถบเลื่อนเริ่มใต้หัวตาราง (table-scroll-standard.js)
+  /* ไม่มีแถบเลื่อนในกรอบ — เลื่อนไปกับหน้าเว็บ หัวตารางตรึงใต้แถบบน และแถวที่เปิดดูตรึงใต้หัวตารางจนกว่าจะเลื่อนพ้นรายละเอียดของใบนั้น
+     (--ib-top/--ib-head วัดจริงใน ibStickyVars; ต้องไม่มี overflow:auto/hidden ครอบ ไม่อย่างนั้น sticky จะยึดกับกรอบแทนหน้าเว็บ)
      ใช้ border-collapse:separate เพราะแบบ collapse เส้นใต้หัวตารางจะไม่ตรึงตามหัวตารางตอนเลื่อน */
-  .ib-list .table-wrap{max-height:62vh;overflow-y:auto;}
+  #panel-inbound .section{overflow:clip;}
+  .ib-list .table-wrap{overflow:visible;}
+  @media(max-width:760px){.ib-list .table-wrap{overflow-x:auto;}}
   .ib-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;}
   .ib-tbl th{text-align:left;font-size:12.5px;font-weight:600;color:var(--ink-600);padding:8px 10px;border-bottom:2px solid var(--line);white-space:nowrap;}
+  .ib-tbl thead th{top:var(--ib-top,0px);}
+  .ib-row.open>td{position:sticky;top:var(--ib-push,calc(var(--ib-top,0px) + var(--ib-head,38px)));z-index:1;}
   .ib-tbl th small{font-weight:400;color:var(--ink-400);}
   .ib-tbl td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
   .ib-row{cursor:pointer;}
@@ -2095,7 +2100,39 @@ function setIbKind(el){
   renderInbound();
 }
 function goInbound(){ const t = document.querySelector('.sec-tab[data-sec="inbound"]'); if(t) t.click(); }
-function ibToggle(key){ if(ibOpen.has(key)) ibOpen.delete(key); else ibOpen.add(key); renderInbound(); }
+function ibToggle(key, rowEl){
+  // คงแถวที่กดไว้ตำแหน่งเดิมบนจอ (ตอนปิดแถวที่ตรึงอยู่ เนื้อหาหดลง หน้าจะกระโดดถ้าไม่ชดเชย)
+  const rows = () => Array.from(document.querySelectorAll('#ib-list .ib-row'));
+  const idx = rows().indexOf(rowEl);
+  const y = idx>=0 ? rowEl.cells[0].getBoundingClientRect().top : 0;
+  if(ibOpen.has(key)) ibOpen.delete(key); else ibOpen.add(key);
+  renderInbound();
+  const after = rows()[idx];
+  if(after) window.scrollBy(0, after.cells[0].getBoundingClientRect().top - y);
+}
+function ibStickyVars(){
+  const listEl = document.getElementById('ib-list');
+  const head = listEl && listEl.querySelector('.ib-tbl thead');
+  if(!head || !head.offsetHeight) return; // แท็บถูกซ่อนอยู่ วัดไม่ได้ จะวัดใหม่ตอนเปิดแท็บ
+  const bar = document.querySelector('.topbar');
+  listEl.style.setProperty('--ib-top', (bar ? bar.offsetHeight : 0)+'px');
+  listEl.style.setProperty('--ib-head', head.offsetHeight+'px');
+  ibStickyPush();
+}
+// sticky ของแถวตารางยึดกับทั้งตาราง จึงต้องดันแถวที่ตรึงออกเองเมื่อเลื่อนพ้นรายละเอียดของใบนั้น
+function ibStickyPush(){
+  const listEl = document.getElementById('ib-list');
+  listEl.querySelectorAll('.ib-row.open').forEach(r=>{
+    const detail = r.nextElementSibling;
+    if(!detail || !r.offsetHeight) return;
+    const room = detail.getBoundingClientRect().bottom - r.offsetHeight;
+    const base = (parseFloat(listEl.style.getPropertyValue('--ib-top'))||0) + (parseFloat(listEl.style.getPropertyValue('--ib-head'))||0);
+    if(room < base) r.style.setProperty('--ib-push', room+'px');
+    else r.style.removeProperty('--ib-push');
+  });
+}
+window.addEventListener('resize', ibStickyVars);
+window.addEventListener('scroll', ibStickyPush, {passive:true});
 function renderInbound(){
   const listEl = document.getElementById('ib-list');
   if(!listEl) return;
@@ -2155,7 +2192,7 @@ function renderInbound(){
       const body = s.lines.map(l=>`<tr><td>${l.kind==='fuel'?'⛽':'📦'} ${esc(l.name)}</td><td class="c-qty">${fmtNum(l.qty, Number.isInteger(l.qty)?0:2)} ${esc(l.unit)}</td><td class="c-price">${l.unitPrice ? fmtNum(l.unitPrice,2) : '<span class="na">–</span>'}</td><td class="c-total">${l.unitPrice ? fmtNum(lineTot(l),2) : '<span class="na">–</span>'}</td></tr>`).join('');
       detail = `<tr class="ib-lines"><td class="ib-lines-gap"></td><td colspan="${ncol-1}"><table class="ib-lt"><thead><tr><th>รายการ</th><th class="c-qty">จำนวน</th><th class="c-price">ราคา/หน่วย (บาท)</th><th class="c-total">รวม (บาท)</th></tr></thead><tbody>${body}</tbody>${hasAnyPrice ? `<tfoot><tr><td colspan="3">รวมทั้งใบ</td><td class="c-total">${fmtNum(grand,2)}</td></tr></tfoot>` : ''}</table></td></tr>`;
     }
-    return `<tr class="ib-row${open?' open':''}" onclick="ibToggle('${kj}')">
+    return `<tr class="ib-row${open?' open':''}" onclick="ibToggle('${kj}',this)">
       <td class="ib-date">${fmtDate(s.date)}</td>
       <td>${s.ref ? `<span class="ib-ref">${esc(s.ref)}</span>` : (s.off ? '<span class="ib-ref none">ไม่มีใบเบิก (ได้รับอนุเคราะห์)</span>' : '<span class="ib-ref none">ยังไม่ระบุเลขที่</span>')}</td>
       <td>${tags}</td>
@@ -2165,6 +2202,7 @@ function renderInbound(){
   listEl.innerHTML = `<div class="table-wrap"><table class="ib-tbl">
     <thead><tr><th>วันที่รับ</th><th>เลขที่ใบเบิก</th><th>รายการในใบ <small>(กดแถวเพื่อดูรายละเอียด)</small></th><th>สถานะ</th>${admin?'<th></th>':''}</tr></thead>
     <tbody>${trs}</tbody></table></div>`;
+  ibStickyVars();
 }
 
 /* ---- แก้ไขใบเบิก: เลขที่/วันที่/จำนวน/ราคา, เอารายการออก, เพิ่มรายการ ---- */
