@@ -10,6 +10,7 @@
     print:'<path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v7H7z"/>',
     cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
     calq:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="14.5" cy="15.5" r="2.2"/><path d="m16.2 17.2 1.8 1.8"/>',
+    calchk:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="m8.5 15.5 2.5 2.5 4.5-5"/>',
     down:'<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
     up:'<path d="M12 16V5M7 9l5-5 5 5M5 20h14"/>',
     pen:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
