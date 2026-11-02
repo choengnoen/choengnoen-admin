@@ -1512,6 +1512,8 @@ function activeStaff(){ return staff.filter(s=>s.status==='ok'); }
 function fmtDate(iso){ if(!iso) return '—'; const d=new Date(iso+'T00:00:00'); const months=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']; return d.getDate()+' '+months[d.getMonth()]+' '+(d.getFullYear()+543-2500).toString().padStart(2,'0'); }
 function fmtDateFull(iso){ if(!iso) return '—'; const d=new Date(iso+'T00:00:00'); const months=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม']; return d.getDate()+' '+months[d.getMonth()]+' พ.ศ. '+(d.getFullYear()+543); }
 function fmtNum(n,dec){ dec=dec===undefined?2:dec; return (n||0).toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec}); }
+/* จำนวนที่กรอกจริงในช่องที่ล็อกแล้ว: ไม่ปัดทศนิยมทิ้ง (5.19 แสดง 5.19) แต่ยังมีทศนิยมอย่างน้อย 1 ตำแหน่ง (5 แสดง 5.0) */
+function fmtQtyExact(n){ return (n||0).toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:3}); }
 const monthNamesTh = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
 /* ============================================================
@@ -3908,10 +3910,17 @@ function setMatDraft(code, date, patch, n){
   if(cur.raw===base.raw && cur.who===base.who){ delete draftMatCells[key]; return false; }
   draftMatCells[key] = cur; return true;
 }
+/* น้ำมัน 1 ช่อง = ยอดรวมของรถคันนั้นในวันนั้น ซึ่งอาจมีหลายรายการ (เช่น ใบสั่งการหลายใบในวันเดียว) (2569-11-02)
+   ค่าตั้งต้นของฉบับร่างและการบันทึกต้องคิดจากทุกรายการ ไม่ใช่รายการแรก ตัวเลขหลังบันทึกจึงตรงกับที่กรอก */
+function fuelIssueTxs(fuelType, vehicle, date){
+  return fuelTransactions.filter(t=>t.vehicle===vehicle && t.date===date && t.kind==='issue' && t.fuelType===fuelType).sort((a,b)=>(a.id>b.id)-(a.id<b.id));
+}
+function fuelTxsLiters(txs){ return Math.round(txs.reduce((s,t)=>s+(t.liters||0),0)*1000)/1000; }   // ปัดเศษทศนิยมลอยตัว (เช่น 0.1+0.2)
+function fuelTxsWho(txs){ return (txs.find(t=>t.requester)||{}).requester||''; }
 function setFuelDraft(fuelType, vehicle, date, patch){
   const key = fuelType+'|'+vehicle+'|'+date;
-  const tx = fuelTransactions.find(t=>t.vehicle===vehicle && t.date===date && t.kind==='issue' && t.fuelType===fuelType);
-  const base = {raw: tx ? String(tx.liters) : '', who: tx ? (tx.requester||'') : ''};
+  const txs = fuelIssueTxs(fuelType, vehicle, date);
+  const base = {raw: txs.length ? String(fuelTxsLiters(txs)) : '', who: fuelTxsWho(txs)};
   const cur = Object.assign({fuelType, vehicle, date}, base, draftFuelCells[key]||{}, patch);
   if(cur.raw===base.raw && cur.who===base.who){ delete draftFuelCells[key]; return false; }
   draftFuelCells[key] = cur; return true;
@@ -3924,8 +3933,7 @@ function matEffWho(code, date, n){
 }
 function fuelEffWho(fuelType, vehicle, date){
   const d = draftFuelCells[fuelType+'|'+vehicle+'|'+date]; if(d && d.who!=null) return d.who;
-  const tx = fuelTransactions.find(t=>t.vehicle===vehicle && t.date===date && t.kind==='issue' && t.fuelType===fuelType);
-  return tx ? (tx.requester||'') : '';
+  return fuelTxsWho(fuelIssueTxs(fuelType, vehicle, date));
 }
 function onMatCellDraftInput(el){
   if(!isAdmin()) return;
@@ -4079,14 +4087,18 @@ async function confirmCommitDraftReport(){
       matDayAdded = {};   // บันทึกแล้วลำดับช่องอาจเลื่อน — แถวที่เหลือแสดงตามรายการที่บันทึกจริง
     } else {
       for(const {fuelType,vehicle,date,raw,who} of Object.values(draftFuelCells)){
-        const existing = fuelTransactions.find(t=>t.vehicle===vehicle && t.date===date && t.kind==='issue' && t.fuelType===fuelType);
+        const existing = fuelIssueTxs(fuelType, vehicle, date);
         const val = raw===''?NaN:parseFloat(raw);
-        if(existing){
-          await apiPost('delete', 'fuel_transactions', null, existing.id, (!isNaN(val) && val>0) ? {trash:false} : undefined);
-          fuelTransactions = fuelTransactions.filter(t=>t!==existing);
+        const ref = (existing.find(t=>t.ref)||{}).ref;
+        const orderIds = Array.from(new Set(existing.map(t=>t.relatedDailyWorkOrderId||'')));
+        for(const t of existing){
+          // รวมหลายรายการเป็นรายการเดียว → เก็บรายการเดิมลงถังขยะ เผื่อต้องกู้คืน
+          await apiPost('delete', 'fuel_transactions', null, t.id, (!isNaN(val) && val>0 && existing.length===1) ? {trash:false} : undefined);
+          fuelTransactions = fuelTransactions.filter(x=>x!==t);
         }
         if(!isNaN(val) && val>0){
-          const rec = {fuelType, kind:'issue', date, liters:val, vehicle, requester:who||'', note:'บันทึกจากตารางเบิกจ่ายรายวัน', ref: existing ? existing.ref : undefined};   /* คงเลขที่ใบเดิมไว้ (ลบแล้วสร้างใหม่) */
+          const rec = {fuelType, kind:'issue', date, liters:val, vehicle, requester:who||'', note:'บันทึกจากตารางเบิกจ่ายรายวัน', ref,   /* คงเลขที่ใบเดิมไว้ (ลบแล้วสร้างใหม่) */
+            relatedDailyWorkOrderId: orderIds.length===1 && orderIds[0] ? orderIds[0] : undefined};   /* มาจากใบสั่งการใบเดียว → คงการเชื่อมโยงไว้ แก้ใบสั่งการภายหลังจะได้ไม่ตัดน้ำมันซ้ำ */
           const saved = await apiPost('add', 'fuel_transactions', fuelTxToApi(rec));
           fuelTransactions.push(fuelTxFromApi(saved));
         }
@@ -4552,7 +4564,7 @@ function unlockFuelDay(date){
 function fuelEffLiters(ft, label, date){
   const key = ft+'|'+label+'|'+date;
   if(Object.prototype.hasOwnProperty.call(draftFuelCells, key)){ const v = parseFloat(draftFuelCells[key].raw); return (!isNaN(v) && v>0) ? v : 0; }
-  return fuelTransactions.filter(t=>t.vehicle===label && t.date===date && t.kind==='issue' && t.fuelType===ft).reduce((s,t)=>s+(t.liters||0),0);
+  return fuelTxsLiters(fuelIssueTxs(ft, label, date));
 }
 function fuelLastIssueBefore(ft, label, date){
   let best = null;
@@ -4819,13 +4831,13 @@ function renderReportFuel(mk){
     const isDirty = Object.prototype.hasOwnProperty.call(draftFuelCells, dkey);
     const litCell = editable
       ? `<input type="number" min="0" step="0.1" class="fd-in${isDirty?' cell-dirty':''}" value="${r.lit>0?r.lit:''}" placeholder="—" data-kind="fuel" data-fueltype="${r.ft}" data-vehicle="${esc(label)}" data-date="${date}" oninput="onFuelCellDraftInput(this)">`
-      : `<b class="fd-big">${r.lit>0?fmtNum(r.lit,1):'—'}</b>`;
+      : `<b class="fd-big">${r.lit>0?fmtQtyExact(r.lit):'—'}</b>`;
     const badMi = r.flags.some(f=>f.c==='b') ? ' fd-inbad' : '';
     const miCell = !r.hasMile ? '<span class="fd-mut">ไม่มีเลขไมล์</span>'
       : editable ? `<input type="text" class="fd-in fd-mi${badMi}" value="${r.mRaw!=null?esc(String(r.mRaw)):''}" placeholder="เลขไมล์" data-mi-vehicle="${esc(label)}" data-mi-date="${date}" oninput="onMileageInput(this)" onblur="fuelMileageBlur(this)">`
       : `<b>${r.mRaw!=null&&String(r.mRaw)!==''?esc(String(r.mRaw)):'—'}</b>`;
     const whoRaw = fuelEffWho(r.ft, label, date), who = whoRaw || r.v.note || '';
-    const whoDirty = isDirty && whoRaw!==((fuelTransactions.find(t=>t.vehicle===label && t.date===date && t.kind==='issue' && t.fuelType===r.ft)||{}).requester||'');
+    const whoDirty = isDirty && whoRaw!==fuelTxsWho(fuelIssueTxs(r.ft, label, date));
     const whoSub = whoRaw ? ` <span class="fd-whosub" title="เบิกแทนผู้รับผิดชอบรถ: ${esc(r.v.note||'—')}">แทน</span>` : '';
     const whoCell = editable
       ? `<div class="fd-whobox${whoDirty?' cell-dirty':''}${who?'':' empty'}" tabindex="0" data-whoedit="fuel" data-val="${esc(who)}" data-f="who" data-fueltype="${r.ft}" data-vehicle="${esc(label)}" data-date="${date}" title="คลิกเพื่อแก้ชื่อผู้เบิก">${who?esc(who):'+ ระบุชื่อ'}${whoSub}</div>`
@@ -5116,8 +5128,7 @@ function delFuelDayRow(fuelType, label){
   if(!isAdmin()) return;
   const date = dateStrFor(currentFuelMk(), fuelCheckDay);
   showConfirmModal('ยืนยันลบรายการ', `ลบรายการเบิกน้ำมันของ "${label}" วันนี้หรือไม่?\n(กด "บันทึก" ที่แถบด้านล่างเพื่อยืนยันการลบ — ถ้าเปลี่ยนใจกด "ล้างการแก้ไข")`, 'ลบรายการ', function(){
-    const tx = fuelTransactions.find(t=>t.vehicle===label && t.date===date && t.kind==='issue' && t.fuelType===fuelType);
-    if(tx) setFuelDraft(fuelType, label, date, {raw:''}); else delete draftFuelCells[fuelType+'|'+label+'|'+date];
+    if(fuelIssueTxs(fuelType, label, date).length) setFuelDraft(fuelType, label, date, {raw:''}); else delete draftFuelCells[fuelType+'|'+label+'|'+date];
     if(fuelDayAdded[date]) fuelDayAdded[date].delete(label);
     renderReportFuel(currentFuelMk());
   });
@@ -5414,7 +5425,7 @@ function renderReportMaterialDay(mk){
     const cls = !(r.qty>0) ? 'fd-off' : on ? 'fd-ck' : r.flags.some(f=>f.c==='b') ? 'fd-rb' : r.flags.length ? 'fd-rw' : '';
     const qtyCell = editable
       ? `<input type="number" min="0" step="0.1" class="fd-in${isDirty?' cell-dirty':''}" value="${r.qty>0?r.qty:''}" placeholder="—" data-kind="mat" data-code="${esc(m.code)}" data-n="${n}" data-date="${date}" oninput="matDayInput(this)" onchange="matDayChange()">`
-      : `<b class="fd-big">${r.qty>0?fmtNum(r.qty,1):'—'}</b>`;
+      : `<b class="fd-big">${r.qty>0?fmtQtyExact(r.qty):'—'}</b>`;
     const flagHtml = !(r.qty>0) ? '<span class="fd-fl fd-n">ยังไม่ได้เบิก</span>'
       : !r.flags.length ? '<span class="fd-fl fd-ok">✔ ปกติ</span>'
       : `<span class="fd-fl ${r.flags.some(f=>f.c==='b')?'fd-b':'fd-w'}" title="${esc(r.flags.map(f=>f.t).join(' · '))}">${r.flags[0].c==='b'?'⛔':'⚠'} ${esc(r.flags[0].s||r.flags[0].t)}${r.flags.length>1?' +'+(r.flags.length-1):''}</span>`;
