@@ -505,7 +505,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="firebase-layer.js" data-page="s1"></script>
 <script src="labor-calc.js?v=20261026"></script>
 <script src="emoji-img.js" defer></script>
-<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261024" defer></script><script src="table-scroll-standard.js?v=20261024" defer></script>
+<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261103b" defer></script><script src="table-scroll-standard.js?v=20261024" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
 .route-header .topbar-right{flex-direction:column;align-items:flex-end;gap:6px}
@@ -696,7 +696,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </table></div>
             <div class="legend-block" id="leave-approved-foot-block">
               <button type="button" class="legend-dot-btn no-print" id="leave-approved-foot-toggle" onclick="__toggleNote('leave-approved-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-              <div class="foot-note" id="leave-approved-foot" style="display:none;background:transparent;border-top:none;">การลางาน:&nbsp;<br>1. ลาพักผ่อน / ลากิจ / ไปราชการ ต้องยื่นล่วงหน้าอย่างน้อย 3 วัน&nbsp;&nbsp;<br>2. ลาป่วย ยื่นภายใน 3 วันหลังกลับมาปฏิบัติงานได้<br>3. คำขอลาที่ยื่นเข้าระบบแล้วถือเป็นข้อมูลลาจริง (ผ่านการลงนามในใบลาตามระเบียบแล้ว) — การลบรายการต้องมีสิทธิ์ผู้ดูแลระบบ หากลาไปแล้วต้องการยกเลิกให้ใช้ปุ่ม "ใบขอยกเลิกวันลา" เท่านั้น<br>4. พิมพ์ใบลาได้หลังจากบันทึกข้อมูลการลาแล้วเท่านั้น โดยกดปุ่ม "🖶 พิมพ์ใบลา" ที่รายการในตาราง<br>5. การลาต่อเนื่องหลายวัน ระบบจะไม่นับวันเสาร์-อาทิตย์และวันหยุดนักขัตฤกษ์เป็นวันลา (ดู/แก้ไขรายการวันหยุดได้ที่ปุ่ม "🗓 วันหยุดนักขัตฤกษ์")</div>
+              <div class="foot-note" id="leave-approved-foot" style="display:none;background:transparent;border-top:none;">การลางาน:&nbsp;<br>1. ลาพักผ่อน / ลากิจ / ไปราชการ ต้องยื่นล่วงหน้าอย่างน้อย 3 วัน&nbsp;&nbsp;<br>2. ลาป่วย ยื่นภายใน 3 วันหลังกลับมาปฏิบัติงานได้<br>3. คำขอลาที่ยื่นเข้าระบบแล้วถือเป็นข้อมูลลาจริง (ผ่านการลงนามในใบลาตามระเบียบแล้ว) — การลบรายการต้องมีสิทธิ์ผู้ดูแลระบบ หากลาไปแล้วต้องการยกเลิกให้ใช้ปุ่ม "ใบขอยกเลิกวันลา" เท่านั้น<br>4. พิมพ์ใบลาได้หลังจากบันทึกข้อมูลการลาแล้วเท่านั้น โดยกดปุ่ม "🖶 พิมพ์ใบลา" ที่รายการในตาราง<br>5. การลาต่อเนื่องหลายวัน ระบบจะไม่นับวันเสาร์-อาทิตย์และวันหยุดนักขัตฤกษ์เป็นวันลา (ดู/แก้ไขรายการวันหยุดได้ที่ปุ่ม "วันหยุดนักขัตฤกษ์")</div>
             </div>
           </div>
         </div>
@@ -816,7 +816,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <div id="holiday-modal" class="modal-overlay hidden no-print">
         <div class="modal-box" style="max-width:540px;">
           <div class="modal-head">
-            <div class="modal-head-icon">🗓</div>
+            <div class="modal-head-icon" data-ic="cal" style="color:#fff;"></div>
             <h3>วันหยุดนักขัตฤกษ์ในระบบ</h3>
             <button type="button" class="modal-close" onclick="closeHolidayModal()">✕</button>
           </div>
@@ -1180,7 +1180,7 @@ async function loadLeaveRequestsFromApi(){
 /* วันหยุดนักขัตฤกษ์ที่ใช้คำนวณจำนวนวันลาแบบต่อเนื่องหลายวัน (ไม่นับเป็นวันลา เช่นเดียวกับวันเสาร์-อาทิตย์)
    ข้อมูลจริง 18 รายการย้ายไปอยู่ที่ Google Sheets แท็บ "public_holidays" แล้ว (นำเข้าผ่าน
    seedPublicHolidaysOnce() ใน Code.gs — ดูไฟล์ seedLeaveAndHolidaysOnce.gs.txt ในโฟลเดอร์เดียวกัน)
-   หน้านี้โหลดจาก API ตอนเปิดหน้าเสมอ ดู/เพิ่ม/ลบได้ที่ปุ่ม "🗓 วันหยุดนักขัตฤกษ์" ในหน้าการลา
+   หน้านี้โหลดจาก API ตอนเปิดหน้าเสมอ ดู/เพิ่ม/ลบได้ที่ปุ่ม "วันหยุดนักขัตฤกษ์" ในหน้าการลา
    (แก้ไขได้เฉพาะผู้มีสิทธิ์แก้ไข) — ตารางนี้ใช้ "date" เป็นกุญแจแทน id (ไม่มีคอลัมน์ id) */
 let publicHolidays = [];
 async function loadPublicHolidaysFromApi(){
@@ -1458,7 +1458,7 @@ function __staffFormUpd(p){
   document.getElementById(p+'-n5').textContent = temp ? 4 : 5;
 }
 /* นับ "จำนวนวันทำการ" ตั้งแต่ a ถึง b (รวมปลายทั้งสองด้าน) สำหรับการลางานแบบต่อเนื่องหลายวัน
-   ไม่นับวันเสาร์-อาทิตย์ และวันที่อยู่ในรายการ publicHolidays — จัดการรายการวันหยุดได้ที่ปุ่ม "🗓 วันหยุดนักขัตฤกษ์" ในหน้าการลา
+   ไม่นับวันเสาร์-อาทิตย์ และวันที่อยู่ในรายการ publicHolidays — จัดการรายการวันหยุดได้ที่ปุ่ม "วันหยุดนักขัตฤกษ์" ในหน้าการลา
    ส่งชื่อผู้ลา (name) มาด้วย → ผู้ปฏิบัติหน้าที่ยามนับวันเสาร์เป็นวันลา (เพราะเป็นวันทำงานของเขา) ตั้งแต่วันเริ่มปฏิบัติหน้าที่ยาม
    ใช้คำนวณจำนวนวันลาทุกจุดในระบบ (รวมรายการที่เคยบันทึกไว้แล้ว เพราะ from/to ของแต่ละรายการยังอยู่ครบ มีแต่ตัวฟังก์ชันนี้ที่เปลี่ยน) */
 function daysBetween(a,b,name){
@@ -2656,7 +2656,7 @@ function renderHolidayModalBody(){
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px;">
       <button id="hd-add-btn" class="btn btn-primary btn-sm" onclick="addHoliday()">+ เพิ่มวันหยุด</button>
-      <button id="hd-seed-btn" class="btn btn-ghost btn-sm" onclick="seedFixedHolidaysForFY(fiscalYearOf(TODAY.toISOString().slice(0,10)))">📅 เพิ่มวันหยุดฯ ปีงบปัจจุบัน</button>
+      <button id="hd-seed-btn" class="btn btn-ghost btn-sm" data-ic="cal" onclick="seedFixedHolidaysForFY(fiscalYearOf(TODAY.toISOString().slice(0,10)))">เพิ่มวันหยุดฯ ปีงบปัจจุบัน</button>
     </div>
     <div class="foot-note" style="margin:0 0 10px;">ปุ่มด้านบนเพิ่มเฉพาะวันหยุดที่วันที่ตายตัว — วันหยุดทางศาสนา (มาฆบูชา วิสาขบูชา อาสาฬหบูชา เข้าพรรษา) และวันหยุดตามมติ ครม. ให้เพิ่มเองด้วยฟอร์มด้านบน</div>` : ''}
     <div class="table-wrap table-wrap-scroll" style="max-height:44vh;"><table style="table-layout:fixed;">

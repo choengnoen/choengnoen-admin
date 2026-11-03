@@ -1160,7 +1160,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s3"></script>
 <script src="emoji-img.js" defer></script>
-<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261103" defer></script><script src="table-scroll-standard.js?v=20261024" defer></script>
+<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261103b" defer></script><script src="table-scroll-standard.js?v=20261024" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
 .route-header .topbar-right{flex-direction:column;align-items:flex-end;gap:6px}
@@ -1440,7 +1440,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <div class="modal-overlay hidden no-print" id="fuel-cal-overlay">
   <div class="modal-box modal-l">
     <div class="modal-head">
-      <div class="modal-head-icon" style="font-size:19px;">📅</div>
+      <div class="modal-head-icon" data-ic="calchk" style="color:#fff;"></div>
       <h3>ปฏิทินภาพรวมการตรวจ พ.1-03</h3>
       <button type="button" class="modal-close" onclick="closeFuelCal()">✕</button>
     </div>
@@ -1846,7 +1846,7 @@ function renderMasterToolbar(){
     const [y,m] = mk.split('-').map(Number);
     upd.className = 'mc-upd old';
     upd.title = '';
-    upd.textContent = '🗓 ข้อมูลสิ้นเดือน '+monthNamesTh[m-1]+' '+(y+543)+' (ดูย้อนหลังอย่างเดียว)';
+    upd.innerHTML = '<span class="ic-inline" data-ic="cal"></span>ข้อมูลสิ้นเดือน '+monthNamesTh[m-1]+' '+(y+543)+' (ดูย้อนหลังอย่างเดียว)';
   }
 }
 function renderMaterialCols(){

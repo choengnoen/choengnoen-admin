@@ -864,6 +864,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .dwt-meta{margin-top:4px;font-size:13.5px;color:var(--ink-600);display:flex;gap:4px 18px;flex-wrap:wrap;align-items:center;}
   .dwt-empty{background:#fff;border:2px dashed var(--line);border-radius:16px;padding:36px 20px;text-align:center;color:var(--ink-400);}
   .dwt-empty .big{font-size:32px;}
+  .dwt-empty .big svg.bs-i{width:36px;height:36px;}
   /* ===== หน้าต่างรายละเอียดใบสั่งการ ===== */
   #dw-view-overlay .dwv-box{max-width:1000px;border-radius:20px;overflow:hidden;padding:0;background:var(--paper-50);display:flex;flex-direction:column;max-height:calc(100vh - 56px);}
   .dwv-hd{color:#fff;background:var(--modal-head-bg);padding:16px 22px 12px;flex:none;}
@@ -940,7 +941,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="firebase-layer.js" data-page="s2"></script>
 <script src="labor-calc.js?v=20261026"></script>
 <script src="emoji-img.js" defer></script>
-<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261024" defer></script><script src="table-scroll-standard.js?v=20261024" defer></script>
+<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261103b" defer></script><script src="table-scroll-standard.js?v=20261024" defer></script>
 <script src="doh-import.js?v=20261030" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
@@ -5931,7 +5932,7 @@ function renderDailyLog(){
   const list = dailyWorkOrders.filter(d=>d.date===dwSel).sort((a,b)=> a.no-b.no);
   day.innerHTML = `<div class="dwt-head"><b>${fmtDayHeading(dwSel)}</b><span class="dwt-count">${list.length} ใบ</span></div>`
     + (list.length ? dwTimelineHtml(list)
-      : `<div class="dwt-empty"><div class="big">🗓️</div><p style="margin:6px 0 14px;">ยังไม่มีใบสั่งการในวันนี้</p><button class="btn btn-primary" onclick="toggleDailyForm()">+ บันทึกใบสั่งการ</button></div>`);
+      : `<div class="dwt-empty"><div class="big" data-ic="cal"></div><p style="margin:6px 0 14px;">ยังไม่มีใบสั่งการในวันนี้</p><button class="btn btn-primary" onclick="toggleDailyForm()">+ บันทึกใบสั่งการ</button></div>`);
 }
 
 /* ---------- หน้าต่างรายละเอียดใบสั่งการ ---------- */

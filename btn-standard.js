@@ -40,6 +40,8 @@
   '.icb svg.bs-i{width:17px;height:17px}'+
   '.btn svg.bs-i{width:1.15em;height:1.15em;flex:none}'+
   '.btn-ic svg.bs-i{width:17px;height:17px}.btn-ic.btn-sm svg.bs-i{width:15px;height:15px}'+
+  '.pill svg.bs-i{width:13px;height:13px;flex:none}'+
+  '.ic-inline{display:inline-flex;vertical-align:-.15em;margin-right:4px}.ic-inline svg.bs-i{width:1.1em;height:1.1em}'+
   '.bs-tip{position:fixed;left:0;top:0;background:#14263f;color:#fff;font:500 11.5px "Sarabun",sans-serif;padding:3px 8px;border-radius:6px;white-space:nowrap;z-index:2147483000;pointer-events:none;display:none}'+
   '.tb-sep{width:1px;height:22px;background:var(--line,#e4e4e0);flex:none;align-self:center}'+
   '.hd-sub{display:block;font-family:"Sarabun",sans-serif;font-size:11.5px;font-weight:400;color:var(--ink-400,#8b93a1);margin-top:1px;line-height:1.3}'+
