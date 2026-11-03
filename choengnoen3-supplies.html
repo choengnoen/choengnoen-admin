@@ -1295,7 +1295,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 <option value="4">เม.ย.</option><option value="5">พ.ค.</option><option value="6">มิ.ย.</option>
                 <option value="7" selected>ก.ค.</option><option value="8">ส.ค.</option><option value="9">ก.ย.</option>
               </select>
-            <div class="search-box" style="min-width:200px;flex:none;">🔍 <input id="rep-mat-search" oninput="renderReportMaterial(ledgerMonthKey('rep-ledger-fy','rep-ledger-month'))" placeholder="ค้นหาชื่อพัสดุ"></div>
               <span class="tb-sep"></span>
               <button type="button" class="btn btn-ghost btn-ic" data-ic="calchk" data-tip="ปฏิทินภาพรวมการตรวจรายเดือน" onclick="openMatCal()"></button>
             </div>
@@ -5631,7 +5630,6 @@ function renderReportMaterialDay(mk){
   if(!wrap) return;
   const locked = false;   /* เหมือน พ.1-03: ไม่ใช้ล็อกรายเดือน ใช้ "ยืนยันตรวจครบทั้งวัน" ล็อกรายวันแทน */
   const {inUse} = updateMatFilterCounts();
-  const q = (document.getElementById('rep-mat-search')?.value||'').trim().toLowerCase();
   const acctFilter = 'all';
   const dayNum = pickMatDay(mk);
   if(dayNum==null){ wrap.innerHTML = '<div class="fd-empty">เดือนนี้ไม่มีวันทำการ</div>'; return; }
@@ -5671,7 +5669,6 @@ function renderReportMaterialDay(mk){
         if(!(matSlotQty(m.code, date, n)>0)) continue;
         if(acctFilter!=='all' && (m.accountType||'ในบัญชี')!==acctFilter) continue;
         if(!inUse(m)) continue;
-        if(q && !((m.name+' '+m.code).toLowerCase().includes(q))) continue;
       }
       slots.push({m, n, id});
     }
