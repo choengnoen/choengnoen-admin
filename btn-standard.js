@@ -28,7 +28,15 @@
     wand:'<path d="m5 19 9-9M13 4l1 2 2 1-2 1-1 2-1-2-2-1 2-1zM18 11l.7 1.3 1.3.7-1.3.7-.7 1.3-.7-1.3-1.3-.7 1.3-.7z"/>',
     doc:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h4"/>',
     save:'<path d="M5 4h12l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/>',
-    caret:'<path d="m6 9 6 6 6-6"/>'
+    caret:'<path d="m6 9 6 6 6-6"/>',
+    user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>',
+    warn:'<path d="M12 9v4M12 17h.01"/><path d="M10.3 4.3 2.6 18a1.8 1.8 0 0 0 1.6 2.7h15.6a1.8 1.8 0 0 0 1.6-2.7L13.7 4.3a1.8 1.8 0 0 0-3.4 0Z"/>',
+    help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17h.01"/>',
+    ban:'<circle cx="12" cy="12" r="9"/><path d="m5.7 5.7 12.6 12.6"/>',
+    copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
+    folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+    scale:'<path d="M12 4v16M8 20h8M5 7h14"/><path d="M5 7 2.5 13a2.5 2.5 0 0 0 5 0zM19 7l-2.5 6a2.5 2.5 0 0 0 5 0z"/>',
+    cart:'<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l3 13h11l2-9H6"/>'
   };
   var css=
   '.btn-ic{width:36px;height:36px;padding:0!important;justify-content:center;position:relative;flex:none;color:var(--ink-600,#5b6475)}'+
@@ -40,8 +48,7 @@
   '.icb svg.bs-i{width:17px;height:17px}'+
   '.btn svg.bs-i{width:1.15em;height:1.15em;flex:none}'+
   '.btn-ic svg.bs-i{width:17px;height:17px}.btn-ic.btn-sm svg.bs-i{width:15px;height:15px}'+
-  '.pill svg.bs-i{width:13px;height:13px;flex:none}'+
-  '.ic-inline{display:inline-flex;vertical-align:-.15em;margin-right:4px}.ic-inline svg.bs-i{width:1.1em;height:1.1em}'+
+  '.modal-head-icon svg.bs-i{color:#fff}'+
   '.bs-tip{position:fixed;left:0;top:0;background:#14263f;color:#fff;font:500 11.5px "Sarabun",sans-serif;padding:3px 8px;border-radius:6px;white-space:nowrap;z-index:2147483000;pointer-events:none;display:none}'+
   '.tb-sep{width:1px;height:22px;background:var(--line,#e4e4e0);flex:none;align-self:center}'+
   '.hd-sub{display:block;font-family:"Sarabun",sans-serif;font-size:11.5px;font-weight:400;color:var(--ink-400,#8b93a1);margin-top:1px;line-height:1.3}'+
@@ -113,6 +120,8 @@
     root.querySelectorAll('.search-box').forEach(sxFill);
   }
   window.BtnStd={icon:svg,scan:scan,
+    /* เปลี่ยนไอคอนในกล่องตามสถานการณ์ เช่น หัวโมดัลที่ใช้ร่วมกันหลายงาน: BtnStd.setIcon(el,'warn') */
+    setIcon:function(el,n){el.innerHTML=svg(n);},
     /* ปุ่มส้มแบบแยกเมนู: BtnStd.toggleMenu(this) บนปุ่ม ▾ */
     toggleMenu:function(b){var m=b.parentNode.querySelector('.bs-menu');if(m)m.classList.toggle('open');},
     closeMenus:function(){document.querySelectorAll('.bs-menu.open').forEach(function(m){m.classList.remove('open');});}};

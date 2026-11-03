@@ -130,7 +130,7 @@
     return '<div class="dohi-note warn"><b>วัสดุที่ระบบยังจับคู่กับทะเบียนพัสดุไม่ได้ ('+ms.length+')</b>'
       + '<div style="font-size:.85em;margin-top:4px">ถ้ามีในทะเบียนอยู่แล้ว ให้เลือก "ใช้รายการนี้" (ระบบจำการจับคู่ไว้ ครั้งหน้าไม่ถามอีก) — กดเพิ่มใหม่ต่อเมื่อไม่มีในทะเบียนจริง ๆ</div>'
       + rows
-      + '<div style="margin-top:10px"><button class="btn btn-primary btn-sm" onclick="DohImp.addMissing()">➕ ไม่มีในทะเบียนจริง — เพิ่มรายการใหม่ แล้วตัดคลังให้เลย</button></div></div>';
+      + '<div style="margin-top:10px"><button class="btn btn-primary btn-sm" data-ic="plus" onclick="DohImp.addMissing()">ไม่มีในทะเบียนจริง — เพิ่มรายการใหม่ แล้วตัดคลังให้เลย</button></div></div>';
   }
   /* หลังจับคู่/เพิ่มวัสดุ: สร้างแผนใหม่ แล้วเตรียมตัดคลังต่อ */
   async function afterMatsChanged(pre){
@@ -426,7 +426,7 @@
     if(back){ S.mode = 'compare'; S.result = null; rebuild().then(()=>{ S.cmpMsg = 'เทียบใหม่แล้ว หลังแก้ใบสั่งการ'; render(); }); }
     else render();
   }
-  const pickHtml = () => '<label class="btn btn-primary" style="cursor:pointer;">📂 เลือกไฟล์ CSV จากกรม<input type="file" accept=".csv,text/csv" multiple style="display:none" onchange="DohImp.onFiles(this)"></label>';
+  const pickHtml = () => '<label class="btn btn-primary" data-ic="folder" style="cursor:pointer;">เลือกไฟล์ CSV จากกรม<input type="file" accept=".csv,text/csv" multiple style="display:none" onchange="DohImp.onFiles(this)"></label>';
   function monthOptions(sel){
     const keys = []; const now = new Date();
     for(let i=0;i<14;i++){ const d = new Date(now.getFullYear(), now.getMonth()-i, 1); keys.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
@@ -460,7 +460,7 @@
         + (S.skipped.length?'<div class="dohi-note warn">ข้าม '+S.skipped.length+' ไฟล์ที่ไม่ใช่ผลงานรายกิจกรรม: '+H(S.skipped.join(', '))+'</div>':'')
         + modeBar + toolBar + optBar(false)
         + missNote() + renderCompare();
-      setFoot('<button class="btn btn-ghost" onclick="DohImp.close()">ปิด</button><button class="btn btn-ghost" onclick="DohImp.copyCompare()">📋 คัดลอกผลเทียบ</button><button class="btn btn-primary" '+(nAct?'':'disabled')+' onclick="DohImp.runCompare()">ดำเนินการที่เลือก ('+nAct+')</button>');
+      setFoot('<button class="btn btn-ghost" onclick="DohImp.close()">ปิด</button><button class="btn btn-ghost" data-ic="copy" onclick="DohImp.copyCompare()">คัดลอกผลเทียบ</button><button class="btn btn-primary" '+(nAct?'':'disabled')+' onclick="DohImp.runCompare()">ดำเนินการที่เลือก ('+nAct+')</button>');
       return;
     }
     const kpi = p ? '<div class="dohi-kpi"><div><b>'+S.parsed.length+'</b>ไฟล์กิจกรรมที่อ่าน</div><div><b>'+p.items.length+'</b>ใบสั่งการที่จะสร้าง</div>'
@@ -1107,7 +1107,7 @@
     body.innerHTML = '<div class="dohi-bar"><span>เดือน <select onchange="DohImp.setCheckMonth(this.value)">'+opts+'</select></span><span><b>'+items.length+'</b> ใบที่ต้องตรวจ</span></div>'
       + list
       + '<div class="dohi-note" style="margin-top:12px">ตรวจ/แก้ใบแล้ว ให้ลบข้อความ "⚠ต้องตรวจ: ..." ออกจากช่องหมายเหตุของใบนั้น รายการจะหายไปจากหน้านี้ · เรื่องลางาน ระบบเทียบกับบันทึกการลาสด ๆ จะหายเมื่อเอาชื่อผู้ลาออกจากใบ หรือแก้วันลา</div>';
-    if(foot) foot.innerHTML = '<span id="doh-ck-msg" style="margin-right:auto;font-size:13px;color:#1c8a53"></span><button class="btn btn-ghost" onclick="DohImp.closeCheck()">ปิด</button><button class="btn btn-primary" '+(items.length?'':'disabled')+' onclick="DohImp.copyCheck()">📋 คัดลอกรายการ</button>';
+    if(foot) foot.innerHTML = '<span id="doh-ck-msg" style="margin-right:auto;font-size:13px;color:#1c8a53"></span><button class="btn btn-ghost" onclick="DohImp.closeCheck()">ปิด</button><button class="btn btn-primary" '+(items.length?'':'disabled')+' data-ic="copy" onclick="DohImp.copyCheck()">คัดลอกรายการ</button>';
   }
   function openCheck(){
     ensureCss();

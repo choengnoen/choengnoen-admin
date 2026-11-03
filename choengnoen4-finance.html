@@ -230,6 +230,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ub-cell+.ub-cell{margin-top:6px;}
   .ub-btns{display:inline-flex;gap:2px;}
   .ub-ic{border:1px solid var(--paper-100);background:#fff;border-radius:6px;padding:1px 5px;font-size:12px;line-height:1.4;cursor:pointer;}
+  .ub-ic svg.bs-i{width:13px;height:13px;display:block;color:var(--ink-600);}
+  .ub-ic.ub-del svg.bs-i{color:var(--danger,#c0392b);}
   .ub-ic:hover{border-color:var(--ink-400);}
   .ub-ic.ub-del:hover{border-color:#e5a3a3;background:#fdeeee;}
   .ub-note{flex-basis:100%;color:var(--ink-600);font-size:12px;}
@@ -439,7 +441,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="firebase-layer.js" data-page="s4"></script>
 <script src="labor-calc.js?v=20261026"></script>
 <script src="emoji-img.js" defer></script>
-<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261024" defer></script><script src="table-scroll-standard.js?v=20261024" defer></script>
+<script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261103c" defer></script><script src="table-scroll-standard.js?v=20261024" defer></script>
 <style>
 /* ส่วนหัวขวา: แสดงเหมือนระบบงานอุบัติเหตุ — "ผู้บันทึก: ชื่อ" + ปุ่มออกจากระบบ (ไม่มีเมนูรูปโปรไฟล์) */
 .route-header .topbar-right{flex-direction:column;align-items:flex-end;gap:6px}
@@ -2164,7 +2166,7 @@ function openUtilMonth(cy){ utilExpanded.add(cy); renderUtilReport(); }
 // ไม่แสดงยอดซ้ำกับแถวเดือน ยกเว้นค่าน้ำประปาที่แถวเดือนใช้ "ยอด สนง." จึงบอกยอดบิลเต็มไว้ให้เทียบ (วันครบกำหนดไปเตือนที่แท็บภาพรวมแทน)
 function utilBillsDetailRow(cy){
   const billHtml = ({b,i})=>`<div class="ub-cell">${statusPill(['จ่ายแล้ว','รอเบิกจ่าย'], b.status==='จ่ายแล้ว'?'จ่ายแล้ว':'รอเบิกจ่าย', b.status==='จ่ายแล้ว'?'pill-ok':'pill-neutral', isAdmin()?[
-      {label:'จ่ายแล้ว', cls:'pill-ok', js:`toggleUtilPaid(${i})`}, {label:'รอเบิกจ่าย', cls:'pill-neutral', js:`toggleUtilPaid(${i})`}]:null)}${isAdmin()&&b.status!=='จ่ายแล้ว'?`<span class="ub-btns no-print"><button type="button" class="ub-ic" title="แก้ไขบิล" onclick="editUtility(${i})">✏️</button><button type="button" class="ub-ic ub-del" title="ลบบิล" onclick="deleteUtility(${i})">🗑️</button></span>`:''}${b.type==='ค่าน้ำประปา'?`<div class="ub-note">บิลเต็ม ${fmtMoney(b.amount)}</div>`:''}</div>`;
+      {label:'จ่ายแล้ว', cls:'pill-ok', js:`toggleUtilPaid(${i})`}, {label:'รอเบิกจ่าย', cls:'pill-neutral', js:`toggleUtilPaid(${i})`}]:null)}${isAdmin()&&b.status!=='จ่ายแล้ว'?`<span class="ub-btns no-print"><button type="button" class="ub-ic" data-ic="pen" title="แก้ไขบิล" onclick="editUtility(${i})"></button><button type="button" class="ub-ic ub-del" data-ic="trash" title="ลบบิล" onclick="deleteUtility(${i})"></button></span>`:''}${b.type==='ค่าน้ำประปา'?`<div class="ub-note">บิลเต็ม ${fmtMoney(b.amount)}</div>`:''}</div>`;
   const cells = UTIL_TYPES.map(t=>{
     const bills = utilityBills.map((b,i)=>({b,i})).filter(({b})=>b.cycle===cy && b.type===t);
     return `<td>${bills.length ? bills.map(billHtml).join('') : '<span class="ub-none">ยังไม่บันทึก</span>'}</td>`;
