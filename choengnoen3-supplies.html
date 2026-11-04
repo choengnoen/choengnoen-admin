@@ -236,8 +236,15 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   }
   /* แถวผู้รับผิดชอบในฟอร์มเครื่องจักร: เว้นขอบขวาไว้เสมอ ปุ่มลบลอยในขอบนั้น ช่องกรอกจึงกว้างเท่ากันทุกแถว */
   .vm-op-row{position:relative;display:grid;grid-template-columns:1fr 150px;gap:8px;padding-right:34px;margin-bottom:6px;align-items:center;}
-  .vm-op-head{margin-bottom:4px;} .vm-op-head label{font-size:12.5px;color:var(--ink-600);}
+  .vm-op-head{height:22px;margin-bottom:4px;} .vm-op-head label{font-size:12.5px;color:var(--ink-600);}
   .vm-op-since{font-size:13px;color:var(--ink-400);padding:0 2px;}
+  /* มีผู้รับผิดชอบคนเดียว: ไม่ต้องโชว์คอลัมน์วันที่ ใช้ที่ตรงนั้นวางปุ่มเปลี่ยนคนแทน (ช่องชื่อกว้างเท่าเดิมตอนเพิ่มแถว) · เพิ่มเครื่องใหม่: มีแค่ช่องชื่อเต็มแถว */
+  .vm-ops{position:relative;}
+  .vm-ops.single .vm-op-since,.vm-ops.single .vm-op-date-lbl{visibility:hidden;}
+  #veh-modal-overlay .vm-ops.single #vm-op-add{position:absolute;top:26px;right:0;width:184px;height:42px;margin:0;}
+  #vm-op-add{margin-top:2px;}
+  .vm-ops.is-new .vm-op-row{grid-template-columns:1fr;padding-right:0;}
+  .vm-ops.is-new .vm-op-since,.vm-ops.is-new .vm-op-date-lbl{display:none;}
   .vm-op-row > .vm-op-del{position:absolute !important;right:0;top:2px;}
   .vm-op-warn{grid-column:1/-1;font-size:12px;line-height:1.4;color:#b45309;background:#fff7e6;border-radius:6px;padding:5px 8px;}
   .vb-plate{flex:none;display:inline-block;border:2px solid var(--navy-900);border-radius:8px;padding:2px 11px;font-weight:700;font-size:14.5px;line-height:1.3;text-align:center;background:#fff;color:var(--ink-900);margin-top:-2px;}
@@ -256,6 +263,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .vm-f>label,.vm-lbl{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--ink-900);margin-bottom:5px;}
   .vm-hint{font-size:12px;line-height:1.4;color:var(--ink-400);margin-top:4px;}
   .vm-g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+  .vm-g2:last-child{margin-bottom:0;} .vm-g2>.vm-f{margin-bottom:0;}
+  .vm-err-msg{font-size:12px;line-height:1.4;color:var(--danger);margin-top:4px;}
+  .vm-opts.vm-err .vm-opt{border-color:var(--danger);}
+  /* ช่องอัตราสิ้นเปลือง + หน่วย ติดกันเป็นช่องเดียว */
+  .vm-join{display:grid;grid-template-columns:minmax(0,1fr) 108px;}
+  #veh-modal-overlay .vm-join .edit-input:first-child{border-radius:9px 0 0 9px;}
+  #veh-modal-overlay .vm-join .edit-input:last-child{border-radius:0 9px 9px 0;margin-left:-1px;padding:0 6px 0 10px;}
+  #veh-modal-overlay .vm-join .edit-input:focus{position:relative;z-index:1;}
   #veh-modal-overlay .edit-input{height:42px;padding:0 12px;font-size:14.5px;border-radius:9px;}
   #veh-modal-overlay .edit-input:focus{outline:none;border-color:var(--orange-500);box-shadow:0 0 0 3px rgba(240,122,31,.15);}
   #veh-modal-overlay .edit-input.vm-filled{background:#f5f9ff;border-color:#bcd6f5;}
@@ -270,19 +285,19 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .vm-opt{--c:var(--orange-500);border:1.5px solid var(--line);border-radius:10px;background:#fff;padding:9px 12px;text-align:left;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;color:var(--ink-600);min-width:0;}
   .vm-opt small{display:block;font-size:12px;font-weight:400;color:var(--ink-400);line-height:1.35;}
   .vm-opt.on{border-color:var(--c);background:#fff8f2;color:var(--ink-900);}
-  .vm-opts.center .vm-opt{text-align:center;}
-  .vm-opt.dot{--c:var(--success);display:flex;align-items:center;gap:8px;padding:9px 10px;font-size:13px;}
+  .vm-opts.center .vm-opt{text-align:center;height:42px;padding:0 6px;font-size:13.5px;white-space:nowrap;}
+  .vm-opt.dot{--c:var(--success);display:flex;align-items:center;gap:7px;height:42px;padding:0 9px;font-size:13px;white-space:nowrap;}
   .vm-opt.dot::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c);flex:none;}
   .vm-opt.dot.s-dmg{--c:var(--danger);} .vm-opt.dot.s-svc{--c:#d97706;} .vm-opt.dot.s-ret{--c:#64748b;}
   .vr-ret{flex:none;font-size:11.5px;color:#475569;background:#eef2f6;border-radius:99px;padding:1px 8px;white-space:nowrap;}
   .vm-opt.dot.on{background:#fafcff;}
-  .vm-note{border-radius:10px;padding:9px 12px;font-size:13px;line-height:1.45;margin-bottom:12px;}
-  .vm-note.blue{background:#eef6ff;color:#17589f;}
   @media(max-width:640px){
     #veh-modal-body{padding:12px;} .vm-card{padding:12px;}
-    .vm-g2{grid-template-columns:1fr;gap:14px;} .vm-g2 .vm-f{margin-bottom:0;}
+    .vm-g2{grid-template-columns:1fr;gap:14px;}
     .vm-opts.stack{grid-auto-flow:row;}
     #veh-modal-overlay .vm-op-row{grid-template-columns:1fr;}
+    .vm-op-date-lbl,.vm-ops.single .vm-op-since{display:none;}
+    #veh-modal-overlay .vm-ops.single #vm-op-add{position:static;width:100%;margin-top:2px;}
     #veh-modal-foot{padding:10px 12px;}
   }
   /* โมดัลรายละเอียดเครื่องจักร/รถ */
@@ -304,7 +319,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .vd-hero-l{font-size:13px;color:var(--ink-600);}
   .vd-hero-v{font-family:'Kanit',sans-serif;font-size:26px;font-weight:600;line-height:1.25;color:var(--orange-600);}
   .vd-hero-v small{font-family:'Sarabun',sans-serif;font-size:13.5px;font-weight:500;color:var(--ink-600);margin-left:5px;}
-  .vd-none{font-size:14.5px;font-weight:600;color:var(--ink-400);}
+  .vd-hero-t:only-child{grid-column:1/-1;}
   .vd-hero-t .vb-plate{font-size:19px;padding:3px 16px 2px;margin:0;} .vd-hero-t .vb-plate small{font-size:10.5px;}
   .vd-box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px 14px;display:flex;flex-direction:column;min-width:0;flex:none;}
   .vd-box-h{display:flex;align-items:center;gap:7px;margin:0 0 10px;font-family:'Kanit',sans-serif;font-size:14px;font-weight:600;color:var(--navy-900);}
@@ -314,8 +329,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .vd-row>span{color:var(--ink-600);flex:none;}
   .vd-row>b{font-weight:600;text-align:right;color:var(--ink-900);}
   .vd-row>b small{font-size:12.5px;font-weight:400;color:var(--ink-400);margin-left:6px;}
-  .vd-row>b.none{font-weight:500;color:var(--ink-400);}
-  .vd-pair{flex:1 0 auto;display:grid;grid-template-columns:1fr 1fr;gap:14px;}
   .vd-tl{list-style:none;margin:0;padding:0;}
   .vd-tl li{position:relative;padding:0 0 11px 19px;}
   .vd-tl li:last-child{padding-bottom:0;}
@@ -336,7 +349,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
     #veh-detail-body{padding:12px;gap:12px;}
     .vd-hero{gap:10px;} .vd-hero-t{padding:10px 12px;min-height:76px;} .vd-hero-v{font-size:21px;} .vd-hero-v small{display:block;margin-left:0;font-size:12.5px;}
     .vd-hero-t.reg{flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;} .vd-hero-t .vb-plate{font-size:15px;padding:1px 10px;}
-    .vd-pair{grid-template-columns:1fr;gap:12px;}
   }
   @media(max-width:900px){.vb-board{grid-template-columns:minmax(0,1fr);}}
   /* แถวเลขไมล์ (odometer) — โทนน้ำเงินอ่อน แยกจากแถวสายทางด้วยสี+ไอคอน ให้ดูออกทันทีว่าเป็นข้อมูลคนละประเภทกับแถวปริมาณน้ำมันด้านบน (พื้นขาว) */
@@ -2944,7 +2956,7 @@ function vehicleBoardHtml(list, searching, counts, statusSel){
 /* เส้นเวลาผู้รับผิดชอบ ใหม่สุดอยู่บน */
 function vehOperatorHistoryHtml(v){
   const list = v.operatorHistory && v.operatorHistory.length ? v.operatorHistory : (v.note ? [{from:'', name:v.note}] : []);
-  if(!list.length) return '<div class="vd-empty"><b>ยังไม่ได้ระบุ</b></div>';
+  if(!list.length) return '';
   const today = toLocalISODate(TODAY);
   const rows = list.map((e,i)=>{
     const until = list[i+1] ? list[i+1].from : '';
@@ -2960,7 +2972,7 @@ function openVehDetail(id){
   const v = vehicles.find(x=>x.id===id); if(!v) return;
   const k = vehStatusKey(v), code = vehicleRegNo(v.label), typeName = vehicleShortName(v.label);
   const noFuel = !v.fuelType, mower = typeName===VM_MOWER, mode = vehicleFuelMode(v);
-  const row = (label,val,fallback)=>`<div class="vd-row"><span>${label}</span>${val?`<b>${val}</b>`:`<b class="none">${fallback||'ยังไม่ได้กำหนด'}</b>`}</div>`;
+  const row = (label,val)=>val ? `<div class="vd-row"><span>${label}</span><b>${val}</b></div>` : '';
   const rate = v.fuelRate!=null && v.fuelRate!=='' ? `${fmtNum(v.fuelRate,1)} ${esc(v.fuelRateUnit||'')}`.trim() : '';
   const modeHtml = noFuel ? '' : (mode==='daily' ? 'เบิกสม่ำเสมอ<small>ตรวจรายวัน</small>' : 'เบิกเป็นครั้ง<small>ตรวจข้ามรอบ</small>');
   const kmHtml = v.maxKmPerDay!=null ? `${fmtNum(v.maxKmPerDay,0)} กม./วัน` : (mower||noFuel ? '' : '300 กม./วัน<small>ค่ามาตรฐาน</small>');
@@ -2968,18 +2980,18 @@ function openVehDetail(id){
   document.getElementById('veh-detail-head').innerHTML = `<div class="vd-ic">${VEH_DETAIL_IC(typeIc,'#fff')}</div>
     <div class="vd-title"><h3>${esc(typeName)}</h3><div class="vd-code">รหัส ${esc(code)}${vehIsDistrict(v)?' · เครื่องจักรแขวง':''}</div></div>
     <span class="vd-status s-${k}">${VEH_STATUS[k].label}</span><button type="button" class="modal-close" onclick="closeVehDetail()">✕</button>`;
-  document.getElementById('veh-detail-body').innerHTML = `<div class="vd-hero">
-      <div class="vd-hero-t rent"><div class="vd-hero-l">ค่าเช่า/บำรุงรักษา</div>${v.monthlyRent!=null?`<div class="vd-hero-v">${fmtNum(v.monthlyRent,0)}<small>บาท/เดือน</small></div>`:'<div class="vd-none">ยังไม่ได้กำหนด</div>'}</div>
-      <div class="vd-hero-t reg"><div class="vd-hero-l">ทะเบียนรถ</div>${vehPlateHtml(v)||'<div class="vd-none">ไม่มีทะเบียน</div>'}</div>
-    </div>
-    ${v.returnDate?`<section class="vd-box"><h4 class="vd-box-h">${VEH_DETAIL_IC('<path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>')}การส่งคืนแขวง</h4>${row('วันที่ส่งคืนแขวง',esc(fmtDate(v.returnDate)))}</section>`:''}
-    <section class="vd-box"><h4 class="vd-box-h">${VEH_DETAIL_IC('<path d="M3 22h12M4 9h10M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 4 0V9.83a2 2 0 0 0-.59-1.42L18 5"/>')}เชื้อเพลิงและการเบิก</h4>
-      ${row('ชนิดเชื้อเพลิง',esc(v.fuelType||''),'ไม่ใช้เชื้อเพลิง')}${row('อัตราสิ้นเปลือง',rate)}${row('รูปแบบการเบิก',modeHtml)}${row('เกณฑ์เลขไมล์',kmHtml,'ไม่ตรวจเลขไมล์')}
-    </section>
-    <div class="vd-pair">
-      <section class="vd-box"><h4 class="vd-box-h">${VEH_DETAIL_IC('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>')}ผู้รับผิดชอบ</h4>${vehOperatorHistoryHtml(v)}</section>
-      <section class="vd-box"><h4 class="vd-box-h">${VEH_DETAIL_IC('<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>')}ประวัติการบำรุงรักษา</h4><div class="vd-empty"><b>ยังไม่มีประวัติ</b>ยังไม่มีการบันทึกในระบบ</div></section>
-    </div>`;
+  /* แสดงเฉพาะช่องที่มีข้อมูล — ช่องว่างและกล่องที่ไม่เหลือช่องใดจะไม่แสดง */
+  const rentTile = v.monthlyRent!=null ? `<div class="vd-hero-t rent"><div class="vd-hero-l">ค่าเช่า</div><div class="vd-hero-v">${fmtNum(v.monthlyRent,0)}<small>บาท/เดือน</small></div></div>` : '';
+  const plate = vehPlateHtml(v), plateTile = plate ? `<div class="vd-hero-t reg"><div class="vd-hero-l">ทะเบียนรถ</div>${plate}</div>` : '';
+  const fuelRows = row('ชนิดเชื้อเพลิง',esc(v.fuelType||''))+row('อัตราสิ้นเปลือง',rate)+row('รูปแบบการเบิก',modeHtml)+row('เกณฑ์เลขไมล์',kmHtml);
+  const opHist = vehOperatorHistoryHtml(v);
+  const detailBody = [
+    rentTile||plateTile ? `<div class="vd-hero">${rentTile}${plateTile}</div>` : '',
+    v.returnDate ? `<section class="vd-box"><h4 class="vd-box-h">${VEH_DETAIL_IC('<path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>')}การส่งคืนแขวง</h4>${row('วันที่ส่งคืนแขวง',esc(fmtDate(v.returnDate)))}</section>` : '',
+    fuelRows ? `<section class="vd-box"><h4 class="vd-box-h">${VEH_DETAIL_IC('<path d="M3 22h12M4 9h10M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 4 0V9.83a2 2 0 0 0-.59-1.42L18 5"/>')}เชื้อเพลิงและการเบิก</h4>${fuelRows}</section>` : '',
+    opHist ? `<section class="vd-box"><h4 class="vd-box-h">${VEH_DETAIL_IC('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>')}ผู้รับผิดชอบ</h4>${opHist}</section>` : ''
+  ].join('');
+  document.getElementById('veh-detail-body').innerHTML = detailBody || '<div class="vd-empty"><b>ยังไม่มีข้อมูลเพิ่มเติม</b></div>';
   document.getElementById('veh-detail-foot').innerHTML = `<button type="button" class="btn btn-ghost" onclick="closeVehDetail()">ปิด</button>${isAdmin()?`<button type="button" class="btn btn-primary" onclick="closeVehDetail();openVehicleModal(${vehIdArg(v.id)})">แก้ไขข้อมูล</button>`:''}`;
   document.getElementById('veh-detail-overlay').classList.remove('hidden');
 }
@@ -3015,7 +3027,7 @@ function vmOperatorRowHtml(r, first){
   return `<div class="vm-op-row">
     <input class="edit-input vm-op-name" data-pick="staff" ${first ? '' : `data-date="${esc(r.from||'')}" `}autocomplete="off" value="${esc(r.name||'')}" data-orig="${esc(r.name||'')}" placeholder="ชื่อผู้รับผิดชอบ" oninput="onVmOpNameInput(this)">
     ${first ? '<div class="vm-op-since">ตั้งแต่เริ่มต้น</div>' : `<input type="date" class="edit-input vm-op-from" value="${esc(r.from||'')}" data-orig="${esc(r.from||'')}" onchange="this.closest('.vm-op-row').querySelector('.vm-op-name').dataset.date=this.value">`}
-    ${first ? '' : `<button type="button" class="btn btn-ghost btn-ic btn-ic-danger btn-sm vm-op-del" data-ic="trash" data-tip="ลบ" onclick="this.closest('.vm-op-row').remove()"></button>`}
+    ${first ? '' : `<button type="button" class="btn btn-ghost btn-ic btn-ic-danger btn-sm vm-op-del" data-ic="trash" data-tip="ลบ" onclick="this.closest('.vm-op-row').remove();vmSyncOps()"></button>`}
     <div class="vm-op-warn hidden">แก้ชื่อตรงนี้จะมีผลย้อนหลังทั้งช่วง (ใช้แก้คำผิด) — ถ้าเปลี่ยนคน ให้กด "เปลี่ยนผู้รับผิดชอบ" แล้วระบุวันที่</div>
   </div>`;
 }
@@ -3026,7 +3038,11 @@ function onVmOpNameInput(el){
 function addVmOperatorRow(){
   const box = document.getElementById('vm-op-rows');
   box.insertAdjacentHTML('beforeend', vmOperatorRowHtml({from:toLocalISODate(TODAY), name:''}, false));
+  vmSyncOps();
   box.lastElementChild.querySelector('.vm-op-name').focus();
+}
+function vmSyncOps(){
+  document.getElementById('vm-ops').classList.toggle('single', document.querySelectorAll('#vm-op-rows .vm-op-row').length<2);
 }
 /* ชื่อนี้รับผิดชอบเครื่องจักรตั้งแต่วันที่ date ได้ไหม (คืนข้อความปัญหา หรือ '' ถ้าได้) — ชื่อที่ไม่อยู่ในทะเบียนบุคลากร = บุคคลภายนอก ไม่ตรวจ */
 function vmOpDateProblem(name, date){
@@ -3087,7 +3103,24 @@ function vmTypeValue(){
   const val = document.getElementById('vm-typename').value||'';
   return (val===VM_TYPE_OTHER ? document.getElementById('vm-typename-other').value : val).trim();
 }
-function vmAutoTag(id){ return `<span class="vm-auto hidden" id="vm-auto-${id}">เติมให้อัตโนมัติ</span>`; }
+/* แจ้งปัญหาที่ใต้ช่องนั้นเลย (ไม่ต้องกดปิดกล่องข้อความ) */
+function vmFlagErr(el, msg){
+  el.classList.add('vm-err');
+  const f = el.closest('.vm-f');
+  let m = f.querySelector('.vm-err-msg');
+  if(!m){ m = document.createElement('div'); m.className = 'vm-err-msg'; f.appendChild(m); }
+  m.textContent = msg;
+}
+function vmClearErr(el){
+  if(!el) return;
+  el.classList.remove('vm-err');
+  el.closest('.vm-f')?.querySelector('.vm-err-msg')?.remove();
+}
+function vmFocusErr(el){
+  el.scrollIntoView({block:'center'});
+  if(el.focus) el.focus({preventScroll:true});
+}
+function vmAutoTag(id){ return `<span class="vm-auto hidden" id="vm-auto-${id}">เติมให้</span>`; }
 function vmMarkAuto(id, on){
   document.getElementById('vm-auto-'+id)?.classList.toggle('hidden', !on);
   document.getElementById(id)?.classList.toggle('vm-filled', !!on);
@@ -3096,6 +3129,7 @@ function vmSetOpt(hiddenId, val){
   const el = document.getElementById(hiddenId);
   el.value = val; el.dataset.picked = '1';
   document.querySelectorAll(`[data-for="${hiddenId}"] .vm-opt`).forEach(b=>b.classList.toggle('on', b.dataset.v===val));
+  vmClearErr(document.querySelector(`[data-for="${hiddenId}"]`));
 }
 function onVmOpt(btn){
   const id = btn.parentElement.dataset.for;
@@ -3110,31 +3144,36 @@ function vmSyncFields(){
   document.getElementById('vm-plate-input').classList.toggle('hidden', mower);
   document.getElementById('vm-plate-locked').classList.toggle('hidden', !mower);
   document.getElementById('vm-fuel-extra').classList.toggle('hidden', noFuel);
-  document.getElementById('vm-maxkm-field').classList.toggle('hidden', mower || noFuel);
+  /* เกณฑ์เลขไมล์ใช้กับเครื่องที่นับเป็นกิโลเมตร — เครื่องที่นับเป็นชั่วโมงซ่อนไว้ ยกเว้นเคยตั้งค่าไว้แล้ว (ซ่อนแล้วค่าเดิมยังอยู่) */
+  const maxKm = document.getElementById('vm-maxkm'), byHour = /ชม/.test(document.getElementById('vm-fuelrateunit').value||'');
+  document.getElementById('vm-maxkm-field').classList.toggle('hidden', mower || noFuel || (byHour && !maxKm.value));
   document.getElementById('vm-return-field')?.classList.toggle('hidden', document.getElementById('vm-status').value!=='ret');
+  /* คำอธิบายขึ้นเฉพาะตัวเลือกที่กำลังเลือก จะได้ไม่รกหน้าจอ */
+  document.getElementById('vm-source-hint').classList.toggle('hidden', document.getElementById('vm-source').value!==VEH_SOURCE_DISTRICT);
+  const mode = document.getElementById('vm-fuelmode').value;
+  document.getElementById('vm-mode-hint').textContent = mode==='daily' ? 'เช่น เครื่องตัดหญ้า — ตรวจรายวัน' : mode==='issue' ? 'เช่น รถยนต์ สัปดาห์ละ 1-2 ครั้ง — ตรวจข้ามรอบ' : 'เลือกตามลักษณะการเบิกของเครื่องนี้';
+  document.getElementById('vm-rent-hint').textContent = document.getElementById('vm-rent').classList.contains('vm-filled') ? `เติมจากค่าที่พบมากสุดของ${vmTypeValue()}ในทะเบียน` : 'รับข้อมูลจากแขวง (งานปรับซ่อม) ทุกเดือน';
 }
 /* เลือกประเภท → เติมค่าให้ แต่ยังแก้เองได้ทุกช่อง */
 function onVmTypeChange(sel){
-  sel.classList.remove('vm-err');
+  vmClearErr(sel);
   const isOther = sel.value===VM_TYPE_OTHER, other = document.getElementById('vm-typename-other');
   other.classList.toggle('hidden', !isOther);
-  const rent = document.getElementById('vm-rent');
+  const rent = document.getElementById('vm-rent'), code = document.getElementById('vm-code');
   if(rent.classList.contains('vm-filled')) rent.value = '';   // ค่าที่ระบบเติมจากประเภทก่อนหน้า ไม่ใช่ค่าที่ผู้ใช้กรอก
   ['vm-fueltype','vm-fuelmode','vm-fuelrateunit','vm-rent'].forEach(id=>vmMarkAuto(id,false));
-  const note = document.getElementById('vm-auto-note'), filled = [];
-  if(isOther) other.focus();
   const type = vmTypeValue(), p = isOther ? null : vmPresetOf(type);
   if(p){
-    vmSetOpt('vm-fueltype', p.fuel); vmMarkAuto('vm-fueltype', true); filled.push(p.fuel);
-    vmSetOpt('vm-fuelmode', p.mode); vmMarkAuto('vm-fuelmode', true); filled.push(p.mode==='daily'?'เบิกสม่ำเสมอ':'เบิกเป็นครั้ง');
-    document.getElementById('vm-fuelrateunit').value = p.unit; vmMarkAuto('vm-fuelrateunit', true); filled.push('หน่วย '+p.unit);
+    vmSetOpt('vm-fueltype', p.fuel); vmMarkAuto('vm-fueltype', true);
+    vmSetOpt('vm-fuelmode', p.mode); vmMarkAuto('vm-fuelmode', true);
+    document.getElementById('vm-fuelrateunit').value = p.unit; vmMarkAuto('vm-fuelrateunit', true);
   }
-  if(type===VM_MOWER){ document.getElementById('vm-plate').value = ''; filled.push('ไม่มีทะเบียน'); }
+  if(type===VM_MOWER) document.getElementById('vm-plate').value = '';
   const common = isOther ? '' : vmCommonRent(type);
-  if(common && !rent.value){ rent.value = common; vmMarkAuto('vm-rent', true); filled.push('ค่าเช่า '+fmtNum(+common,0)+' บาท (ค่าที่พบมากสุดของ'+type+'ในทะเบียน)'); }
-  note.textContent = filled.length ? 'เติมให้แล้ว: '+filled.join(' · ')+' — แก้ไขเองได้' : '';
-  note.classList.toggle('hidden', !filled.length);
+  if(common && !rent.value){ rent.value = common; vmMarkAuto('vm-rent', true); }
   vmSyncFields();
+  if(isOther) other.focus();
+  else if(!code.value) code.focus();   // เลือกประเภทแล้วพิมพ์รหัสต่อได้เลย
 }
 function openVehicleModal(id){
   if(!isAdmin()) return;
@@ -3150,70 +3189,78 @@ function openVehicleModal(id){
   const units = [...new Set(['ลิตร/ชม.','กม./ลิตร',unit])];
   document.getElementById('veh-modal-body').innerHTML = `
     <input type="hidden" id="vm-id" value="${v?v.id:''}">
-    <div class="vm-note blue hidden" id="vm-auto-note"></div>
-    <section class="vm-card"><h4><i>1</i>ข้อมูลหลัก</h4>
-      <div class="vm-f"><label for="vm-typename">ประเภทเครื่องจักร-รถ <span class="req">*</span></label>
-        <select class="edit-input" id="vm-typename" onchange="onVmTypeChange(this)">${vmTypeOptionsHtml(typeName)}</select>
-        <input class="edit-input hidden" id="vm-typename-other" style="margin-top:6px;" placeholder="พิมพ์ชื่อประเภท" oninput="this.classList.remove('vm-err');vmSyncFields()"></div>
+    <section class="vm-card"><h4><i>1</i>ข้อมูลเครื่อง</h4>
+      <div class="vm-g2">
+        <div class="vm-f"><label for="vm-typename">ประเภทเครื่องจักร-รถ <span class="req">*</span></label>
+          <select class="edit-input" id="vm-typename" onchange="onVmTypeChange(this)">${vmTypeOptionsHtml(typeName)}</select>
+          <input class="edit-input hidden" id="vm-typename-other" style="margin-top:6px;" placeholder="พิมพ์ชื่อประเภท" oninput="vmClearErr(this);vmSyncFields()"></div>
+        <div class="vm-f"><div class="vm-lbl">ที่มาของเครื่อง</div>
+          <div class="vm-opts center" data-for="vm-source">
+            <button type="button" class="vm-opt${v&&vehIsDistrict(v)?'':' on'}" data-v="" onclick="onVmOpt(this)">ประจำหมวด</button>
+            <button type="button" class="vm-opt${v&&vehIsDistrict(v)?' on':''}" data-v="${VEH_SOURCE_DISTRICT}" onclick="onVmOpt(this)">เครื่องจักรแขวง</button>
+          </div>
+          <input type="hidden" id="vm-source" value="${v&&vehIsDistrict(v)?VEH_SOURCE_DISTRICT:''}">
+          <div class="vm-hint hidden" id="vm-source-hint">หมวดทำบันทึกขอใช้ · แยกตารางไว้ท้ายทะเบียน</div></div>
+      </div>
       <div class="vm-g2">
         <div class="vm-f"><label for="vm-code">รหัส/เลขทะเบียนเครื่องจักร <span class="req">*</span></label>
-          <input class="edit-input" id="vm-code" value="${esc(code)}" placeholder="เช่น 04-1492-23-5" oninput="this.classList.remove('vm-err');vmSyncFields()"></div>
+          <input class="edit-input" id="vm-code" value="${esc(code)}" placeholder="เช่น 04-1492-23-5" oninput="vmClearErr(this);vmSyncFields()"></div>
         <div class="vm-f"><div class="vm-lbl">ทะเบียนรถ</div>
           <div id="vm-plate-input"><input class="edit-input" id="vm-plate" value="${esc(v?(v.plate||''):'')}" placeholder="เช่น ฮข 1234"></div>
-          <div id="vm-plate-locked" class="hidden"><div class="vm-locked">ไม่มีทะเบียน</div><div class="vm-hint">เครื่องตัดหญ้าไม่ต้องกรอกทะเบียน</div></div></div>
+          <div id="vm-plate-locked" class="hidden"><div class="vm-locked">ไม่มีทะเบียน</div></div></div>
       </div>
-      <div class="vm-f"><div class="vm-lbl">ที่มาของเครื่อง</div>
-        <div class="vm-opts center" data-for="vm-source">
-          <button type="button" class="vm-opt${v&&vehIsDistrict(v)?'':' on'}" data-v="" onclick="onVmOpt(this)">ประจำหมวด</button>
-          <button type="button" class="vm-opt${v&&vehIsDistrict(v)?' on':''}" data-v="${VEH_SOURCE_DISTRICT}" onclick="onVmOpt(this)">เครื่องจักรแขวง<small>ทำบันทึกขอใช้</small></button>
-        </div>
-        <input type="hidden" id="vm-source" value="${v&&vehIsDistrict(v)?VEH_SOURCE_DISTRICT:''}"></div>
-      <div class="vm-f">
-        <div class="vm-op-row vm-op-head"><label>ผู้รับผิดชอบ</label><label>มีผลตั้งแต่วันที่</label></div>
+    </section>
+    <section class="vm-card"><h4><i>2</i>ผู้รับผิดชอบและสถานะ</h4>
+      <div class="vm-f vm-ops${v?'':' is-new'}" id="vm-ops">
+        <div class="vm-op-row vm-op-head"><label>ผู้รับผิดชอบ</label><label class="vm-op-date-lbl">มีผลตั้งแต่วันที่</label></div>
         <div id="vm-op-rows">${operatorRows.map((r,i)=>vmOperatorRowHtml(r, i===0)).join('')}</div>
-        ${v?`<button type="button" class="btn btn-ghost btn-sm" onclick="addVmOperatorRow()">+ เปลี่ยนผู้รับผิดชอบ</button>`:''}
+        ${v?`<button type="button" class="btn btn-ghost btn-sm" id="vm-op-add" onclick="addVmOperatorRow()">+ เปลี่ยนผู้รับผิดชอบ</button>`:''}
       </div>
       <div class="vm-f"><div class="vm-lbl">สถานะ</div>
         <div class="vm-opts stack" data-for="vm-status">${(v?['ok','svc','dmg','ret']:['ok','svc','dmg']).map(k=>`<button type="button" class="vm-opt dot s-${k}${status===k?' on':''}" data-v="${k}" onclick="onVmOpt(this)">${VEH_STATUS[k].label}</button>`).join('')}</div>
         <input type="hidden" id="vm-status" value="${status}"></div>
       ${v?`<div class="vm-f hidden" id="vm-return-field"><label for="vm-return">วันที่ส่งคืนแขวง <span class="req">*</span></label>
-        <input type="date" class="edit-input" id="vm-return" value="${esc(v.returnDate||toLocalISODate(TODAY))}">
+        <input type="date" class="edit-input" id="vm-return" value="${esc(v.returnDate||toLocalISODate(TODAY))}" oninput="vmClearErr(this)">
         <div class="vm-hint">หลังวันนี้เครื่องจะไม่ขึ้นให้เลือกในงานใหม่ ส่วนประวัติเดิมยังอยู่ครบ — ถ้ารับเครื่องกลับ ให้เปลี่ยนสถานะเป็นใช้งานปกติ</div></div>`:''}
     </section>
-    <section class="vm-card"><h4><i>2</i>เชื้อเพลิง</h4>
+    <section class="vm-card"><h4><i>3</i>เชื้อเพลิง</h4>
       <div class="vm-f"><div class="vm-lbl">ชนิดเชื้อเพลิง <span class="req">*</span> ${vmAutoTag('vm-fueltype')}</div>
         <div class="vm-opts center" data-for="vm-fueltype">${fuelBtn('ดีเซล','ดีเซล')}${fuelBtn('เบนซิน','เบนซิน')}${fuelBtn('','ไม่ใช้เชื้อเพลิง')}</div>
         <input type="hidden" id="vm-fueltype" value="${esc(v?(v.fuelType||''):'')}" data-picked="${v?'1':''}"></div>
       <div id="vm-fuel-extra">
         <div class="vm-g2">
-          <div class="vm-f"><label for="vm-fuelrate">อัตราสิ้นเปลืองน้ำมัน</label>
-            <input type="number" step="0.1" min="0" class="edit-input" id="vm-fuelrate" value="${v&&v.fuelRate!=null?v.fuelRate:''}" placeholder="เช่น 3.5"></div>
-          <div class="vm-f"><label for="vm-fuelrateunit">หน่วย ${vmAutoTag('vm-fuelrateunit')}</label>
-            <select class="edit-input" id="vm-fuelrateunit" onchange="vmMarkAuto(this.id,false)">${units.map(u=>`<option${u===unit?' selected':''}>${esc(u)}</option>`).join('')}</select></div>
+          <div class="vm-f"><label for="vm-fuelrate">อัตราสิ้นเปลือง ${vmAutoTag('vm-fuelrateunit')}</label>
+            <div class="vm-join"><input type="number" step="0.1" min="0" class="edit-input" id="vm-fuelrate" value="${v&&v.fuelRate!=null?v.fuelRate:''}" placeholder="เช่น 3.5">
+              <select class="edit-input" id="vm-fuelrateunit" aria-label="หน่วย" onchange="vmMarkAuto(this.id,false);vmSyncFields()">${units.map(u=>`<option${u===unit?' selected':''}>${esc(u)}</option>`).join('')}</select></div></div>
+          <div class="vm-f"><div class="vm-lbl">รูปแบบการเบิก ${vmAutoTag('vm-fuelmode')}</div>
+            <div class="vm-opts center" data-for="vm-fuelmode">
+              <button type="button" class="vm-opt${mode==='issue'?' on':''}" data-v="issue" onclick="onVmOpt(this)">เป็นครั้ง</button>
+              <button type="button" class="vm-opt${mode==='daily'?' on':''}" data-v="daily" onclick="onVmOpt(this)">สม่ำเสมอ</button>
+            </div>
+            <input type="hidden" id="vm-fuelmode" value="${mode}">
+            <div class="vm-hint" id="vm-mode-hint"></div></div>
         </div>
-        <div class="vm-f"><div class="vm-lbl">รูปแบบการเบิกน้ำมัน ${vmAutoTag('vm-fuelmode')}</div>
-          <div class="vm-opts stack" data-for="vm-fuelmode">
-            <button type="button" class="vm-opt${mode==='issue'?' on':''}" data-v="issue" onclick="onVmOpt(this)">เบิกเป็นครั้ง<small>รถยนต์ สัปดาห์ละ 1-2 ครั้ง ตรวจข้ามรอบ</small></button>
-            <button type="button" class="vm-opt${mode==='daily'?' on':''}" data-v="daily" onclick="onVmOpt(this)">เบิกสม่ำเสมอ<small>เครื่องตัดหญ้า ตรวจรายวัน</small></button>
-          </div>
-          <input type="hidden" id="vm-fuelmode" value="${mode}"></div>
       </div>
     </section>
-    <section class="vm-card"><h4><i>3</i>ค่าใช้จ่ายและเกณฑ์</h4>
-      <div class="vm-f"><label for="vm-rent">ค่าเช่า/บำรุงรักษาต่อเดือน ${vmAutoTag('vm-rent')}</label>
-        <div class="vm-unit"><input type="number" step="0.01" min="0" class="edit-input" id="vm-rent" value="${v&&v.monthlyRent!=null?v.monthlyRent:''}" placeholder="0.00" oninput="vmMarkAuto(this.id,false)"><span>บาท/เดือน</span></div>
-        <div class="vm-hint">รับข้อมูลจากแขวง (งานปรับซ่อม) ทุกเดือน</div></div>
-      <div class="vm-f" id="vm-maxkm-field"><label for="vm-maxkm">เกณฑ์เลขไมล์สูงสุดต่อวัน</label>
-        <div class="vm-unit"><input type="number" step="1" min="0" class="edit-input" id="vm-maxkm" value="${v&&v.maxKmPerDay!=null?v.maxKmPerDay:''}" placeholder="300"><span>กม./วัน</span></div>
-        <div class="vm-hint">เว้นว่างใช้ค่ามาตรฐาน 300 กม./วัน ปรับสูงขึ้นสำหรับรถที่ใช้งานหนัก</div></div>
+    <section class="vm-card"><h4><i>4</i>ค่าเช่าและเกณฑ์</h4>
+      <div class="vm-g2">
+        <div class="vm-f"><label for="vm-rent">ค่าเช่าต่อเดือน ${vmAutoTag('vm-rent')}</label>
+          <div class="vm-unit"><input type="number" step="0.01" min="0" class="edit-input" id="vm-rent" value="${v&&v.monthlyRent!=null?v.monthlyRent:''}" placeholder="0.00" oninput="vmMarkAuto(this.id,false);vmSyncFields()"><span>บาท/เดือน</span></div>
+          <div class="vm-hint" id="vm-rent-hint"></div></div>
+        <div class="vm-f" id="vm-maxkm-field"><label for="vm-maxkm">เกณฑ์เลขไมล์สูงสุด</label>
+          <div class="vm-unit"><input type="number" step="1" min="0" class="edit-input" id="vm-maxkm" value="${v&&v.maxKmPerDay!=null?v.maxKmPerDay:''}" placeholder="300"><span>กม./วัน</span></div>
+          <div class="vm-hint">เว้นว่าง = ค่ามาตรฐาน 300 กม./วัน</div></div>
+      </div>
     </section>`;
   document.getElementById('veh-modal-foot').innerHTML = `
     ${v?`<button type="button" class="btn btn-danger" onclick="removeVehicle(${vehIdArg(v.id)})">ลบรายการนี้</button>`:''}
     <button type="button" class="btn btn-ghost" onclick="closeVehicleModal()">ยกเลิก</button>
     <button type="button" class="btn btn-primary" id="veh-save-btn" onclick="saveVehicleModal()">บันทึก</button>`;
   vmSyncFields();
+  vmSyncOps();
   document.getElementById('veh-modal-overlay').classList.remove('hidden');
   document.getElementById('veh-modal-body').scrollTop = 0;
+  if(!v) document.getElementById('vm-typename').focus({preventScroll:true});
 }
 function closeVehicleModal(){ document.getElementById('veh-modal-overlay').classList.add('hidden'); }
 async function saveVehicleModal(){
@@ -3223,21 +3270,23 @@ async function saveVehicleModal(){
   const code = (document.getElementById('vm-code').value||'').trim();
   const typeEl = document.getElementById('vm-typename');
   const fuelEl = document.getElementById('vm-fueltype');
-  if(!typeName){ (typeEl.value===VM_TYPE_OTHER ? document.getElementById('vm-typename-other') : typeEl).classList.add('vm-err'); }
-  if(!code){ document.getElementById('vm-code').classList.add('vm-err'); }
-  if(!typeName || !code){ document.getElementById('veh-modal-body').scrollTop = 0; showAlertModal(!typeName ? 'กรุณาเลือกประเภทเครื่องจักร-รถ' : 'กรุณากรอกรหัส/เลขทะเบียน'); return; }
+  const codeEl = document.getElementById('vm-code');
+  /* ช่องบังคับที่ยังขาด แจ้งใต้ช่องพร้อมกันทุกช่อง แล้วเลื่อนไปช่องแรก */
+  const missing = [];
+  if(!typeName) missing.push([typeEl.value===VM_TYPE_OTHER ? document.getElementById('vm-typename-other') : typeEl, 'กรุณาเลือกประเภทเครื่องจักร-รถ']);
+  if(!code) missing.push([codeEl, 'กรุณากรอกรหัส/เลขทะเบียน']);
+  if(fuelEl.dataset.picked!=='1') missing.push([document.querySelector('[data-for="vm-fueltype"]'), 'กรุณาเลือกชนิดเชื้อเพลิง']);
+  if(missing.length){ missing.forEach(m=>vmFlagErr(m[0], m[1])); vmFocusErr(missing[0][0]); return; }
   /* กันรหัสซ้ำ (ไม่สนขีด/เว้นวรรค) รวมเครื่องที่ส่งคืนแขวงแล้ว — ตอนแก้ไขตรวจเฉพาะเมื่อเปลี่ยนรหัส รายการที่ซ้ำอยู่ก่อนแล้วจะได้ยังแก้ช่องอื่นได้ */
   const editing = id ? vehicles.find(x=>x.id===vehIdVal(id)) : null, codeKey = vehSearchKey(code);
   if(!editing || vehSearchKey(vehicleRegNo(editing.label))!==codeKey){
     const dup = vehicles.find(x=>x!==editing && vehSearchKey(vehicleRegNo(x.label))===codeKey);
     if(dup){
-      document.getElementById('vm-code').classList.add('vm-err');
-      document.getElementById('veh-modal-body').scrollTop = 0;
-      showAlertModal(`รหัส ${vehicleRegNo(dup.label)} มีอยู่ในทะเบียนแล้ว: ${vehicleShortName(dup.label)}${dup.note?' — '+dup.note:''} (${VEH_STATUS[vehStatusKey(dup)].label})\nถ้าเป็นเครื่องเดิม ให้แก้ไขรายการนั้นแทนการเพิ่มใหม่`);
+      vmFlagErr(codeEl, `รหัสนี้มีอยู่ในทะเบียนแล้ว: ${vehicleShortName(dup.label)}${dup.note?' — '+dup.note:''} (${VEH_STATUS[vehStatusKey(dup)].label}) ถ้าเป็นเครื่องเดิม ให้แก้ไขรายการนั้นแทนการเพิ่มใหม่`);
+      vmFocusErr(codeEl);
       return;
     }
   }
-  if(fuelEl.dataset.picked!=='1'){ showAlertModal('กรุณาเลือกชนิดเชื้อเพลิง'); return; }
   const operatorRows = readVmOperatorRows();
   if(!operatorRows) return;
   // มีแถวเดียวไม่ต้องเก็บประวัติ ยกเว้นล้างชื่อจนว่าง (กันระบบรองที่ 2 ไปแกะชื่อเก่าจากท้ายป้าย)
@@ -3246,7 +3295,7 @@ async function saveVehicleModal(){
   const plate = typeName===VM_MOWER ? '' : (document.getElementById('vm-plate').value||'').trim();
   const statusKey = document.getElementById('vm-status').value;
   const returnDate = statusKey==='ret' ? (document.getElementById('vm-return').value||'') : '';
-  if(statusKey==='ret' && !returnDate){ showAlertModal('กรุณาระบุวันที่ส่งคืนแขวง'); return; }
+  if(statusKey==='ret' && !returnDate){ const el = document.getElementById('vm-return'); vmFlagErr(el, 'กรุณาระบุวันที่ส่งคืนแขวง'); vmFocusErr(el); return; }
   const fuelType = fuelEl.value||'';
   const fuelRateRaw = document.getElementById('vm-fuelrate').value;
   const fuelRate = fuelRateRaw!=='' ? parseFloat(fuelRateRaw) : undefined;
