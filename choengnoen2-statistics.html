@@ -2965,6 +2965,7 @@ function showView(view){
   const strip = document.getElementById('mn-strip'); if(strip) strip.classList.toggle('hidden', !(showFilter || inSettings || view==='routine'));
   const gm = document.getElementById('g-month'); if(gm) gm.style.display = (view==='routine2') ? 'none' : '';
   document.getElementById('nav-menu-pop')?.classList.remove('show');
+  try{ sessionStorage.setItem('cn_statistics_view', view); }catch(e){}
 }
 document.querySelectorAll('.sec-tab').forEach(t=>{
   t.addEventListener('click', ()=> showView(t.dataset.sec));
@@ -6684,8 +6685,14 @@ function __toggleNote(id, btn){
 }
 
 renderAll();
+// เปิดหน้าเดิมที่ดูค้างไว้ (เช่น หลังรีเฟรชหน้า) รวมถึงหน้าย่อยของงานบำรุงปกติ — ลิงก์เคสอุบัติเหตุ (applyCaseHandoff) ทำงานทีหลังจึงมีผลเหนือกว่า
+try{
+  const last = sessionStorage.getItem('cn_statistics_view');
+  const t = last && document.getElementById('panel-'+last) && document.querySelector(`.sec-tab[data-sec="${MAINT_VIEWS.includes(last)?'routine':last}"]`);
+  if(t && t.style.display!=='none' && !t.classList.contains('fbl-tab-off')) showView(last);
+}catch(e){}
 /* ============================================================
-   แผน 12 — รับข้อมูลเคสอุบัติเหตุ (ปุ่ม "ส่งไปทำใบสั่งการ") ผ่านส่วนท้ายลิงก์ #case=accident&id=…&hw=…&km=…&side=…&d=…
+   แผน 12— รับข้อมูลเคสอุบัติเหตุ (ปุ่ม "ส่งไปทำใบสั่งการ") ผ่านส่วนท้ายลิงก์ #case=accident&id=…&hw=…&km=…&side=…&d=…
    - ไม่มีข้อมูลส่วนบุคคล ไม่มีวัสดุ/ราคา — เติมได้เฉพาะ ทล./กม./ฝั่ง/เลขเคส ลงฟอร์ม ไม่บันทึกเอง
    - อ่านแล้วล้างออกจากแถบที่อยู่ทันที; เก็บใน sessionStorage ไว้ 30 นาทีเผื่อต้องล็อกอินก่อน
    ============================================================ */

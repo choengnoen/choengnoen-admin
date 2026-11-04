@@ -1614,6 +1614,7 @@ document.querySelectorAll('.sec-tab').forEach(t=>{
     document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
     t.classList.add('active');
     document.getElementById('panel-'+t.dataset.sec).classList.add('active');
+    try{ sessionStorage.setItem('cn_saraban_tab', t.dataset.sec); }catch(e){}
   });
 });
 
@@ -3888,6 +3889,8 @@ function __toggleNote(id, btn){
 }
 
 renderAll();
+// เปิดแท็บเดิมที่ดูค้างไว้ (เช่น หลังรีเฟรชหน้า) — ถ้าแท็บถูกซ่อนตามสิทธิ์ firebase-layer จะย้ายไปแท็บแรกที่เห็นให้เอง
+try{ const last = sessionStorage.getItem('cn_saraban_tab'); const t = last && document.querySelector(`.sec-tab[data-sec="${last}"]`); if(t && t.style.display!=='none' && !t.classList.contains('fbl-tab-off')) t.click(); }catch(e){}
 (async function __initApiData(){
   // โหลด 5 ตารางที่หน้านี้ต้องใช้ในคำขอเดียว (apiGetMultiple) แทนการยิงทีละตาราง
   // 5 ครั้งเรียงลำดับกันแบบเดิม — แต่ละคำขอไปยัง Apps Script มี latency คงที่ของตัว

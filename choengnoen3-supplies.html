@@ -1754,6 +1754,7 @@ document.querySelectorAll('.sec-tab').forEach(t=>{
       renderMaterials();
     }
     if(t.dataset.sec==='inbound') renderInbound();
+    try{ sessionStorage.setItem('cn_supplies_tab', t.dataset.sec); }catch(e){}
   });
 });
 
@@ -6899,6 +6900,8 @@ function __toggleNote(id, btn){
 }
 
 renderAll();
+// เปิดแท็บเดิมที่ดูค้างไว้ (เช่น หลังรีเฟรชหน้า) — ถ้าแท็บถูกซ่อนตามสิทธิ์ firebase-layer จะย้ายไปแท็บแรกที่เห็นให้เอง
+try{ const last = sessionStorage.getItem('cn_supplies_tab'); const t = last && document.querySelector(`.sec-tab[data-sec="${last}"]`); if(t && t.style.display!=='none' && !t.classList.contains('fbl-tab-off')) t.click(); }catch(e){}
 (async function __initApiData(){
   // Firestore โหลดพร้อมกันได้ทุกตาราง (ไม่มีปัญหา quota แบบ Apps Script เดิม) — เร็วกว่าโหลดทีละตารางมาก
   // leave_requests (ระบบ 1) โหลดเก็บไว้ให้ getSharedLeaveRequests() อ่าน — ใบสั่งการรายวันโหลดเป็นรายเดือนใน ensureDwoMonths()

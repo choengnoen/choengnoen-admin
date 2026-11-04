@@ -1233,6 +1233,7 @@ document.querySelectorAll('.sec-tab').forEach(t=>{
     document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
     t.classList.add('active');
     document.getElementById('panel-'+t.dataset.sec).classList.add('active');
+    try{ sessionStorage.setItem('cn_finance_tab', t.dataset.sec); }catch(e){}
   });
 });
 
@@ -2729,6 +2730,8 @@ __ensureHistoricalDistrictReportSeed();
 /* ============ จบส่วนบันทึกข้อมูล ============ */
 
 renderAll();
+// เปิดแท็บเดิมที่ดูค้างไว้ (เช่น หลังรีเฟรชหน้า) — ถ้าแท็บถูกซ่อนตามสิทธิ์ firebase-layer จะย้ายไปแท็บแรกที่เห็นให้เอง
+try{ const last = sessionStorage.getItem('cn_finance_tab'); const t = last && document.querySelector(`.sec-tab[data-sec="${last}"]`); if(t && t.style.display!=='none' && !t.classList.contains('fbl-tab-off')) t.click(); }catch(e){}
 (async function __initApiData(){
   // Firestore โหลดพร้อมกันได้ทุกตาราง (ไม่มีปัญหา quota แบบ Apps Script เดิม)
   // staff/leave_requests/public_holidays (ระบบ 1) ใช้คำนวณบัญชีแรงงานรายวัน ง.3-12
