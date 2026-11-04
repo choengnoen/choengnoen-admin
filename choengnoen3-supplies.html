@@ -856,6 +856,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   /* พ.1-02 มุมมองรายวัน (2569-10-19) — หน้าตาเดียวกับ พ.1-03 (ใช้คลาส dwk-/fd- ร่วมกัน) ส่วนมุมมองทั้งเดือนยังเป็นตารางเดิม */
   #rep-mat-grid-wrap.md-day{max-height:none;padding:0 20px 20px;}
   table.fd-table.md-table{min-width:900px;}
+  .fd-table.md-table td.fd-in-td{text-align:center;}
   .md-seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none;background:#fff;}
   .md-seg button{border:0;background:transparent;padding:6px 14px;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--ink-600);cursor:pointer;}
   .md-seg button+button{border-left:1px solid var(--line);}
@@ -4408,6 +4409,23 @@ function updateDraftChip(kind){
   if(textEl) textEl.textContent = `แก้ไขแล้ว ${n} ช่อง — ยังไม่บันทึก`;
 }
 function updateDraftChips(){ updateDraftChip('mat'); updateDraftChip('fuel'); }
+/* แก้ข้อมูลแล้วต้องบันทึกหรือล้างก่อนจึงเปลี่ยนวันได้ (พ.1-02 และ พ.1-03)
+   ไปยังวันที่มีฉบับร่างอยู่ได้ เพราะฉบับร่างค้างข้ามการเปิดหน้าใหม่ และผู้ใช้ต้องกลับไปดูวันนั้นได้ */
+function draftDatesFor(kind){
+  return Array.from(new Set(Object.values(kind==='mat'?draftMatCells:draftFuelCells).map(d=>d.date))).sort();
+}
+function alertUnsavedDraft(kind){
+  const label = kind==='mat' ? 'พ.1-02' : 'พ.1-03';
+  showAlertModal(`มีข้อมูล ${label} ที่แก้ไขแล้วแต่ยังไม่ได้บันทึก (${draftDatesFor(kind).map(fuelShortDate).join(', ')}) — กรุณากด "บันทึก" หรือ "ล้างการแก้ไข" ก่อนเลือกวันอื่น`, 'ยังไม่ได้บันทึกข้อมูล');
+}
+function blockDayChangeIfDraft(kind, iso){
+  if(draftDatesFor(kind).some(d=>d!==iso)){ alertUnsavedDraft(kind); return true; }
+  // พ.1-02/พ.1-03 ใช้ตัวเลือกเดือนร่วมกัน: ข้ามเดือนจึงต้องไม่มีฉบับร่างค้างอยู่อีกรายงานด้วย
+  const other = kind==='mat' ? 'fuel' : 'mat';
+  const curMk = kind==='mat' ? currentMatMk() : currentFuelMk();
+  if(monthKeyOf(iso)!==curMk && draftCountFor(other)>0){ alertUnsavedDraft(other); return true; }
+  return false;
+}
 function applyDraftToState(kind){
   if(!kind || kind==='mat'){
     // จับคู่ฉบับร่างกับรายการเดิมของช่องนั้นก่อนแก้ (ลบรายการแล้วลำดับช่องจะเลื่อน)
@@ -4628,6 +4646,15 @@ function populateLedgerFySelects(){
 }
 /* รายงาน พ.1-02/พ.1-03 ใช้เดือน-ปีงบประมาณเดียวกัน — เปลี่ยนจากตัวเลือกฝั่งใดฝั่งหนึ่งแล้ว sync อีกฝั่งให้ตรงกันเสมอ */
 function syncRepLedger(fyId, monthId){
+  const unsaved = draftCountFor('mat')>0 ? 'mat' : draftCountFor('fuel')>0 ? 'fuel' : null;
+  if(unsaved){
+    // คืนค่าตัวเลือกกลับเป็นเดือนเดิม โดยอ่านจากตัวเลือกของอีกรายงานที่ยังไม่ถูกเปลี่ยน
+    const isMat = fyId==='rep-ledger-fy';
+    document.getElementById(fyId).value = document.getElementById(isMat?'rep-fuel-ledger-fy':'rep-ledger-fy').value;
+    document.getElementById(monthId).value = document.getElementById(isMat?'rep-fuel-ledger-month':'rep-ledger-month').value;
+    alertUnsavedDraft(unsaved);
+    return;
+  }
   const fy = document.getElementById(fyId)?.value;
   const month = document.getElementById(monthId)?.value;
   if(fy) ['rep-ledger-fy','rep-fuel-ledger-fy'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value = fy; });
@@ -5214,6 +5241,7 @@ function fuelWeekDays(iso){
   return out;
 }
 function fuelGoDate(iso){
+  if(blockDayChangeIfDraft('fuel', iso)) return;
   const mk = monthKeyOf(iso), day = +iso.slice(8,10);
   fuelPickFirstDay = false;   // กดเลือกวัน/เลื่อนสัปดาห์เอง → ใช้วันที่นั้นตามที่กด
   if(mk===currentFuelMk()){ fuelCheckDay = day; fuelCheckDayMk = mk; renderReportFuel(mk); return; }
@@ -5544,6 +5572,7 @@ function pickMatDay(mk){
   return matCheckDay;
 }
 function matGoDate(iso){
+  if(blockDayChangeIfDraft('mat', iso)) return;
   const mk = monthKeyOf(iso), day = +iso.slice(8,10);
   matPickFirstDay = false;
   if(mk===currentMatMk()){ matCheckDay = day; matCheckDayMk = mk; renderReportMaterial(mk); return; }
@@ -5901,7 +5930,9 @@ function renderReportMaterialDay(mk){
       slots.push({m, n, id});
     }
   });
-  slots.sort((a,b)=>a.m.name.localeCompare(b.m.name,'th') || a.n-b.n);
+  /* ไล่ทีละผู้เบิก: ชื่อเดียวกันอยู่ติดกัน แล้วเรียงพัสดุในแต่ละคน · แถวที่ยังไม่ระบุชื่ออยู่ท้ายสุด */
+  slots.forEach(s=>{ s.who = matEffWho(s.m.code, date, s.n).trim(); });
+  slots.sort((a,b)=>(!a.who - !b.who) || a.who.localeCompare(b.who,'th') || a.m.name.localeCompare(b.m.name,'th') || a.n-b.n);
 
   const rows = slots.map(({m, n, id})=>{
     const qty = matSlotQty(m.code, date, n);
@@ -5944,7 +5975,9 @@ function renderReportMaterialDay(mk){
   if(editable){
     matDayAddMap = {};
     const nameCount = {}; materials.forEach(m=>{ nameCount[m.name] = (nameCount[m.name]||0)+1; });
-    const opts = materials.slice().sort((a,b)=>a.name.localeCompare(b.name,'th')).map(m=>{
+    /* พัสดุในบัญชีอยู่บนเสมอ แล้วจึงต่อด้วยนอกบัญชี (ทั้งตอนเปิดรายการและตอนพิมพ์ค้น) */
+    const isOff = m=>m.accountType==='นอกบัญชี' ? 1 : 0;
+    const opts = materials.slice().sort((a,b)=>isOff(a)-isOff(b) || a.name.localeCompare(b.name,'th')).map(m=>{
       const v = nameCount[m.name]>1 ? m.name+' ('+m.code+')' : m.name;
       matDayAddMap[v] = m.code;
       return `<option value="${esc(v)}"></option>`;
