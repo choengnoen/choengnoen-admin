@@ -736,9 +736,15 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ib-lt tfoot td:first-child{text-align:right;color:var(--ink-600);}
   .ib-lt .na{color:var(--ink-400);}
   .ib-empty{text-align:center;color:var(--ink-400);padding:38px 0;font-size:14px;line-height:1.8;}
-  .ib-hd{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-  .ib-sec-t{font-weight:600;font-size:13px;color:var(--ink-600);margin:6px 0 8px;}
-  .ib-tbw{overflow-x:auto;margin-bottom:6px;}
+  /* โมดัลใบเบิก: ส่วนหัวใบ (เลขที่/วันที่) · ส่วนรายการ (ค้นหา+เพิ่มน้ำมัน อยู่บนเสมอ แถวรายการต่อลงด้านล่าง) · ยอดรวมอยู่ท้ายโมดัล */
+  .ib-hd{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;padding-bottom:18px;border-bottom:1px solid var(--line);}
+  .ib-hd .f-row{margin-bottom:0;min-width:0;}
+  .ib-hd .f-row input{height:44px;box-sizing:border-box;}
+  .ib-sec-h{display:flex;align-items:center;gap:8px;margin:16px 0 10px;}
+  .ib-sec-t{font-family:'Kanit',sans-serif;font-weight:600;font-size:14.5px;color:var(--navy-900);}
+  .ib-sec-n{padding:1px 9px;border-radius:999px;background:var(--paper-100);color:var(--ink-600);font-size:12px;font-weight:600;}
+  .ib-noline{margin-top:10px;padding:22px 16px;border:1px dashed var(--line);border-radius:12px;background:var(--paper-50);text-align:center;color:var(--ink-400);font-size:13.5px;}
+  .ib-tbw{overflow-x:auto;margin-top:10px;}
   .ib-tb{width:100%;min-width:560px;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:14px;}
   .ib-tb th{background:var(--paper-50);font-size:12.5px;font-weight:600;color:var(--ink-600);text-align:left;padding:8px 10px;white-space:nowrap;}
   .ib-tb td{padding:7px 10px;border-top:1px solid var(--line);vertical-align:middle;}
@@ -758,21 +764,32 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ib-opt:hover,.ib-opt.hi{background:#fff4ea;}
   .ib-opt small{color:var(--ink-400);white-space:nowrap;}
   .ib-opt.mk{color:var(--success);font-weight:700;background:#f3fbf5;position:sticky;bottom:0;border-bottom:0;border-top:1px solid #cfe9d8;}
-  .ib-newcard{border:1px dashed #86d1a1;background:#f3fbf5;border-radius:12px;padding:12px;margin:6px 0 8px;width:100%;box-sizing:border-box;}
+  .ib-newcard{border:1px dashed #86d1a1;background:#f3fbf5;border-radius:12px;padding:14px;width:100%;box-sizing:border-box;}
   .ib-newcard h4{margin:0 0 8px;font-size:13.5px;}
-  .ib-newgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-bottom:8px;}
-  .ib-newgrid .full{grid-column:1/-1;}
+  .ib-newgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px 12px;margin-bottom:12px;}
+  .ib-newgrid>div{grid-column:span 2;min-width:0;}
+  .ib-newgrid>.half{grid-column:span 3;}
+  .ib-newgrid>.full{grid-column:1/-1;}
+  .ib-newfoot{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
+  .ib-newfoot small{margin-right:auto;font-size:12.5px;color:var(--ink-600);}
   .ib-newgrid input,.ib-newgrid select{width:100%;box-sizing:border-box;font-family:'Sarabun',sans-serif;font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;}
   .ib-newgrid label{display:block;font-size:12.5px;color:var(--ink-600);margin-bottom:3px;}
   .ib-combo{flex:1;min-width:260px;position:relative;}
-  .ib-combo input{width:100%;box-sizing:border-box;font-family:'Sarabun',sans-serif;font-size:14px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;}
-  .ib-gt{display:inline-block;background:#fff4ea;border:1px solid #f9c79c;border-radius:10px;padding:7px 14px;font-weight:600;}
-  .ib-gt b{color:#d95f08;font-size:17px;}
-  .ib-x{border:none;background:transparent;color:var(--ink-400);font-size:15px;cursor:pointer;padding:8px 6px;border-radius:6px;}
-  .ib-x:hover{background:#fdeceb;color:#c0392b;}
-  .ib-add{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 8px;}
-  #ib-edit-foot{padding:14px 22px;border-top:1px solid #e3e6ea;background:#fff;}
-  @media(max-width:600px){.ib-hd{grid-template-columns:1fr;}.ib-newgrid{grid-template-columns:1fr;}.ib-kpi>div{min-width:calc(50% - 5px);}}
+  .ib-combo-ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);display:flex;color:var(--ink-400);pointer-events:none;}
+  .ib-combo-ic svg{width:17px;height:17px;}
+  .ib-combo input{width:100%;height:42px;box-sizing:border-box;font-family:'Sarabun',sans-serif;font-size:14px;padding:0 13px 0 38px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink-900);transition:border-color .15s ease,box-shadow .15s ease;}
+  .ib-combo input:focus{outline:none;border-color:var(--orange-500);box-shadow:0 0 0 3px rgba(224,98,15,.12);}
+  .ib-gt{display:inline-flex;align-items:baseline;gap:8px;font-size:13px;font-weight:600;color:var(--ink-600);white-space:nowrap;}
+  .ib-gt b{font-family:'Kanit',sans-serif;color:#d95f08;font-size:19px;font-weight:600;}
+  .ib-x{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:none;background:transparent;color:#c0392b;cursor:pointer;padding:0;border-radius:8px;vertical-align:middle;}
+  .ib-x svg{width:16px;height:16px;}
+  .ib-x:hover{background:#fdeceb;}
+  .ib-add{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .ib-fuelbtn{height:42px;padding:0 14px;border-radius:10px;font-size:13.5px;white-space:nowrap;}
+  #ib-edit-foot{padding:14px 22px;border-top:1px solid #e3e6ea;background:#fff;display:flex;align-items:center;flex-wrap:wrap;gap:10px;}
+  #ib-edit-foot>.mstd-del{margin-right:4px;} /* modal-standard ดันปุ่มลบชิดซ้ายด้วย margin-right:auto — ที่นี่ให้ยอดรวมต่อท้ายปุ่มลบ แล้ว .ib-foot-l เป็นตัวดันปุ่มที่เหลือไปขวา */
+  .ib-foot-l{margin-right:auto;min-width:0;}
+  @media(max-width:600px){.ib-hd{grid-template-columns:1fr;}.ib-newgrid{grid-template-columns:1fr;}.ib-newgrid>div,.ib-newgrid>.half{grid-column:auto;}.ib-kpi>div{min-width:calc(50% - 5px);}.ib-combo{min-width:100%;}.ib-fuelbtn{flex:1;justify-content:center;}.ib-foot-l{width:100%;margin-right:0;}}
   .mc-watch{display:inline-block;margin-top:4px;background:#fdeede;color:#a3350f;border-radius:99px;padding:1px 8px;font-size:11px;font-weight:600;}
   .mc-empty{text-align:center;color:var(--ink-400);padding:18px;font-size:13px;}
   .mc-act .mc-ed{margin:0;}
@@ -2467,10 +2484,10 @@ function renderIbEdit(){
       <td><div class="ib-sfx"><input type="number" min="0" step="0.01" class="no-spin" id="ib-e-q${i}" value="${l.qty||''}" placeholder="0" oninput="ibCalc()"><span>${esc(l.unit)}</span></div></td>
       <td><div class="ib-sfx pre"><span>฿</span><input type="number" min="0" step="0.01" id="ib-e-p${i}" value="${l.unitPrice||''}" placeholder="0" oninput="ibCalc()"></div></td>
       <td class="r" id="ib-e-t${i}">–</td>
-      <td class="c"><button type="button" class="ib-x" title="เอารายการนี้ออกจากใบ" onclick="ibRemoveLine(${i})">✕</button></td>
+      <td class="c"><button type="button" class="ib-x" data-ic="trash" data-tip="เอารายการนี้ออกจากใบ" aria-label="เอารายการนี้ออกจากใบ" onclick="ibRemoveLine(${i})"></button></td>
     </tr>`).join('');
-  const lineHtml = live.length ? `<div class="ib-tbw"><table class="ib-tb"><thead><tr><th style="width:34px">#</th><th>รายการวัสดุ</th><th style="width:128px">จำนวน</th><th style="width:120px">ราคา/หน่วย</th><th class="r" style="width:100px">รวม (บาท)</th><th style="width:34px"></th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`
-    : (E.key===null ? '' : `<div class="foot-note">ไม่เหลือรายการในใบนี้ — กด "ลบทั้งใบ" ถ้าต้องการลบใบเบิกนี้</div>`);
+  const lineHtml = live.length ? `<div class="ib-tbw"><table class="ib-tb"><thead><tr><th style="width:34px">#</th><th>รายการวัสดุ</th><th style="width:128px">จำนวน</th><th style="width:120px">ราคา/หน่วย</th><th class="r" style="width:100px">รวม (บาท)</th><th style="width:44px"></th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`
+    : (E.nf ? '' : `<div class="ib-noline">${E.key===null ? (E.off ? 'ยังไม่มีรายการ — ค้นหาพัสดุจากช่องด้านบน' : 'ยังไม่มีรายการ — ค้นหาวัสดุ หรือกดเพิ่มน้ำมันจากด้านบน') : 'ไม่เหลือรายการในใบนี้ — กด "ลบทั้งใบ" ถ้าต้องการลบใบเบิกนี้'}</div>`);
   const hasFt = ft => live.some(x=>x.l.fuelType===ft);
   const nf = E.nf;
   const addHtml = nf ? `<div class="ib-newcard"><h4>✨ วัสดุใหม่ที่ยังไม่มีในทะเบียน</h4>
@@ -2479,28 +2496,30 @@ function renderIbEdit(){
         <div><label>หน่วยนับ</label><input type="text" id="ib-nf-unit" value="${esc(nf.unit)}" placeholder="เช่น ถัง, กก., ชิ้น"></div>
         <div><label>ประเภทบัญชี</label><input type="text" id="ib-nf-acct" value="${E.off?'นอกบัญชี':'ในบัญชี'}" disabled></div>
         <div><label>ลักษณะการใช้งาน</label><select id="ib-nf-usage"><option value="งานบำรุง" ${nf.usage!=='สำนักงาน'?'selected':''}>งานบำรุง</option><option value="สำนักงาน" ${nf.usage==='สำนักงาน'?'selected':''}>สำนักงาน</option></select></div>
-        <div><label>จำนวน</label><input type="number" min="0" step="0.01" id="ib-nf-qty" value="${esc(nf.qty)}"></div>
-        <div><label>ราคา/หน่วย (บาท)</label><input type="number" min="0" step="0.01" id="ib-nf-price" value="${esc(nf.price)}"></div>
+        <div class="half"><label>จำนวน</label><input type="number" min="0" step="0.01" id="ib-nf-qty" value="${esc(nf.qty)}"></div>
+        <div class="half"><label>ราคา/หน่วย (บาท)</label><input type="number" min="0" step="0.01" id="ib-nf-price" value="${esc(nf.price)}"></div>
       </div>
-      <button type="button" class="btn btn-primary btn-sm" onclick="ibSubmitNewMat()">＋ เพิ่มเข้าใบ</button>
-      <button type="button" class="btn btn-ghost btn-sm" onclick="ibCancelNewMat()">ยกเลิก</button>
-      <div class="foot-note" style="margin-top:6px;">ระบบจะสร้างวัสดุนี้ในทะเบียนให้พร้อมกันตอนกด "บันทึก"</div></div>`
-    : `<div class="ib-combo"><input type="text" id="ib-add-q" placeholder="${E.off ? '＋ พิมพ์ชื่อพัสดุนอกบัญชีเพื่อค้นหา หรือสร้างใหม่' : '＋ พิมพ์ชื่อวัสดุเพื่อค้นหา หรือสร้างวัสดุใหม่'}" autocomplete="off" value="${esc(E.q||'')}" oninput="ibListInput()" onfocus="ibListInput()" onkeydown="ibListKey(event)" onblur="setTimeout(ibListClose,180)"><div class="ib-combo-list hidden" id="ib-add-list"></div></div>`;
+      <div class="ib-newfoot">
+        <small>ระบบจะสร้างวัสดุนี้ในทะเบียนให้พร้อมกันตอนกด "บันทึก"</small>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="ibCancelNewMat()">ยกเลิก</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="ibSubmitNewMat()">＋ เพิ่มเข้าใบ</button>
+      </div></div>`
+    : `<div class="ib-combo"><span class="ib-combo-ic" data-ic="search"></span><input type="text" id="ib-add-q" placeholder="${E.off ? 'พิมพ์ชื่อพัสดุนอกบัญชีเพื่อค้นหา หรือสร้างใหม่' : 'พิมพ์ชื่อวัสดุเพื่อค้นหา หรือสร้างวัสดุใหม่'}" autocomplete="off" value="${esc(E.q||'')}" oninput="ibListInput()" onfocus="ibListInput()" onkeydown="ibListKey(event)" onblur="setTimeout(ibListClose,180)"><div class="ib-combo-list hidden" id="ib-add-list"></div></div>`;
   document.getElementById('ib-edit-body').innerHTML = `
     <div class="ib-hd">
       <div class="f-row"><label>${E.off ? 'เลขที่เอกสาร / แหล่งที่ได้รับ (ถ้ามี)' : 'เลขที่ใบเบิก'}</label><input type="text" id="ib-e-ref" value="${esc(E.off ? (E.ref||'') : (E.ref || FUEL_REF_PREFIX))}" ${E.off ? 'placeholder="เช่น ได้รับอนุเคราะห์จาก ... (เว้นว่างได้)" ' : ''}oninput="ibCheckRef()"><div class="fh-err" id="ib-e-err"></div></div>
       <div class="f-row"><label>วันที่รับ <span class="req">*</span></label><input type="date" id="ib-e-date" value="${esc(E.date)}"></div>
     </div>
-    <div class="ib-sec-t">รายการในใบ</div>
-    ${lineHtml}
+    <div class="ib-sec-h"><span class="ib-sec-t">รายการในใบ</span>${live.length ? `<span class="ib-sec-n">${live.length} รายการ</span>` : ''}</div>
     <div class="ib-add">
       ${addHtml}
-      ${E.off || hasFt('ดีเซล') ? '' : `<button type="button" class="btn btn-ghost btn-sm" onclick="ibAddFuel('ดีเซล')">＋ ดีเซล</button>`}
-      ${E.off || hasFt('เบนซิน') ? '' : `<button type="button" class="btn btn-ghost btn-sm" onclick="ibAddFuel('เบนซิน')">＋ เบนซิน</button>`}
+      ${E.off || nf || hasFt('ดีเซล') ? '' : `<button type="button" class="btn btn-ghost ib-fuelbtn" data-ic="plus" onclick="ibAddFuel('ดีเซล')">ดีเซล</button>`}
+      ${E.off || nf || hasFt('เบนซิน') ? '' : `<button type="button" class="btn btn-ghost ib-fuelbtn" data-ic="plus" onclick="ibAddFuel('เบนซิน')">เบนซิน</button>`}
     </div>
-    <div class="mrv-grand-total" id="ib-e-total"></div>`;
+    ${lineHtml}`;
   document.getElementById('ib-edit-foot').innerHTML = `
     ${E.key===null ? '' : `<button type="button" class="btn btn-ghost" style="color:var(--danger);" data-ic="trash" onclick="ibDeleteFromEdit()">ลบทั้งใบ</button>`}
+    <div class="ib-foot-l" id="ib-e-total"></div>
     <button type="button" class="btn btn-ghost" onclick="closeIbEdit()">ยกเลิก</button>
     <button type="button" class="btn btn-primary" id="ib-e-save" data-ic="save" onclick="ibSave()">บันทึก</button>`;
   ibCalc(); ibCheckRef();
@@ -2601,7 +2620,7 @@ async function ibSave(){
   if(!E.date){ showAlertModal('กรุณากรอกวันที่รับ'); return; }
   const live = E.lines.filter(l=>!l.del);
   if(!live.length){ showAlertModal('ไม่เหลือรายการในใบนี้ — ถ้าต้องการลบใบเบิก ให้กด "ลบทั้งใบ"'); return; }
-  if(live.some(l=>!(l.qty>0))){ showAlertModal('กรุณากรอกจำนวนให้มากกว่า 0 ทุกรายการ (หรือกด ✕ เอารายการนั้นออก)'); return; }
+  if(live.some(l=>!(l.qty>0))){ showAlertModal('กรุณากรอกจำนวนให้มากกว่า 0 ทุกรายการ (หรือกดไอคอนถังขยะเอารายการนั้นออก)'); return; }
   if(!ibCheckRef()){ showAlertModal('เลขที่ใบเบิกนี้ลงข้อมูลไว้แล้ว ไม่สามารถบันทึกซ้ำได้'); return; }
   if(blockIfMonthLocked(E.date)) return;
   for(const l of E.lines){ if(l.tx && l.tx.date && blockIfMonthLocked(l.tx.date)) return; }
