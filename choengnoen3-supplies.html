@@ -206,7 +206,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .vb-col h3 span{margin-left:auto;background:#fff;border-radius:99px;padding:1px 10px;font-size:12.5px;}
   /* กล่องกลุ่มชนิดน้ำมัน — สีและแถวแบบตารางหน้าพัสดุ (.mc-col/.mc-card) ทุกแถวใช้ grid เดียวกัน คอลัมน์จึงตรงกันทุกกลุ่ม */
   .vb-fg{grid-column:1/-1;border-radius:14px;padding:12px;}
-  .vb-fg.d{background:#fdeede;} .vb-fg.g{background:var(--success-bg);} .vb-fg.o{background:var(--paper-100);}
+  .vb-fg.d{background:#fdeede;} .vb-fg.g{background:var(--success-bg);} .vb-fg.o{background:var(--paper-100);} .vb-fg.b{background:#e4eefa;}
   .vb-fg h3{font-size:14.5px;margin:0;padding:2px 6px 10px;display:flex;align-items:center;gap:7px;color:var(--navy-900);}
   .vb-fg h3 .n{margin-left:auto;background:#fff;border-radius:99px;padding:1px 11px;font-size:12.5px;}
   .vr-row{display:grid;grid-template-columns:minmax(0,1.1fr) 120px minmax(0,1.1fr) 165px 130px 130px 34px;gap:12px;align-items:center;}
@@ -2834,12 +2834,15 @@ function vehicleFromApi(row){
     fuelRateUnit: row.fuelRateUnit||undefined, note:FBL.operatorOnDate(operatorHistory, row.operatorName), operatorHistory,
     monthlyRent: row.monthlyRent!==''&&row.monthlyRent!=null ? Number(row.monthlyRent) : undefined,
     maxKmPerDay: row.mileageThresholdOverride!==''&&row.mileageThresholdOverride!=null ? Number(row.mileageThresholdOverride) : undefined,
-    plate: row.plate||'', status: row.status||'ใช้งาน', fuelMode: row.fuelMode||'', vehicleType: row.vehicleType||'', regNumber: row.regNumber||'', returnDate: row.returnDate||'' };
+    plate: row.plate||'', status: row.status||'ใช้งาน', fuelMode: row.fuelMode||'', vehicleType: row.vehicleType||'', regNumber: row.regNumber||'', returnDate: row.returnDate||'', machSource: row.machSource||'' };
 }
 function vehicleToApi(v){
   return { id:v.id, label:v.label, fuelType:v.fuelType||'', fuelRate:v.fuelRate, fuelRateUnit:v.fuelRateUnit,
-    operatorName:v.note||'', operatorHistoryJson:v.operatorHistory||[], monthlyRent:v.monthlyRent, mileageThresholdOverride:v.maxKmPerDay, status:v.status||'ใช้งาน', plate:v.plate||'', fuelMode:v.fuelMode||'', vehicleType:v.vehicleType||'', regNumber:v.regNumber||'', returnDate:v.returnDate||'' };
+    operatorName:v.note||'', operatorHistoryJson:v.operatorHistory||[], monthlyRent:v.monthlyRent, mileageThresholdOverride:v.maxKmPerDay, status:v.status||'ใช้งาน', plate:v.plate||'', fuelMode:v.fuelMode||'', vehicleType:v.vehicleType||'', regNumber:v.regNumber||'', returnDate:v.returnDate||'', machSource:v.machSource||'' };
 }
+/* ที่มาของเครื่อง: machSource='แขวง' = เครื่องจักรแขวงที่หมวดทำบันทึกขอมาใช้ (แยกตารางไว้ท้ายทะเบียน) · ว่าง = เครื่องประจำหมวด */
+const VEH_SOURCE_DISTRICT = 'แขวง';
+function vehIsDistrict(v){ return v.machSource===VEH_SOURCE_DISTRICT; }
 /* ผู้รับผิดชอบรถ ณ วันที่ date — v.note = คนปัจจุบัน (วันนี้) ส่วนงานย้อนหลังต้องใช้ฟังก์ชันนี้ ชื่อจึงตรงกับคนที่รับผิดชอบในวันนั้น */
 function vehicleOperatorOn(v, date){ return v ? FBL.operatorOnDate(v.operatorHistory, v.note, date) : ''; }
 /* รูปแบบการเบิกน้ำมัน: 'issue' = เบิกเป็นครั้ง (รถยนต์/เครื่องจักรดีเซล ตรวจข้ามรอบ) · 'daily' = เบิกสม่ำเสมอ (เครื่องตัดหญ้า/เครื่องมือเบนซิน)
@@ -2920,13 +2923,17 @@ function vehicleBoardHtml(list, searching, counts, statusSel){
   const sum = `<div class="vb-sum">${['ok','svc','dmg','ret'].map(k=>`<button type="button" class="vr-st s-${k}${statusSel===k?' on':''}" aria-pressed="${statusSel===k}" onclick="setVehStatus('${k}')">${VEH_STATUS[k].label} <b>${counts[k]}</b></button>`).join('')}</div>`;
   const bar = `<div class="vb-fuelbar">${seg}${sum}</div>`;
   if(!list.length) return bar + `<div class="vb-empty" style="grid-column:1/-1;">${searching ? 'ไม่พบเครื่องจักร/รถที่ตรงกับคำค้นหา' : statusSel ? `ไม่มีรายการในสถานะ "${VEH_STATUS[statusSel].label}"` : 'ไม่มีเครื่องจักร/รถที่ใช้งานอยู่'}</div>`;
+  const own = list.filter(v=>!vehIsDistrict(v));
   const groups = [
-    ['⛽ น้ำมันดีเซล', list.filter(v=>v.fuelType==='ดีเซล'), 'ดีเซล'],
-    ['⛽ น้ำมันเบนซิน', list.filter(v=>v.fuelType==='เบนซิน'), 'เบนซิน'],
-    ['อื่น ๆ / ไม่ใช้เชื้อเพลิง', list.filter(v=>v.fuelType!=='ดีเซล' && v.fuelType!=='เบนซิน'), 'all']
+    ['⛽ น้ำมันดีเซล', own.filter(v=>v.fuelType==='ดีเซล'), 'ดีเซล'],
+    ['⛽ น้ำมันเบนซิน', own.filter(v=>v.fuelType==='เบนซิน'), 'เบนซิน'],
+    ['อื่น ๆ / ไม่ใช้เชื้อเพลิง', own.filter(v=>v.fuelType!=='ดีเซล' && v.fuelType!=='เบนซิน'), 'all']
   ].filter(g=>g[1].length && (fuelSel==='all' || fuelSel===g[2]));
-  // กลุ่มตามชนิดน้ำมัน แบบกล่องสีของหน้าพัสดุ (ดีเซล = ครีม, เบนซิน = เขียว) ภายในเป็นแถวตาราง
-  const fgCls = {'ดีเซล':'d','เบนซิน':'g'};
+  // เครื่องจักรแขวงที่ทำบันทึกขอมาใช้ แยกเป็นตารางเดียวไว้ล่างสุด ไม่แบ่งตามน้ำมัน (ตัวกรองน้ำมันด้านบนยังมีผล)
+  const district = list.filter(v=>vehIsDistrict(v) && (fuelSel==='all' || v.fuelType===fuelSel));
+  if(district.length) groups.push(['🏗️ เครื่องจักรแขวง (ทำบันทึกขอใช้)', district, 'แขวง']);
+  // กลุ่มตามชนิดน้ำมัน แบบกล่องสีของหน้าพัสดุ (ดีเซล = ครีม, เบนซิน = เขียว, เครื่องจักรแขวง = ฟ้า) ภายในเป็นแถวตาราง
+  const fgCls = {'ดีเซล':'d','เบนซิน':'g','แขวง':'b'};
   const head = `<div class="vr-row vr-head"><span>รายการ</span><span>รหัส</span><span>ผู้รับผิดชอบ</span><span>ทะเบียนรถ</span><span>สถานะ</span><span class="r">ค่าเช่า</span><span></span></div>`;
   const body = groups.length
     ? groups.map(g=>`<div class="vb-fg ${fgCls[g[2]]||'o'}"><h3>${g[0]}<span class="n">${g[1].length}</span></h3>${head}${[...g[1]].sort(vehBoardSort).map(vehicleRowHtml).join('')}</div>`).join('')
@@ -2958,7 +2965,7 @@ function openVehDetail(id){
   const kmHtml = v.maxKmPerDay!=null ? `${fmtNum(v.maxKmPerDay,0)} กม./วัน` : (mower||noFuel ? '' : '300 กม./วัน<small>ค่ามาตรฐาน</small>');
   const typeIc = mower ? '<path d="M21 4 11 14"/><circle cx="8" cy="17" r="4"/><path d="M8 13v8M4 17h8"/>' : '<path d="M14 18V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h1"/><path d="M14 9h4l3 3v5a1 1 0 0 1-1 1h-1"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>';
   document.getElementById('veh-detail-head').innerHTML = `<div class="vd-ic">${VEH_DETAIL_IC(typeIc,'#fff')}</div>
-    <div class="vd-title"><h3>${esc(typeName)}</h3><div class="vd-code">รหัส ${esc(code)}</div></div>
+    <div class="vd-title"><h3>${esc(typeName)}</h3><div class="vd-code">รหัส ${esc(code)}${vehIsDistrict(v)?' · เครื่องจักรแขวง (ทำบันทึกขอใช้)':''}</div></div>
     <span class="vd-status s-${k}">${VEH_STATUS[k].label}</span><button type="button" class="modal-close" onclick="closeVehDetail()">✕</button>`;
   document.getElementById('veh-detail-body').innerHTML = `<div class="vd-hero">
       <div class="vd-hero-t rent"><div class="vd-hero-l">ค่าเช่า/บำรุงรักษา</div>${v.monthlyRent!=null?`<div class="vd-hero-v">${fmtNum(v.monthlyRent,0)}<small>บาท/เดือน</small></div>`:'<div class="vd-none">ยังไม่ได้กำหนด</div>'}</div>
@@ -3138,6 +3145,12 @@ function openVehicleModal(id){
           <div id="vm-plate-input"><input class="edit-input" id="vm-plate" value="${esc(v?(v.plate||''):'')}" placeholder="เช่น ฮข 1234"></div>
           <div id="vm-plate-locked" class="hidden"><div class="vm-locked">ไม่มีทะเบียน</div><div class="vm-hint">เครื่องตัดหญ้าไม่ต้องกรอกทะเบียน</div></div></div>
       </div>
+      <div class="vm-f"><div class="vm-lbl">ที่มาของเครื่อง</div>
+        <div class="vm-opts center" data-for="vm-source">
+          <button type="button" class="vm-opt${v&&vehIsDistrict(v)?'':' on'}" data-v="" onclick="onVmOpt(this)">ประจำหมวด</button>
+          <button type="button" class="vm-opt${v&&vehIsDistrict(v)?' on':''}" data-v="${VEH_SOURCE_DISTRICT}" onclick="onVmOpt(this)">เครื่องจักรแขวง<small>ทำบันทึกขอใช้</small></button>
+        </div>
+        <input type="hidden" id="vm-source" value="${v&&vehIsDistrict(v)?VEH_SOURCE_DISTRICT:''}"></div>
       <div class="vm-f">
         <div class="vm-op-row vm-op-head"><label>ผู้รับผิดชอบ</label><label>มีผลตั้งแต่วันที่</label></div>
         <div id="vm-op-rows">${operatorRows.map((r,i)=>vmOperatorRowHtml(r, i===0)).join('')}</div>
@@ -3226,6 +3239,7 @@ async function saveVehicleModal(){
   const maxKmRaw = document.getElementById('vm-maxkm').value;
   const maxKmPerDay = maxKmRaw!=='' ? parseFloat(maxKmRaw) : undefined;
   const fuelMode = document.getElementById('vm-fuelmode').value||'';
+  const machSource = document.getElementById('vm-source').value||'';
   const vehSaveBtn = document.getElementById('veh-save-btn');
   const vehSaveLabel = vehSaveBtn ? vehSaveBtn.textContent : '';
   if(vehSaveBtn){ vehSaveBtn.disabled = true; vehSaveBtn.textContent = 'กำลังบันทึก...'; }
@@ -3237,14 +3251,14 @@ async function saveVehicleModal(){
         const sameAsLabel = typeName===vehicleLabelType(v.label) && code===vehicleLabelReg(v.label);
         v.vehicleType = sameAsLabel ? '' : typeName; v.regNumber = sameAsLabel ? '' : code;
         v.note = operator; v.operatorHistory = operatorHistory; v.fuelType = fuelType; v.plate = plate;
-        v.fuelRate = fuelRate; v.fuelRateUnit = fuelRateUnit; v.monthlyRent = monthlyRent; v.maxKmPerDay = maxKmPerDay; v.fuelMode = fuelMode;
+        v.fuelRate = fuelRate; v.fuelRateUnit = fuelRateUnit; v.monthlyRent = monthlyRent; v.maxKmPerDay = maxKmPerDay; v.fuelMode = fuelMode; v.machSource = machSource;
         v.returnDate = returnDate;   // ต้องตั้งก่อนเทียบสถานะ · เลือกสถานะอื่น = รับเครื่องกลับ ล้างวันที่ทิ้ง
         if(statusKey!=='ret' && statusKey!==vehStatusKey(v)) v.status = VEH_STATUS[statusKey].store;   // ไม่เปลี่ยนสถานะ = คงข้อความเดิมในฐานข้อมูล
         await apiPost('update', 'machinery', vehicleToApi(v));
       }
     } else {
       const newLabel = operator ? `${typeName} (${code}) — ${operator}` : `${typeName} (${code})`;
-      const v = {label:newLabel, fuelType, note:operator, operatorHistory, plate, fuelRate, fuelRateUnit, monthlyRent, maxKmPerDay, fuelMode, status:VEH_STATUS[statusKey].store};
+      const v = {label:newLabel, fuelType, note:operator, operatorHistory, plate, fuelRate, fuelRateUnit, monthlyRent, maxKmPerDay, fuelMode, machSource, status:VEH_STATUS[statusKey].store};
       const saved = await apiPost('add', 'machinery', vehicleToApi(v));
       vehicles.push(vehicleFromApi(saved));
     }
