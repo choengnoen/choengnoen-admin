@@ -2931,7 +2931,7 @@ function vehicleBoardHtml(list, searching, counts, statusSel){
   ].filter(g=>g[1].length && (fuelSel==='all' || fuelSel===g[2]));
   // เครื่องจักรแขวงที่ทำบันทึกขอมาใช้ แยกเป็นตารางเดียวไว้ล่างสุด ไม่แบ่งตามน้ำมัน (ตัวกรองน้ำมันด้านบนยังมีผล)
   const district = list.filter(v=>vehIsDistrict(v) && (fuelSel==='all' || v.fuelType===fuelSel));
-  if(district.length) groups.push(['🏗️ เครื่องจักรแขวง (ทำบันทึกขอใช้)', district, 'แขวง']);
+  if(district.length) groups.push(['🏗️ เครื่องจักรแขวง', district, 'แขวง']);
   // กลุ่มตามชนิดน้ำมัน แบบกล่องสีของหน้าพัสดุ (ดีเซล = ครีม, เบนซิน = เขียว, เครื่องจักรแขวง = ฟ้า) ภายในเป็นแถวตาราง
   const fgCls = {'ดีเซล':'d','เบนซิน':'g','แขวง':'b'};
   const head = `<div class="vr-row vr-head"><span>รายการ</span><span>รหัส</span><span>ผู้รับผิดชอบ</span><span>ทะเบียนรถ</span><span>สถานะ</span><span class="r">ค่าเช่า</span><span></span></div>`;
@@ -2965,7 +2965,7 @@ function openVehDetail(id){
   const kmHtml = v.maxKmPerDay!=null ? `${fmtNum(v.maxKmPerDay,0)} กม./วัน` : (mower||noFuel ? '' : '300 กม./วัน<small>ค่ามาตรฐาน</small>');
   const typeIc = mower ? '<path d="M21 4 11 14"/><circle cx="8" cy="17" r="4"/><path d="M8 13v8M4 17h8"/>' : '<path d="M14 18V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h1"/><path d="M14 9h4l3 3v5a1 1 0 0 1-1 1h-1"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>';
   document.getElementById('veh-detail-head').innerHTML = `<div class="vd-ic">${VEH_DETAIL_IC(typeIc,'#fff')}</div>
-    <div class="vd-title"><h3>${esc(typeName)}</h3><div class="vd-code">รหัส ${esc(code)}${vehIsDistrict(v)?' · เครื่องจักรแขวง (ทำบันทึกขอใช้)':''}</div></div>
+    <div class="vd-title"><h3>${esc(typeName)}</h3><div class="vd-code">รหัส ${esc(code)}${vehIsDistrict(v)?' · เครื่องจักรแขวง':''}</div></div>
     <span class="vd-status s-${k}">${VEH_STATUS[k].label}</span><button type="button" class="modal-close" onclick="closeVehDetail()">✕</button>`;
   document.getElementById('veh-detail-body').innerHTML = `<div class="vd-hero">
       <div class="vd-hero-t rent"><div class="vd-hero-l">ค่าเช่า/บำรุงรักษา</div>${v.monthlyRent!=null?`<div class="vd-hero-v">${fmtNum(v.monthlyRent,0)}<small>บาท/เดือน</small></div>`:'<div class="vd-none">ยังไม่ได้กำหนด</div>'}</div>
@@ -3008,11 +3008,12 @@ function renderVehicles(){
   body.innerHTML = vehicleBoardHtml(list, !!q, counts, statusSel);
   fitVehPair();
 }
-/* แถวผู้รับผิดชอบในฟอร์ม: แถวแรก = ตั้งแต่เริ่มต้น (ไม่มีวันที่) แถวถัดไป = เปลี่ยนคนตั้งแต่วันที่ระบุ — แก้ชื่อในแถวเดิม = แก้ทั้งช่วงนั้นย้อนหลัง */
+/* แถวผู้รับผิดชอบในฟอร์ม: แถวแรก = ตั้งแต่เริ่มต้น (ไม่มีวันที่) แถวถัดไป = เปลี่ยนคนตั้งแต่วันที่ระบุ — แก้ชื่อในแถวเดิม = แก้ทั้งช่วงนั้นย้อนหลัง
+   data-date บนช่องชื่อ = วันที่มีผลของแถว ให้รายชื่อแสดงคนที่ปฏิบัติงานอยู่ในวันนั้น (ดู pickItems) */
 function vmOperatorRowHtml(r, first){
   return `<div class="vm-op-row">
-    <input class="edit-input vm-op-name" data-pick="staff" autocomplete="off" value="${esc(r.name||'')}" data-orig="${esc(r.name||'')}" placeholder="ชื่อผู้รับผิดชอบ" oninput="onVmOpNameInput(this)">
-    ${first ? '<div class="vm-op-since">ตั้งแต่เริ่มต้น</div>' : `<input type="date" class="edit-input vm-op-from" value="${esc(r.from||'')}">`}
+    <input class="edit-input vm-op-name" data-pick="staff" ${first ? '' : `data-date="${esc(r.from||'')}" `}autocomplete="off" value="${esc(r.name||'')}" data-orig="${esc(r.name||'')}" placeholder="ชื่อผู้รับผิดชอบ" oninput="onVmOpNameInput(this)">
+    ${first ? '<div class="vm-op-since">ตั้งแต่เริ่มต้น</div>' : `<input type="date" class="edit-input vm-op-from" value="${esc(r.from||'')}" data-orig="${esc(r.from||'')}" onchange="this.closest('.vm-op-row').querySelector('.vm-op-name').dataset.date=this.value">`}
     ${first ? '' : `<button type="button" class="btn btn-ghost btn-ic btn-ic-danger btn-sm vm-op-del" data-ic="trash" data-tip="ลบ" onclick="this.closest('.vm-op-row').remove()"></button>`}
     <div class="vm-op-warn hidden">แก้ชื่อตรงนี้จะมีผลย้อนหลังทั้งช่วง (ใช้แก้คำผิด) — ถ้าเปลี่ยนคน ให้กด "เปลี่ยนผู้รับผิดชอบ" แล้วระบุวันที่</div>
   </div>`;
@@ -3026,13 +3027,28 @@ function addVmOperatorRow(){
   box.insertAdjacentHTML('beforeend', vmOperatorRowHtml({from:toLocalISODate(TODAY), name:''}, false));
   box.lastElementChild.querySelector('.vm-op-name').focus();
 }
-/* อ่านแถวผู้รับผิดชอบจากฟอร์ม → แถวแรกคงเดิม แถวที่เหลือเรียงตามวันที่ (คืน null ถ้ากรอกไม่ครบ/วันที่ซ้ำ) */
+/* ชื่อนี้รับผิดชอบเครื่องจักรตั้งแต่วันที่ date ได้ไหม (คืนข้อความปัญหา หรือ '' ถ้าได้) — ชื่อที่ไม่อยู่ในทะเบียนบุคลากร = บุคคลภายนอก ไม่ตรวจ */
+function vmOpDateProblem(name, date){
+  if(!staff.some(s=>__personNamesMatch(s.name, name))) return '';
+  if(!staffWorkingOn(date).some(s=>__personNamesMatch(s.name, name))) return `${name} ไม่ได้ปฏิบัติงานในวันที่ ${fmtDateFull(date)} (ยังไม่เริ่มงาน เกษียณ หรือลาออกแล้ว)`;
+  if(approvedLeaveOnDate(name, date)) return `${name} มีบันทึกการลาในวันที่ ${fmtDateFull(date)}`;
+  return '';
+}
+/* อ่านแถวผู้รับผิดชอบจากฟอร์ม → แถวแรกคงเดิม แถวที่เหลือเรียงตามวันที่ (คืน null ถ้ากรอกไม่ครบ/วันที่ซ้ำ/คนไม่ได้ปฏิบัติงานในวันนั้น) */
 function readVmOperatorRows(){
-  const rows = Array.from(document.querySelectorAll('#vm-op-rows .vm-op-row')).map(el=>({
+  const els = Array.from(document.querySelectorAll('#vm-op-rows .vm-op-row'));
+  const rows = els.map(el=>({
     from: el.querySelector('.vm-op-from')?.value||'', name: el.querySelector('.vm-op-name').value.trim() }));
   const changes = rows.slice(1);
   if(changes.some(r=>!r.from || !r.name)){ showAlertModal('กรุณากรอกชื่อผู้รับผิดชอบและวันที่มีผลให้ครบทุกแถว'); return null; }
   if(new Set(changes.map(r=>r.from)).size!==changes.length){ showAlertModal('มีวันที่มีผลซ้ำกัน — วันเดียวกันระบุผู้รับผิดชอบได้คนเดียว'); return null; }
+  // ตรวจเฉพาะแถวที่เพิ่ม/แก้รอบนี้ ประวัติเดิมที่ไม่ได้แตะจะได้ไม่ขวางการแก้ช่องอื่น
+  for(let i=1; i<els.length; i++){
+    const r = rows[i], nameEl = els[i].querySelector('.vm-op-name'), fromEl = els[i].querySelector('.vm-op-from');
+    if(r.name===nameEl.dataset.orig && r.from===fromEl.dataset.orig) continue;
+    const problem = vmOpDateProblem(r.name, r.from);
+    if(problem){ showAlertModal(problem+'\nกรุณาเลือกผู้รับผิดชอบหรือวันที่มีผลใหม่'); return null; }
+  }
   changes.sort((a,b)=>a.from.localeCompare(b.from));
   return [rows[0], ...changes];
 }
