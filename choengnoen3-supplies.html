@@ -2920,7 +2920,8 @@ function vehicleBoardHtml(list, searching, counts, statusSel){
   const nD = list.filter(v=>v.fuelType==='ดีเซล').length, nG = list.filter(v=>v.fuelType==='เบนซิน').length;
   const fuelTabs = [['all','ทั้งหมด',list.length],['ดีเซล','น้ำมันดีเซล',nD],['เบนซิน','น้ำมันเบนซิน',nG]];
   const seg = searching ? '' : `<div class="vb-seg">${fuelTabs.map(t=>`<button type="button" class="${vehFuelTab===t[0]?'on':''}" onclick="setVehFuel('${t[0]}')">${t[1]} (${t[2]})</button>`).join('')}</div>`;
-  const sum = `<div class="vb-sum">${['ok','svc','dmg','ret'].map(k=>`<button type="button" class="vr-st s-${k}${statusSel===k?' on':''}" aria-pressed="${statusSel===k}" onclick="setVehStatus('${k}')">${VEH_STATUS[k].label} <b>${counts[k]}</b></button>`).join('')}</div>`;
+  // ซ่อมกับชำรุดแสดงเฉพาะเมื่อมีรายการ — ยกเว้นปุ่มที่เลือกค้างอยู่ จะได้กดยกเลิกได้เมื่อรายการสุดท้ายถูกเปลี่ยนสถานะไป
+  const sum = `<div class="vb-sum">${['ok','svc','dmg','ret'].filter(k=>k==='ok'||k==='ret'||counts[k]>0||statusSel===k).map(k=>`<button type="button" class="vr-st s-${k}${statusSel===k?' on':''}" aria-pressed="${statusSel===k}" onclick="setVehStatus('${k}')">${VEH_STATUS[k].label} <b>${counts[k]}</b></button>`).join('')}</div>`;
   const bar = `<div class="vb-fuelbar">${seg}${sum}</div>`;
   if(!list.length) return bar + `<div class="vb-empty" style="grid-column:1/-1;">${searching ? 'ไม่พบเครื่องจักร/รถที่ตรงกับคำค้นหา' : statusSel ? `ไม่มีรายการในสถานะ "${VEH_STATUS[statusSel].label}"` : 'ไม่มีเครื่องจักร/รถที่ใช้งานอยู่'}</div>`;
   const own = list.filter(v=>!vehIsDistrict(v));
