@@ -192,24 +192,36 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .vb-seg{display:inline-flex;background:var(--paper-100);border-radius:10px;padding:3px;gap:2px;max-width:100%;overflow-x:auto;}
   .vb-seg button{border:0;background:none;padding:6px 14px;border-radius:8px;font:600 13px 'Sarabun',sans-serif;color:var(--ink-600);cursor:pointer;white-space:nowrap;}
   .vb-seg button.on{background:#fff;color:var(--navy-900);box-shadow:0 1px 3px rgba(0,0,0,.15);}
-  .vb-card{--c:var(--success);margin-bottom:0;} .vb-card.s-due{--c:var(--danger);} .vb-card.s-svc{--c:#d97706;}
   .vb-col{background:var(--paper-100);border-radius:14px;padding:12px;--c:var(--success);}
   .vb-col.s-due{--c:var(--danger);} .vb-col.s-svc{--c:#d97706;}
   .vb-col h3{margin:2px 4px 12px;display:flex;align-items:center;gap:9px;font-size:14.5px;color:var(--navy-900);}
   .vb-col h3:before{content:"";width:11px;height:11px;border-radius:50%;background:var(--c);}
   .vb-col h3 span{margin-left:auto;background:#fff;border-radius:99px;padding:1px 10px;font-size:12.5px;}
-  .vb-card{background:#fff;border-radius:12px;padding:13px;margin-bottom:10px;box-shadow:0 1px 3px rgba(10,37,64,.12);border-top:4px solid var(--c);}
-  /* กล่องกลุ่มชนิดน้ำมัน — สีและการ์ดแบบคอลัมน์หน้าพัสดุ (.mc-col/.mc-card) */
+  /* กล่องกลุ่มชนิดน้ำมัน — สีและแถวแบบตารางหน้าพัสดุ (.mc-col/.mc-card) ทุกแถวใช้ grid เดียวกัน คอลัมน์จึงตรงกันทุกกลุ่ม */
   .vb-fg{grid-column:1/-1;border-radius:14px;padding:12px;}
   .vb-fg.d{background:#fdeede;} .vb-fg.g{background:var(--success-bg);} .vb-fg.o{background:var(--paper-100);}
-  .vb-fg h3{font-size:14.5px;margin:0;padding:4px 6px 12px;display:flex;align-items:center;gap:7px;color:var(--navy-900);}
+  .vb-fg h3{font-size:14.5px;margin:0;padding:2px 6px 10px;display:flex;align-items:center;gap:7px;color:var(--navy-900);}
   .vb-fg h3 .n{margin-left:auto;background:#fff;border-radius:99px;padding:1px 11px;font-size:12.5px;}
-  .vb-fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:9px;align-items:stretch;}
-  .vb-fg .vb-card{border-top:0;border-radius:11px;margin:0;padding:12px 13px;box-shadow:0 1px 2px rgba(0,0,0,.07);display:flex;flex-direction:column;}
-  .vb-fg .vb-r1{margin-bottom:auto;}
-  .vb-r1{display:flex;gap:11px;align-items:flex-start;}
-  .vb-r1 .vb-nm{flex:1;min-width:0;} .vb-r1 b{display:block;font-size:14.5px;color:var(--ink-900);}
-  .vb-sub{font-size:12px;color:var(--ink-400);}
+  .vr-row{display:grid;grid-template-columns:minmax(0,1.1fr) 120px minmax(0,1.1fr) 180px 130px 34px;gap:12px;align-items:center;}
+  .vr-head{padding:0 14px 6px;font-size:11.5px;color:var(--ink-600);}
+  .vr-head .r{text-align:right;}
+  .vr-code{font-size:13px;color:var(--ink-600);white-space:nowrap;}
+  .vr-op{min-width:0;font-size:13.5px;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .vr-none{color:var(--ink-400);}
+  .vr-rent{text-align:right;font-family:'Kanit',sans-serif;font-weight:500;font-size:14px;color:var(--ink-900);white-space:nowrap;}
+  .vr-rent small{margin-left:4px;font-family:'Sarabun',sans-serif;font-size:11.5px;font-weight:400;color:var(--ink-600);}
+  .vr-row .vb-plate{display:inline-block;margin:0;border-width:1.5px;border-radius:7px;padding:0 8px;font-size:13px;white-space:nowrap;}
+  .vr-row .vb-plate small{display:inline;margin:0 0 0 4px;font-size:10.5px;}
+  .vr-item{cursor:pointer;transition:box-shadow .15s ease;}
+  .vr-item:hover{box-shadow:0 4px 12px -4px rgba(10,37,64,.28);}
+  .vr-item:focus-visible{outline:2px solid var(--orange-500);outline-offset:2px;}
+  /* จอแคบ: ซ่อนหัวคอลัมน์ แถวเรียงเป็น 3 บรรทัด ข้อมูลยังครบ */
+  @media(max-width:900px){
+    .vr-head{display:none;}
+    .vr-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nm act" "code rent" "op plate";row-gap:4px;}
+    .vr-row .mc-nm{grid-area:nm;} .vr-row .mc-act{grid-area:act;} .vr-row .vr-code{grid-area:code;}
+    .vr-row .vr-rent{grid-area:rent;} .vr-row .vr-op{grid-area:op;} .vr-row .vr-pl{grid-area:plate;text-align:right;}
+  }
   /* แถวผู้รับผิดชอบในฟอร์มเครื่องจักร: เว้นขอบขวาไว้เสมอ ปุ่มลบลอยในขอบนั้น ช่องกรอกจึงกว้างเท่ากันทุกแถว */
   .vm-op-row{position:relative;display:grid;grid-template-columns:1fr 150px;gap:8px;padding-right:34px;margin-bottom:6px;align-items:center;}
   .vm-op-head{margin-bottom:4px;} .vm-op-head label{font-size:12.5px;color:var(--ink-600);}
@@ -218,13 +230,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .vm-op-warn{grid-column:1/-1;font-size:12px;line-height:1.4;color:#b45309;background:#fff7e6;border-radius:6px;padding:5px 8px;}
   .vb-plate{flex:none;display:inline-block;border:2px solid var(--navy-900);border-radius:8px;padding:2px 11px;font-weight:700;font-size:14.5px;line-height:1.3;text-align:center;background:#fff;color:var(--ink-900);margin-top:-2px;}
   .vb-plate small{display:block;font-size:9.5px;font-weight:500;color:var(--ink-400);margin-top:-2px;}
-  .vb-r2{display:flex;justify-content:space-between;align-items:center;margin-top:11px;font-size:12.5px;color:var(--ink-600);gap:8px;}
-  .vb-pill{display:inline-flex;align-items:center;gap:5px;padding:2px 11px;border-radius:99px;font-size:12px;font-weight:700;background:#fdeede;color:#b45309;}
-  .vb-pill.g{background:#e4f0ff;color:#1d6fd1;}
-  .vb-card{cursor:pointer;transition:box-shadow .15s ease,transform .1s ease;}
-  .vb-card:hover{box-shadow:0 6px 16px -6px rgba(10,37,64,.28);transform:translateY(-1px);}
-  .vb-card:focus-visible{outline:2px solid var(--orange-500);outline-offset:2px;}
-  .vb-r2 .vb-rent{margin-right:auto;}
   .vb-empty{padding:14px;text-align:center;color:var(--ink-400);font-size:13px;}
   /* โมดัลรายละเอียดกับโมดัลแก้ไขเครื่องจักร/รถ ต้องขนาดเท่ากัน (กว้าง M 640 จาก modal-standard.js) */
   .veh-modal-size{height:640px;}
@@ -320,7 +325,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
     .vd-hero-t.reg{flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;} .vd-hero-t .vb-plate{font-size:15px;padding:1px 10px;}
     .vd-pair{grid-template-columns:1fr;gap:12px;}
   }
-  @media(max-width:900px){.vb-board{grid-template-columns:1fr;}}
+  @media(max-width:900px){.vb-board{grid-template-columns:minmax(0,1fr);}}
   /* แถวเลขไมล์ (odometer) — โทนน้ำเงินอ่อน แยกจากแถวสายทางด้วยสี+ไอคอน ให้ดูออกทันทีว่าเป็นข้อมูลคนละประเภทกับแถวปริมาณน้ำมันด้านบน (พื้นขาว) */
   tr.mileage-row td{background:#eef3f9;padding:5px 14px;color:var(--ink-600);font-size:12px;border-bottom:1px solid var(--paper-100);}
   tr.mileage-row td.stuck1{background:#eef3f9;box-shadow:inset 3px 0 0 var(--navy-700);}
@@ -2866,13 +2871,21 @@ function vehStatusKey(v){
 function vehPlateHtml(v){
   return v.plate ? `<span class="vb-plate">${esc(v.plate)}<small>ระยอง</small></span>` : '';
 }
-function vehFuelPill(v){
-  return v.fuelType ? `<span class="vb-pill${v.fuelType==='เบนซิน'?' g':''}">⛽ ${esc(v.fuelType)}</span>` : '';
+/* แถวเครื่องจักร 1 คัน — กดแถวเปิดรายละเอียด กดดินสอเปิดฟอร์มแก้ไข (ชนิดน้ำมันดูจากกล่องกลุ่มที่แถวอยู่) */
+function vehicleRowHtml(v){
+  const code = vehicleRegNo(v.label), typeName = vehicleShortName(v.label), op = v.note||'';
+  return `<div class="mc-card vr-row vr-item" role="button" tabindex="0" onclick="openVehDetail(${v.id})" onkeydown="if(event.key==='Enter'&&event.target===this)openVehDetail(${v.id})">
+    <div class="mc-nm"><span class="t" title="${esc(typeName)}">${esc(typeName)}</span></div>
+    <div class="vr-code">${esc(code)}</div>
+    <div class="vr-op${op?'':' vr-none'}" title="${esc(op)}">${esc(op)||'—'}</div>
+    <div class="vr-pl">${vehPlateHtml(v)}</div>
+    <div class="vr-rent${v.monthlyRent!=null?'':' vr-none'}">${v.monthlyRent!=null ? `${fmtNum(v.monthlyRent,0)}<small>บาท/เดือน</small>` : '—'}</div>
+    <div class="mc-act">${isAdmin()?`<button type="button" class="mc-ed" data-ic="pen" data-tip="แก้ไขข้อมูลและสถานะ" aria-label="แก้ไขข้อมูลและสถานะ" onclick="event.stopPropagation();openVehicleModal(${v.id})"></button>`:''}</div>
+  </div>`;
 }
-function vehicleCardHtml(v){
-  const code = vehicleRegNo(v.label), typeName = vehicleShortName(v.label);
-  return `<div class="vb-card s-${vehStatusKey(v)}" role="button" tabindex="0" onclick="openVehDetail(${v.id})" onkeydown="if(event.key==='Enter'&&event.target===this)openVehDetail(${v.id})"><div class="vb-r1"><div class="vb-nm"><b>${esc(typeName)}</b><div class="vb-sub">${esc(code)}</div><div class="vb-sub">${esc(v.note||'')}</div></div>${vehPlateHtml(v)}</div>
-    <div class="vb-r2"><span class="vb-rent">${v.monthlyRent!=null ? fmtNum(v.monthlyRent,0)+' บาท/เดือน' : ''}</span>${vehFuelPill(v)}${isAdmin()?`<button type="button" class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไขข้อมูลและสถานะ" aria-label="แก้ไขข้อมูลและสถานะ" onclick="event.stopPropagation();openVehicleModal(${v.id})"></button>`:''}</div></div>`;
+/* เรียงตามชื่อประเภท แล้วตามรหัส (แบบตารางพัสดุที่เรียงตามชื่อ) */
+function vehRowSort(a,b){
+  return vehicleShortName(a.label).localeCompare(vehicleShortName(b.label),'th') || vehicleRegNo(a.label).localeCompare(vehicleRegNo(b.label),'th');
 }
 let vehFuelTab = 'all';
 function setVehFuel(f){ vehFuelTab = f; renderVehicles(); }
@@ -2888,10 +2901,11 @@ function vehicleBoardHtml(list, key){
     ['⛽ น้ำมันเบนซิน', list.filter(v=>v.fuelType==='เบนซิน'), 'เบนซิน'],
     ['อื่น ๆ / ไม่ใช้เชื้อเพลิง', list.filter(v=>v.fuelType!=='ดีเซล' && v.fuelType!=='เบนซิน'), 'all']
   ].filter(g=>g[1].length && (fuelSel==='all' || fuelSel===g[2]));
-  // กลุ่มตามชนิดน้ำมัน แบบกล่องสีของหน้าพัสดุ (ดีเซล = ครีม, เบนซิน = เขียว) การ์ดเรียงแนวนอนในกล่อง
+  // กลุ่มตามชนิดน้ำมัน แบบกล่องสีของหน้าพัสดุ (ดีเซล = ครีม, เบนซิน = เขียว) ภายในเป็นแถวตาราง
   const fgCls = {'ดีเซล':'d','เบนซิน':'g'};
+  const head = `<div class="vr-row vr-head"><span>รายการ</span><span>รหัส</span><span>ผู้รับผิดชอบ</span><span>ทะเบียนรถ</span><span class="r">ค่าเช่า</span><span></span></div>`;
   const body = groups.length
-    ? groups.map(g=>`<div class="vb-fg ${fgCls[g[2]]||'o'}"><h3>${g[0]}<span class="n">${g[1].length}</span></h3><div class="vb-fgrid">${g[1].map(vehicleCardHtml).join('')}</div></div>`).join('')
+    ? groups.map(g=>`<div class="vb-fg ${fgCls[g[2]]||'o'}"><h3>${g[0]}<span class="n">${g[1].length}</span></h3>${head}${[...g[1]].sort(vehRowSort).map(vehicleRowHtml).join('')}</div>`).join('')
     :`<div class="vb-empty" style="grid-column:1/-1;">ไม่มีรายการน้ำมัน${fuelSel} ในสถานะ "${VEH_STATUS[key].label}"</div>`;
   return bar + body;
 }
