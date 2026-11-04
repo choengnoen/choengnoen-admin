@@ -2889,9 +2889,9 @@ function vehRowSort(a,b){
 }
 let vehFuelTab = 'all';
 function setVehFuel(f){ vehFuelTab = f; renderVehicles(); }
-function vehicleBoardHtml(list, key){
-  if(!list.length) return `<div class="vb-empty" style="grid-column:1/-1;">ไม่มีรายการในสถานะ "${VEH_STATUS[key].label}"</div>`;
-  const showFuelTabs = key==='ok';   // ตัวกรองชนิดน้ำมันมีเฉพาะแท็บ "ใช้งานปกติ" (แท็บอื่นมีรถไม่กี่คัน)
+function vehicleBoardHtml(list, key, searching){
+  if(!list.length) return `<div class="vb-empty" style="grid-column:1/-1;">${searching ? 'ไม่พบเครื่องจักร/รถที่ตรงกับคำค้นหา' : `ไม่มีรายการในสถานะ "${VEH_STATUS[key].label}"`}</div>`;
+  const showFuelTabs = key==='ok' && !searching;   // ตัวกรองชนิดน้ำมันมีเฉพาะแท็บ "ใช้งานปกติ" (แท็บอื่นมีรถไม่กี่คัน) · ระหว่างค้นหาแสดงทุกชนิดน้ำมัน ไม่ให้แท็บที่เลือกค้างไว้ซ่อนผลค้นหา
   const fuelSel = showFuelTabs ? vehFuelTab : 'all';
   const nD = list.filter(v=>v.fuelType==='ดีเซล').length, nG = list.filter(v=>v.fuelType==='เบนซิน').length;
   const fuelTabs = [['all','ทั้งหมด',list.length],['ดีเซล','น้ำมันดีเซล',nD],['เบนซิน','น้ำมันเบนซิน',nG]];
@@ -2966,17 +2966,24 @@ function fitVehPair(){
   pair.style.width = col>0 ? Math.min(col, board.clientWidth) + 'px' : '';
 }
 window.addEventListener('resize', fitVehPair);
+/* คำสำหรับเทียบตอนค้นหา: เลขไทยเป็นอารบิก ตัดเว้นวรรคและขีด — พิมพ์ 368460234 หรือ ๓๖-๘๔๖๐ ก็เจอ 36-8460-23-4 */
+function vehSearchKey(s){
+  return String(s||'').replace(/[๐-๙]/g, d=>'๐๑๒๓๔๕๖๗๘๙'.indexOf(d)).toLowerCase().replace(/[\s\-–—.\/()]/g,'');
+}
 function renderVehicles(){
   const body = document.getElementById('veh-board');
   if(!body) return;
-  const q = (document.getElementById('veh-search')?.value||'').trim().toLowerCase();
-  const filtered = vehicles.filter(v=>!q || `${vehicleShortName(v.label)} (${vehicleRegNo(v.label)})`.toLowerCase().includes(q) || (v.note||'').toLowerCase().includes(q) || (v.plate||'').toLowerCase().includes(q));
+  const q = vehSearchKey(document.getElementById('veh-search')?.value);
+  const filtered = vehicles.filter(v=>!q || [vehicleShortName(v.label), vehicleRegNo(v.label), v.note, v.plate].some(f=>vehSearchKey(f).includes(q)));
+  /* ระหว่างค้นหา ตัวเลขบนแท็บ = จำนวนที่พบ · ถ้าแท็บที่เปิดอยู่ไม่พบ ให้แสดงแท็บแรกที่พบแทน (ลบคำค้นแล้วกลับแท็บเดิม) */
+  const inTab = k=>filtered.filter(v=>vehStatusKey(v)===k);
   ['ok','due','svc'].forEach(k=>{
     const el = document.getElementById('veh-count-'+k);
-    if(el) el.textContent = vehicles.filter(v=>vehStatusKey(v)===k).length;
+    if(el) el.textContent = inTab(k).length;
   });
-  const shown = filtered.filter(v=>vehStatusKey(v)===vehTypeTab);
-  body.innerHTML = vehicleBoardHtml(shown, vehTypeTab);
+  const tab = q && !inTab(vehTypeTab).length ? (['ok','due','svc'].find(k=>inTab(k).length) || vehTypeTab) : vehTypeTab;
+  document.querySelectorAll('#veh-type-tabs .tab').forEach(t=>t.classList.toggle('active', t.dataset.vehtype===tab));
+  body.innerHTML = vehicleBoardHtml(inTab(tab), tab, !!q);
   fitVehPair();
 }
 /* แถวผู้รับผิดชอบในฟอร์ม: แถวแรก = ตั้งแต่เริ่มต้น (ไม่มีวันที่) แถวถัดไป = เปลี่ยนคนตั้งแต่วันที่ระบุ — แก้ชื่อในแถวเดิม = แก้ทั้งช่วงนั้นย้อนหลัง */
