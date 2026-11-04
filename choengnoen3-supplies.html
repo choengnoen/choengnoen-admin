@@ -264,8 +264,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .vm-hint{font-size:12px;line-height:1.4;color:var(--ink-400);margin-top:4px;}
   .vm-g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
   .vm-g2:last-child{margin-bottom:0;} .vm-g2>.vm-f{margin-bottom:0;}
+  .vm-f:has(+ .vm-f.hidden:last-child){margin-bottom:0;}   /* ช่องวันที่ส่งคืนที่ซ่อนอยู่ ไม่ให้เหลือช่องว่างท้ายการ์ด */
   .vm-err-msg{font-size:12px;line-height:1.4;color:var(--danger);margin-top:4px;}
-  .vm-opts.vm-err .vm-opt{border-color:var(--danger);}
+  .vm-opts.vm-err{border-color:var(--danger);box-shadow:0 0 0 3px rgba(193,64,47,.12);}
   /* ช่องอัตราสิ้นเปลือง + หน่วย ติดกันเป็นช่องเดียว */
   .vm-join{display:grid;grid-template-columns:minmax(0,1fr) 108px;}
   #veh-modal-overlay .vm-join .edit-input:first-child{border-radius:9px 0 0 9px;}
@@ -281,20 +282,19 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .vm-locked{height:42px;display:flex;align-items:center;padding:0 12px;border-radius:9px;background:var(--paper-100);color:var(--ink-600);font-weight:600;}
   .vm-unit{position:relative;} .vm-unit .edit-input{padding-right:82px !important;}
   .vm-unit span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12.5px;color:var(--ink-400);}
-  .vm-opts{display:grid;gap:8px;grid-auto-flow:column;grid-auto-columns:1fr;}
-  .vm-opt{--c:var(--orange-500);border:1.5px solid var(--line);border-radius:10px;background:#fff;padding:9px 12px;text-align:left;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;color:var(--ink-600);min-width:0;}
-  .vm-opt small{display:block;font-size:12px;font-weight:400;color:var(--ink-400);line-height:1.35;}
-  .vm-opt.on{border-color:var(--c);background:#fff8f2;color:var(--ink-900);}
-  .vm-opts.center .vm-opt{text-align:center;height:42px;padding:0 6px;font-size:13.5px;white-space:nowrap;}
-  .vm-opt.dot{--c:var(--success);display:flex;align-items:center;gap:7px;height:42px;padding:0 9px;font-size:13px;white-space:nowrap;}
+  /* ตัวเลือกแบบเลือกได้ข้อเดียว: รวมเป็นแถบเดียว สูงเท่าช่องกรอก กดครั้งเดียวเลือกได้เลย */
+  .vm-opts{display:grid;gap:2px;grid-auto-flow:column;grid-auto-columns:1fr;box-sizing:border-box;height:42px;padding:3px;border:1px solid var(--line);border-radius:9px;background:var(--paper-100);}
+  .vm-opt{--c:var(--orange-500);border:1.5px solid transparent;border-radius:7px;background:transparent;padding:0 6px;text-align:center;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:13.5px;font-weight:600;color:var(--ink-600);min-width:0;white-space:nowrap;}
+  .vm-opt:not(.on):hover{color:var(--ink-900);background:rgba(255,255,255,.65);}
+  .vm-opt.on{border-color:var(--c);background:#fff;color:var(--ink-900);box-shadow:0 1px 3px rgba(15,30,50,.12);}
+  .vm-opt.dot{--c:var(--success);display:flex;align-items:center;justify-content:center;gap:6px;padding:0 4px;font-size:13px;}
   .vm-opt.dot::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c);flex:none;}
   .vm-opt.dot.s-dmg{--c:var(--danger);} .vm-opt.dot.s-svc{--c:#d97706;} .vm-opt.dot.s-ret{--c:#64748b;}
   .vr-ret{flex:none;font-size:11.5px;color:#475569;background:#eef2f6;border-radius:99px;padding:1px 8px;white-space:nowrap;}
-  .vm-opt.dot.on{background:#fafcff;}
   @media(max-width:640px){
     #veh-modal-body{padding:12px;} .vm-card{padding:12px;}
     .vm-g2{grid-template-columns:1fr;gap:14px;}
-    .vm-opts.stack{grid-auto-flow:row;}
+    .vm-opts.stack{grid-auto-flow:row;grid-template-columns:1fr 1fr;height:auto;} .vm-opts.stack .vm-opt{height:36px;}
     #veh-modal-overlay .vm-op-row{grid-template-columns:1fr;}
     .vm-op-date-lbl,.vm-ops.single .vm-op-since{display:none;}
     #veh-modal-overlay .vm-ops.single #vm-op-add{position:static;width:100%;margin-top:2px;}
