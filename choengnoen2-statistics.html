@@ -4566,7 +4566,7 @@ let __subsys3FuelTx = [];
 let __subsys3MaterialTx = [];
 function subsys3VehicleFromApi(row){
   const operatorHistory = Array.isArray(row.operatorHistoryJson) ? row.operatorHistoryJson : [];
-  return { id:row.id, label:row.label, fuelType:row.fuelType||'', note:FBL.operatorOnDate(operatorHistory, row.operatorName), operatorHistory, regNumber:row.regNumber||'', vehicleType:row.vehicleType||'',
+  return { id:row.id, label:row.label, fuelType:row.fuelType||'', note:FBL.operatorOnDate(operatorHistory, row.operatorName), operatorHistory, regNumber:row.regNumber||'', vehicleType:row.vehicleType||'', returnDate:row.returnDate||'',
     monthlyRent: row.monthlyRent!==''&&row.monthlyRent!=null?Number(row.monthlyRent):undefined,
     maxKmPerDay: row.mileageThresholdOverride!==''&&row.mileageThresholdOverride!=null?Number(row.mileageThresholdOverride):undefined,
     fuelRate: row.fuelRate!==''&&row.fuelRate!=null?Number(row.fuelRate):undefined, fuelRateUnit:row.fuelRateUnit||undefined };
@@ -4604,6 +4604,8 @@ async function loadSubsys3RefDataFromApi(){
   }
 }
 function getVehiclesX(){ return __subsys3Vehicles; }
+/* เครื่องที่ส่งคืนแขวงแล้วไม่ให้เลือกในงานหลังวันส่งคืน (วันที่ส่งคืนยังเลือกได้) — ใช้กับการเลือกใหม่เท่านั้น ใบสั่งการเดิมยังเปิดได้ตามป้าย */
+function vehActiveOn(v, date){ return !v.returnDate || !date || date<=v.returnDate; }
 function getMaterialsX(){ return __subsys3Materials; }
 function getFuelTxX(){ return __subsys3FuelTx; }
 /* รายชื่อบุคลากรและการลา (ระบบรองที่ 1) — อ่านจาก Firestore โดยตรง (โหลดไว้ตอนเปิดหน้าใน __initApiData)
@@ -4854,7 +4856,7 @@ function suggestDwFromUnitCost(){
   if(qty<=0){ alert('กรุณากรอกปริมาณงานที่ทำก่อน ระบบจะได้คำนวณจำนวนวัสดุที่ต้องใช้ตามจริง'); return; }
   const rec = unitCostRecords.find(r=>r.code===code);
   if(!rec){ alert('ยังไม่มีสูตรมาตรฐานสำหรับรหัสงานนี้ในระบบ (ดูที่แท็บ "ข้อมูลอ้างอิงงาน")'); return; }
-  let addedMat = 0, addedVeh = 0, skippedVeh = 0;
+  let addedMat = 0, addedVeh = 0, skippedVeh = 0, returnedVeh = 0;
   (rec.materialRows||[]).forEach(row=>{
     if(!row.code) return;
     const m = getMaterialsX().find(x=>x.code===row.code);
@@ -4870,6 +4872,7 @@ function suggestDwFromUnitCost(){
     if(!row.vehId) return;
     const v = getVehiclesX().find(x=>x.id===row.vehId);
     if(!v){ skippedVeh++; return; } // เครื่องจักรนี้ถูกลบ/แก้ id ไปแล้วตั้งแต่ตอนตั้งสูตร ข้ามไป
+    if(!vehActiveOn(v, document.getElementById('dw-date')?.value)){ returnedVeh++; return; }
     const idx = __dwVehCount;
     addDwVehicleRow();
     selectDwVeh(idx, row.vehId);
@@ -4883,6 +4886,7 @@ function suggestDwFromUnitCost(){
   suggestRentCost();
   let msg = `เติมจากสูตรมาตรฐานแล้ว: วัสดุ ${addedMat} รายการ, เครื่องจักร ${addedVeh} รายการ — ตรวจสอบและปรับจำนวนได้ก่อนบันทึก`;
   if(skippedVeh) msg += `\n(ข้าม ${skippedVeh} รายการเครื่องจักรในสูตร เพราะไม่พบในทะเบียนเครื่องจักรปัจจุบันแล้ว)`;
+  if(returnedVeh) msg += `\n(ข้าม ${returnedVeh} รายการเครื่องจักรในสูตร เพราะส่งคืนแขวงแล้ว)`;
   alert(msg);
 }
 /* ช่อง "หน่วย" ถัดจากปริมาณงานที่ทำ — อ้างอิงจากช่อง "หน่วยนับ" ของรหัสงานที่เลือกใน jobCodeReference
@@ -5004,7 +5008,7 @@ function addDwVehForOperator(name, mowerOnly){
   if(!n) return;
   const used = new Set(dwUsedVehicleIds(-1));
   const date = document.getElementById('dw-date')?.value;
-  getVehiclesX().filter(v=> normName(vehicleOperatorName(v, date))===n && !used.has(v.id) && (!mowerOnly || isMowerVehicle(v))).forEach(v=>{
+  getVehiclesX().filter(v=> vehActiveOn(v, date) && normName(vehicleOperatorName(v, date))===n && !used.has(v.id) && (!mowerOnly || isMowerVehicle(v))).forEach(v=>{
     const idx = __dwVehCount;
     addDwVehicleRow();
     document.getElementById('dw-veh-id-'+idx).value = v.id;
@@ -5095,7 +5099,7 @@ function renderDwVehSuggest(idx){
   const q = (document.getElementById('dw-veh-search-'+idx).value||'').trim().toLowerCase();
   const used = dwUsedVehicleIds(idx);
   const date = document.getElementById('dw-date')?.value;
-  let matches = getVehiclesX().filter(v=> !used.includes(v.id));
+  let matches = getVehiclesX().filter(v=> !used.includes(v.id) && vehActiveOn(v, date));
   if(q) matches = matches.filter(v=> vehicleLabelOn(v, date).toLowerCase().includes(q));
   matches = matches.slice(0,30);
   box.innerHTML = matches.length ? matches.map(v=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectDwVeh(${idx},${v.id})">${esc(vehicleLabelOn(v, date))}</div>`).join('')
@@ -5497,7 +5501,8 @@ function addUcVehicleRow(data){
 function renderUcVehSuggest(idx){
   const box = document.getElementById('uc-veh-suggest-'+idx);
   const q = (document.getElementById('uc-veh-search-'+idx).value||'').trim().toLowerCase();
-  let matches = getVehiclesX();
+  const today = new Date().toLocaleDateString('en-CA');   // สูตรมาตรฐานไม่ผูกวันที่ จึงดูจากวันนี้ (en-CA = YYYY-MM-DD)
+  let matches = getVehiclesX().filter(v=> vehActiveOn(v, today));
   if(q) matches = matches.filter(v=> vehicleLabelOn(v).toLowerCase().includes(q));
   matches = matches.slice(0,30);
   box.innerHTML = matches.length ? matches.map(v=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectUcVeh(${idx},${v.id})">${esc(vehicleLabelOn(v))}</div>`).join('')
