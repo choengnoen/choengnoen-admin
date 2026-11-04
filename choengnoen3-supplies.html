@@ -1572,6 +1572,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 // กรองข้อความก่อนใส่ HTML (ใช้ตัวเดียวกับ firebase-layer.js) / jsArg = ค่าที่ใส่เป็นสตริงใน onclick="fn('...')"
 const esc = FBL.esc;
 const jsArg = v => esc(String(v==null?'':v).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,'\\n'));
+/* รหัสเครื่องจักรมี 2 แบบ: ตัวเลข (รายการเดิม เช่น 7) และข้อความ (รายการที่เพิ่มใหม่ เช่น MCH-1793769229121)
+   vehIdArg = ใส่ใน onclick (ข้อความต้องมีเครื่องหมายคำพูด) / vehIdVal = แปลงค่าจากช่องฟอร์มกลับเป็นแบบเดิม */
+const vehIdArg = id => typeof id==='number' ? id : `'${jsArg(id)}'`;
+const vehIdVal = s => s==null||s==='' ? null : (isNaN(+s) ? s : +s);
 /* ============================================================
    BASE DATE / STAFF (shared reference with ระบบที่ 1)
    ============================================================ */
@@ -2880,13 +2884,13 @@ function vehPlateHtml(v){
 /* แถวเครื่องจักร 1 คัน — กดแถวเปิดรายละเอียด กดดินสอเปิดฟอร์มแก้ไข (ชนิดน้ำมันดูจากกล่องกลุ่มที่แถวอยู่) */
 function vehicleRowHtml(v){
   const code = vehicleRegNo(v.label), typeName = vehicleShortName(v.label), op = v.note||'';
-  return `<div class="mc-card vr-row vr-item" role="button" tabindex="0" onclick="openVehDetail(${v.id})" onkeydown="if(event.key==='Enter'&&event.target===this)openVehDetail(${v.id})">
+  return `<div class="mc-card vr-row vr-item" role="button" tabindex="0" onclick="openVehDetail(${vehIdArg(v.id)})" onkeydown="if(event.key==='Enter'&&event.target===this)openVehDetail(${vehIdArg(v.id)})">
     <div class="mc-nm"><span class="t" title="${esc(typeName)}">${esc(typeName)}</span>${v.returnDate?`<span class="vr-ret">คืนแขวง ${esc(fmtDate(v.returnDate))}</span>`:''}</div>
     <div class="vr-code">${esc(code)}</div>
     <div class="vr-op${op?'':' vr-none'}" title="${esc(op)}">${esc(op)||'—'}</div>
     <div class="vr-pl">${vehPlateHtml(v)}</div>
     <div class="vr-rent${v.monthlyRent!=null?'':' vr-none'}">${v.monthlyRent!=null ? `${fmtNum(v.monthlyRent,0)}<small>บาท/เดือน</small>` : '—'}</div>
-    <div class="mc-act">${isAdmin()?`<button type="button" class="mc-ed" data-ic="pen" data-tip="แก้ไขข้อมูลและสถานะ" aria-label="แก้ไขข้อมูลและสถานะ" onclick="event.stopPropagation();openVehicleModal(${v.id})"></button>`:''}</div>
+    <div class="mc-act">${isAdmin()?`<button type="button" class="mc-ed" data-ic="pen" data-tip="แก้ไขข้อมูลและสถานะ" aria-label="แก้ไขข้อมูลและสถานะ" onclick="event.stopPropagation();openVehicleModal(${vehIdArg(v.id)})"></button>`:''}</div>
   </div>`;
 }
 /* เรียงตามชื่อประเภท แล้วตามรหัส (แบบตารางพัสดุที่เรียงตามชื่อ) */
@@ -2954,7 +2958,7 @@ function openVehDetail(id){
       <section class="vd-box"><h4 class="vd-box-h">${VEH_DETAIL_IC('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>')}ผู้รับผิดชอบ</h4>${vehOperatorHistoryHtml(v)}</section>
       <section class="vd-box"><h4 class="vd-box-h">${VEH_DETAIL_IC('<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>')}ประวัติการบำรุงรักษา</h4><div class="vd-empty"><b>ยังไม่มีประวัติ</b>ยังไม่มีการบันทึกในระบบ</div></section>
     </div>`;
-  document.getElementById('veh-detail-foot').innerHTML = `<button type="button" class="btn btn-ghost" onclick="closeVehDetail()">ปิด</button>${isAdmin()?`<button type="button" class="btn btn-primary" onclick="closeVehDetail();openVehicleModal(${v.id})">แก้ไขข้อมูล</button>`:''}`;
+  document.getElementById('veh-detail-foot').innerHTML = `<button type="button" class="btn btn-ghost" onclick="closeVehDetail()">ปิด</button>${isAdmin()?`<button type="button" class="btn btn-primary" onclick="closeVehDetail();openVehicleModal(${vehIdArg(v.id)})">แก้ไขข้อมูล</button>`:''}`;
   document.getElementById('veh-detail-overlay').classList.remove('hidden');
 }
 function closeVehDetail(){ document.getElementById('veh-detail-overlay').classList.add('hidden'); }
@@ -3038,7 +3042,7 @@ function vmPresetOf(type){
 }
 /* ค่าเช่าที่พบมากที่สุดของประเภทนี้ในทะเบียน (ไม่นับคันที่กำลังแก้) */
 function vmCommonRent(type){
-  const curId = +document.getElementById('vm-id').value, count = {};
+  const curId = vehIdVal(document.getElementById('vm-id').value), count = {};
   vehicles.forEach(x=>{ if(x.id!==curId && x.monthlyRent!=null && vehicleShortName(x.label)===type) count[x.monthlyRent] = (count[x.monthlyRent]||0)+1; });
   return Object.keys(count).sort((a,b)=>count[b]-count[a])[0] || '';
 }
@@ -3170,7 +3174,7 @@ function openVehicleModal(id){
         <div class="vm-hint">เว้นว่างใช้ค่ามาตรฐาน 300 กม./วัน ปรับสูงขึ้นสำหรับรถที่ใช้งานหนัก</div></div>
     </section>`;
   document.getElementById('veh-modal-foot').innerHTML = `
-    ${v?`<button type="button" class="btn btn-danger" onclick="removeVehicle(${v.id})">ลบรายการนี้</button>`:''}
+    ${v?`<button type="button" class="btn btn-danger" onclick="removeVehicle(${vehIdArg(v.id)})">ลบรายการนี้</button>`:''}
     <button type="button" class="btn btn-ghost" onclick="closeVehicleModal()">ยกเลิก</button>
     <button type="button" class="btn btn-primary" id="veh-save-btn" onclick="saveVehicleModal()">บันทึก</button>`;
   vmSyncFields();
@@ -3189,7 +3193,7 @@ async function saveVehicleModal(){
   if(!code){ document.getElementById('vm-code').classList.add('vm-err'); }
   if(!typeName || !code){ document.getElementById('veh-modal-body').scrollTop = 0; showAlertModal(!typeName ? 'กรุณาเลือกประเภทเครื่องจักร-รถ' : 'กรุณากรอกรหัส/เลขทะเบียน'); return; }
   /* กันรหัสซ้ำ (ไม่สนขีด/เว้นวรรค) รวมเครื่องที่ส่งคืนแขวงแล้ว — ตอนแก้ไขตรวจเฉพาะเมื่อเปลี่ยนรหัส รายการที่ซ้ำอยู่ก่อนแล้วจะได้ยังแก้ช่องอื่นได้ */
-  const editing = id ? vehicles.find(x=>x.id===+id) : null, codeKey = vehSearchKey(code);
+  const editing = id ? vehicles.find(x=>x.id===vehIdVal(id)) : null, codeKey = vehSearchKey(code);
   if(!editing || vehSearchKey(vehicleRegNo(editing.label))!==codeKey){
     const dup = vehicles.find(x=>x!==editing && vehSearchKey(vehicleRegNo(x.label))===codeKey);
     if(dup){
@@ -3223,7 +3227,7 @@ async function saveVehicleModal(){
   if(vehSaveBtn){ vehSaveBtn.disabled = true; vehSaveBtn.textContent = 'กำลังบันทึก...'; }
   try{
     if(id){
-      const v = vehicles.find(x=>x.id===+id);
+      const v = vehicles.find(x=>x.id===vehIdVal(id));
       if(v){
         // ป้ายคือตัวเชื่อมประวัติน้ำมัน/เลขไมล์/EC 1-W/ใบสั่งการในฐานข้อมูล: ห้ามเปลี่ยน — แก้ประเภท/รหัสเก็บใน vehicleType/regNumber (ถ้ากลับมาตรงกับป้าย ล้างทิ้ง) ส่วนชื่อคนอ่านจาก vehicleOperatorOn
         const sameAsLabel = typeName===vehicleLabelType(v.label) && code===vehicleLabelReg(v.label);

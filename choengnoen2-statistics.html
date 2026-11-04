@@ -1895,6 +1895,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 // กรองข้อความก่อนใส่ HTML (ใช้ตัวเดียวกับ firebase-layer.js) / jsArg = ค่าที่ใส่เป็นสตริงใน onclick="fn('...')"
 const esc = FBL.esc;
 const jsArg = v => esc(String(v==null?'':v).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,'\\n'));
+/* รหัสเครื่องจักรมี 2 แบบ: ตัวเลข (รายการเดิม เช่น 7) และข้อความ (รายการที่เพิ่มใหม่ เช่น MCH-1793769229121)
+   vehIdArg = ใส่ใน onmousedown (ข้อความต้องมีเครื่องหมายคำพูด) / vehIdVal = แปลงค่าจากช่องฟอร์มกลับเป็นแบบเดิม */
+const vehIdArg = id => typeof id==='number' ? id : `'${jsArg(id)}'`;
+const vehIdVal = s => s==null||s==='' ? null : (isNaN(+s) ? s : +s);
 /* ============================================================
    DATA
    ============================================================ */
@@ -5020,7 +5024,7 @@ function addDwVehForOperator(name, mowerOnly){
    แถวที่ยังไม่ได้เลือกเครื่องจักร (ไม่มีเลขให้เทียบ) จะถูกจัดไว้ท้ายสุด เรียงตามลำดับเดิมของมันเอง */
 function dwVehSortKey(div){
   const idx = div.id.replace('dw-veh-','');
-  const vehId = +document.getElementById('dw-veh-id-'+idx)?.value || null;
+  const vehId = vehIdVal(document.getElementById('dw-veh-id-'+idx)?.value);
   if(!vehId) return null;
   const v = getVehiclesX().find(x=>x.id===vehId);
   const m = v && /\(([\d-]+)\)/.exec(vehicleBaseName(v));
@@ -5076,7 +5080,7 @@ function renumberDwVehicleRows(){
   let mowerCount = 0;
   rows.forEach((div,i)=>{
     const idx = div.id.replace('dw-veh-','');
-    const vehId = +document.getElementById('dw-veh-id-'+idx)?.value || null;
+    const vehId = vehIdVal(document.getElementById('dw-veh-id-'+idx)?.value);
     const v = vehId ? getVehiclesX().find(x=>x.id===vehId) : null;
     const mower = isMowerVehicle(v);
     if(mower) mowerCount++;
@@ -5092,7 +5096,7 @@ function renumberDwVehicleRows(){
 function dwUsedVehicleIds(excludeIdx){
   return Array.from(document.querySelectorAll('#dw-vehicle-items [id^="dw-veh-id-"]'))
     .filter(el=> el.id !== 'dw-veh-id-'+excludeIdx)
-    .map(el=>+el.value).filter(Boolean);
+    .map(el=>vehIdVal(el.value)).filter(Boolean);
 }
 function renderDwVehSuggest(idx){
   const box = document.getElementById('dw-veh-suggest-'+idx);
@@ -5102,7 +5106,7 @@ function renderDwVehSuggest(idx){
   let matches = getVehiclesX().filter(v=> !used.includes(v.id) && vehActiveOn(v, date));
   if(q) matches = matches.filter(v=> vehicleLabelOn(v, date).toLowerCase().includes(q));
   matches = matches.slice(0,30);
-  box.innerHTML = matches.length ? matches.map(v=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectDwVeh(${idx},${v.id})">${esc(vehicleLabelOn(v, date))}</div>`).join('')
+  box.innerHTML = matches.length ? matches.map(v=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectDwVeh(${idx},${vehIdArg(v.id)})">${esc(vehicleLabelOn(v, date))}</div>`).join('')
     : `<div style="padding:9px 12px;color:var(--ink-400);font-size:13px;">ไม่พบรายการที่ตรงกับคำค้น หรือเพิ่มไว้แล้วทุกเครื่อง</div>`;
   box.classList.remove('hidden');
 }
@@ -5151,7 +5155,7 @@ function updateDwVehOperatorHint(idx, v){
 function refreshAllDwVehOperatorHints(){
   Array.from(document.querySelectorAll('#dw-vehicle-items > div[id^="dw-veh-"]')).forEach(div=>{
     const idx = div.id.replace('dw-veh-','');
-    const vehId = +document.getElementById('dw-veh-id-'+idx)?.value || null;
+    const vehId = vehIdVal(document.getElementById('dw-veh-id-'+idx)?.value);
     const v = vehId ? getVehiclesX().find(x=>x.id===vehId) : null;
     if(v){
       document.getElementById('dw-veh-search-'+idx).value = vehicleLabelOn(v, document.getElementById('dw-date')?.value);
@@ -5181,7 +5185,7 @@ function selectDwVeh(idx, id){
 function dwVehicleRowsData(){
   return Array.from(document.querySelectorAll('#dw-vehicle-items > div')).map(div=>{
     const idx = div.id.replace('dw-veh-','');
-    const vehId = +document.getElementById('dw-veh-id-'+idx)?.value || null;
+    const vehId = vehIdVal(document.getElementById('dw-veh-id-'+idx)?.value);
     const liters = +document.getElementById('dw-veh-liters-'+idx)?.value || 0;
     const v = vehId ? getVehiclesX().find(x=>x.id===vehId) : null;
     return v ? {vehicle:v, liters} : null;
@@ -5505,7 +5509,7 @@ function renderUcVehSuggest(idx){
   let matches = getVehiclesX().filter(v=> vehActiveOn(v, today));
   if(q) matches = matches.filter(v=> vehicleLabelOn(v).toLowerCase().includes(q));
   matches = matches.slice(0,30);
-  box.innerHTML = matches.length ? matches.map(v=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectUcVeh(${idx},${v.id})">${esc(vehicleLabelOn(v))}</div>`).join('')
+  box.innerHTML = matches.length ? matches.map(v=>`<div style="padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--paper-100);" onmousedown="selectUcVeh(${idx},${vehIdArg(v.id)})">${esc(vehicleLabelOn(v))}</div>`).join('')
     : `<div style="padding:9px 12px;color:var(--ink-400);font-size:13px;">ไม่พบรายการที่ตรงกับคำค้น</div>`;
   box.classList.remove('hidden');
 }
@@ -5525,7 +5529,7 @@ function selectUcVeh(idx, id){
 function ucVehicleRowsData(){
   return Array.from(document.querySelectorAll('#uc-vehicle-items > div')).map(div=>{
     const idx = div.id.replace('uc-veh-','');
-    const vehId = +document.getElementById('uc-veh-id-'+idx)?.value || null;
+    const vehId = vehIdVal(document.getElementById('uc-veh-id-'+idx)?.value);
     const liters = +document.getElementById('uc-veh-liters-'+idx)?.value || 0;
     const fuelPrice = +document.getElementById('uc-veh-fuelprice-'+idx)?.value || 0;
     const rentPerDay = +document.getElementById('uc-veh-rent-'+idx)?.value || 0;
@@ -5556,7 +5560,7 @@ function ucComputeTotals(){
   let fuel=0, rent=0;
   Array.from(document.querySelectorAll('#uc-vehicle-items > div')).forEach(div=>{
     const idx = div.id.replace('uc-veh-','');
-    const vehId = +document.getElementById('uc-veh-id-'+idx)?.value || null;
+    const vehId = vehIdVal(document.getElementById('uc-veh-id-'+idx)?.value);
     const liters = +document.getElementById('uc-veh-liters-'+idx)?.value || 0;
     const fuelPrice = +document.getElementById('uc-veh-fuelprice-'+idx)?.value || 0;
     const rentPerDay = +document.getElementById('uc-veh-rent-'+idx)?.value || 0;
