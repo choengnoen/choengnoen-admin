@@ -188,11 +188,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .vb-grp{grid-column:1/-1;background:var(--paper-100);color:var(--navy-900);font-weight:700;font-size:13.5px;padding:8px 14px;border-radius:8px;}
   .vb-grp:not(:first-child){margin-top:8px;}
   .vb-brk{grid-column:1/-1;height:0;}
-  .vb-fuelbar{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:8px 16px;}
-  .vb-sum{display:flex;flex-wrap:wrap;gap:4px 14px;}
-  .vb-sum .vr-st{font-size:12.5px;font-weight:500;color:var(--ink-600);}
+  .vb-fuelbar{grid-column:1/-1;display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
+  .vb-sum{display:flex;flex-wrap:wrap;gap:4px;}
+  /* ปุ่มสถานะ: กดแล้วแสดงเฉพาะสถานะนั้น กดซ้ำเพื่อยกเลิก */
+  .vb-sum .vr-st{border:1px solid transparent;background:none;padding:4px 11px;border-radius:99px;font:500 12.5px 'Sarabun',sans-serif;color:var(--ink-600);cursor:pointer;}
   .vb-sum .vr-st b{color:var(--ink-900);}
-  .vb-retbtn{margin-left:auto;}
+  .vb-sum .vr-st:hover{background:var(--paper-100);}
+  .vb-sum .vr-st:focus-visible{outline:2px solid var(--orange-500);outline-offset:1px;}
+  .vb-sum .vr-st.on{background:#fff;border-color:var(--c);color:var(--navy-900);font-weight:700;}
   .vb-seg{display:inline-flex;background:var(--paper-100);border-radius:10px;padding:3px;gap:2px;max-width:100%;overflow-x:auto;}
   .vb-seg button{border:0;background:none;padding:6px 14px;border-radius:8px;font:600 13px 'Sarabun',sans-serif;color:var(--ink-600);cursor:pointer;white-space:nowrap;}
   .vb-seg button.on{background:#fff;color:var(--navy-900);box-shadow:0 1px 3px rgba(0,0,0,.15);}
@@ -2906,17 +2909,16 @@ const VEH_STATUS_ORDER = {dmg:0, svc:1, ok:2, ret:3};
 function vehBoardSort(a,b){
   return VEH_STATUS_ORDER[vehStatusKey(a)]-VEH_STATUS_ORDER[vehStatusKey(b)] || vehRowSort(a,b);
 }
-let vehShowRet = false;   // เครื่องที่ส่งคืนแขวงแล้วซ่อนไว้ก่อน กดปุ่มเพื่อแสดง (ระหว่างค้นหาแสดงเสมอ)
-function toggleVehRet(){ vehShowRet = !vehShowRet; renderVehicles(); }
-function vehicleBoardHtml(list, searching, counts){
+let vehStatusSel = '';   // สถานะที่กดเลือกไว้ ('' = ทุกเครื่องที่ยังใช้อยู่ · เครื่องที่คืนแขวงแล้วดูได้โดยกดสถานะนั้นหรือค้นหา)
+function setVehStatus(k){ vehStatusSel = vehStatusSel===k ? '' : k; renderVehicles(); }
+function vehicleBoardHtml(list, searching, counts, statusSel){
   const fuelSel = searching ? 'all' : vehFuelTab;   // ระหว่างค้นหาแสดงทุกชนิดน้ำมัน ไม่ให้ตัวกรองที่เลือกค้างไว้ซ่อนผลค้นหา
   const nD = list.filter(v=>v.fuelType==='ดีเซล').length, nG = list.filter(v=>v.fuelType==='เบนซิน').length;
   const fuelTabs = [['all','ทั้งหมด',list.length],['ดีเซล','น้ำมันดีเซล',nD],['เบนซิน','น้ำมันเบนซิน',nG]];
   const seg = searching ? '' : `<div class="vb-seg">${fuelTabs.map(t=>`<button type="button" class="${vehFuelTab===t[0]?'on':''}" onclick="setVehFuel('${t[0]}')">${t[1]} (${t[2]})</button>`).join('')}</div>`;
-  const sum = `<div class="vb-sum">${['ok','svc','dmg','ret'].map(k=>`<span class="vr-st s-${k}">${VEH_STATUS[k].label} <b>${counts[k]}</b></span>`).join('')}</div>`;
-  const retBtn = !searching && counts.ret ? `<button type="button" class="btn btn-ghost btn-sm vb-retbtn" onclick="toggleVehRet()">${vehShowRet?'ซ่อน':'แสดง'}เครื่องที่คืนแขวงแล้ว (${counts.ret})</button>` : '';
-  const bar = `<div class="vb-fuelbar">${seg}${sum}${retBtn}</div>`;
-  if(!list.length) return bar + `<div class="vb-empty" style="grid-column:1/-1;">${searching ? 'ไม่พบเครื่องจักร/รถที่ตรงกับคำค้นหา' : 'ไม่มีเครื่องจักร/รถที่ใช้งานอยู่'}</div>`;
+  const sum = `<div class="vb-sum">${['ok','svc','dmg','ret'].map(k=>`<button type="button" class="vr-st s-${k}${statusSel===k?' on':''}" aria-pressed="${statusSel===k}" onclick="setVehStatus('${k}')">${VEH_STATUS[k].label} <b>${counts[k]}</b></button>`).join('')}</div>`;
+  const bar = `<div class="vb-fuelbar">${seg}${sum}</div>`;
+  if(!list.length) return bar + `<div class="vb-empty" style="grid-column:1/-1;">${searching ? 'ไม่พบเครื่องจักร/รถที่ตรงกับคำค้นหา' : statusSel ? `ไม่มีรายการในสถานะ "${VEH_STATUS[statusSel].label}"` : 'ไม่มีเครื่องจักร/รถที่ใช้งานอยู่'}</div>`;
   const groups = [
     ['⛽ น้ำมันดีเซล', list.filter(v=>v.fuelType==='ดีเซล'), 'ดีเซล'],
     ['⛽ น้ำมันเบนซิน', list.filter(v=>v.fuelType==='เบนซิน'), 'เบนซิน'],
@@ -2990,11 +2992,12 @@ function renderVehicles(){
   if(!body) return;
   const q = vehSearchKey(document.getElementById('veh-search')?.value);
   const filtered = vehicles.filter(v=>!q || [vehicleShortName(v.label), vehicleRegNo(v.label), v.note, v.plate].some(f=>vehSearchKey(f).includes(q)));
-  /* แถวสรุปนับตามสถานะ — ระหว่างค้นหา ตัวเลข = จำนวนที่พบ และแสดงเครื่องที่คืนแขวงแล้วด้วย ค้นหาเจอเสมอ */
+  /* ปุ่มสถานะนับตามคำค้น — ระหว่างค้นหา ถ้าสถานะที่เลือกค้างไว้ไม่พบ ให้แสดงผลทุกสถานะแทน (ลบคำค้นแล้วกลับสถานะเดิม) · ไม่ได้เลือกสถานะและไม่ได้ค้นหา = ซ่อนเครื่องที่คืนแขวงแล้ว */
   const counts = {ok:0, svc:0, dmg:0, ret:0};
   filtered.forEach(v=>{ counts[vehStatusKey(v)]++; });
-  const list = q || vehShowRet ? filtered : filtered.filter(v=>vehStatusKey(v)!=='ret');
-  body.innerHTML = vehicleBoardHtml(list, !!q, counts);
+  const statusSel = q && !counts[vehStatusSel] ? '' : vehStatusSel;
+  const list = statusSel ? filtered.filter(v=>vehStatusKey(v)===statusSel) : (q ? filtered : filtered.filter(v=>vehStatusKey(v)!=='ret'));
+  body.innerHTML = vehicleBoardHtml(list, !!q, counts, statusSel);
   fitVehPair();
 }
 /* แถวผู้รับผิดชอบในฟอร์ม: แถวแรก = ตั้งแต่เริ่มต้น (ไม่มีวันที่) แถวถัดไป = เปลี่ยนคนตั้งแต่วันที่ระบุ — แก้ชื่อในแถวเดิม = แก้ทั้งช่วงนั้นย้อนหลัง */
