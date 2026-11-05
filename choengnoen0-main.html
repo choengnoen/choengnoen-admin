@@ -116,7 +116,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .stat-card .bar{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--navy-800);}
   .stat-card.warn .bar{background:var(--orange-600);}
   /* ===== ภาพรวม (Overview) — modern grouped stat cards ===== */
-  .ov-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-bottom:22px;}
+  .ov-grid{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:22px;}
+  .ov-grid>.ov-card{flex:1 1 250px;min-width:0;}
   .ov-card{background:linear-gradient(180deg,#ffffff,var(--paper-50) 130%);border:1px solid var(--line);border-radius:14px;padding:16px 18px 14px;box-shadow:0 1px 2px rgba(10,37,64,.04),0 10px 22px -16px rgba(10,37,64,.14);transition:box-shadow .15s ease,transform .15s ease;}
   .ov-card:hover{box-shadow:0 4px 10px rgba(10,37,64,.06),0 16px 30px -16px rgba(10,37,64,.18);transform:translateY(-1px);}
   .ov-card-head{display:flex;align-items:center;gap:10px;margin-bottom:13px;}
@@ -138,11 +139,12 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ov-card.accent-success{border-top:3px solid var(--success);}
   .ov-leave{margin-top:10px;max-height:150px;overflow-y:auto;}
   .ov-leave-title{font-size:11.5px;font-weight:600;color:var(--ink-600);margin-bottom:4px;}
-  .ov-leave-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dashed var(--line);font-size:12.5px;}
+  .ov-leave-item{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;padding:5px 0;border-bottom:1px dashed var(--line);font-size:12.5px;}
   .ov-leave-item:last-child{border-bottom:none;}
-  .ov-leave-item .pill{white-space:nowrap;}
+  .ov-leave-item>span:first-child{white-space:nowrap;}
+  .ov-leave-item .pill{white-space:normal;max-width:100%;}
   .ov-leave-empty{font-size:11.5px;color:var(--ink-400);padding:4px 0;}
-  @media(max-width:640px){ .ov-grid{grid-template-columns:1fr 1fr;} }
+  @media(max-width:640px){ .ov-grid>.ov-card{flex-basis:calc(50% - 7px);} }
 
 
   .section{background:var(--white);border:1px solid var(--line);border-radius:12px;margin-bottom:22px;overflow:hidden;}
@@ -1126,18 +1128,13 @@ function renderOverviewStats(){
   const trip = lv.filter(r=>r.type==='ไปราชการ').length;
   const onLeave = lv.length - trip;
   const working = Math.max(0, staff.length - lv.length);
-  const bv = budgetView();
-  // นับเฉพาะหมวดที่กำหนดวงเงินแล้ว — หมวดที่ยังไม่มีวงเงินจะทำให้ % คงเหลือรวมผิด
-  const withAlloc = bv.filter(x=>x.alloc>0);
-  const alloc = withAlloc.reduce((s,x)=>s+x.alloc,0), spent = withAlloc.reduce((s,x)=>s+x.spent,0);
-  const remainPct = alloc>0 ? Math.round((alloc-spent)/alloc*100) : null;
   const mats = materialsView();
   const lowMat = mats.filter(m=>matStatus(m)==='low').length;
   const cOpen = D.complaints.filter(c=>c.status!=='ดำเนินการแล้วเสร็จ').length;
   const encOpen = D.enc.filter(e=>!(e.cleared===true || e.cleared==='TRUE' || e.cleared==='true')).length;
   const permitPending = D.permits.filter(p=>(p.status||'pending')==='pending').length;
   const emOngoing = D.em.filter(e=>(e.status||'ongoing')==='ongoing').length;
-  const V = { n:staff.length, working, onLeave, trip, remainPct, alloc, spent, fy:currentFiscalYear(), lowMat, matN:mats.length, cOpen, encOpen, permitPending, emOngoing, date:todayISO() };
+  const V = { n:staff.length, working, onLeave, trip, lowMat, matN:mats.length, cOpen, encOpen, permitPending, emOngoing, date:todayISO() };
   drawOverview(V, '');
   saveOverviewSnap(V);
 }
@@ -1160,8 +1157,7 @@ function paintOverviewSnap(s){
 function drawOverview(V, note){
   const num = x=>Number(x)||0;
   const staff = {length:num(V.n)}, mats = {length:num(V.matN)};
-  const working = num(V.working), onLeave = num(V.onLeave), trip = num(V.trip), alloc = num(V.alloc), spent = num(V.spent);
-  const remainPct = (V.remainPct===null || V.remainPct===undefined) ? null : num(V.remainPct);
+  const working = num(V.working);
   const lowMat = num(V.lowMat), cOpen = num(V.cOpen), encOpen = num(V.encOpen), permitPending = num(V.permitPending), emOngoing = num(V.emOngoing);
   const icon = (bg, path)=>`<span class="ov-icon" style="background:${bg};"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">${path}</svg></span>`;
   document.getElementById('overview-stats').innerHTML = (note ? `<div class="hint-box" style="margin-bottom:10px;">${esc(note)}</div>` : '') + `
@@ -1170,10 +1166,6 @@ function drawOverview(V, note){
         <div class="ov-card-head">${icon('var(--orange-600)','<circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1"/><path d="M17 11a4 4 0 0 0 0-8"/>')}<h3>กำลังพลวันนี้</h3><span class="ov-note">ทั้งหมด ${staff.length} คน</span></div>
         <div class="ov-metrics">${ovMetric(working,'ปฏิบัติงาน','ok')}</div>
         <div class="ov-leave" id="ov-leave-names">${__todayLeaveHTML}</div>
-      </div>
-      <div class="ov-card accent-navy">
-        <div class="ov-card-head">${icon('var(--navy-900)','<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>')}<h3>งบประมาณ ปีงบ ${num(V.fy)}</h3></div>
-        <div class="ov-metrics">${ovMetric(remainPct===null?'—':remainPct+'%', remainPct===null?'ยังไม่ได้กำหนดวงเงิน':`คงเหลือ ${fmtMoney(alloc-spent)} จาก ${fmtMoney(alloc)} บาท`, remainPct!==null&&remainPct<20?'warn':'')}</div>
       </div>
       <div class="ov-card accent-amber">
         <div class="ov-card-head">${icon('var(--amber-400)','<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>')}<h3>พัสดุ</h3></div>
