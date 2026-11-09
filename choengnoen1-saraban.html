@@ -3243,6 +3243,14 @@ function lvCheckSvg(){ return '<svg viewBox="0 0 18 18" preserveAspectRatio="non
 /* แถวข้อความ + ช่องเส้นจุด (flex) — parts: ข้อความ | {v,fix,size,left} | {box:true/false} */
 function lvRow(x,y,w,parts){
   const dot = '<svg class="lv-d" style="width:100%"><line x1="1" y1="16.4" x2="100%" y2="16.4" stroke="#000" stroke-width="1.3" stroke-linecap="round" stroke-dasharray="0 3.4"/></svg>';
+  /* ถ้าข้อความ+ช่องกรอกรวมกันกว้างเกินแถว (เช่น เดือน "พฤศจิกายน" หลายช่องในบรรทัดเดียว) ย่อทั้งแถวลงให้พอดี ไม่ให้ล้นขอบกระดาษ */
+  let need = 0;
+  parts.forEach(p=>{
+    if(typeof p==='string') need += lvTextW(p,16)*1.05;
+    else if(p.box!==undefined) need += (p.w||14)+7;
+    else need += p.fix ? p.fix : Math.min(lvTextW(String(p.v==null?'':p.v),p.size||16)+2,200);
+  });
+  const k = need>w ? Math.max(.7, (w-1)/need) : 1;
   const inner = parts.map(p=>{
     if(typeof p==='string') return `<span class="lv-s">${p}</span>`;
     if(p.box!==undefined){
@@ -3250,14 +3258,14 @@ function lvRow(x,y,w,parts){
       return `<span style="flex:none;position:relative;display:inline-block;align-self:center;width:${bw}pt;height:${bw}pt;margin:0 3pt 0 4pt;top:-1.6pt;border:.9pt solid #000;box-sizing:border-box;background:#fff">${p.box?lvCheckSvg():''}</span>`;
     }
     const v = String(p.v==null?'':p.v);
-    const sz = p.size||16;
+    const sz = (p.size||16)*k;
     const tw = lvTextW(v,sz);
-    const basis = p.fix ? `0 0 ${p.fix}pt` : `1 1 ${Math.max(20, tw+8)}pt`;
+    const basis = p.fix ? `0 0 ${p.fix*k}pt` : `1 1 ${Math.max(20*k, tw+8*k)}pt`;
     const al = p.left ? 'text-align:left;padding-left:2pt;box-sizing:border-box;' : 'text-align:center;';
     /* ช่องที่ไม่กำหนดความกว้างตายตัวห้ามแคบกว่าข้อความที่กรอก — กันเดือน/ชื่อยาวทับข้อความข้างเคียง */
-    return `<div style="flex:${basis};position:relative;min-width:${p.fix?0:Math.min(tw+2,200)}pt;height:16pt">${dot}<div class="lv-psk" style="position:absolute;left:0;right:0;top:${-LV_RAISE}pt;${al}white-space:pre;font-size:${sz}pt;line-height:${sz}pt">${esc(v)}</div></div>`;
+    return `<div style="flex:${basis};position:relative;min-width:${p.fix?0:Math.min(tw+2*k,200)}pt;height:16pt">${dot}<div class="lv-psk" style="position:absolute;left:0;right:0;top:${-LV_RAISE}pt;${al}white-space:pre;font-size:${sz}pt;line-height:${sz}pt">${esc(v)}</div></div>`;
   }).join('');
-  return `<div class="lv-t lv-fl" style="left:${x}pt;top:${y+LV_DY-LV_BASE}pt;width:${w}pt">${inner}</div>`;
+  return `<div class="lv-t lv-fl" style="left:${x}pt;top:${y+LV_DY-LV_BASE}pt;width:${w}pt;${k<1?`font-size:${16*k}pt;`:''}">${inner}</div>`;
 }
 function lvTitle(cx,y,txt){ return `<div class="lv-t" style="left:${cx-200}pt;width:400pt;text-align:center;top:${y+LV_DY-LV_BASE}pt;text-decoration:underline">${txt}</div>`; }
 function lvCT(x0,x1,y,txt){ return `<div class="lv-t" style="left:${x0}pt;width:${x1-x0}pt;text-align:center;top:${y+LV_DY-LV_BASE}pt">${txt}</div>`; }
