@@ -433,7 +433,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .official-form .two-box>div:first-child{border-right:1px solid #333;}
   .official-form .cmd-box{border-top:1px solid #333;padding-top:10px;margin-top:10px;}
   /* แบบใบลา (แบบใหม่) วางพิกัดตามไฟล์ PDF ในโฟลเดอร์ "แบบใบลา" (A4) */
-  @page lvpage{size:A4;margin:0;}
+  @page lvpage{size:210mm 297mm;margin:0;}
   .lv-page{page:lvpage;position:relative;width:595.3pt;height:841pt;overflow:hidden;margin:0 auto;background:#fff;color:#000;font-family:'TH SarabunIT๙','THSarabunIT๙','TH SarabunPSK','THSarabunPSK','TH Sarabun New','THSarabunNew','Sarabun',sans-serif;font-size:16pt;line-height:16pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .lv-page.lv-sick{font-family:'TH SarabunIT๙','THSarabunIT๙','TH SarabunPSK','THSarabunPSK','TH Sarabun New','Sarabun',sans-serif;}
   .lv-psk{font-family:'TH SarabunPSK','THSarabunPSK','TH Sarabun PSK','TH Sarabun New','Sarabun',sans-serif;}
@@ -466,13 +466,13 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
        ตอนพิมพ์ให้ซ่อนทุกอย่างที่อยู่ใน body ยกเว้นฟอร์มที่กำลังพิมพ์ (.show-print) */
     body > *:not(.show-print){display:none !important;}
     html,body{height:auto !important;min-height:0 !important;}
-    .lv-page{height:830pt;break-after:avoid;page-break-after:avoid;}
+    .lv-page{height:812pt;break-after:avoid;page-break-after:avoid;}
     /* จ.3-03: 1 แผ่นต่อ 29 ครั้งลา — เกินกว่านั้นขึ้นแผ่นใหม่ ; สูงต่ำกว่า A4 เล็กน้อยกันหน้าว่างตามหลัง (เนื้อหาจบที่ ~760pt) */
     .j303-page{height:830pt;box-shadow:none;margin:0;break-after:page;page-break-after:always;}
     .j303-page:last-child{break-after:auto;page-break-after:auto;}
     /* ใบลา (.lv-page) ต้องจบที่ 1 หน้า A4 เสมอ — ตัดส่วนที่ล้นทิ้ง ไม่ให้เกิดหน้าว่างตามหลัง (ไม่กระทบฟอร์มอื่นที่ต้องหลายหน้า) */
-    html:has(.show-print .lv-page), body:has(.show-print .lv-page){height:830pt !important;max-height:830pt !important;overflow:hidden !important;}
-    .show-print:has(.lv-page){height:830pt;overflow:hidden;}
+    html:has(.show-print .lv-page), body:has(.show-print .lv-page){height:812pt !important;max-height:812pt !important;overflow:hidden !important;}
+    .show-print:has(.lv-page){height:812pt;overflow:hidden;}
     .route-header,.sidebar,.topbar,.sec-tabs,.no-print,.page-head .toolbar{display:none !important;}
     .content{padding:0;max-width:none;}
     .section{border:none;box-shadow:none;}
