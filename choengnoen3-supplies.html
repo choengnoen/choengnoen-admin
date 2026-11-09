@@ -241,8 +241,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   /* มีผู้รับผิดชอบคนเดียว: ไม่ต้องโชว์คอลัมน์วันที่ ใช้ที่ตรงนั้นวางปุ่มเปลี่ยนคนแทน (ช่องชื่อกว้างเท่าเดิมตอนเพิ่มแถว) · เพิ่มเครื่องใหม่: มีแค่ช่องชื่อเต็มแถว */
   .vm-ops{position:relative;}
   .vm-ops.single .vm-op-since,.vm-ops.single .vm-op-date-lbl{visibility:hidden;}
-  #veh-modal-overlay .vm-ops.single #vm-op-add{position:absolute;top:26px;right:0;width:184px;height:42px;margin:0;}
-  #vm-op-add{margin-top:2px;}
+  #veh-modal-overlay .vm-ops.single #vm-op-add,#veh-modal-overlay .vm-ops.single #vm-rent-add{position:absolute;top:26px;right:0;width:184px;height:42px;margin:0;}
+  #vm-op-add,#vm-rent-add{margin-top:2px;}
   .vm-ops.is-new .vm-op-row{grid-template-columns:1fr;padding-right:0;}
   .vm-ops.is-new .vm-op-since,.vm-ops.is-new .vm-op-date-lbl{display:none;}
   .vm-op-row > .vm-op-del{position:absolute !important;right:0;top:2px;}
@@ -291,7 +291,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
     .vm-g2{grid-template-columns:1fr;gap:14px;}
     #veh-modal-overlay .vm-op-row{grid-template-columns:1fr;}
     .vm-op-date-lbl,.vm-ops.single .vm-op-since{display:none;}
-    #veh-modal-overlay .vm-ops.single #vm-op-add{position:static;width:100%;margin-top:2px;}
+    #vm-rents .vm-op-since{display:none;}
+    #veh-modal-overlay .vm-ops.single #vm-op-add,#veh-modal-overlay .vm-ops.single #vm-rent-add{position:static;width:100%;margin-top:2px;}
     #veh-modal-foot{padding:10px 12px;}
   }
   /* โมดัลรายละเอียดเครื่องจักร/รถ */
@@ -2856,16 +2857,17 @@ let __vehiclesNextId = 31;
    (operatorName/mileageThresholdOverride) — field อื่นชื่อตรงกันอยู่แล้ว */
 function vehicleFromApi(row){
   const operatorHistory = Array.isArray(row.operatorHistoryJson) ? row.operatorHistoryJson : [];
+  const rentHistory = Array.isArray(row.rentHistoryJson) ? row.rentHistoryJson : [];
   return { id:row.id, label:row.label, fuelType:row.fuelType||'',
     fuelRate: row.fuelRate!==''&&row.fuelRate!=null ? Number(row.fuelRate) : undefined,
     fuelRateUnit: row.fuelRateUnit||undefined, note:FBL.operatorOnDate(operatorHistory, row.operatorName), operatorHistory,
-    monthlyRent: row.monthlyRent!==''&&row.monthlyRent!=null ? Number(row.monthlyRent) : undefined,
+    monthlyRent: FBL.rentOnDate(rentHistory, row.monthlyRent!==''&&row.monthlyRent!=null ? Number(row.monthlyRent) : undefined), rentHistory,
     maxKmPerDay: row.mileageThresholdOverride!==''&&row.mileageThresholdOverride!=null ? Number(row.mileageThresholdOverride) : undefined,
     plate: row.plate||'', status: row.status||'ใช้งาน', fuelMode: row.fuelMode||'', vehicleType: row.vehicleType||'', regNumber: row.regNumber||'', returnDate: row.returnDate||'', machSource: row.machSource||'', fuelRateRef: row.fuelRateRef||'' };
 }
 function vehicleToApi(v){
   return { id:v.id, label:v.label, fuelType:v.fuelType||'', fuelRate:v.fuelRate, fuelRateUnit:v.fuelRateUnit,
-    operatorName:v.note||'', operatorHistoryJson:v.operatorHistory||[], monthlyRent:v.monthlyRent, mileageThresholdOverride:v.maxKmPerDay, status:v.status||'ใช้งาน', plate:v.plate||'', fuelMode:v.fuelMode||'', vehicleType:v.vehicleType||'', regNumber:v.regNumber||'', returnDate:v.returnDate||'', machSource:v.machSource||'', fuelRateRef:v.fuelRateRef||'' };
+    operatorName:v.note||'', operatorHistoryJson:v.operatorHistory||[], monthlyRent:v.monthlyRent, rentHistoryJson:v.rentHistory||[], mileageThresholdOverride:v.maxKmPerDay, status:v.status||'ใช้งาน', plate:v.plate||'', fuelMode:v.fuelMode||'', vehicleType:v.vehicleType||'', regNumber:v.regNumber||'', returnDate:v.returnDate||'', machSource:v.machSource||'', fuelRateRef:v.fuelRateRef||'' };
 }
 /* ที่มาของเครื่อง: machSource='แขวง' = เครื่องจักรแขวงที่หมวดทำบันทึกขอมาใช้ (แยกตารางไว้ท้ายทะเบียน) · ว่าง = เครื่องประจำหมวด */
 const VEH_SOURCE_DISTRICT = 'แขวง';
@@ -2987,6 +2989,20 @@ function vehOperatorHistoryHtml(v){
   }).reverse().join('');
   return `<ul class="vd-tl">${rows}</ul>`;
 }
+/* เส้นเวลาค่าเช่า ใหม่สุดอยู่บน — แสดงเมื่อมีการเปลี่ยนอัตราแล้วเท่านั้น */
+function vehRentHistoryHtml(v){
+  const list = v.rentHistory || [];
+  if(list.length<2) return '';
+  const today = toLocalISODate(TODAY);
+  const rows = list.map((e,i)=>{
+    const until = list[i+1] ? list[i+1].from : '';
+    const isNow = (!e.from || e.from<=today) && (!until || today<until), isNext = e.from>today;
+    const since = e.from ? 'ตั้งแต่ '+esc(fmtDate(e.from)) : 'ตั้งแต่เริ่มต้น';
+    const tag = isNow ? '<span class="now">ปัจจุบัน</span> · ' : (isNext ? '<span class="now">รอมีผล</span> · ' : '');
+    return `<li${isNow?' class="cur"':''}><b>${e.rent!=null&&e.rent!=='' ? fmtNum(e.rent,0)+' บาท/เดือน' : 'ยังไม่กำหนด'}</b><small>${tag}${since}</small></li>`;
+  }).reverse().join('');
+  return `<ul class="vd-tl">${rows}</ul>`;
+}
 const VEH_DETAIL_IC = (d,st)=>`<svg viewBox="0 0 24 24" fill="none" stroke="${st||'currentColor'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 function openVehDetail(id){
   const v = vehicles.find(x=>x.id===id); if(!v) return;
@@ -3005,9 +3021,10 @@ function openVehDetail(id){
   const rentTile = v.monthlyRent!=null ? `<div class="vd-hero-t rent"><div class="vd-hero-l">ค่าเช่า</div><div class="vd-hero-v">${fmtNum(v.monthlyRent,0)}<small>บาท/เดือน</small></div></div>` : '';
   const plate = vehPlateHtml(v), plateTile = plate ? `<div class="vd-hero-t reg"><div class="vd-hero-l">ทะเบียนรถ</div>${plate}</div>` : '';
   const fuelRows = row('ชนิดเชื้อเพลิง',esc(v.fuelType||''))+row('รุ่นตามตารางกรม',refRow?esc(`${refRow.brand} ${refRow.model}`):'')+row('อัตราสิ้นเปลือง',rate)+row('รูปแบบการเบิก',modeHtml)+row('เกณฑ์เลขไมล์',kmHtml);
-  const opHist = vehOperatorHistoryHtml(v);
+  const opHist = vehOperatorHistoryHtml(v), rentHist = vehRentHistoryHtml(v);
   const detailBody = [
     rentTile||plateTile ? `<div class="vd-hero">${rentTile}${plateTile}</div>` : '',
+    rentHist ? `<section class="vd-box"><h4 class="vd-box-h">${VEH_DETAIL_IC('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>')}ประวัติค่าเช่า</h4>${rentHist}</section>` : '',
     v.returnDate ? `<section class="vd-box"><h4 class="vd-box-h">${VEH_DETAIL_IC('<path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>')}การส่งคืนแขวง</h4>${row('วันที่ส่งคืนแขวง',esc(fmtDate(v.returnDate)))}</section>` : '',
     fuelRows ? `<section class="vd-box"><h4 class="vd-box-h">${VEH_DETAIL_IC('<path d="M3 22h12M4 9h10M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 4 0V9.83a2 2 0 0 0-.59-1.42L18 5"/>')}เชื้อเพลิงและการเบิก</h4>${fuelRows}</section>` : '',
     opHist ? `<section class="vd-box"><h4 class="vd-box-h">${VEH_DETAIL_IC('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>')}ผู้รับผิดชอบ</h4>${opHist}</section>` : ''
@@ -3087,6 +3104,44 @@ function readVmOperatorRows(){
     const problem = vmOpDateProblem(r.name, r.from);
     if(problem){ showAlertModal(problem+'\nกรุณาเลือกผู้รับผิดชอบหรือวันที่มีผลใหม่'); return null; }
   }
+  changes.sort((a,b)=>a.from.localeCompare(b.from));
+  return [rows[0], ...changes];
+}
+/* แถวค่าเช่าในฟอร์ม: แถวแรก = ตั้งแต่เริ่มต้น (ไม่มีวันที่) แถวถัดไป = อัตราใหม่ตั้งแต่วันที่ระบุ — แก้ตัวเลขในแถวเดิม = แก้ทั้งช่วงนั้นย้อนหลัง */
+function vmRentRowHtml(r, first){
+  const val = r.rent!=null ? String(r.rent) : '';
+  return `<div class="vm-op-row">
+    <div class="vm-unit"><input type="number" step="0.01" min="0" class="edit-input vm-rent-val"${first?' id="vm-rent"':''} value="${esc(val)}" data-orig="${esc(val)}" placeholder="0.00" oninput="onVmRentInput(this)"><span>บาท/เดือน</span></div>
+    ${first ? '<div class="vm-op-since">ตั้งแต่เริ่มต้น</div>' : `<input type="date" class="edit-input vm-rent-from" value="${esc(r.from||'')}">`}
+    ${first ? '' : `<button type="button" class="btn btn-ghost btn-ic btn-ic-danger btn-sm vm-op-del" data-ic="trash" data-tip="ลบ" onclick="this.closest('.vm-op-row').remove();vmSyncRents()"></button>`}
+    <div class="vm-op-warn hidden">แก้ตัวเลขตรงนี้จะมีผลย้อนหลังทั้งช่วง (ใช้แก้คำผิด) — ถ้าอัตราเปลี่ยน ให้กด "เปลี่ยนอัตราค่าเช่า" แล้วระบุวันที่</div>
+  </div>`;
+}
+function onVmRentInput(el){
+  if(el.id==='vm-rent'){ vmMarkAuto('vm-rent', false); vmSyncFields(); }
+  const orig = el.dataset.orig||'';
+  el.closest('.vm-op-row').querySelector('.vm-op-warn').classList.toggle('hidden', !orig || el.value===orig);
+}
+/* อัตรากำหนดเป็นรายปีงบประมาณ จึงตั้งวันที่เริ่มต้นเป็น 1 ต.ค. ของปีงบปัจจุบันให้ */
+function addVmRentRow(){
+  const y = TODAY.getMonth()>=9 ? TODAY.getFullYear() : TODAY.getFullYear()-1;
+  const box = document.getElementById('vm-rent-rows');
+  box.insertAdjacentHTML('beforeend', vmRentRowHtml({from:`${y}-10-01`, rent:null}, false));
+  vmSyncRents();
+  box.lastElementChild.querySelector('.vm-rent-val').focus();
+}
+function vmSyncRents(){
+  document.getElementById('vm-rents').classList.toggle('single', document.querySelectorAll('#vm-rent-rows .vm-op-row').length<2);
+}
+/* อ่านแถวค่าเช่าจากฟอร์ม → แถวแรกคงเดิม แถวที่เหลือเรียงตามวันที่ (คืน null ถ้ากรอกไม่ครบ/วันที่ซ้ำ) */
+function readVmRentRows(){
+  const rows = Array.from(document.querySelectorAll('#vm-rent-rows .vm-op-row')).map(el=>{
+    const raw = el.querySelector('.vm-rent-val').value;
+    return { from: el.querySelector('.vm-rent-from')?.value||'', rent: raw!=='' ? parseFloat(raw) : null };
+  });
+  const changes = rows.slice(1);
+  if(changes.some(r=>!r.from || r.rent==null)){ showAlertModal('กรุณากรอกค่าเช่าและวันที่มีผลให้ครบทุกแถว'); return null; }
+  if(new Set(changes.map(r=>r.from)).size!==changes.length){ showAlertModal('มีวันที่มีผลซ้ำกัน — วันเดียวกันระบุค่าเช่าได้อัตราเดียว'); return null; }
   changes.sort((a,b)=>a.from.localeCompare(b.from));
   return [rows[0], ...changes];
 }
@@ -3255,6 +3310,7 @@ function openVehicleModal(id){
   const code = v ? vehicleRegNo(v.label) : '';
   document.getElementById('veh-modal-sub').textContent = v ? `${typeName} · ${code}` : 'กรอกช่องที่มี * ให้ครบ';
   const operatorRows = v && v.operatorHistory && v.operatorHistory.length ? v.operatorHistory : [{from:'', name:v?(v.note||''):''}];
+  const rentRows = v && v.rentHistory && v.rentHistory.length ? v.rentHistory : [{from:'', rent:v?v.monthlyRent:null}];
   const status = v ? (v.returnDate ? 'ret' : vehStatusKey(v)) : 'ok', mode = v ? vehicleFuelMode(v) : '';
   /* ชนิดเชื้อเพลิง: ค่าว่าง = ไม่ใช้เชื้อเพลิง จึงใช้ VM_FUEL_PICK แทนสถานะ "ยังไม่ได้เลือก" · ค่าเก่าที่ไม่อยู่ในรายการยังคงเลือกไว้ */
   const curFuel = v ? (v.fuelType||'') : VM_FUEL_PICK;
@@ -3319,10 +3375,13 @@ function openVehicleModal(id){
       </div>
     </section>
     <section class="vm-card"><h4><i>4</i>ค่าเช่าและเกณฑ์</h4>
+      <div class="vm-f vm-ops${v?'':' is-new'}" id="vm-rents">
+        <div class="vm-op-row vm-op-head"><label for="vm-rent">ค่าเช่าต่อเดือน ${vmAutoTag('vm-rent')}</label><label class="vm-op-date-lbl">มีผลตั้งแต่วันที่</label></div>
+        <div id="vm-rent-rows">${rentRows.map((r,i)=>vmRentRowHtml(r, i===0)).join('')}</div>
+        ${v?`<button type="button" class="btn btn-ghost btn-sm" id="vm-rent-add" onclick="addVmRentRow()">+ เปลี่ยนอัตราค่าเช่า</button>`:''}
+        <div class="vm-hint" id="vm-rent-hint"></div>
+      </div>
       <div class="vm-g2">
-        <div class="vm-f"><label for="vm-rent">ค่าเช่าต่อเดือน ${vmAutoTag('vm-rent')}</label>
-          <div class="vm-unit"><input type="number" step="0.01" min="0" class="edit-input" id="vm-rent" value="${v&&v.monthlyRent!=null?v.monthlyRent:''}" placeholder="0.00" oninput="vmMarkAuto(this.id,false);vmSyncFields()"><span>บาท/เดือน</span></div>
-          <div class="vm-hint" id="vm-rent-hint"></div></div>
         <div class="vm-f" id="vm-maxkm-field"><label for="vm-maxkm">เกณฑ์เลขไมล์สูงสุด</label>
           <div class="vm-unit"><input type="number" step="1" min="0" class="edit-input" id="vm-maxkm" value="${v&&v.maxKmPerDay!=null?v.maxKmPerDay:''}" placeholder="300"><span>กม./วัน</span></div>
           <div class="vm-hint">เว้นว่าง = ค่ามาตรฐาน 300 กม./วัน</div></div>
@@ -3334,6 +3393,7 @@ function openVehicleModal(id){
     <button type="button" class="btn btn-primary" id="veh-save-btn" onclick="saveVehicleModal()">บันทึก</button>`;
   vmSyncFields();
   vmSyncOps();
+  vmSyncRents();
   document.getElementById('veh-modal-overlay').classList.remove('hidden');
   document.getElementById('veh-modal-body').scrollTop = 0;
   if(!v) document.getElementById('vm-typename').focus({preventScroll:true});
@@ -3377,8 +3437,12 @@ async function saveVehicleModal(){
   const fuelRate = fuelRateRaw!=='' ? parseFloat(fuelRateRaw) : undefined;
   const fuelRateUnit = (document.getElementById('vm-fuelrateunit').value||'').trim();
   const fuelRateRef = fuelType ? (document.getElementById('vm-fuelref').value||'') : '';
-  const rentRaw = document.getElementById('vm-rent').value;
-  const monthlyRent = rentRaw!=='' ? parseFloat(rentRaw) : undefined;
+  const rentRows = readVmRentRows();
+  if(!rentRows) return;
+  // มีอัตราเดียวไม่ต้องเก็บประวัติ · monthlyRent = อัตราที่มีผลวันนี้ ให้จุดอื่นในระบบอ่านได้เหมือนเดิม
+  const rentHistory = rentRows.length>1 ? rentRows : [];
+  const rentNow = FBL.rentOnDate(rentHistory, rentRows[0].rent);
+  const monthlyRent = rentNow!=null ? rentNow : undefined;
   const maxKmRaw = document.getElementById('vm-maxkm').value;
   const maxKmPerDay = maxKmRaw!=='' ? parseFloat(maxKmRaw) : undefined;
   const fuelMode = document.getElementById('vm-fuelmode').value||'';
@@ -3394,7 +3458,7 @@ async function saveVehicleModal(){
         const sameAsLabel = typeName===vehicleLabelType(v.label) && code===vehicleLabelReg(v.label);
         v.vehicleType = sameAsLabel ? '' : typeName; v.regNumber = sameAsLabel ? '' : code;
         v.note = operator; v.operatorHistory = operatorHistory; v.fuelType = fuelType; v.plate = plate;
-        v.fuelRate = fuelRate; v.fuelRateUnit = fuelRateUnit; v.fuelRateRef = fuelRateRef; v.monthlyRent = monthlyRent; v.maxKmPerDay = maxKmPerDay; v.fuelMode = fuelMode; v.machSource = machSource;
+        v.fuelRate = fuelRate; v.fuelRateUnit = fuelRateUnit; v.fuelRateRef = fuelRateRef; v.monthlyRent = monthlyRent; v.rentHistory = rentHistory; v.maxKmPerDay = maxKmPerDay; v.fuelMode = fuelMode; v.machSource = machSource;
         v.returnDate = returnDate;   // ต้องตั้งก่อนเทียบสถานะ · เลือกสถานะอื่น = รับเครื่องกลับ ล้างวันที่ทิ้ง
         if(statusKey!=='ret' && statusKey!==vehStatusKey(v)) v.status = VEH_STATUS[statusKey].store;   // ไม่เปลี่ยนสถานะ = คงข้อความเดิมในฐานข้อมูล
         await apiPost('update', 'machinery', vehicleToApi(v));
@@ -7148,11 +7212,14 @@ async function __publishStockSnapshot(){
   try{
     const materialStock = {};
     materials.forEach(m=>{ materialStock[m.code] = currentStock(m); });
-    const sj = JSON.stringify(materialStock);
+    /* น้ำมันคงเหลือเดือนปัจจุบัน (ตรงกับการ์ดน้ำมันในหน้านี้) + จุดสั่งซื้อ ไว้แสดงในการ์ดพัสดุหน้าภาพรวม */
+    const fuelStock = {};
+    ['ดีเซล','เบนซิน'].forEach(ft=>{ fuelStock[ft] = { stock: fuelMonthSummary(ft, currentMonthKey()).closing, reorder: fuelSettings[ft] || 0 }; });
+    const sj = JSON.stringify({materialStock, fuelStock});
     if(sj === __lastStockJson) return;
     __lastStockJson = sj;
     const cur = await FBL.stateGet('s3');
-    await FBL.stateSet('s3', Object.assign({}, cur, {materialStock}));
+    await FBL.stateSet('s3', Object.assign({}, cur, {materialStock, fuelStock}));
   }catch(e){ __lastStockJson = null; console.error('ส่งยอดคงเหลือวัสดุให้ระบบหลักไม่สำเร็จ', e); }
 }
 setInterval(__publishStockSnapshot, 5000);

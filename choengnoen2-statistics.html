@@ -4571,8 +4571,9 @@ let __subsys3FuelTx = [];
 let __subsys3MaterialTx = [];
 function subsys3VehicleFromApi(row){
   const operatorHistory = Array.isArray(row.operatorHistoryJson) ? row.operatorHistoryJson : [];
+  const rentHistory = Array.isArray(row.rentHistoryJson) ? row.rentHistoryJson : [];
   return { id:row.id, label:row.label, fuelType:row.fuelType||'', note:FBL.operatorOnDate(operatorHistory, row.operatorName), operatorHistory, regNumber:row.regNumber||'', vehicleType:row.vehicleType||'', returnDate:row.returnDate||'',
-    monthlyRent: row.monthlyRent!==''&&row.monthlyRent!=null?Number(row.monthlyRent):undefined,
+    monthlyRent: FBL.rentOnDate(rentHistory, row.monthlyRent!==''&&row.monthlyRent!=null?Number(row.monthlyRent):undefined), rentHistory,
     maxKmPerDay: row.mileageThresholdOverride!==''&&row.mileageThresholdOverride!=null?Number(row.mileageThresholdOverride):undefined,
     fuelRate: row.fuelRate!==''&&row.fuelRate!=null?Number(row.fuelRate):undefined, fuelRateUnit:row.fuelRateUnit||undefined };
 }
@@ -5238,12 +5239,14 @@ function daysInMonthOf(dateStr){
 }
 function suggestRentCost(){
   const hint = document.getElementById('dw-rent-hint'); if(!hint) return;
-  const rows = dwVehicleRowsData().filter(r=> r.vehicle.monthlyRent!=null);
+  const date = document.getElementById('dw-date')?.value;
+  /* ใช้อัตราที่มีผลในวันที่ของใบสั่งการ — เปิดแก้ใบของปีก่อนจึงยังได้อัตราปีนั้น */
+  const rows = dwVehicleRowsData().map(r=>({vehicle:r.vehicle, rent:FBL.rentOnDate(r.vehicle.rentHistory, r.vehicle.monthlyRent, date)})).filter(r=> r.rent!=null);
   if(!rows.length){ hint.innerHTML=''; refreshDwAccBadges(); return; }
-  const dim = daysInMonthOf(document.getElementById('dw-date')?.value);
+  const dim = daysInMonthOf(date);
   let sum = 0;
   const parts = rows.map(r=>{
-    const daily = r.vehicle.monthlyRent/dim;
+    const daily = r.rent/dim;
     sum += daily;
     return `${esc(vehicleBaseName(r.vehicle))} ${fmtNum(daily,2)}`;
   });
