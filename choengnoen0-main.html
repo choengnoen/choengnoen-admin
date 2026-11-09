@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>งานบริหารหมวด | หมวดทางหลวงเชิงเนิน</title>
+<title>ระบบงานหมวด | หมวดทางหลวงเชิงเนิน</title>
 <link rel="icon" href="logo.jpg" data-cn-emblem>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -843,7 +843,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 
 <script>
 /* ============================================================
-   ระบบหลัก — งานบริหารหมวด (ฉบับ Firebase)
+   ระบบหลัก — ระบบงานหมวด (ฉบับ Firebase)
    ข้อมูลทั้งหมดอ่านสดจาก Firestore ผ่าน firebase-layer.js (FBL) — ไม่อ่าน localStorage ของระบบรองอีกต่อไป
    (เดิมหน้านี้อ่านข้อมูลบางส่วนจาก localStorage ซึ่งมีเฉพาะเครื่องที่เคยเปิดระบบรองนั้นๆ ตัวเลขจึงไม่ตรงกันระหว่างเครื่อง)
    ============================================================ */
@@ -1608,7 +1608,7 @@ function renderUsers(){
       <div style="margin-top:6px"><span class="role-chip ${u.role}">${r.icon} ${esc(r.label)}</span> &nbsp;${statusHtml(u)}</div>${secNote}</div>${acts}</div>
     <div class="umd-sec"><div class="um-guide"><b>${r.icon} ${esc(r.label)}</b> — ${esc(r.desc)}</div></div>
     <div class="umd-sec"><h4>สิทธิ์รายระบบ</h4>
-      <div class="um-row"><div>• งานบริหารหมวด (ระบบหลัก)<div class="u-sub">ภาพรวม แจ้งเตือน รายงานสรุป</div>${umHiddenNote(u,'main')}</div>${segMain(!!u.perm.main)}</div>
+      <div class="um-row"><div>• ระบบงานหมวด (ระบบหลัก)<div class="u-sub">ภาพรวม แจ้งเตือน รายงานสรุป</div>${umHiddenNote(u,'main')}</div>${segMain(!!u.perm.main)}</div>
       ${FBL.SUB_KEYS.map(k=>`<div class="um-row"><div>${k.slice(1)}. ${esc(FBL.SECTIONS[k].label)}${umHiddenNote(u,k)}</div>${segSub(u.perm[k])}</div>`).join('')}</div>
     ${u.role==='staff' ? '' : `<div class="umd-sec"><h4>สิทธิ์พิเศษ</h4>
       ${FBL.FLAGS.map(f=>`<div class="um-row"><div><b style="font-weight:600">${esc(umFlagLabel(f))}</b><div class="u-sub">${esc(umFlagDesc(f))}</div></div><span class="um-sw ${userCan(u,f.key)?'on':''}"></span></div>`).join('')}
@@ -1727,7 +1727,7 @@ function umRenderSys(){
     const rows = v==='none' ? `<div class="um-sys-off">ไม่เห็นระบบนี้</div>`
       : `<div class="um-tabrows">${FBL.PAGE_TABS[k].map(([s,l])=>{ const tv = UM.tabs[k+':'+s];
           return `<div class="um-tabrow ${tv}"><span>${esc(l)}</span><span class="um-segc sm">${umSeg(k, tv, `umSetTab('${k}','${s}',`)}</span></div>`; }).join('')}</div>`;
-    return `<div class="um-sys${v==='none'?' off':''}"><div class="um-sys-h"><span>${k==='main'?'• ระบบหลัก (งานบริหารหมวด)':k.slice(1)+'. '+esc(FBL.SECTIONS[k].label)}${mixed?'<small class="um-mixed">กำหนดรายแท็บ</small>':''}</span>
+    return `<div class="um-sys${v==='none'?' off':''}"><div class="um-sys-h"><span>${k==='main'?'• ระบบหลัก (ระบบงานหมวด)':k.slice(1)+'. '+esc(FBL.SECTIONS[k].label)}${mixed?'<small class="um-mixed">กำหนดรายแท็บ</small>':''}</span>
       <span class="um-segc" title="ตั้งทุกแท็บของระบบนี้พร้อมกัน">${umSeg(k, mixed ? '' : v, `umSetAcc('${k}',`)}</span></div>${rows}</div>`;
   }).join('');
 }
@@ -2027,7 +2027,7 @@ async function exportAllExcel(){
       const ws = rows.length ? XLSX.utils.json_to_sheet(rows, {header:cols}) : XLSX.utils.aoa_to_sheet([cols]);
       XLSX.utils.book_append_sheet(wb, ws, t.slice(0,31));
     });
-    XLSX.writeFile(wb, `ระบบบริหารหมวด-ทุกตาราง-${stamp()}.xlsx`);
+    XLSX.writeFile(wb, `ระบบงานหมวด-ทุกตาราง-${stamp()}.xlsx`);
   }catch(e){ alert('ส่งออกไม่สำเร็จ: '+e.message); }
   btn.disabled = false; btn.textContent = orig;
 }
@@ -2035,10 +2035,10 @@ async function exportAllJson(){
   const btn = document.getElementById('btn-export-json'); const orig = btn.textContent; btn.disabled = true; btn.textContent = 'กำลังรวบรวมข้อมูล...';
   try{
     const all = await FBL.exportAll();
-    const bundle = { __meta:{ exportedAt:new Date().toISOString(), by:FBL.user.name, note:'สำรองข้อมูลทุกตาราง ระบบงานบริหารหมวด (Firestore)' }, tables:all,
+    const bundle = { __meta:{ exportedAt:new Date().toISOString(), by:FBL.user.name, note:'สำรองข้อมูลทุกตาราง ระบบงานหมวด (Firestore)' }, tables:all,
       app_state:{ main: await FBL.stateGet('main'), s3: await FBL.stateGet('s3'), s4: await FBL.stateGet('s4') } };
     const blob = new Blob([JSON.stringify(bundle,null,1)], {type:'application/json'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `ระบบบริหารหมวด-สำรอง-${stamp()}.json`;
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `ระบบงานหมวด-สำรอง-${stamp()}.json`;
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
   }catch(e){ alert('ส่งออกไม่สำเร็จ: '+e.message); }
   btn.disabled = false; btn.textContent = orig;

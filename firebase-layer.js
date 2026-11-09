@@ -1,6 +1,6 @@
 /* ==========================================================================
    firebase-layer.js — ชั้นเชื่อมต่อ Firebase (Authentication + Firestore)
-   ระบบงานบริหารหมวด หมวดทางหลวงเชิงเนิน (ฉบับ Firestore — แทน Code.gs + Google Sheets เดิม)
+   ระบบงานหมวด หมวดทางหลวงเชิงเนิน (ฉบับ Firestore — แทน Code.gs + Google Sheets เดิม)
 
    ใช้ร่วมกันทั้ง 5 หน้า (ระบบหลัก + ระบบรอง 1-4) — แต่ละหน้าโหลดไฟล์นี้ด้วย
      <script src="firebase-layer.js" data-page="main|s1|s2|s3|s4"></script>
@@ -52,6 +52,18 @@
     return String(cur.name || '').trim();
   };
 
+  /* ค่าเช่าต่อเดือนของเครื่องจักร ณ วันที่ date (ใช้ร่วมกันทุกระบบ) — history = [{from:'YYYY-MM-DD', rent}] เรียงตามวันที่ แถวแรก from ว่าง = ตั้งแต่เริ่มต้น
+     rent ว่าง = ช่วงนั้นยังไม่มีอัตรา (คืน undefined) · ไม่มีประวัติ = ใช้ค่าในทะเบียน (fallback) · ไม่ระบุ date = วันนี้ */
+  FBL.rentOnDate = function (history, fallback, date) {
+    const list = Array.isArray(history) ? history : [];
+    if (!list.length) return fallback;
+    const now = new Date();
+    const d = date || (now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0'));
+    let cur = list[0];
+    list.forEach(function (e) { if (!e.from || e.from <= d) cur = e; });
+    return cur.rent !== '' && cur.rent != null ? Number(cur.rent) : undefined;
+  };
+
   const scriptEl = document.currentScript;
   FBL.page = (scriptEl && scriptEl.dataset.page) || 'main';
 
@@ -59,7 +71,7 @@
      หน้า/ส่วนงาน และบทบาท
      ====================================================================== */
   const SECTIONS = {
-    main: { key: 'main', no: '•', label: 'งานบริหารหมวด', short: 'ระบบหลัก', file: 'choengnoen0-main.html' },
+    main: { key: 'main', no: '•', label: 'ระบบงานหมวด', short: 'ระบบหลัก', file: 'choengnoen0-main.html' },
     s1: { key: 's1', no: '1', label: 'งานสารบรรณและบุคลากร', short: 'ระบบ 1', file: 'choengnoen1-saraban.html' },
     s2: { key: 's2', no: '2', label: 'งานสถิติและบริการประชาชน', short: 'ระบบ 2', file: 'choengnoen2-statistics.html' },
     s3: { key: 's3', no: '3', label: 'งานพัสดุและเครื่องจักร', short: 'ระบบ 3', file: 'choengnoen3-supplies.html' },
@@ -203,7 +215,7 @@
 
     materials: { section: 's3', label: 'ทะเบียนพัสดุ', idField: 'code', idPrefix: null, columns: ['code', 'itemName', 'category', 'unit', 'openingStock', 'reorderPoint', 'status', 'lastUpdated', 'unitPrice', 'usage'], numericFields: ['openingStock', 'reorderPoint', 'unitPrice'] },
     material_transactions: { section: 's3', label: 'รับ-จ่ายวัสดุ', idField: 'id', idPrefix: 'MTX', columns: ['id', 'materialId', 'type', 'qty', 'unitPrice', 'totalPrice', 'refNo', 'date', 'note', 'relatedDailyWorkOrderId', 'lastUpdated', 'requester'], numericFields: ['qty', 'unitPrice', 'totalPrice'] },
-    machinery: { section: 's3', label: 'เครื่องจักร/ยานพาหนะ', idField: 'id', idPrefix: 'MCH', columns: ['id', 'regNumber', 'vehicleType', 'operatorName', 'mileageThresholdOverride', 'status', 'lastUpdated', 'label', 'fuelType', 'fuelRate', 'fuelRateUnit', 'monthlyRent', 'plate', 'fuelMode', 'operatorHistoryJson', 'returnDate', 'machSource', 'fuelRateRef'], numericFields: ['mileageThresholdOverride', 'fuelRate', 'monthlyRent'], jsonFields: ['operatorHistoryJson'] },
+    machinery: { section: 's3', label: 'เครื่องจักร/ยานพาหนะ', idField: 'id', idPrefix: 'MCH', columns: ['id', 'regNumber', 'vehicleType', 'operatorName', 'mileageThresholdOverride', 'status', 'lastUpdated', 'label', 'fuelType', 'fuelRate', 'fuelRateUnit', 'monthlyRent', 'plate', 'fuelMode', 'operatorHistoryJson', 'returnDate', 'machSource', 'fuelRateRef', 'rentHistoryJson'], numericFields: ['mileageThresholdOverride', 'fuelRate', 'monthlyRent'], jsonFields: ['operatorHistoryJson', 'rentHistoryJson'] },
     fuel_transactions: { section: 's3', label: 'รับ-จ่ายน้ำมัน', idField: 'id', idPrefix: 'FUEL', columns: ['id', 'vehicleId', 'fuelType', 'date', 'qty', 'mileage', 'note', 'lastUpdated', 'kind', 'ref', 'unitPrice', 'totalPrice', 'relatedDailyWorkOrderId', 'requester'], numericFields: ['qty', 'mileage', 'unitPrice', 'totalPrice'] },
     machinery_logs: { section: 's3', label: 'บันทึกใช้เครื่องจักร (EC 1-W)', idField: 'id', idPrefix: 'LOG', columns: ['id', 'vehicleId', 'date', 'hrWO', 'hrFS', 'otherUnitCode', 'dayOff', 'routeValueOverride', 'routeLabelOverride', 'note', 'lastUpdated', 'driver', 'hrW', 'hrM', 'hrC', 'hrV', 'hrO', 'hrF', 'hrR', 'hrS', 'otherReason', 'locationsJson'], numericFields: ['hrWO', 'hrFS', 'hrW', 'hrM', 'hrC', 'hrV', 'hrO', 'hrF', 'hrR', 'hrS'], jsonFields: ['locationsJson'] },
     vehicle_requests: { section: 's3', label: 'ขอใช้รถ', idField: 'id', idPrefix: 'VEQ', columns: ['id', 'requesterName', 'vehicleId', 'purpose', 'dateFrom', 'dateTo', 'destination', 'approverName', 'status', 'lastUpdated', 'requestDate', 'requesterPosition', 'passengers', 'driverName', 'mileageStart', 'mileageEnd', 'routeNosJson'], numericFields: ['passengers', 'mileageStart', 'mileageEnd'], jsonFields: ['routeNosJson'] },
@@ -402,7 +414,7 @@
     ensureGate();
     document.getElementById('fbl-card').innerHTML =
       '<img class="fbl-logo" src="' + logoSrc() + '" alt="ตรากรมทางหลวง">' +
-      '<div class="fbl-title">งานบริหารหมวด</div>' +
+      '<div class="fbl-title">ระบบงานหมวด</div>' +
       '<div class="fbl-sub">หมวดทางหลวงเชิงเนิน · แขวงทางหลวงระยอง</div>' + html;
     gateEl.classList.remove('hidden');
   }
