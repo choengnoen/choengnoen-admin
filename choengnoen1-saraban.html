@@ -3137,7 +3137,7 @@ const LV_RAISE = 2.2;   /* ยกข้อความที่กรอกข�
 function lvT(x,y,s,o){   // ข้อความคงที่ ชิดซ้ายที่ x เส้นฐาน y
   o=o||{};
   const sz = o.size||16;
-  const st = `left:${x}pt;top:${y+LV_DY-LV_BASE+(16-sz)*0.8}pt;`+(o.size?`font-size:${o.size}pt;line-height:${o.size}pt;`:'')+(o.bold?'font-weight:700;':'')+(o.u?'text-decoration:underline;':'');
+  const st = `left:${x}pt;top:${y+LV_DY-LV_BASE+(16-sz)*0.8}pt;`+(o.size?`font-size:${o.size}pt;line-height:${o.size}pt;`:'')+(o.bold?'font-weight:700;':'')+(o.u?'text-decoration:underline;text-decoration-thickness:.5pt;text-underline-offset:1.6pt;':'');
   return `<div class="lv-t${o.psk?' lv-psk':''}" style="${st}">${s}</div>`;
 }
 function lvLine(x,y,w,s,o){
@@ -3220,6 +3220,8 @@ function lvChiefSigner(applicantName, cover){
 const LVN_K = 595.3/920;
 const nx = v => Math.round(v*LVN_K*10)/10;
 const ny = v => Math.round((v*LVN_K+4.7)*10)/10;
+/* เส้นฐานของตัวเลขที่ต้องอยู่กึ่งกลางแนวตั้งของช่อง (v = กึ่งกลางช่องเป็น px) */
+const lvCy = v => Math.round((v*LVN_K+3.6)*10)/10;
 const LVN_L = nx(131), LVN_R = 542;
 const LVN_WORK = 'แขวงทางหลวงระยอง   หมวดทางหลวงเชิงเนิน';
 
@@ -3267,7 +3269,7 @@ function lvRow(x,y,w,parts){
   }).join('');
   return `<div class="lv-t lv-fl" style="left:${x}pt;top:${y+LV_DY-LV_BASE}pt;width:${w}pt;${k<1?`font-size:${16*k}pt;`:''}">${inner}</div>`;
 }
-function lvTitle(cx,y,txt){ return `<div class="lv-t" style="left:${cx-200}pt;width:400pt;text-align:center;top:${y+LV_DY-LV_BASE}pt;text-decoration:underline">${txt}</div>`; }
+function lvTitle(cx,y,txt){ return `<div class="lv-t" style="left:${cx-200}pt;width:400pt;text-align:center;top:${y+LV_DY-LV_BASE}pt;text-decoration:underline;text-decoration-thickness:.5pt;text-underline-offset:1.6pt;">${txt}</div>`; }
 function lvCT(x0,x1,y,txt){ return `<div class="lv-t" style="left:${x0}pt;width:${x1-x0}pt;text-align:center;top:${y+LV_DY-LV_BASE}pt">${txt}</div>`; }
 function lvBoxAt(x,yBase,on,w,h){ w=w||15; h=h||w; return lvBox(x, yBase-4.7-h/2, on, {w:w, h:h, bw:.9, fill:1}); }
 /* ตัดข้อความไทยยาวเป็นหลายบรรทัดตามความกว้างแต่ละบรรทัด — ตัดตามขอบคำ (Intl.Segmenter ภาษาไทย) ถ้าเบราว์เซอร์ไม่รองรับจะตัดทีละตัวอักษรที่ไม่แยกพยางค์ */
@@ -3300,14 +3302,14 @@ function lvWrapText(txt, widths, size){
 function lvSignBlk(xS,xE,y,name,role,g){
   const xp = xS+26.2, wp = lvTextW('(ตำแหน่ง)')+2;
   return lvLead(xS,y,xE-xS,'(ลงชื่อ)')
-    + lvLead(xp,y+g,xE-4-xp,'(') + lvT(xE-4,y+g,')') + lvV(xp+3,xE-4,y+g,name||'',{center:1})
+    + lvLead(xp,y+g,xE-5.5-xp,'(') + lvT(xE-4,y+g,')') + lvV(xp+3,xE-4,y+g,name||'',{center:1})
     + lvLead(xS-4,y+2*g,xE+4-(xS-4),'(ตำแหน่ง)') + lvV(xS-4+wp,xE+4,y+2*g,role||'',{center:1})
-    + lvLine(xS+22,y+3*g,xE-xS-22,'วันที่..'+'/'+'..........'+'/'+'....');
+    + lvLine(xS+22,y+3*g,xE-xS-22,'วันที่'+'....'+'/'+'........'+'/'+'......');
 }
 /* ลายเซ็นผู้ลา — เส้นจุดยืดตามความยาวชื่อ (ไม่เกินขอบขวา) */
 function lvSignApp(xS,y,nm,g){
   const P = Math.min(LVN_R-3, Math.max(xS+165, xS+29.2+lvTextW(nm)+14));
-  return lvLead(xS,y,P+3-xS,'(ลงชื่อ)') + lvLead(xS+26.2,y+g,P-(xS+26.2),'(') + lvT(P,y+g,')') + lvV(xS+29.2,P,y+g,nm,{center:1});
+  return lvLead(xS,y,P+3-xS,'(ลงชื่อ)') + lvLead(xS+26.2,y+g,P-1.5-(xS+26.2),'(') + lvT(P,y+g,')') + lvV(xS+29.2,P,y+g,nm,{center:1});
 }
 /* ส่วนหัวร่วมของทุกแบบ: ชื่อแบบ / เขียนที่ / วันที่ / เรื่อง / เรียน / ข้าพเจ้า–ตำแหน่ง / ระดับ–สังกัด */
 function lvnTop(F, nm, s, subject, whoLabel){
@@ -3318,8 +3320,9 @@ function lvnTop(F, nm, s, subject, whoLabel){
   const dx = nx(F.dx||489);
   h += lvLead(dx, ny(Y.dt), 38, 'วันที่') + lvLead(dx+41.4, ny(Y.dt), 118, 'เดือน') + lvLead(dx+163.6, ny(Y.dt), LVN_R-dx-163.6, 'พ.ศ.');
   h += lvV(dx+19, dx+38, ny(Y.dt), lvTh(td.getDate()), {center:1}) + lvV(dx+64, dx+157, ny(Y.dt), THAI_MONTH_FULL[td.getMonth()], {center:1}) + lvV(dx+183, LVN_R, ny(Y.dt), lvTh(td.getFullYear()+543), {center:1});
-  h += lvLead(LVN_L, ny(Y.sub), nx(F.subW||317)-LVN_L, 'เรื่อง') + lvV(LVN_L+24, nx(F.subW||317), ny(Y.sub), subject, {lead:1});
-  h += lvLead(LVN_L, ny(Y.to), nx(F.toW||383)-LVN_L, 'เรียน') + lvV(LVN_L+23.5, nx(F.toW||383), ny(Y.to), 'ผอ.ขท.ระยอง', {lead:1});
+  /* เรื่อง / เรียน: ข้อความพิมพ์ไว้แล้ว ไม่มีเส้นจุดต่อท้าย และเริ่มที่แนวเดียวกัน (เว้นวรรคเท่ากัน) */
+  h += lvT(LVN_L, ny(Y.sub), 'เรื่อง') + lvT(LVN_L+34, ny(Y.sub), esc(subject));
+  h += lvT(LVN_L, ny(Y.to), 'เรียน') + lvT(LVN_L+34, ny(Y.to), 'ผอ.ขท.ระยอง');
   const mx = nx(243), tx = nx(F.tx);
   h += lvRow(mx, ny(Y.me), tx-2.6-mx, [whoLabel||'ข้าพเจ้า', {v:nm}]);
   h += lvRow(tx, ny(Y.me), LVN_R-tx, ['ตำแหน่ง', {v:rl.pos}]);
@@ -3329,6 +3332,12 @@ function lvnTop(F, nm, s, subject, whoLabel){
   return h;
 }
 const lvIsPhone = c => /^[\d\s\-+()\/,]+$/.test(String(c||'').trim());
+/* ที่ติดต่อระหว่างลา: ถ้ากรอกเป็นเบอร์ → ใส่ช่องเบอร์ ; ถ้ากรอกเป็นที่อยู่ → ใส่ช่องที่อยู่ ; ช่องเบอร์ที่ยังว่างดึงจากเบอร์โทรในทะเบียนบุคลากรอัตโนมัติ */
+function lvContact(contact, s){
+  const c = String(contact||'').trim(), own = (s && s.phone) ? String(s.phone).trim() : '';
+  if(c && lvIsPhone(c)) return {addr:'', phone:lvTh(c)};
+  return {addr:lvTh(c), phone:lvTh(own)};
+}
 
 /* ---------- แบบใบลาพักผ่อน ---------- */
 function buildFormVac(name, s, from, to, days, cover, contact, stats, fy){
@@ -3339,27 +3348,25 @@ function buildFormVac(name, s, from, to, days, cover, contact, stats, fy){
   LV_BASE = 12.7; LV_DY = 0;
   const F = {title:'แบบใบลาพักผ่อน', cx:484, wx:567, dx:489, tx:552, sx:384, subW:0,
     y:{title:82, wr:123, dt:161, sub:203, to:243, me:272, lv:305}};
-  let h = lvnTop(F, nm, s, '', 'ข้าพเจ้า');
-  /* เรื่อง: แบบพิมพ์ไว้แล้ว ไม่มีเส้นจุด */
-  h = h.replace(lvLead(LVN_L, ny(F.y.sub), nx(317)-LVN_L, 'เรื่อง') + lvV(LVN_L+24, nx(317), ny(F.y.sub), '', {lead:1}), lvT(LVN_L, ny(F.y.sub), 'เรื่อง') + lvT(LVN_L+34, ny(F.y.sub), 'ขอลาพักผ่อน'));
-  h += lvRow(LVN_L, ny(337), LVN_R-LVN_L, ['มีวันลาพักผ่อนสะสม',{v:carried==null?'':lvTh(carried),fix:26},' วันทำการ มีสิทธิลาพักผ่อนประจำปีนี้อีก',{v:carried==null?'':'๑๐',fix:26},' วันทำการ รวมเป็น',{v:carried==null?'':lvTh(carried+10),fix:26},' วันทำการ']);
+  let h = lvnTop(F, nm, s, 'ขอลาพักผ่อน', 'ข้าพเจ้า');
+  h += lvRow(LVN_L, ny(337), LVN_R-LVN_L, ['มีวันลาพักผ่อนสะสม',{v:carried==null?'':lvTh(carried)},' วันทำการ มีสิทธิลาพักผ่อนประจำปีนี้อีก',{v:carried==null?'':'๑๐'},' วันทำการ รวมเป็น',{v:carried==null?'':lvTh(carried+10)},' วันทำการ']);
   h += lvRow(LVN_L, ny(367), LVN_R-LVN_L, ['ขอลาพักผ่อนตั้งแต่วันที่'].concat(lvDP(from), [' ถึงวันที่'], lvDP(to), [' มีกำหนด',{v:lvTh(dnum),fix:18},' วัน']));
-  const ph = lvIsPhone(contact);
-  h += lvRow(LVN_L, ny(399), LVN_R-LVN_L, ['ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่',{v:ph?'':lvTh(contact),left:1}]);
-  h += lvRow(LVN_L, ny(431), LVN_R-LVN_L, [{v:''},'หมายเลขโทรศัพท์',{v:ph?lvTh(contact):'',fix:130}]);
+  const ct = lvContact(contact, s);
+  h += lvRow(LVN_L, ny(399), LVN_R-LVN_L, ['ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่',{v:ct.addr,left:1}]);
+  h += lvRow(LVN_L, ny(431), LVN_R-LVN_L, [{v:''},'หมายเลขโทรศัพท์',{v:ct.phone,fix:130}]);
   h += lvSignApp(nx(449), ny(491), nm, 19.4);
   /* สถิติการลา */
   h += lvT(LVN_L, ny(549), 'สถิติการลาในปีงบประมาณนี้', {u:1});
   const cx = [124,235,347,458].map(nx), ty = [598,660,692].map(v=>Math.round(v*LVN_K*10)/10);
   h += ty.map(y=>lvHL(cx[0],cx[3],y)).join('') + cx.map(x=>lvVL(x,ty[0],ty[2])).join('');
   ['ลามาแล้ว','ลาครั้งนี้','รวมเป็น'].forEach((t,k)=>{ h += lvCT(cx[k],cx[k+1],ny(614),t) + lvCT(cx[k],cx[k+1],ny(645),'(วันทำการ)'); });
-  h += lvV(cx[0],cx[1],ny(681),lvTh(stats.vac),{center:1,flat:1}) + lvV(cx[1],cx[2],ny(681),lvTh(dnum),{center:1,flat:1}) + lvV(cx[2],cx[3],ny(681),lvTh(stats.vac+dnum),{center:1,flat:1});
+  h += lvV(cx[0],cx[1],lvCy(676),lvTh(stats.vac),{center:1,flat:1}) + lvV(cx[1],cx[2],lvCy(676),lvTh(dnum),{center:1,flat:1}) + lvV(cx[2],cx[3],lvCy(676),lvTh(stats.vac+dnum),{center:1,flat:1});
   /* ผู้ตรวจสอบ (ซ้าย) */
   const g = 19.9;
   h += lvLead(LVN_L, ny(727), nx(369)-LVN_L, '(ลงชื่อ)') + lvT(nx(370), ny(727), 'ผู้ตรวจสอบ');
-  h += lvLead(nx(163), ny(758), nx(393)-nx(163), '(') + lvT(nx(393), ny(758), ')');
+  h += lvLead(nx(163), ny(758), nx(393)-1.5-nx(163), '(') + lvT(nx(393), ny(758), ')');
   h += lvLead(LVN_L, ny(788), nx(377)-LVN_L, '(ตำแหน่ง)');
-  h += lvLine(nx(158), ny(820), nx(358)-nx(158), 'วันที่..'+'/'+'..........'+'/'+'....');
+  h += lvLine(nx(158), ny(820), nx(358)-nx(158), 'วันที่'+'....'+'/'+'........'+'/'+'......');
   /* ความเห็นผู้บังคับบัญชา (ขวา) */
   const sg = lvChiefSigner(nm, cover);
   h += lvT(nx(466), ny(727), 'ความเห็นผู้บังคับบัญชา', {u:1});
@@ -3398,19 +3405,19 @@ function buildFormSick(name, s, type, from, to, days, reason, cover, contact, st
   h += lvRow(LVN_L, ny(428), LVN_R-LVN_L, ['ตั้งแต่วันที่'].concat(lvDP(from), [' ถึงวันที่'], lvDP(to), [' มีกำหนด',{v:lvTh(dnum),fix:18},' วัน']));
   const pf = lvDateParts(prev?prev.from:''), pt = prev?lvDP(prev.to):lvDP('');
   h += lvRow(LVN_L, ny(459), LVN_R-LVN_L, ['ข้าพเจ้าได้ลา',{box:!!prev&&prev.type==='ป่วย',w:13},'ป่วย',{box:!!prev&&prev.type==='กิจ',w:13},'กิจส่วนตัว',{box:!!prev&&prev.type==='คลอดบุตร',w:13},'คลอดบุตร',' ครั้งสุดท้ายตั้งแต่วันที่',{v:pf.d,fix:20},' เดือน',{v:pf.m,fix:48},' พ.ศ.',{v:pf.y,fix:28}]);
-  const ph = lvIsPhone(contact);
-  h += lvRow(LVN_L, ny(490), LVN_R-LVN_L, ['ถึงวันที่'].concat(pt, [' มีกำหนด',{v:prev?lvTh(prevDays):'',fix:22},' วัน ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่',{v:ph?'':lvTh(contact),left:1}]));
-  h += lvRow(LVN_L, ny(521), LVN_R-LVN_L, [{v:''},'หมายเลขโทรศัพท์',{v:ph?lvTh(contact):'',fix:120}]);
+  const ct = lvContact(contact, s);
+  h += lvRow(LVN_L, ny(490), LVN_R-LVN_L, ['ถึงวันที่'].concat(pt, [' มีกำหนด',{v:prev?lvTh(prevDays):'',fix:22},' วัน ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่',{v:ct.addr,left:1}]));
+  h += lvRow(LVN_L, ny(521), LVN_R-LVN_L, [{v:''},'หมายเลขโทรศัพท์',{v:ct.phone,fix:120}]);
   h += lvSignApp(nx(423), ny(582), nm, 19.9);
   /* สถิติการลา */
   h += lvT(LVN_L, ny(640), 'สถิติการลาในปีงบประมาณนี้', {u:1});
   const cx = [118,225,337,441,540].map(v=>Math.round(v*LVN_K*10)/10), ty = [659,691,754,816,879].map(v=>Math.round(v*LVN_K*10)/10);
   h += ty.map(y=>lvHL(cx[0],cx[4],y)).join('') + cx.map(x=>lvVL(x,ty[0],ty[4])).join('');
   ['ประเภทลา','ลามาแล้ว','ลาครั้งนี้','รวมเป็น'].forEach((t,k)=>{ h += lvCT(cx[k],cx[k+1],ny(675),t); });
-  [[712,'ป่วย',stats.sick,cur.sick,743],[773,'กิจส่วนตัว',stats.biz,cur.biz,805],[835,'คลอดบุตร',stats.mat,cur.mat,849]].forEach(([yy,lab,used,now,vy],k)=>{
+  [[712,'ป่วย',stats.sick,cur.sick,738],[773,'กิจส่วนตัว',stats.biz,cur.biz,800],[835,'คลอดบุตร',stats.mat,cur.mat,847.5]].forEach(([yy,lab,used,now,vy],k)=>{
     h += lvT(nx(125), ny(yy), lab);
     if(k<2) for(let c=1;c<=3;c++) h += lvCT(cx[c],cx[c+1],ny(yy),'(วันทำการ)');
-    if(used||now) h += lvV(cx[1],cx[2],ny(vy),lvTh(used),{center:1,flat:1}) + lvV(cx[2],cx[3],ny(vy),lvTh(now),{center:1,flat:1}) + lvV(cx[3],cx[4],ny(vy),lvTh(used+now),{center:1,flat:1});
+    if(used||now) h += lvV(cx[1],cx[2],lvCy(vy),lvTh(used),{center:1,flat:1}) + lvV(cx[2],cx[3],lvCy(vy),lvTh(now),{center:1,flat:1}) + lvV(cx[3],cx[4],lvCy(vy),lvTh(used+now),{center:1,flat:1});
   });
   /* ความเห็นผู้บังคับบัญชา (ขวา) */
   const sg = lvChiefSigner(nm, cover), g = 19.9;
@@ -3419,9 +3426,9 @@ function buildFormSick(name, s, type, from, to, days, reason, cover, contact, st
   h += lvSignBlk(nx(602), nx(840), ny(771), sg.name, sg.pos, g);
   /* ผู้ตรวจสอบ (ซ้ายล่าง) */
   h += lvLead(LVN_L, ny(987), nx(369)-LVN_L, '(ลงชื่อ)') + lvT(nx(370), ny(987), 'ผู้ตรวจสอบ');
-  h += lvLead(nx(163), ny(1020), nx(393)-nx(163), '(') + lvT(nx(393), ny(1020), ')');
+  h += lvLead(nx(163), ny(1020), nx(393)-1.5-nx(163), '(') + lvT(nx(393), ny(1020), ')');
   h += lvLead(LVN_L, ny(1050), nx(377)-LVN_L, '(ตำแหน่ง)');
-  h += lvLine(nx(158), ny(1080), nx(358)-nx(158), 'วันที่..'+'/'+'..........'+'/'+'....');
+  h += lvLine(nx(158), ny(1080), nx(358)-nx(158), 'วันที่'+'....'+'/'+'........'+'/'+'......');
   /* คำสั่ง (ขวาล่าง) */
   h += lvT(nx(565), ny(987), 'คำสั่ง', {u:1});
   h += lvBoxAt(nx(566), ny(1017), false, 10) + lvT(nx(592), ny(1017), 'อนุญาต') + lvBoxAt(nx(687), ny(1017), false, 10) + lvT(nx(713), ny(1017), 'ไม่อนุญาต');
@@ -3448,7 +3455,7 @@ function lvOpinionOrder(c, sg){
 function lvSpecialForm(i, kind){
   const r = leaveRequests[i], name = r.name, s = staff.find(x=>x.name===name) || {};
   const nm = String(name).trim(), dnum = parseInt(daysBetween(r.from,r.to,name)||0);
-  const ph = lvIsPhone(r.contact||''), contact = lvTh(r.contact||'');
+  const ct = lvContact(r.contact||'', s);
   const pf = lvDateParts(r.from), pt = lvDateParts(r.to), W = LVN_R-LVN_L;
   const sg = lvChiefSigner(nm, r.cover||'');
   LV_BASE = 12.7; LV_DY = 0;
@@ -3460,8 +3467,8 @@ function lvSpecialForm(i, kind){
     h += lvRow(LVN_L, ny(346), W, ['มีความประสงค์ลาไปช่วยเหลือภริยาโดยชอบด้วยกฎหมายชื่อ',{v:''}]);
     h += lvRow(LVN_L, ny(378), W, ['ซึ่งคลอดบุตรเมื่อวันที่'].concat(lvDP(''), [' จึงขออนุญาตลาไปช่วยเหลือภริยาที่คลอดบุตรตั้งแต่']));
     h += lvRow(LVN_L, ny(408), W, ['วันที่'].concat(lvDP(r.from), [' ถึงวันที่'], lvDP(r.to), [' มีกำหนด',{v:lvTh(dnum),fix:20},' วันทำการ']));
-    h += lvRow(LVN_L, ny(440), W, ['ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่',{v:ph?'':contact,left:1}]);
-    h += lvRow(LVN_L, ny(470), W, [{v:''},'หมายเลขโทรศัพท์',{v:ph?contact:'',fix:120}]);
+    h += lvRow(LVN_L, ny(440), W, ['ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่',{v:ct.addr,left:1}]);
+    h += lvRow(LVN_L, ny(470), W, [{v:''},'หมายเลขโทรศัพท์',{v:ct.phone,fix:120}]);
     h += lvSignApp(nx(411), ny(536), nm, 16.2);
     h += lvOpinionOrder({oh:625,o1x:203,o1:659,o2:689,o2e:830,os:735,ch:857,cb:889,c1x:212,c1:921,c2:952,cs:998,xE:653}, sg);
   } else if(kind==='อุปสมบท'){
