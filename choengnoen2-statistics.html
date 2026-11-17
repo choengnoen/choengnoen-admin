@@ -636,7 +636,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
     body{background:#fff;}
   }
 
-  @media (max-width:1100px){
+  @media (max-width:900px){
     .stats{grid-template-columns:repeat(2,1fr);}
     .lr-grid{grid-template-columns:1fr;}
     .detail-grid{grid-template-columns:repeat(2,1fr);}
@@ -806,6 +806,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .mn-strip #dw-week{flex:1;min-width:0;margin:-10px -20px;}
   .mn-strip .dwk-bar{border:0;border-radius:0;box-shadow:none;margin:0;background:transparent;}
   .maint-nav.hidden ~ .mn-strip{display:none;}
+  #mn-strip.force-show{display:flex !important;}
   /* เนื้อหาต่อจากการ์ดหัว: ไม่มีขอบบน ไม่ซ้ำหัวข้อ */
   #maint-nav ~ #panel-rollup .section,#maint-nav ~ #panel-routine2 .section,#maint-nav ~ #panel-crews .section,#maint-nav ~ #panel-refdata .section,#maint-nav ~ #panel-routes .section{border-top:0;border-radius:0 0 16px 16px;}
   #panel-rollup .section-head,#panel-routine2 .section-head,#panel-crews .section-head{display:none;}
@@ -991,6 +992,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <!-- แท็บใหญ่ 4 กลุ่ม (data-sec = view เริ่มต้นของกลุ่ม) -->
       <div class="sec-tabs no-print" id="sec-tabs">
         <div class="sec-tab active" data-sec="routine">งานบำรุงปกติ</div>
+        <div class="sec-tab" data-sec="unitcost">ค่างานต่อหน่วยเฉลี่ย</div>
         <div class="sec-tab" data-sec="encroach">งานรุกล้ำ</div>
         <div class="sec-tab" data-sec="emergency">เหตุฉุกเฉิน</div>
         <div class="sec-tab" data-sec="contracts">สัญญา</div>
@@ -1572,6 +1574,26 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           </div>
         </div>
 
+      </div>
+
+      <!-- ============ ค่างานต่อหน่วยเฉลี่ย (คำนวณจากใบสั่งการรายวันจริง ต่างจากสูตรมาตรฐานในแท็บ "ข้อมูลอ้างอิงงาน") ============ -->
+      <div class="panel" id="panel-unitcost">
+        <div class="section">
+          <div class="section-head">
+            <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+              ค่างานต่อหน่วยเฉลี่ย (จากงานจริง)
+              <span class="head-desc" id="unitcost-ctx"></span>
+            </h2>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th style="text-align:left;">งาน</th><th>ปริมาณงานรวม</th><th>รวมต้นทุน (บาท)</th><th>ค่างานต่อหน่วยเฉลี่ย</th><th style="width:60px;"></th></tr></thead>
+            <tbody id="unitcost-body" class="rollup-tbody"></tbody>
+          </table></div>
+          <div class="legend-block" id="unitcost-foot-block">
+            <button type="button" class="legend-dot-btn no-print" id="unitcost-foot-toggle" onclick="__toggleNote('unitcost-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
+            <div class="foot-note" id="unitcost-foot" style="display:none;background:transparent;border-top:none;">ค่างานต่อหน่วยเฉลี่ย = (ผลรวมต้นทุนวัสดุ+แรงงาน+ค่าเช่า+น้ำมัน ของใบสั่งการรายวันทุกใบของรหัสงานนั้นในช่วงที่เลือก) ÷ (ผลรวมปริมาณงานของใบเดียวกัน) — ไม่ใช่การเฉลี่ยค่าต่อหน่วยของแต่ละใบตรงๆ เพื่อไม่ให้ใบที่ทำปริมาณงานน้อยถ่วงค่าเฉลี่ยผิดสัดส่วน ใบที่ติ๊ก "ยังไม่ทราบปริมาณงาน" หรือกรอกปริมาณงาน 0 จะถูกตัดออกจากค่าเฉลี่ยเสมอ (กดแถวเพื่อดูที่มาของตัวเลข) ต่างจากตาราง "ค่างานต่อหน่วย (UNIT COST)" ในแท็บ "ข้อมูลอ้างอิงงาน" ซึ่งเป็นสูตรมาตรฐานสำหรับประเมิน/วางแผนงบ ไม่ใช่ค่าที่เกิดขึ้นจริง</div>
+          </div>
+        </div>
       </div>
 
       <!-- ============ ROUTINE MAINTENANCE (2) — แผนงาน-ผลงาน / รายละเอียดรหัสงาน ============ -->
@@ -2958,12 +2980,13 @@ function showView(view){
   document.getElementById('nav-add-btn')?.classList.toggle('hidden', view!=='routine');
   /* ปุ่มหลักของแต่ละหน้า (แถวบนขวาของการ์ด) + คำอธิบายใต้ชื่อหน้า */
   [['rollup-commit-btn','rollup'],['nav-act-bmm','routine2'],['nav-act-crews','crews']].forEach(([id,v])=> document.getElementById(id)?.classList.toggle('hidden', view!==v));
-  const showFilter = (view==='rollup' || view==='routine2');
+  const showFilter = (view==='rollup' || view==='routine2' || view==='unitcost');
   document.getElementById('g-filter')?.classList.toggle('hidden', !showFilter);
   document.getElementById('g-kind-wrap')?.classList.toggle('hidden', view!=='routine2');
   document.getElementById('dw-week')?.classList.toggle('hidden', view!=='routine');
-  const strip = document.getElementById('mn-strip'); if(strip) strip.classList.toggle('hidden', !(showFilter || inSettings || view==='routine'));
+  const strip = document.getElementById('mn-strip'); if(strip){ strip.classList.toggle('hidden', !(showFilter || inSettings || view==='routine')); strip.classList.toggle('force-show', view==='unitcost'); }
   const gm = document.getElementById('g-month'); if(gm) gm.style.display = (view==='routine2') ? 'none' : '';
+  if(view==='unitcost'){ const gfy=+(document.getElementById('g-fy')||{}).value; if(gfy && !__dwFyLoaded[gfy]) loadDailyWorkOrdersForFy([gfy]).then(renderUnitCostReport); else renderUnitCostReport(); }
   document.getElementById('nav-menu-pop')?.classList.remove('show');
   try{ sessionStorage.setItem('cn_statistics_view', view); }catch(e){}
 }
@@ -2989,7 +3012,7 @@ async function applyGlobalFilter(){
   syncGlobalFilterToHidden();
   const gfy = +(document.getElementById('g-fy')||{}).value;
   if(gfy && typeof loadDailyWorkOrdersForFy==='function' && !__dwFyLoaded[gfy]) await loadDailyWorkOrdersForFy([gfy]);
-  renderDailyLog(); renderRollup(); renderBmmTable();
+  renderDailyLog(); renderRollup(); renderBmmTable(); renderUnitCostReport();
 }
 
 /* ============================================================
@@ -6516,6 +6539,70 @@ function renderRollupStatus(fy, month, rows){
   el.innerHTML = html;
   const btn = document.getElementById('rollup-commit-btn');
   if(btn) btn.textContent = st.state==='stale' ? 'ปิดยอดใหม่' : (st.state==='closed' ? 'ปิดยอดซ้ำ' : 'ปิดยอดเดือนนี้');
+}
+/* ============================================================
+   ค่างานต่อหน่วยเฉลี่ย (จากงานจริง) — ใช้ตัวกรองรวม g-fy/g-month เดียวกับสรุปรายเดือน
+   (g-month = "ทั้งปี" ที่นี่หมายถึงสรุปทั้งปีงบจริงๆ ต่างจากแท็บสรุปรายเดือนที่ตกไปใช้เดือนปัจจุบันแทน)
+   สูตร: unit cost เฉลี่ยต่อรหัสงาน = ผลรวมต้นทุน 4 ประเภทของทุกใบในช่วงที่เลือก ÷ ผลรวมปริมาณงานของใบเดียวกัน
+   (ไม่ใช่การเฉลี่ยค่าต่อหน่วยของแต่ละใบตรงๆ — กันไม่ให้ใบที่ปริมาณงานน้อยถ่วงค่าเฉลี่ยผิดสัดส่วน)
+   ใบที่ qtyPending หรือ qty<=0 ตัดออกจากค่าเฉลี่ยเสมอ นับจำนวนที่ตัดไว้ให้ดูที่ท้ายตาราง */
+function unitCostReportRows(){
+  const fy = +(document.getElementById('g-fy')||{}).value || fyOfDate(TODAY.toISOString().slice(0,10));
+  const monthVal = (document.getElementById('g-month')||{}).value;
+  const all = !monthVal || monthVal==='all';
+  const month = +monthVal || 0;
+  const ceYear = month>=10 ? fy-543-1 : fy-543;
+  const matching = dailyWorkOrders.filter(d=>{
+    if(all) return fyOfDate(d.date)===fy;
+    const dt = new Date(d.date+'T00:00:00');
+    return (dt.getMonth()+1)===month && dt.getFullYear()===ceYear;
+  });
+  const byCode = {};
+  let excludedPending=0, excludedZero=0;
+  matching.forEach(d=>{
+    if(d.qtyPending){ excludedPending++; return; }
+    if(!(d.qty>0)){ excludedZero++; return; }
+    if(!byCode[d.code]) byCode[d.code] = {code:d.code, unit:d.unit, count:0, qty:0, material:0, labor:0, rent:0, fuel:0};
+    const b = byCode[d.code];
+    b.count++; b.qty += d.qty; b.material += d.material; b.labor += d.labor; b.rent += d.rent; b.fuel += d.fuel;
+  });
+  const rows = Object.values(byCode).map(b=>{
+    const total = b.material+b.labor+b.rent+b.fuel;
+    return Object.assign(b, {total, unitCost: b.qty>0 ? total/b.qty : 0});
+  });
+  rows.sort((a,b)=> b.total-a.total);
+  rows.__excludedPending = excludedPending; rows.__excludedZero = excludedZero;
+  rows.__fy = fy; rows.__all = all; rows.__month = month;
+  return rows;
+}
+function renderUnitCostReport(){
+  const body = document.getElementById('unitcost-body');
+  if(!body) return;
+  const rows = unitCostReportRows();
+  const ctx = document.getElementById('unitcost-ctx');
+  if(ctx) ctx.textContent = rows.__all ? ('· ทั้งปีงบประมาณ ' + rows.__fy) : ('· เดือน' + monthLabel(rows.__month) + ' ปีงบประมาณ ' + rows.__fy);
+  if(!rows.length){
+    body.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--ink-400);">ยังไม่มีใบสั่งการรายวันที่คำนวณค่างานต่อหน่วยได้ในช่วงที่เลือก</td></tr>`;
+    return;
+  }
+  const excludedNote = (rows.__excludedPending || rows.__excludedZero)
+    ? `<tr><td colspan="5" style="text-align:center;color:var(--ink-400);font-size:12px;">ไม่รวม ${rows.__excludedPending} ใบที่ยังไม่ทราบปริมาณงาน และ ${rows.__excludedZero} ใบที่ปริมาณงาน 0 ไว้ในค่าเฉลี่ยนี้</td></tr>`
+    : '';
+  body.innerHTML = rows.map(r=>{
+    const job = findJob(r.code);
+    const unitLabel = (job && job.unit ? job.unit.split(',')[0].trim() : (r.unit||'')) || 'หน่วย';
+    return `<tr class="cost-row" onclick="toggleCostRow(this)" title="กดเพื่อดูที่มาของค่าเฉลี่ย">
+      <td><span class="bmm-code">${esc(r.code)}</span> ${esc(job?job.name:'—')}${job && job.unit ? `<div class="bmm-sub">หน่วย: ${esc(job.unit)}</div>` : ''}</td>
+      <td class="num">${fmtQtyShort(r.qty)}</td>
+      <td class="num"><b>${fmtMoney(r.total)}</b></td>
+      <td class="num"><b>${fmtNum(r.unitCost,2)}</b> บาท/${esc(unitLabel)}</td>
+      <td class="num"><span class="row-chev">▸</span></td>
+    </tr>
+    <tr class="cost-detail"><td colspan="5">
+      ${bmmCostChipsHtml(r.material, r.labor, r.rent, r.fuel, 0)}
+      <div style="margin-top:8px;font-size:12px;color:var(--ink-600);">จากใบสั่งการรายวัน <b>${r.count}</b> ใบ · ปริมาณงานรวม <b>${fmtQtyShort(r.qty)}</b> ${esc(unitLabel)} · รวมต้นทุน <b>${fmtMoney(r.total)}</b> บาท ÷ ${fmtQtyShort(r.qty)} ${esc(unitLabel)} = <b>${fmtNum(r.unitCost,2)}</b> บาท/${esc(unitLabel)}</div>
+    </td></tr>`;
+  }).join('') + excludedNote;
 }
 /* ปิดยอดเดือน: แสดงรายการตรวจก่อน แล้วค่อยบันทึกจริง (doCommitRollupToActual) */
 function commitRollupToActual(){
