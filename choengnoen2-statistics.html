@@ -280,6 +280,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .uc-formula-table th{text-align:left;font-size:10px;color:var(--ink-400);padding:5px 10px;border-bottom:1px solid var(--line);text-transform:uppercase;}
   .uc-formula-table td{padding:6px 10px;font-size:12px;border-bottom:1px solid var(--paper-100);}
   .uc-formula-table td.num{text-align:right;}
+  .uc-source-table{width:100%;border-collapse:collapse;}
+  .uc-source-table th{text-align:left;font-size:10px;color:var(--ink-400);padding:5px 10px;border-bottom:1px solid var(--line);text-transform:uppercase;white-space:nowrap;}
+  .uc-source-table td{padding:6px 10px;font-size:12px;border-bottom:1px solid var(--paper-100);}
+  .uc-source-table th.num,.uc-source-table td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+  .uc-source-table tfoot td{border-bottom:none;border-top:2px solid var(--line);}
   .uc-variant-card{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;}
   .uc-variant-title{font-family:'Kanit',sans-serif;font-size:12.5px;font-weight:600;color:var(--navy-900);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
 
@@ -6562,9 +6567,10 @@ function unitCostReportRows(){
   matching.forEach(d=>{
     if(d.qtyPending){ excludedPending++; return; }
     if(!(d.qty>0)){ excludedZero++; return; }
-    if(!byCode[d.code]) byCode[d.code] = {code:d.code, unit:d.unit, count:0, qty:0, material:0, labor:0, rent:0, fuel:0};
+    if(!byCode[d.code]) byCode[d.code] = {code:d.code, unit:d.unit, count:0, qty:0, material:0, labor:0, rent:0, fuel:0, orders:[]};
     const b = byCode[d.code];
     b.count++; b.qty += d.qty; b.material += d.material; b.labor += d.labor; b.rent += d.rent; b.fuel += d.fuel;
+    b.orders.push({date:d.date, loc:d.loc||'', qty:d.qty, material:d.material||0, labor:d.labor||0, rent:d.rent||0, fuel:d.fuel||0, total:(d.material||0)+(d.labor||0)+(d.rent||0)+(d.fuel||0)});
   });
   const rows = Object.values(byCode).map(b=>{
     const total = b.material+b.labor+b.rent+b.fuel;
@@ -6600,7 +6606,31 @@ function renderUnitCostReport(){
     </tr>
     <tr class="cost-detail"><td colspan="5">
       ${bmmCostChipsHtml(r.material, r.labor, r.rent, r.fuel, 0)}
-      <div style="margin-top:8px;font-size:12px;color:var(--ink-600);">จากใบสั่งการรายวัน <b>${r.count}</b> ใบ · ปริมาณงานรวม <b>${fmtQtyShort(r.qty)}</b> ${esc(unitLabel)} · รวมต้นทุน <b>${fmtMoney(r.total)}</b> บาท ÷ ${fmtQtyShort(r.qty)} ${esc(unitLabel)} = <b>${fmtNum(r.unitCost,2)}</b> บาท/${esc(unitLabel)}</div>
+      <div class="table-wrap" style="margin-top:10px;"><table class="uc-source-table">
+        <thead><tr><th>วันที่</th><th>ตำแหน่ง/สายทาง</th><th class="num">ปริมาณงาน</th><th class="num">วัสดุ</th><th class="num">แรงงาน</th><th class="num">เช่า</th><th class="num">น้ำมัน</th><th class="num">รวม</th></tr></thead>
+        <tbody>
+          ${r.orders.slice().sort((a,b)=> a.date<b.date?-1:a.date>b.date?1:0).map(o=>`<tr>
+            <td style="text-align:left;white-space:nowrap;">${fmtDateShort(o.date)}</td>
+            <td style="text-align:left;">${esc(o.loc)||'—'}</td>
+            <td class="num">${fmtQtyShort(o.qty)}</td>
+            <td class="num">${fmtMoney(o.material)}</td>
+            <td class="num">${fmtMoney(o.labor)}</td>
+            <td class="num">${fmtMoney(o.rent)}</td>
+            <td class="num">${fmtMoney(o.fuel)}</td>
+            <td class="num"><b>${fmtMoney(o.total)}</b></td>
+          </tr>`).join('')}
+        </tbody>
+        <tfoot><tr style="font-weight:600;background:var(--paper-50);">
+          <td colspan="2" style="text-align:left;">รวม ${r.count} ใบ</td>
+          <td class="num">${fmtQtyShort(r.qty)}</td>
+          <td class="num">${fmtMoney(r.material)}</td>
+          <td class="num">${fmtMoney(r.labor)}</td>
+          <td class="num">${fmtMoney(r.rent)}</td>
+          <td class="num">${fmtMoney(r.fuel)}</td>
+          <td class="num">${fmtMoney(r.total)}</td>
+        </tr></tfoot>
+      </table></div>
+      <div style="margin-top:8px;font-size:12px;color:var(--ink-600);">ค่างานต่อหน่วยเฉลี่ย = รวมต้นทุน <b>${fmtMoney(r.total)}</b> บาท ÷ ปริมาณงานรวม <b>${fmtQtyShort(r.qty)}</b> ${esc(unitLabel)} = <b>${fmtNum(r.unitCost,2)}</b> บาท/${esc(unitLabel)}</div>
     </td></tr>`;
   }).join('') + excludedNote;
 }
