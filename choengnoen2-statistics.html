@@ -1042,7 +1042,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         </div>
         <div class="set-tabs no-print hidden" id="set-tabs">
           <div class="set-tab active" data-view="crews">ชุดปฏิบัติงาน</div>
-          <div class="set-tab" data-view="refdata">ข้อมูลอ้างอิงงาน</div>
           <div class="set-tab" data-view="routes">ทางหลวงควบคุม</div>
         </div>
         <div id="dw-week" class="no-print"></div>
@@ -5695,10 +5694,80 @@ function ucRecordTotals(r){
   const unitCost = r.qtyPerDay>0 ? total/r.qtyPerDay : 0;
   return {labor, material, fuel, rent, total, unitCost};
 }
+/* พิมพ์สูตรค่างานต่อหน่วย (UNIT COST) 1 อัตรา ตามแบบฟอร์มราชการเดิม (ตารางค่างานต่อหน่วย (UNIT COST))
+   เปิดหน้าต่างใหม่แล้วสั่งพิมพ์ทันที — ไม่แตะ DOM ของหน้าเดิม จึงไม่กระทบตารางที่กำลังแสดงอยู่ */
+function printUcFormula(no){
+  const r = unitCostRecords.find(x=>x.no===no);
+  if(!r) return;
+  const job = findJob(r.code);
+  const t = ucRecordTotals(r);
+  const unitLabel = (r.unit||'').split(',')[0].trim() || 'หน่วย';
+  const pct = v => r.qtyPerDay>0 ? fmtNum(v/r.qtyPerDay,2) : '0.00';
+  const laborRows = (r.laborRows||[]).map(x=>`<tr><td>${esc(x.type)}</td><td class="num">${fmtNum(x.count,0)}</td><td class="num">${fmtNum(x.rate,2)}</td><td class="num">${fmtNum(x.count*x.rate,2)}</td></tr>`).join('');
+  const matRows = (r.materialRows||[]).map(x=>{
+    const m = getMaterialsX().find(mm=>mm.code===x.code);
+    const qty = x.useRate*(r.qtyPerDay||0);
+    return `<tr><td>${esc(m?m.name:x.code)}</td><td class="num">${fmtNum(x.useRate,4)}</td><td class="num">${fmtNum(qty,2)}</td><td>${esc(m?m.unit:'')}</td><td class="num">${fmtNum(x.price,2)}</td><td class="num">${fmtNum(qty*x.price,2)}</td></tr>`;
+  }).join('');
+  const vehRows = (r.vehicleRows||[]).map(x=>{
+    const v = getVehiclesX().find(vv=>vv.id===x.vehId);
+    return `<tr><td>${esc(v?vehicleLabelOn(v):'—')}</td><td class="num">${fmtNum(x.liters,2)}</td><td class="num">${fmtNum(x.fuelPrice,2)}</td><td class="num">${fmtNum(x.liters*x.fuelPrice,2)}</td><td class="num">${fmtNum(x.rentPerDay,2)}</td><td class="num">${fmtNum(x.rentPerDay,2)}</td></tr>`;
+  }).join('');
+  const row = (label, v) => `<tr><td>${label}</td><td class="num">${fmtNum(v,2)}</td></tr>`;
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>ค่างานต่อหน่วย (UNIT COST) — ${esc(r.code)}</title>
+  <style>
+    body{font-family:'TH Sarabun New','Sarabun',sans-serif;font-size:15px;color:#000;margin:24px;}
+    h1{font-size:19px;text-align:center;margin:0 0 14px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:12px;}
+    th,td{border:1px solid #000;padding:5px 8px;font-size:14px;}
+    th{background:#f2f2f2;font-weight:600;}
+    td.num,th.num{text-align:right;}
+    .hd{display:flex;justify-content:space-between;margin-bottom:10px;font-size:14px;}
+    .hd div{line-height:1.8;}
+    .grp-title{font-weight:600;margin:10px 0 4px;}
+    .sum-wrap{display:flex;gap:16px;}
+    .sum-wrap table{flex:1;}
+    @media print{ body{margin:10mm;} }
+  </style></head><body>
+  <h1>ค่างานต่อหน่วย (UNIT COST)</h1>
+  <div class="hd">
+    <div>งานบำรุงปกติ<br>หมวดทางหลวงเชิงเนิน<br>รหัสงาน ${esc(r.code)} — ${esc(job?job.name:'')}${r.variantLabel?' ('+esc(r.variantLabel)+')':''}<br>ปริมาณงานที่ทำได้ต่อวัน ${fmtNum(r.qtyPerDay,2)} ${esc(unitLabel)}</div>
+    <div style="text-align:right;">ประจำปีงบประมาณ ${esc(r.fy)}<br>แขวงทางหลวงระยอง<br>ลักษณะงาน ${esc(job&&job.desc?job.desc:'-')}<br>หน่วย ${esc(unitLabel)}</div>
+  </div>
+  <div class="grp-title">ค่าแรงงาน / วัน</div>
+  <table><thead><tr><th>แรงงาน</th><th class="num">จำนวน (คน)</th><th class="num">อัตราวันละ (บาท)</th><th class="num">เป็นเงิน (บาท)</th></tr></thead>
+  <tbody>${laborRows || '<tr><td colspan="4" style="text-align:center;">ไม่มีข้อมูล</td></tr>'}</tbody></table>
+  <div class="grp-title">ค่าวัสดุอุปกรณ์ / วัน</div>
+  <table><thead><tr><th>รายการวัสดุอุปกรณ์</th><th class="num">อัตราการใช้วัสดุต่อหน่วย</th><th class="num">ปริมาณ</th><th>หน่วย</th><th class="num">ราคา/หน่วย (บาท)</th><th class="num">เป็นเงิน (บาท)</th></tr></thead>
+  <tbody>${matRows || '<tr><td colspan="6" style="text-align:center;">ไม่มีข้อมูล</td></tr>'}<tr><td colspan="5" style="text-align:right;font-weight:600;">รวม</td><td class="num" style="font-weight:600;">${fmtNum(t.material,2)}</td></tr></tbody></table>
+  <div class="grp-title">ค่าใช้จ่ายเครื่องจักร / ยานพาหนะ / วัน</div>
+  <table><thead><tr><th rowspan="2">รายการเครื่องจักร/ยานพาหนะ</th><th colspan="3">ค่าน้ำมันเชื้อเพลิง</th><th colspan="2">ค่าเช่า</th></tr>
+  <tr><th class="num">จำนวน (ลิตร)</th><th class="num">ราคาลิตรละ (บาท)</th><th class="num">เป็นเงิน (บาท)</th><th class="num">วันละ (บาท)</th><th class="num">เป็นเงิน (บาท)</th></tr></thead>
+  <tbody>${vehRows || '<tr><td colspan="6" style="text-align:center;">ไม่มีข้อมูล</td></tr>'}<tr><td colspan="3" style="text-align:right;font-weight:600;">รวม</td><td class="num" style="font-weight:600;">${fmtNum(t.fuel,2)}</td><td></td><td class="num" style="font-weight:600;">${fmtNum(t.rent,2)}</td></tr></tbody></table>
+  <div class="sum-wrap">
+    <table><thead><tr><th>สรุปค่าใช้จ่าย / วัน</th><th class="num">เป็นเงิน</th></tr></thead><tbody>
+      ${row('ค่าแรงงาน', t.labor)}${row('ค่าวัสดุ', t.material)}${row('ค่าน้ำมันเชื้อเพลิง', t.fuel)}${row('ค่าเช่าเครื่องจักร/ยานพาหนะ', t.rent)}
+      <tr style="font-weight:600;"><td>รวมค่าใช้จ่าย</td><td class="num">${fmtNum(t.total,2)}</td></tr>
+    </tbody></table>
+    <table><thead><tr><th>ค่างานต่อหน่วย</th><th class="num">บาท/${esc(unitLabel)}</th></tr></thead><tbody>
+      <tr><td>ค่าแรงงาน คิดเป็นสัดส่วนของค่างาน/หน่วย</td><td class="num">${pct(t.labor)}</td></tr>
+      <tr><td>ค่าวัสดุ คิดเป็นสัดส่วนของค่างาน/หน่วย</td><td class="num">${pct(t.material)}</td></tr>
+      <tr><td>ค่าน้ำมัน คิดเป็นสัดส่วนของค่างาน/หน่วย</td><td class="num">${pct(t.fuel)}</td></tr>
+      <tr><td>ค่าเช่า คิดเป็นสัดส่วนของค่างาน/หน่วย</td><td class="num">${pct(t.rent)}</td></tr>
+      <tr style="font-weight:600;"><td>ค่างานต่อหน่วย = ค่าใช้จ่าย/วัน ÷ ปริมาณงาน/วัน</td><td class="num">${fmtNum(t.unitCost,2)}</td></tr>
+    </tbody></table>
+  </div>
+  <script>window.onload=function(){ window.print(); };<\/script>
+  </body></html>`;
+  const win = window.open('', '_blank');
+  if(!win){ alert('เบราว์เซอร์บล็อกหน้าต่างพิมพ์ — กรุณาอนุญาตป็อปอัปสำหรับเว็บนี้แล้วลองใหม่'); return; }
+  win.document.open(); win.document.write(html); win.document.close();
+}
 /* renderUcTable() คงชื่อเดิมไว้เพราะ saveUcEntry()/deleteUcEntry() เรียกอยู่แล้วหลัง CRUD สำเร็จ —
    ของเดิม render ตารางแบนที่ย้ายออกไปแล้ว ตอนนี้แค่รีเฟรชการ์ดรายละเอียดฝั่งขวาของแท็บ "ข้อมูลอ้างอิงงาน" */
 function renderUcTable(){
   renderRefDetail();
+  renderUnitCostReport();
   // ถ้าเพิ่ง "เพิ่มค่างานต่อหน่วยใหม่" จากรหัสงานที่ยังไม่เคยเลือกในลิสต์ซ้าย ให้จุดสถานะซ้ายอัปเดตตามด้วย
   document.querySelectorAll('.refdata-row').forEach(el=>{
     const has = unitCostRecords.some(u=>u.code===el.dataset.code);
@@ -6551,6 +6620,25 @@ function renderRollupStatus(fy, month, rows){
    สูตร: unit cost เฉลี่ยต่อรหัสงาน = ผลรวมต้นทุน 4 ประเภทของทุกใบในช่วงที่เลือก ÷ ผลรวมปริมาณงานของใบเดียวกัน
    (ไม่ใช่การเฉลี่ยค่าต่อหน่วยของแต่ละใบตรงๆ — กันไม่ให้ใบที่ปริมาณงานน้อยถ่วงค่าเฉลี่ยผิดสัดส่วน)
    ใบที่ qtyPending หรือ qty<=0 ตัดออกจากค่าเฉลี่ยเสมอ นับจำนวนที่ตัดไว้ให้ดูที่ท้ายตาราง */
+/* บรรทัดย่อยใต้แต่ละใบในตารางแจกแจง — บอกว่าค่าแรงงาน/วัสดุ/น้ำมัน/ค่าเช่าของใบนี้มาจากอะไร
+   (ชื่อคน, ชื่อ+จำนวนวัสดุที่เบิก, ชื่อเครื่องจักร/รถ+ลิตรน้ำมัน+ชนิดน้ำมัน — ค่าเช่าเป็นยอดรวมต่อคันในใบ ไม่ได้แยกเก็บราคาต่อคันในระบบ) */
+function unitCostOrderDetailHtml(o){
+  const mats = getMaterialsX();
+  const staffTxt = (o.staff && o.staff.length) ? o.staff.join(', ') : '—';
+  const partsTxt = (o.parts && o.parts.length) ? o.parts.map(p=>{
+    const m = mats.find(mm=>mm.code===p.code);
+    return (m ? m.name : p.code) + ' ' + fmtNum(p.qty,2) + ' ' + (m ? m.unit : '');
+  }).join(', ') : '—';
+  const vehTxt = (o.vehicles && o.vehicles.length) ? o.vehicles.map(v=>{
+    const name = vehicleBaseName(v) || v.label || '—';
+    return name + (v.liters ? ` (${fmtNum(v.liters,1)} ล. ${v.fuelType||''})` : '');
+  }).join(', ') : '—';
+  return `<div style="font-size:11.5px;color:var(--ink-400);line-height:1.6;">
+    <div>👷 ผู้ปฏิบัติงาน (ค่าแรงงาน): ${esc(staffTxt)}</div>
+    <div>🧱 วัสดุที่เบิก: ${esc(partsTxt)}</div>
+    <div>🚜 เครื่องจักร/รถ (น้ำมัน+ค่าเช่า): ${esc(vehTxt)}</div>
+  </div>`;
+}
 function unitCostReportRows(){
   const fy = +(document.getElementById('g-fy')||{}).value || fyOfDate(TODAY.toISOString().slice(0,10));
   const monthVal = (document.getElementById('g-month')||{}).value;
@@ -6570,7 +6658,7 @@ function unitCostReportRows(){
     if(!byCode[d.code]) byCode[d.code] = {code:d.code, unit:d.unit, count:0, qty:0, material:0, labor:0, rent:0, fuel:0, orders:[]};
     const b = byCode[d.code];
     b.count++; b.qty += d.qty; b.material += d.material; b.labor += d.labor; b.rent += d.rent; b.fuel += d.fuel;
-    b.orders.push({date:d.date, loc:d.loc||'', qty:d.qty, material:d.material||0, labor:d.labor||0, rent:d.rent||0, fuel:d.fuel||0, total:(d.material||0)+(d.labor||0)+(d.rent||0)+(d.fuel||0)});
+    b.orders.push({date:d.date, loc:d.loc||'', qty:d.qty, material:d.material||0, labor:d.labor||0, rent:d.rent||0, fuel:d.fuel||0, total:(d.material||0)+(d.labor||0)+(d.rent||0)+(d.fuel||0), staff:d.staff||[], parts:d.parts||[], vehicles:d.vehicles||[]});
   });
   const rows = Object.values(byCode).map(b=>{
     const total = b.material+b.labor+b.rent+b.fuel;
@@ -6580,6 +6668,29 @@ function unitCostReportRows(){
   rows.__excludedPending = excludedPending; rows.__excludedZero = excludedZero;
   rows.__fy = fy; rows.__all = all; rows.__month = month;
   return rows;
+}
+/* การ์ด "สูตรมาตรฐาน (ตั้งไว้ล่วงหน้า)" ของรหัสงานหนึ่งๆ — ย้ายมารวมกับแถวขยายของตารางค่าเฉลี่ยจากงานจริง
+   (เดิมอยู่แยกต่างหากที่แท็บ "ข้อมูลอ้างอิงงาน" ใต้เมนูตั้งค่า — รวมเป็นที่เดียวเพราะเป็นข้อมูลของรหัสงานเดียวกัน)
+   reuse ucFormulaTableHtml()/ucRecordTotals() เดิมทุกจุด เพิ่มแค่ปุ่มพิมพ์ตามแบบฟอร์มราชการ */
+function unitCostStandardSectionHtml(code){
+  const variants = unitCostRecords.filter(u=>u.code===code);
+  const body = variants.length
+    ? variants.map(r=>`<div class="uc-variant-card"><div class="uc-variant-title"><span>${esc(r.variantLabel ? r.variantLabel : 'อัตรามาตรฐาน')}</span><span>
+        <button class="btn btn-ghost btn-ic btn-sm" data-ic="print" data-tip="พิมพ์" onclick="event.stopPropagation();printUcFormula(${r.no})"></button>
+        <button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="event.stopPropagation();openUcForm(${r.no})"></button>
+        <button class="btn btn-ghost btn-ic btn-ic-danger btn-sm" data-ic="trash" data-tip="ลบ" onclick="event.stopPropagation();deleteUcEntry(${r.no})"></button>
+      </span></div>${ucFormulaTableHtml(r)}</div>`).join('')
+    : `<div style="text-align:center;padding:16px 0;color:var(--ink-400);">
+        <div style="font-size:12.5px;margin-bottom:10px;">ยังไม่มีสูตรมาตรฐานของรหัสงานนี้</div>
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openUcForm(null,'${jsArg(code)}')">+ เพิ่มสูตรมาตรฐาน</button>
+      </div>`;
+  return `<div class="refdata-card" style="margin-top:10px;" onclick="event.stopPropagation();">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <h3 style="font-family:'Kanit',sans-serif;font-size:13.5px;font-weight:600;color:var(--navy-900);margin:0;">สูตรมาตรฐาน (ตั้งไว้ล่วงหน้า) — สำหรับประเมิน/วางแผนงบ ไม่ใช่ค่าที่เกิดขึ้นจริง</h3>
+      ${variants.length ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openUcForm(null,'${jsArg(code)}')">+ เพิ่มอัตราใหม่</button>` : ''}
+    </div>
+    ${body}
+  </div>`;
 }
 function renderUnitCostReport(){
   const body = document.getElementById('unitcost-body');
@@ -6618,7 +6729,7 @@ function renderUnitCostReport(){
             <td class="num">${fmtMoney(o.rent)}</td>
             <td class="num">${fmtMoney(o.fuel)}</td>
             <td class="num"><b>${fmtMoney(o.total)}</b></td>
-          </tr>`).join('')}
+          </tr><tr><td colspan="8" style="border-bottom:1px solid var(--paper-100);padding:0 10px 8px;">${unitCostOrderDetailHtml(o)}</td></tr>`).join('')}
         </tbody>
         <tfoot><tr style="font-weight:600;background:var(--paper-50);">
           <td colspan="2" style="text-align:left;">รวม ${r.count} ใบ</td>
@@ -6631,6 +6742,7 @@ function renderUnitCostReport(){
         </tr></tfoot>
       </table></div>
       <div style="margin-top:8px;font-size:12px;color:var(--ink-600);">ค่างานต่อหน่วยเฉลี่ย = รวมต้นทุน <b>${fmtMoney(r.total)}</b> บาท ÷ ปริมาณงานรวม <b>${fmtQtyShort(r.qty)}</b> ${esc(unitLabel)} = <b>${fmtNum(r.unitCost,2)}</b> บาท/${esc(unitLabel)}</div>
+      ${unitCostStandardSectionHtml(r.code)}
     </td></tr>`;
   }).join('') + excludedNote;
 }
