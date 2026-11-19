@@ -864,7 +864,15 @@
   });
 
   let suppressAuthEvents = false;
+  // กันหน้าค้างที่ "กำลังตรวจสอบการเข้าสู่ระบบ..." ตลอดไป — บางครั้ง Firebase ตรวจสถานะล็อกอินช้าผิดปกติ (เช่น iframe ช่วยซิงก์สถานะโหลดไม่ทัน)
+  // ทำให้ onAuthStateChanged ไม่ยิงเลยจนกว่าจะรีเฟรชหน้าใหม่ จึงตั้งเวลาไว้ ถ้ายังไม่มีผลภายใน 6 วินาที ให้ขึ้นฟอร์มล็อกอินแทนไปก่อน
+  // (ถ้าจริงๆ ยังล็อกอินค้างอยู่ ตัวจัดการด้านล่างจะตรวจพบภายหลังแล้วรีเฟรชหน้าให้เองเมื่อสถานะมาถึง)
+  let authSeen = false;
+  setTimeout(function () {
+    if (!authSeen && !FBL.user) onDomReady(function () { showLogin('ตรวจสอบสถานะล็อกอินช้ากว่าปกติ กรุณาเข้าสู่ระบบอีกครั้ง'); });
+  }, 6000);
   auth.onAuthStateChanged(async function (u) {
+    authSeen = true;
     if (suppressAuthEvents) return;
     if (!u) {
       const hadUser = !!FBL.user;
