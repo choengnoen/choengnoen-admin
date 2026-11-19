@@ -282,9 +282,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .uc-formula-table td.num{text-align:right;}
   .uc-source-table{width:100%;border-collapse:collapse;}
   .uc-source-table th{text-align:left;font-size:10px;color:var(--ink-400);padding:5px 10px;border-bottom:1px solid var(--line);text-transform:uppercase;white-space:nowrap;}
-  .uc-source-table td{padding:6px 10px;font-size:12px;border-bottom:1px solid var(--paper-100);}
+  .uc-source-table td{padding:7px 10px;font-size:12px;border-bottom:1px solid var(--paper-100);vertical-align:top;}
   .uc-source-table th.num,.uc-source-table td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
   .uc-source-table tfoot td{border-bottom:none;border-top:2px solid var(--line);}
+  .uc-order-group-b td{background:var(--paper-50);}
+  .uc-order-detail{padding:2px 10px 10px 10px;display:flex;flex-wrap:wrap;gap:4px 22px;}
+  .uc-order-detail .uc-dl{display:flex;gap:6px;font-size:11px;line-height:1.5;min-width:0;}
+  .uc-order-detail .uc-dl-k{flex:0 0 auto;color:var(--ink-400);font-weight:600;white-space:nowrap;}
+  .uc-order-detail .uc-dl-v{color:var(--ink-600);word-break:break-word;}
   .uc-variant-card{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;}
   .uc-variant-title{font-family:'Kanit',sans-serif;font-size:12.5px;font-weight:600;color:var(--navy-900);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
 
@@ -6633,10 +6638,11 @@ function unitCostOrderDetailHtml(o){
     const name = vehicleBaseName(v) || v.label || '—';
     return name + (v.liters ? ` (${fmtNum(v.liters,1)} ล. ${v.fuelType||''})` : '');
   }).join(', ') : '—';
-  return `<div style="font-size:11.5px;color:var(--ink-400);line-height:1.6;">
-    <div>👷 ผู้ปฏิบัติงาน (ค่าแรงงาน): ${esc(staffTxt)}</div>
-    <div>🧱 วัสดุที่เบิก: ${esc(partsTxt)}</div>
-    <div>🚜 เครื่องจักร/รถ (น้ำมัน+ค่าเช่า): ${esc(vehTxt)}</div>
+  const dl = (k,v) => `<div class="uc-dl"><span class="uc-dl-k">${esc(k)}</span><span class="uc-dl-v">${esc(v)}</span></div>`;
+  return `<div class="uc-order-detail">
+    ${dl('ผู้ปฏิบัติงาน (ค่าแรงงาน)', staffTxt)}
+    ${dl('วัสดุที่เบิก', partsTxt)}
+    ${dl('เครื่องจักร/รถ (น้ำมัน+ค่าเช่า)', vehTxt)}
   </div>`;
 }
 function unitCostReportRows(){
@@ -6720,16 +6726,19 @@ function renderUnitCostReport(){
       <div class="table-wrap" style="margin-top:10px;"><table class="uc-source-table">
         <thead><tr><th>วันที่</th><th>ตำแหน่ง/สายทาง</th><th class="num">ปริมาณงาน</th><th class="num">วัสดุ</th><th class="num">แรงงาน</th><th class="num">เช่า</th><th class="num">น้ำมัน</th><th class="num">รวม</th></tr></thead>
         <tbody>
-          ${r.orders.slice().sort((a,b)=> a.date<b.date?-1:a.date>b.date?1:0).map(o=>`<tr>
-            <td style="text-align:left;white-space:nowrap;">${fmtDateShort(o.date)}</td>
-            <td style="text-align:left;">${esc(o.loc)||'—'}</td>
-            <td class="num">${fmtQtyShort(o.qty)}</td>
-            <td class="num">${fmtMoney(o.material)}</td>
-            <td class="num">${fmtMoney(o.labor)}</td>
-            <td class="num">${fmtMoney(o.rent)}</td>
-            <td class="num">${fmtMoney(o.fuel)}</td>
-            <td class="num"><b>${fmtMoney(o.total)}</b></td>
-          </tr><tr><td colspan="8" style="border-bottom:1px solid var(--paper-100);padding:0 10px 8px;">${unitCostOrderDetailHtml(o)}</td></tr>`).join('')}
+          ${r.orders.slice().sort((a,b)=> a.date<b.date?-1:a.date>b.date?1:0).map((o,i)=>{
+            const g = i%2 ? ' uc-order-group-b' : '';
+            return `<tr class="${g.trim()}" style="border-top:${i?'2px solid var(--line)':'none'};">
+              <td style="text-align:left;white-space:nowrap;">${fmtDateShort(o.date)}</td>
+              <td style="text-align:left;">${esc(o.loc)||'—'}</td>
+              <td class="num">${fmtQtyShort(o.qty)}</td>
+              <td class="num">${fmtMoney(o.material)}</td>
+              <td class="num">${fmtMoney(o.labor)}</td>
+              <td class="num">${fmtMoney(o.rent)}</td>
+              <td class="num">${fmtMoney(o.fuel)}</td>
+              <td class="num"><b>${fmtMoney(o.total)}</b></td>
+            </tr><tr class="${g.trim()}"><td colspan="8" style="padding:0;border-bottom:1px solid var(--paper-100);">${unitCostOrderDetailHtml(o)}</td></tr>`;
+          }).join('')}
         </tbody>
         <tfoot><tr style="font-weight:600;background:var(--paper-50);">
           <td colspan="2" style="text-align:left;">รวม ${r.count} ใบ</td>
