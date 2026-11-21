@@ -3250,7 +3250,7 @@ function lvRow(x,y,w,parts){
   parts.forEach(p=>{
     if(typeof p==='string') need += lvTextW(p,16)*1.05;
     else if(p.box!==undefined) need += (p.w||14)+7;
-    else need += p.fix ? p.fix : Math.min(lvTextW(String(p.v==null?'':p.v),p.size||16)+2,200);
+    else need += p.fix ? p.fix : p.min ? p.min : Math.min(lvTextW(String(p.v==null?'':p.v),p.size||16)+2,200);
   });
   const k = need>w ? Math.max(.7, (w-1)/need) : 1;
   const inner = parts.map(p=>{
@@ -3262,7 +3262,8 @@ function lvRow(x,y,w,parts){
     const v = String(p.v==null?'':p.v);
     const sz = (p.size||16)*k;
     const tw = lvTextW(v,sz);
-    const basis = p.fix ? `0 0 ${p.fix*k}pt` : `1 1 ${Math.max(20*k, tw+8*k)}pt`;
+    /* p.min = ช่องกว้างอย่างน้อย min แล้วรับพื้นที่เหลือของบรรทัด (ใบขอยกเลิกวันลา) */
+    const basis = p.fix ? `0 0 ${p.fix*k}pt` : p.min ? `1 1 ${Math.max(p.min,tw+4)*k}pt` : `1 1 ${Math.max(20*k, tw+8*k)}pt`;
     const al = p.left ? 'text-align:left;padding-left:2pt;box-sizing:border-box;' : 'text-align:center;';
     /* ช่องที่ไม่กำหนดความกว้างตายตัวห้ามแคบกว่าข้อความที่กรอก — กันเดือน/ชื่อยาวทับข้อความข้างเคียง */
     return `<div style="flex:${basis};position:relative;min-width:${p.fix?0:Math.min(tw+2*k,200)}pt;height:16pt">${dot}<div class="lv-psk" style="position:absolute;left:0;right:0;top:${-LV_RAISE}pt;${al}white-space:pre;font-size:${sz}pt;line-height:${sz}pt">${esc(v)}</div></div>`;
@@ -3410,6 +3411,19 @@ function lvSignBlkA(px,E,y,name,role,g,after){
     + lvRT(A,y+g,'(') + lvDots(A,y+g,E-pw-1-A) + lvRT(E,y+g,')') + lvV(A+1,E-pw-1,y+g,name||'',{center:1})
     + lvRT(A,y+2*g,'(ตำแหน่ง)') + lvDots(A,y+2*g,E-A) + lvV(A+1,E,y+2*g,role||'',{center:1})
     + lvRT(A,y+3*g,'วันที่') + lvDateSlots(A,y+3*g,E);
+}
+/* คู่บรรทัด "<label><ประเภท> ตั้งแต่วันที่…" / "ถึงวันที่…<tail>" (ใบขอยกเลิกวันลา)
+   บรรทัดบน: ทุกช่องกว้างพอดีข้อความ + แบ่งพื้นที่เหลือเท่าๆ กัน จบที่ขอบขวา (ช่องประเภทรับเศษที่เหลือ)
+   บรรทัดล่าง: ช่องวัน/เดือน/ปี กว้างเท่าบรรทัดบนทุกช่อง ; ไม่ยืดจนสุดบรรทัด จบตามเนื้อความ */
+function lvPairRows(y1, y2, label, lt, from, to, tail){
+  const PAD = 12, W = LVN_R-LVN_L;
+  const ltMin = lvTextW(lt,16)+PAD, dMin = lvTextW('๓๐',16)+PAD, mMin = Math.max(...THAI_MONTH_FULL.map(m=>lvTextW(m,16)))+PAD, yMin = lvTextW('๒๕๖๙',16)+PAD;
+  const labels = [label,' ตั้งแต่วันที่',' เดือน',' พ.ศ.'].reduce((a,t)=>a+lvTextW(t,16)*1.05,0);
+  const add = Math.max(0, (W - labels - ltMin - dMin - mMin - yMin)/4);
+  const df = dMin+add, mf = mMin+add, yf = yMin+add;
+  const a = lvDateParts(from), b = lvDateParts(to);
+  return lvRow(LVN_L, y1, W, [label,{v:lt,min:ltMin+add},' ตั้งแต่วันที่',{v:a.d,fix:df},' เดือน',{v:a.m,fix:mf},' พ.ศ.',{v:a.y,fix:yf}])
+       + lvRow(LVN_L, y2, W, ['ถึงวันที่',{v:b.d,fix:df},' เดือน',{v:b.m,fix:mf},' พ.ศ.',{v:b.y,fix:yf}].concat(tail));
 }
 /* ลงชื่อผู้ลา 2 บรรทัด: "(ลงชื่อ)" เริ่มที่ x0 ; "(" จบที่ท้าย "(ลงชื่อ)" ; ทั้งสองบรรทัดจบที่ E (ยืดตามความยาวชื่อ ไม่เกินขอบขวา) */
 function lvSignAppA(x0,eMin,y,nm,g){
@@ -3570,31 +3584,38 @@ function printCancelForm(i){
   const lt = lvTypeLabel(r.type);
   LV_FILED = null;   /* ใบยกเลิกยื่น ณ วันนี้ — หาหัวหน้าหมวดจากทะเบียนผู้บริหารตามวันนี้ */
   LV_BASE = 12.7; LV_DY = 0;
-  const F = {title:'แบบใบขอยกเลิกวันลา', cx:484, wx:527, dx:492, tx:609, sx:384,
-    y:{title:92, wr:131, dt:168, sub:205, to:244, me:286, lv:315}};
+  /* ระยะบรรทัดสม่ำเสมอ: ส่วนหัว 40px ≈ 26pt ; เนื้อความ 32px ≈ 20.7pt (เหมือนใบลาพักผ่อน/ใบลาป่วย) */
+  const F = {title:'แบบใบขอยกเลิกวันลา', cx:484, wx:527, dx:492, tx:609, sx:384, neat:1,
+    y:{title:92, wr:131, dt:171, sub:211, to:251, me:291, lv:323}};
   let h = lvnTop(F, nm, s, 'ขอยกเลิกวันลา'+lt, 'ตามที่ข้าพเจ้า');
-  h += lvRow(LVN_L, ny(346), LVN_R-LVN_L, ['ได้รับอนุญาตให้ลา',{v:lt},' ตั้งแต่วันที่'].concat(lvDP(r.from)));
-  h += lvRow(LVN_L, ny(377), LVN_R-LVN_L, ['ถึงวันที่'].concat(lvDP(r.to), [' รวม',{v:lvTh(days),fix:26},' วัน นั้น']));
-  /* เนื่องจาก … 3 บรรทัด */
-  const x1 = nx(243), lw = lvTextW('เนื่องจาก')+4;
-  const rl = lvWrapText(reason, [LVN_R-x1-lw-6, LVN_R-LVN_L-6, LVN_R-LVN_L-6], 16);
-  h += lvLead(x1, ny(417), LVN_R-x1, 'เนื่องจาก') + lvV(x1+lw, LVN_R, ny(417), rl[0], {lead:0});
-  h += lvDots(LVN_L, ny(449), LVN_R-LVN_L) + lvV(LVN_L, LVN_R, ny(449), rl[1], {lead:0});
-  h += lvDots(LVN_L, ny(480), LVN_R-LVN_L) + lvV(LVN_L, LVN_R, ny(480), rl[2], {lead:0});
-  h += lvRow(LVN_L, ny(510), LVN_R-LVN_L, ['จึงขอยกเลิกวันลา',{v:lt},' ตั้งแต่วันที่'].concat(lvDP(r.from), [' ถึงวันที่',{v:lvDateParts(r.to).d,fix:22}]));
-  const pt = lvDateParts(r.to);
-  h += lvRow(LVN_L, ny(542), LVN_R-LVN_L, ['เดือน',{v:pt.m},' พ.ศ.',{v:pt.y,fix:34},' จำนวน',{v:lvTh(days),fix:26},' วัน']);
-  h += lvSignApp(nx(467), ny(601), nm, 19.9);
-  /* ความเห็นผู้บังคับบัญชา — เจ้าหน้าที่ลา: หัวหน้าหมวดปัจจุบัน / หัวหน้าหมวดลาเอง: ผู้รักษาราชการแทน */
+  const dMin = lvTextW('๓๐',16)+12;
+  h += lvPairRows(ny(355), ny(387), 'ได้รับอนุญาตให้ลา', lt, r.from, r.to, [' รวม',{v:lvTh(days),fix:dMin},' วัน นั้น']);
+  /* เนื่องจาก … 3 บรรทัด — เว้นวรรค 2 ครั้งต่อจาก "เนื่องจาก" */
+  const x1 = nx(243), lw = lvTextW('เนื่องจาก',16), sp2 = lvTextW('  ',16);
+  const rl = lvWrapText(reason, [LVN_R-x1-lw-sp2-6, LVN_R-LVN_L-6, LVN_R-LVN_L-6], 16);
+  h += lvLead(x1, ny(419), LVN_R-x1, 'เนื่องจาก') + lvV(x1+lw, LVN_R, ny(419), rl[0], {lead:2});
+  h += lvDots(LVN_L, ny(451), LVN_R-LVN_L) + lvV(LVN_L, LVN_R, ny(451), rl[1], {lead:0});
+  h += lvDots(LVN_L, ny(483), LVN_R-LVN_L) + lvV(LVN_L, LVN_R, ny(483), rl[2], {lead:0});
+  /* จึงขอยกเลิก: เดิมวันที่สิ้นสุดถูกตัดข้ามบรรทัด → จัดเป็นคู่บรรทัดแบบเดียวกับ "ได้รับอนุญาต" */
+  h += lvPairRows(ny(515), ny(547), 'จึงขอยกเลิกวันลา', lt, r.from, r.to, [' จำนวน',{v:lvTh(days),fix:dMin},' วัน']);
+  /* ส่วนล่างเลื่อนลงตามระยะที่เพิ่ม 5px */
+  LV_DY = Math.round(5*LVN_K*10)/10;
+  const g = 19.9;
+  h += lvSignAppA(nx(467), nx(467)+168, ny(601), nm, g);   /* ลงชื่อผู้ขอยกเลิก: ตำแหน่งเดิม */
+  /* บล็อกลงนาม (ความเห็น/คำสั่ง): (ตำแหน่ง) เริ่ม SX ; แนวหลัง SE — สองบล็อกใช้แนวเดียวกัน */
+  const SX = nx(364)-4, SE = nx(672)+4;
+  /* ความเห็นผู้บังคับบัญชา — เจ้าหน้าที่ลา: หัวหน้าหมวดปัจจุบัน / หัวหน้าหมวดลาเอง: ผู้รักษาราชการแทน
+     ระยะ หัว→เส้นจุด 34px, เส้นจุด→เส้นจุด 30px, เส้นจุด→ลงชื่อ 30px ; เส้นจุดจบที่ขอบขวา */
   const sg = lvChiefSigner(nm, r.cover||'');
   h += lvT(LVN_L, ny(664), 'ความเห็นผู้บังคับบัญชา', {u:1});
-  h += lvDots(nx(187), ny(694), LVN_R-nx(187)) + lvDots(LVN_L, ny(725), nx(813)-LVN_L);
-  h += lvSignBlk(nx(364), nx(672), ny(788), sg.name, sg.pos, 19.9);
-  /* คำสั่ง — เว้นว่างให้ผู้สั่งการเขียนเอง */
+  h += lvDots(nx(187), ny(698), LVN_R-nx(187)) + lvDots(LVN_L, ny(728), LVN_R-LVN_L);
+  h += lvSignBlkA(SX, SE, ny(758), sg.name, sg.pos, g);
+  /* คำสั่ง — เว้นว่างให้ผู้สั่งการเขียนเอง ; ระยะเท่าส่วนความเห็น (นับต่อจากแถวช่องติ๊ก) */
   h += lvT(LVN_L, ny(910), 'คำสั่ง', {u:1});
-  h += lvBoxAt(nx(253), ny(942), false, 12, 9) + lvT(nx(287), ny(942), 'อนุญาต') + lvBoxAt(nx(373), ny(942), false, 12, 9) + lvT(nx(401), ny(942), 'ไม่อนุญาต');
-  h += lvDots(nx(187), ny(992), LVN_R-nx(187)) + lvDots(LVN_L, ny(1022), LVN_R-LVN_L);
-  h += lvSignBlk(nx(357), nx(650), ny(1083), '', '', 19.9);
+  h += lvBoxAt(nx(253), ny(940), false, 12, 9) + lvT(nx(287), ny(940), 'อนุญาต') + lvBoxAt(nx(373), ny(940), false, 12, 9) + lvT(nx(401), ny(940), 'ไม่อนุญาต');
+  h += lvDots(nx(187), ny(974), LVN_R-nx(187)) + lvDots(LVN_L, ny(1004), LVN_R-LVN_L);
+  h += lvSignBlkA(SX, SE, ny(1034), '', '', g);
+  LV_DY = 0;
   document.getElementById('print-cancel-form').innerHTML = lvWrap(h,'vac');
   printForm('print-cancel-form');
 }
