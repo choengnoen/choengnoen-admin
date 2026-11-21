@@ -3249,12 +3249,15 @@ function lvRow(x,y,w,parts){
   let need = 0;
   parts.forEach(p=>{
     if(typeof p==='string') need += lvTextW(p,16)*1.05;
+    else if(p.gap) {}
     else if(p.box!==undefined) need += (p.w||14)+7;
     else need += p.fix ? p.fix : p.min ? p.min : Math.min(lvTextW(String(p.v==null?'':p.v),p.size||16)+2,200);
   });
   const k = need>w ? Math.max(.7, (w-1)/need) : 1;
   const inner = parts.map(p=>{
     if(typeof p==='string') return `<span class="lv-s">${p}</span>`;
+    /* {gap:1} = ช่องว่างยืดได้ แบ่งพื้นที่เหลือของบรรทัดเท่าๆ กัน (ใช้จัดวรรคให้บรรทัดจบตรงขอบขวา) */
+    if(p.gap) return '<span style="flex:1 1 0;min-width:0"></span>';
     if(p.box!==undefined){
       const bw = p.w||14;
       return `<span style="flex:none;position:relative;display:inline-block;align-self:center;width:${bw}pt;height:${bw}pt;margin:0 3pt 0 4pt;top:-1.6pt;border:.9pt solid #000;box-sizing:border-box;background:#fff">${p.box?lvCheckSvg():''}</span>`;
@@ -3516,6 +3519,28 @@ function lvOpinionOrder(c, sg){
   h += lvSignBlk(nx(355), nx(c.xE), ny(c.cs), '', '', 19.6);
   return h;
 }
+/* ---------- เครื่องมือจัดแนวใบลาพิเศษ (แบบใหม่) ---------- */
+/* ความกว้างช่องวัน/เดือน/ปี: วัน (๓๐) / เดือน (ยาวสุด) / ปี (๒๕๖๙) + เว้นหน้า-หลังรวม pad (ตั้งต้น 12pt เท่าฟอร์มอื่น) */
+function lvDateW(pad){ const P = pad==null ? 12 : pad; return {d:lvTextW('๓๐',16)+P, m:Math.max(...THAI_MONTH_FULL.map(m=>lvTextW(m,16)))+P, y:lvTextW('๒๕๖๙',16)+P}; }
+/* ชุดช่องวันที่สำหรับ lvRow ; st = ยืด (กว้างอย่างน้อยค่าคงที่ แล้วแบ่งพื้นที่เหลือของบรรทัดเท่าๆ กันจนถึงขอบขวา) ; ไม่ยืด = กว้างคงที่ */
+function lvDateF(iso, st, pad){ const p = lvDateParts(iso), w = lvDateW(pad), k = st ? 'min' : 'fix'; return [{v:p.d,[k]:w.d},' เดือน',{v:p.m,[k]:w.m},' พ.ศ.',{v:p.y,[k]:w.y}]; }
+/* ความกว้างที่บรรทัดต้องใช้ (สูตรเดียวกับ lvRow) */
+function lvRowNeed(parts){ let need = 0; parts.forEach(p=>{ if(typeof p==='string') need += lvTextW(p,16)*1.05; else if(p.gap) {} else if(p.box!==undefined) need += (p.w||14)+7; else need += p.fix ? p.fix : p.min ? p.min : Math.min(lvTextW(String(p.v==null?'':p.v),p.size||16)+2,200); }); return need; }
+/* บรรทัดเต็มความกว้างที่มีช่องวันที่: เว้น 12pt ; ถ้ายาวเกินกระดาษ ลดเฉพาะบรรทัดนั้นทีละ 1pt จนพอดี (ตัวอักษรคง 16pt) */
+function lvRowFit(y, build){ let pad = 12, parts; for(; pad >= 0; pad--){ parts = build(pad); if(lvRowNeed(parts) <= LVN_R-LVN_L) break; } return lvRow(LVN_L, y, LVN_R-LVN_L, parts); }
+/* ความเห็นผู้บังคับบัญชา + คำสั่ง (เต็มความกว้าง) แบบใหม่ — รูปแบบเดียวกับใบขอยกเลิกวันลา ; oh = บรรทัดหัว (px)
+   ระยะ: หัว→เส้นจุด 34, เส้นจุด→เส้นจุด 30, เส้นจุด→ลงชื่อ 30 ; คำสั่ง: หัว→ช่องติ๊ก 30 แล้วระยะเท่าส่วนความเห็น ; เส้นจุดจบที่ขอบขวา */
+function lvOpinionOrderA(oh, sg, g){
+  const SX = nx(364)-4, SE = nx(672)+4, ch = oh+246;
+  let h = lvT(LVN_L, ny(oh), 'ความเห็นผู้บังคับบัญชา', {u:1});
+  h += lvDots(nx(187), ny(oh+34), LVN_R-nx(187)) + lvDots(LVN_L, ny(oh+64), LVN_R-LVN_L);
+  h += lvSignBlkA(SX, SE, ny(oh+94), sg.name, sg.pos, g);
+  h += lvT(LVN_L, ny(ch), 'คำสั่ง', {u:1});
+  h += lvBoxAt(nx(253), ny(ch+30), false, 12, 9) + lvT(nx(287), ny(ch+30), 'อนุญาต') + lvBoxAt(nx(373), ny(ch+30), false, 12, 9) + lvT(nx(401), ny(ch+30), 'ไม่อนุญาต');
+  h += lvDots(nx(187), ny(ch+64), LVN_R-nx(187)) + lvDots(LVN_L, ny(ch+94), LVN_R-LVN_L);
+  h += lvSignBlkA(SX, SE, ny(ch+124), '', '', g);
+  return h;
+}
 function lvSpecialForm(i, kind){
   const r = leaveRequests[i], name = r.name, s = staff.find(x=>x.name===name) || {};
   const nm = String(name).trim(), dnum = parseInt(daysBetween(r.from,r.to,name)||0);
@@ -3526,48 +3551,72 @@ function lvSpecialForm(i, kind){
   const Y = (o)=>Object.assign({title:80, wr:123, dt:161}, o);
   let h = '';
   if(kind==='ช่วยภริยา'){
-    const F = {title:'แบบใบลาไปช่วยเหลือภริยาที่คลอดบุตร', cx:490, wx:561, dx:489, tx:600, sx:395, subW:560, y:Y({sub:203,to:243,me:286,lv:315})};
+    /* แบบใหม่ (21 พ.ย. 2569): ระยะบรรทัดสม่ำเสมอ (ส่วนหัว 40px ≈ 26pt, เนื้อความ 32px ≈ 20.7pt) ; ช่องวันที่เว้น 12pt ; ตัวอักษร 16pt ทั้งหน้า */
+    const F = {title:'แบบใบลาไปช่วยเหลือภริยาที่คลอดบุตร', cx:490, wx:567, dx:489, tx:600, sx:395, neat:1,
+      y:{title:82, wr:123, dt:163, sub:203, to:243, me:283, lv:315}};
     h += lvnTop(F, nm, s, 'ขอลาไปช่วยเหลือภริยาที่คลอดบุตร', 'ข้าพเจ้า');
-    h += lvRow(LVN_L, ny(346), W, ['มีความประสงค์ลาไปช่วยเหลือภริยาโดยชอบด้วยกฎหมายชื่อ',{v:''}]);
-    h += lvRow(LVN_L, ny(378), W, ['ซึ่งคลอดบุตรเมื่อวันที่'].concat(lvDP(''), [' จึงขออนุญาตลาไปช่วยเหลือภริยาที่คลอดบุตรตั้งแต่']));
-    h += lvRow(LVN_L, ny(408), W, ['วันที่'].concat(lvDP(r.from), [' ถึงวันที่'], lvDP(r.to), [' มีกำหนด',{v:lvTh(dnum),fix:20},' วันทำการ']));
-    h += lvRow(LVN_L, ny(440), W, ['ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่',{v:ct.addr,left:1}]);
-    h += lvRow(LVN_L, ny(470), W, [{v:''},'หมายเลขโทรศัพท์',{v:ct.phone,fix:120}]);
-    h += lvSignApp(nx(411), ny(536), nm, 16.2);
-    h += lvOpinionOrder({oh:625,o1x:203,o1:659,o2:689,o2e:830,os:735,ch:857,cb:889,c1x:212,c1:921,c2:952,cs:998,xE:653}, sg);
+    const B = k => 347 + 32*k, g = 19.9, dnW = lvTextW('๓๐',16)+12;
+    h += lvRow(LVN_L, ny(B(0)), W, ['มีความประสงค์ลาไปช่วยเหลือภริยาโดยชอบด้วยกฎหมายชื่อ',{v:''}]);
+    /* "ตั้งแต่" เดิมห้อยท้ายบรรทัด → ขึ้นต้นบรรทัดถัดไป ; ช่องวันที่ยืดเต็มถึงขอบขวา */
+    h += lvRowFit(ny(B(1)), pd=>['ซึ่งคลอดบุตรเมื่อวันที่'].concat(lvDateF('',1,pd), [' จึงขออนุญาตลาไปช่วยเหลือภริยาที่คลอดบุตร']));
+    h += lvRowFit(ny(B(2)), pd=>['ตั้งแต่วันที่'].concat(lvDateF(r.from,1,pd), [' ถึงวันที่'], lvDateF(r.to,1,pd)));
+    h += lvRow(LVN_L, ny(B(3)), W, ['มีกำหนด',{v:lvTh(dnum),fix:dnW},' วันทำการ ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่',{v:ct.addr,left:1}]);
+    h += lvRow(LVN_L, ny(B(4)), W, [{v:''},'หมายเลขโทรศัพท์',{v:ct.phone,fix:120}]);
+    /* ลงชื่อผู้ลา: ตำแหน่งแนวนอนเดิม ; ความเห็น/คำสั่ง แบบเดียวกับใบขอยกเลิกวันลา */
+    const app = B(4) + 64;
+    h += lvSignAppA(nx(411), nx(411)+168, ny(app), nm, g);
+    h += lvOpinionOrderA(app + 63, sg, g);
   } else if(kind==='อุปสมบท'){
-    const F = {title:'แบบใบลาอุปสมบท', cx:484, wx:523, dx:489, tx:552, sx:384, subW:560, y:Y({title:80,wr:123,dt:155,sub:226,to:265,me:316,lv:347})};
+    /* แบบใหม่ (21 พ.ย. 2569): ระยะบรรทัดสม่ำเสมอ ; ช่องวันที่เว้น 12pt ; ตัวอักษร 16pt ทั้งหน้า */
+    const F = {title:'แบบใบลาอุปสมบท', cx:484, wx:567, dx:489, tx:552, sx:384, neat:1,
+      y:{title:82, wr:123, dt:163, sub:203, to:243, me:283, lv:315}};
     h += lvnTop(F, nm, s, 'ขอลาอุปสมบท', 'ข้าพเจ้า');
-    const b = lvDateParts(s.birth), st = lvDateParts(s.startDate);
-    h += lvRow(LVN_L, ny(380), W, ['เกิดวันที่',{v:b.d,fix:18},' เดือน',{v:b.m},' พ.ศ.',{v:b.y,fix:30},' เข้ารับราชการเมื่อวันที่',{v:st.d,fix:18},' เดือน',{v:st.m},' พ.ศ.',{v:st.y,fix:30}]);
-    h += lvRow(LVN_L, ny(410), W, ['ข้าพเจ้า',{box:false,w:14},'ยังไม่เคย',{box:false,w:14},'เคย อุปสมบท บัดนี้มีศรัทธาจะอุปสมบทในพระพุทธศาสนา']);
-    h += lvRow(LVN_L, ny(440), W, ['ณ วัด',{v:''},' ตั้งอยู่ ณ',{v:''}]);
-    h += lvRow(LVN_L, ny(470), W, [{v:''},'หมายเลขโทรศัพท์',{v:'',fix:90},' กำหนดอุปสมบท']);
-    h += lvRow(LVN_L, ny(502), W, ['วันที่',{v:'',fix:18},' เดือน',{v:'',fix:50},' พ.ศ.',{v:'',fix:30},' และจะจำพรรษาอยู่ ณ วัด',{v:''}]);
-    h += lvRow(LVN_L, ny(532), W, ['ตั้งอยู่ ณ',{v:''},' จึงขออนุญาตลาอุปสมบท']);
-    h += lvRow(LVN_L, ny(564), W, ['ตั้งแต่วันที่'].concat(lvDP(r.from), [' ถึงวันที่'], lvDP(r.to), [' มีกำหนด',{v:lvTh(dnum),fix:24},' วัน']));
-    h += lvSignApp(nx(421), ny(654), nm, 19.4);
-    h += lvOpinionOrder({oh:716,o1x:187,o1:748,o2:779,os:840,ch:965,cb:996,c1x:187,c1:1027,c2:1058,cs:1115,xE:673}, sg);
+    const B = k => 347 + 32*k, g = 19.9, dnW = lvTextW('๓๐',16)+12;
+    /* เกิดวันที่ + เข้ารับราชการ อยู่บรรทัดเดียว — ระยะเว้นช่องวันที่ลดเฉพาะบรรทัดนี้ให้พอดีกระดาษที่ขนาด 16 */
+    h += lvRowFit(ny(B(0)), pd=>['เกิดวันที่'].concat(lvDateF(s.birth,1,pd), [' เข้ารับราชการเมื่อวันที่'], lvDateF(s.startDate,1,pd)));
+    h += lvRow(LVN_L, ny(B(1)), W, ['ข้าพเจ้า',{box:false,w:14},'ยังไม่เคย',{box:false,w:14},'เคย อุปสมบท บัดนี้มีศรัทธาจะอุปสมบทในพระพุทธศาสนา']);
+    h += lvRow(LVN_L, ny(B(2)), W, ['ณ วัด',{v:''},' ตั้งอยู่ ณ',{v:''}]);
+    h += lvRow(LVN_L, ny(B(3)), W, [{v:''},'หมายเลขโทรศัพท์',{v:'',fix:90},' กำหนดอุปสมบท']);
+    h += lvRow(LVN_L, ny(B(4)), W, ['วันที่'].concat(lvDateF(''), [' และจะจำพรรษาอยู่ ณ วัด',{v:''}]));
+    h += lvRow(LVN_L, ny(B(5)), W, ['ตั้งอยู่ ณ',{v:''},' จึงขออนุญาตลาอุปสมบท']);
+    /* ตั้งแต่…ถึง… กับ มีกำหนด รวมบรรทัดเดียวยาวเกินกระดาษ → แยก "มีกำหนด … วัน" ไปบรรทัดถัดไป */
+    h += lvRowFit(ny(B(6)), pd=>['ตั้งแต่วันที่'].concat(lvDateF(r.from,1,pd), [' ถึงวันที่'], lvDateF(r.to,1,pd)));
+    h += lvRow(LVN_L, ny(B(7)), W, ['มีกำหนด',{v:lvTh(dnum),fix:dnW},' วัน']);
+    const app = B(7) + 64;
+    h += lvSignAppA(nx(411), nx(411)+168, ny(app), nm, g);
+    h += lvOpinionOrderA(app + 63, sg, g);
   } else if(kind==='ฮัจย์'){
-    const F = {title:'แบบใบลาไปประกอบพิธีฮัจย์ ณ เมืองเมกกะ ประเทศซาอุดีอาระเบีย', cx:484, wx:523, dx:489, tx:590, sx:384, subW:560, y:Y({sub:195,to:232,me:272,lv:305})};
+    const F = {title:'แบบใบลาไปประกอบพิธีฮัจย์ ณ เมืองเมกกะ ประเทศซาอุดีอาระเบีย', cx:484, wx:567, dx:489, tx:590, sx:384, neat:1,
+      y:{title:82, wr:123, dt:163, sub:203, to:243, me:283, lv:315}};
     h += lvnTop(F, nm, s, 'ขอลาไปประกอบพิธีฮัจย์', 'ข้าพเจ้า');
-    const st = lvDateParts(s.startDate);
-    h += lvRow(LVN_L, ny(337), nx(470)-LVN_L, ['เข้ารับราชการเมื่อวันที่',{v:st.d,fix:18},' เดือน',{v:st.m},' พ.ศ.',{v:st.y,fix:30}]);
-    h += lvRow(LVN_L, ny(394), W, ['ข้าพเจ้า',{box:false,w:14},'ยังไม่เคย',{box:false,w:14},'เคย ไปประกอบพิธีฮัจย์ บัดนี้ มีศรัทธาจะไปประกอบพิธีฮัจย์']);
-    h += lvRow(LVN_L, ny(427), W, ['ณ เมืองเมกกะ ประเทศซาอุดีอาระเบีย จึงขออนุญาตลาหยุดราชการ ตั้งแต่วันที่',{v:pf.d,fix:18},' เดือน',{v:pf.m}]);
-    h += lvRow(LVN_L, ny(458), W, ['พ.ศ.',{v:pf.y,fix:30},' ถึงวันที่'].concat(lvDP(r.to), [' มีกำหนด',{v:lvTh(dnum),fix:24},' วัน']));
-    h += lvSignApp(nx(411), ny(521), nm, 19.4);
-    h += lvOpinionOrder({oh:613,o1x:187,o1:678,o2:709,os:768,ch:893,cb:922,c1x:187,c1:990,c2:1021,cs:1077,xE:675}, sg);
+    const B = k => 347 + 32*k, g = 19.9, dnW = lvTextW('๓๐',16)+12;
+    h += lvRow(LVN_L, ny(B(0)), W, ['เข้ารับราชการเมื่อวันที่'].concat(lvDateF(s.startDate)));
+    /* ข้อความต่อเนื่องเต็มบรรทัดถึงขอบขวา แล้วตัดคำขึ้นบรรทัดถัดไป (ตัดตามขอบคำภาษาไทย) ;
+       เว้นวรรครอบช่องติ๊กเพิ่ม 4 จุดเท่าๆ กัน ({gap}) ให้บรรทัดแรกจบตรงขอบขวาพอดี */
+    const hTxt = 'เคย ไปประกอบพิธีฮัจย์ บัดนี้ มีศรัทธาจะไปประกอบพิธีฮัจย์ ณ เมืองเมกกะ ประเทศซาอุดีอาระเบีย จึงขออนุญาตลาหยุดราชการ';
+    const hW1 = W - (lvTextW('ข้าพเจ้า',16)+lvTextW('ยังไม่เคย',16))*1.05 - 2*(14+7) - 4;
+    const hl = lvWrapText(hTxt, [hW1, W-4], 16);
+    h += lvRow(LVN_L, ny(B(1)), W, ['ข้าพเจ้า',{gap:1},{box:false,w:14},{gap:1},'ยังไม่เคย',{gap:1},{box:false,w:14},{gap:1},hl[0].replace(/ $/,'')]);
+    h += lvT(LVN_L, ny(B(2)), hl[1]);
+    /* เดิม "ตั้งแต่วันที่…เดือน…" อยู่ท้ายบรรทัด แล้ว "พ.ศ." ถูกตัดไปบรรทัดถัดไป → ให้วันที่ทั้งชุดอยู่บรรทัดเดียวกัน */
+    h += lvRowFit(ny(B(3)), pd=>['ตั้งแต่วันที่'].concat(lvDateF(r.from,1,pd), [' ถึงวันที่'], lvDateF(r.to,1,pd)));
+    h += lvRow(LVN_L, ny(B(4)), W, ['มีกำหนด',{v:lvTh(dnum),fix:dnW},' วัน']);
+    const app = B(4) + 64;
+    h += lvSignAppA(nx(411), nx(411)+168, ny(app), nm, g);
+    h += lvOpinionOrderA(app + 63, sg, g);
   } else { /* ตรวจเลือก */
-    const F = {title:'แบบรายงานลาเข้ารับการตรวจเลือก หรือเข้ารับการเตรียมพล', cx:484, wx:523, dx:489, tx:590, sx:384, subW:560, y:Y({title:82,dt:156,sub:215,to:246,me:277,lv:308})};
+    const F = {title:'แบบรายงานลาเข้ารับการตรวจเลือก หรือเข้ารับการเตรียมพล', cx:484, wx:567, dx:489, tx:590, sx:384, neat:1,
+      y:{title:82, wr:123, dt:163, sub:203, to:243, me:283, lv:315}};
     h += lvnTop(F, nm, s, 'รายงานลาเข้ารับการตรวจเลือก/เตรียมพล', 'ข้าพเจ้า');
-    h += lvRow(LVN_L, ny(339), W, ['ได้รับหมายเรียกของ',{v:''}]);
-    h += lvRow(LVN_L, ny(369), W, ['ที่',{v:''},' ลงวันที่',{v:'',fix:18},' เดือน',{v:'',fix:50},' พ.ศ.',{v:'',fix:30}]);
-    h += lvRow(LVN_L, ny(401), W, ['ให้เข้ารับการ',{v:''},' ณ ที่',{v:''}]);
-    h += lvRow(LVN_L, ny(431), W, [{v:''},' ตั้งแต่วันที่',{v:pf.d,fix:18},' เดือน',{v:pf.m},' พ.ศ.',{v:pf.y,fix:30}]);
-    h += lvRow(LVN_L, ny(462), W, ['ถึงวันที่'].concat(lvDP(r.to), [' มีกำหนด',{v:lvTh(dnum),fix:24},' วัน']));
-    h += lvT(nx(243), ny(522), 'จึงรายงานมาเพื่อโปรดทราบ');
-    h += lvSignApp(nx(411), ny(553), nm, 19.9);
+    const B = k => 347 + 32*k, g = 19.9, dnW = lvTextW('๓๐',16)+12;
+    /* ช่องวันที่กว้างคงที่เท่ากันทุกบรรทัด (เว้น 12pt) ; ช่องว่างให้เขียนเองรับพื้นที่ที่เหลือ */
+    h += lvRow(LVN_L, ny(B(0)), W, ['ได้รับหมายเรียกของ',{v:''}]);
+    h += lvRow(LVN_L, ny(B(1)), W, ['ที่',{v:''},' ลงวันที่'].concat(lvDateF('')));
+    h += lvRow(LVN_L, ny(B(2)), W, ['ให้เข้ารับการ',{v:''},' ณ ที่',{v:''}]);
+    h += lvRow(LVN_L, ny(B(3)), W, [{v:''},' ตั้งแต่วันที่'].concat(lvDateF(r.from)));
+    h += lvRow(LVN_L, ny(B(4)), W, ['ถึงวันที่'].concat(lvDateF(r.to), [' มีกำหนด',{v:lvTh(dnum),fix:dnW},' วัน']));
+    h += lvT(nx(243), ny(B(4)+48), 'จึงรายงานมาเพื่อโปรดทราบ');
+    h += lvSignAppA(nx(411), nx(411)+168, ny(B(4)+80), nm, g);
   }
   LV_FILED = r.recordedDate || null;
   document.getElementById('print-leave-form').innerHTML = lvWrap(h,'vac');
