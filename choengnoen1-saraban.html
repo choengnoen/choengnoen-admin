@@ -2788,7 +2788,7 @@ async function submitLeaveRequest(){
     reason: document.getElementById('lr-reason').value,
     status: 'pending',
     approval: 'pending', /* รออนุมัติที่แท็บภาพรวมหน้าหลัก (ใบลาเดิมที่ไม่มีค่านี้ = ก่อนมีระบบอนุมัติ ไม่ต้องอนุมัติ) */
-    recordedDate: TODAY.toISOString().slice(0,10),
+    recordedDate: __isoOfDate(new Date()),   /* วันที่ตามเวลาไทย (เดิม toISOString เป็นเวลา UTC บันทึกช่วง 00:00–07:00 จะได้วันก่อนหน้า) */
     advanceDays
   };
   const saveBtn = document.getElementById('lr-save-btn');
@@ -3313,7 +3313,9 @@ function lvSignApp(xS,y,nm,g){
 }
 /* ส่วนหัวร่วมของทุกแบบ: ชื่อแบบ / เขียนที่ / วันที่ / เรื่อง / เรียน / ข้าพเจ้า–ตำแหน่ง / ระดับ–สังกัด */
 function lvnTop(F, nm, s, subject, whoLabel){
-  const td = TODAY, rl = lvRoleLevel(s.role), Y = F.y;
+  /* วันที่หัวใบลา = วันที่บันทึกรายการ (LV_FILED) ; ไม่มี/ผิดรูปแบบ (ใบลาเก่า, ใบยกเลิกวันลา) = วันนี้ */
+  const fd = LV_FILED ? new Date(LV_FILED+'T00:00:00') : null;
+  const td = (fd && !isNaN(fd)) ? fd : TODAY, rl = lvRoleLevel(s.role), Y = F.y;
   let h = '';
   h += lvTitle(nx(F.cx), ny(Y.title), F.title);
   h += lvLead(nx(F.wx), ny(Y.wr), LVN_R-nx(F.wx), '(เขียนที่)') + lvV(nx(F.wx)+41.8, LVN_R, ny(Y.wr), 'หมวดทางหลวงเชิงเนิน', {lead:2});
