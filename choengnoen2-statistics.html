@@ -867,6 +867,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .dwt-item::before{content:'';position:absolute;left:-25px;top:19px;width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--orange-500);}
   .dwt-item.pend::before{background:#fdf3df;}
   .dwt-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 16px;box-shadow:0 1px 2px rgba(10,37,64,.05),0 10px 22px -16px rgba(10,37,64,.16);cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+  .dwt-card.bad{border:2px solid #d92d20;background:#fff8f7;box-shadow:0 0 0 3px rgba(217,45,32,.12);}
+  .dwt-item.bad::before{border-color:#d92d20;}
+  .dwt-bad-tag{display:inline-block;margin-top:6px;font-size:12px;font-weight:600;color:#b42318;}
   .dwt-card:hover{border-color:var(--orange-500);box-shadow:0 8px 20px -12px rgba(10,37,64,.3);}
   .dwt-h{display:flex;gap:10px;align-items:center;}
   .dwt-code{font-family:'Kanit',sans-serif;font-size:12px;font-weight:600;background:var(--navy-900);color:#fff;border-radius:6px;padding:1px 8px;white-space:nowrap;}
@@ -6006,12 +6009,24 @@ function dwQtyHtml(d){
     ? '<span class="pill pill-warn">รอปริมาณงาน</span>'+(d.unit ? ' <span style="color:var(--ink-400)">หน่วย '+esc(d.unit)+'</span>' : '')
     : '<b>'+fmtQtyShort(d.qty)+'</b> '+esc(d.unit||'');
 }
+/* ความผิดปกติของใบ (ล้อมกรอบแดงในรายการ): มีผู้ปฏิบัติงานลาในวันนั้น หรือชื่อซ้ำกับใบอื่นวันเดียวกัน (ใช้เกณฑ์เดียวกับคำเตือนตอนกรอกฟอร์ม) */
+function dwProblems(d){
+  const staff = dwStaffNames(d), out = [];
+  const leaves = getLeaveHistoryX();
+  const onLeave = staff.filter(n=> leaves.some(l=>l.name===n && l.from<=d.date && d.date<=l.to));
+  if(onLeave.length) out.push('มีผู้ปฏิบัติงานที่ลาในวันนี้ '+onLeave.length+' คน');
+  const dup = staff.filter(n=> dailyWorkOrders.some(x=>x.date===d.date && x.no!==d.no && x.code!==d.code && dwStaffNames(x).includes(n)));
+  if(dup.length) out.push('มีผู้ปฏิบัติงานซ้ำกับรหัสงานอื่นวันเดียวกัน '+dup.length+' คน');
+  return out;
+}
 function dwTimelineHtml(list){
   return '<div class="dwt-list">'+list.map(d=>{
     const job = findJob(d.code), crews = dwCrewNames(d), n = dwStaffNames(d).length;
-    return `<div class="dwt-item ${d.qtyPending?'pend':''}"><div class="dwt-card" ondblclick="if(!event.target.closest('button,a,input,select,textarea'))openDwView(${d.no})">
+    const probs = dwProblems(d), bad = probs.length ? ' bad' : '';
+    return `<div class="dwt-item ${d.qtyPending?'pend':''}${bad}"><div class="dwt-card${bad}" ondblclick="if(!event.target.closest('button,a,input,select,textarea'))openDwView(${d.no})">
       <div class="dwt-h"><span class="dwt-code">${esc(d.code)}</span><div class="dwt-name">${esc(job?job.name:'')}</div><div class="dwt-amt">${fmtMoney(dwTotal(d))}</div></div>
       <div class="dwt-meta"><span>📍 ${esc(dwPlaceText(d))}</span><span>${dwQtyHtml(d)}</span><span>👥 ${crews.length ? esc(crews.join(', '))+' · ' : ''}${n} คน</span></div>
+      ${probs.length ? `<div class="dwt-bad-tag">⚠ ผิดปกติ — ต้องตรวจสอบ: ${esc(probs.join(' · '))}</div>` : ''}
     </div></div>`;
   }).join('')+'</div>';
 }
