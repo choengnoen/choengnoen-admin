@@ -3317,12 +3317,23 @@ function lvnTop(F, nm, s, subject, whoLabel){
   let h = '';
   h += lvTitle(nx(F.cx), ny(Y.title), F.title);
   h += lvLead(nx(F.wx), ny(Y.wr), LVN_R-nx(F.wx), '(เขียนที่)') + lvV(nx(F.wx)+41.8, LVN_R, ny(Y.wr), 'หมวดทางหลวงเชิงเนิน', {lead:2});
+  if(F.neat){
+    /* (ใบลาพักผ่อน) วันที่: ช่องกว้าง = ข้อความยาวสุด + เว้นหน้า-หลังรวม 12pt ; ช่องเดือนอิงเดือนที่ยาวที่สุด ; ทั้งบรรทัดจบที่ขอบขวา */
+    const PAD = 12;
+    const fd = lvTextW('๓๐',16)+PAD, fm = Math.max(...THAI_MONTH_FULL.map(m=>lvTextW(m,16)))+PAD, fyw = lvTextW('๒๕๖๙',16)+PAD;
+    const w = (lvTextW('วันที่',16)+lvTextW(' เดือน',16)+lvTextW(' พ.ศ.',16))*1.05 + fd + fm + fyw;
+    h += lvRow(LVN_R-w, ny(Y.dt), w, ['วันที่',{v:lvTh(td.getDate()),fix:fd},' เดือน',{v:THAI_MONTH_FULL[td.getMonth()],fix:fm},' พ.ศ.',{v:lvTh(td.getFullYear()+543)}]);
+    /* เรื่อง / เรียน: หัวข้อ + เว้นวรรค 2 ครั้ง */
+    h += lvT(LVN_L, ny(Y.sub), 'เรื่อง  '+esc(subject));
+    h += lvT(LVN_L, ny(Y.to), 'เรียน  ผอ.ขท.ระยอง');
+  } else {
   const dx = nx(F.dx||489);
   h += lvLead(dx, ny(Y.dt), 38, 'วันที่') + lvLead(dx+41.4, ny(Y.dt), 118, 'เดือน') + lvLead(dx+163.6, ny(Y.dt), LVN_R-dx-163.6, 'พ.ศ.');
   h += lvV(dx+19, dx+38, ny(Y.dt), lvTh(td.getDate()), {center:1}) + lvV(dx+64, dx+157, ny(Y.dt), THAI_MONTH_FULL[td.getMonth()], {center:1}) + lvV(dx+183, LVN_R, ny(Y.dt), lvTh(td.getFullYear()+543), {center:1});
   /* เรื่อง / เรียน: ข้อความพิมพ์ไว้แล้ว ไม่มีเส้นจุดต่อท้าย และเริ่มที่แนวเดียวกัน (เว้นวรรคเท่ากัน) */
   h += lvT(LVN_L, ny(Y.sub), 'เรื่อง') + lvT(LVN_L+34, ny(Y.sub), esc(subject));
   h += lvT(LVN_L, ny(Y.to), 'เรียน') + lvT(LVN_L+34, ny(Y.to), 'ผอ.ขท.ระยอง');
+  }
   const mx = nx(243), tx = nx(F.tx);
   h += lvRow(mx, ny(Y.me), tx-2.6-mx, [whoLabel||'ข้าพเจ้า', {v:nm}]);
   h += lvRow(tx, ny(Y.me), LVN_R-tx, ['ตำแหน่ง', {v:rl.pos}]);
@@ -3346,38 +3357,64 @@ function buildFormVac(name, s, from, to, days, cover, contact, stats, fy){
   const carried = (s.vacCarry!=null && s.vacCarry!=='' && (s.vacCarryFy==null || Number(s.vacCarryFy)===fy)) ? Number(s.vacCarry) : (isTemp ? 0 : null);
   const nm = String(name).trim(), dnum = parseInt(days||0);
   LV_BASE = 12.7; LV_DY = 0;
-  const F = {title:'แบบใบลาพักผ่อน', cx:484, wx:567, dx:489, tx:552, sx:384, subW:0,
-    y:{title:82, wr:123, dt:161, sub:203, to:243, me:272, lv:305}};
+  /* ระยะบรรทัดสม่ำเสมอ: ส่วนหัว (เขียนที่→วันที่→เรื่อง→เรียน→ข้าพเจ้า) ห่างกัน 40px ≈ 26pt ; เนื้อความห่างกัน 32px ≈ 20.7pt */
+  const F = {title:'แบบใบลาพักผ่อน', cx:484, wx:567, dx:489, tx:552, sx:384, subW:0, neat:1,
+    y:{title:82, wr:123, dt:163, sub:203, to:243, me:283, lv:315}};
   let h = lvnTop(F, nm, s, 'ขอลาพักผ่อน', 'ข้าพเจ้า');
-  h += lvRow(LVN_L, ny(337), LVN_R-LVN_L, ['มีวันลาพักผ่อนสะสม',{v:carried==null?'':lvTh(carried)},' วันทำการ มีสิทธิลาพักผ่อนประจำปีนี้อีก',{v:carried==null?'':'๑๐'},' วันทำการ รวมเป็น',{v:carried==null?'':lvTh(carried+10)},' วันทำการ']);
-  h += lvRow(LVN_L, ny(367), LVN_R-LVN_L, ['ขอลาพักผ่อนตั้งแต่วันที่'].concat(lvDP(from), [' ถึงวันที่'], lvDP(to), [' มีกำหนด',{v:lvTh(dnum),fix:18},' วัน']));
+  h += lvRow(LVN_L, ny(347), LVN_R-LVN_L, ['มีวันลาพักผ่อนสะสม',{v:carried==null?'':lvTh(carried)},' วันทำการ มีสิทธิลาพักผ่อนประจำปีนี้อีก',{v:carried==null?'':'๑๐'},' วันทำการ รวมเป็น',{v:carried==null?'':lvTh(carried+10)},' วันทำการ']);
+  /* "มีกำหนด … วัน" ขึ้นต้นบรรทัดถัดไป — บรรทัดเดียวยาวเกินกระดาษ (ต้องใช้ ~514pt มี 457pt) ทำให้ตัวอักษรถูกย่อ ; แยกแล้วทุกบรรทัดเป็น 16pt */
   const ct = lvContact(contact, s);
-  h += lvRow(LVN_L, ny(399), LVN_R-LVN_L, ['ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่',{v:ct.addr,left:1}]);
-  h += lvRow(LVN_L, ny(431), LVN_R-LVN_L, [{v:''},'หมายเลขโทรศัพท์',{v:ct.phone,fix:130}]);
-  h += lvSignApp(nx(449), ny(491), nm, 19.4);
+  h += lvRow(LVN_L, ny(379), LVN_R-LVN_L, ['ขอลาพักผ่อนตั้งแต่วันที่'].concat(lvDP(from), [' ถึงวันที่'], lvDP(to)));
+  h += lvRow(LVN_L, ny(411), LVN_R-LVN_L, ['มีกำหนด',{v:lvTh(dnum),fix:18},' วัน ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่',{v:ct.addr,left:1}]);
+  h += lvRow(LVN_L, ny(443), LVN_R-LVN_L, [{v:''},'หมายเลขโทรศัพท์',{v:ct.phone,fix:130}]);
+  /* ส่วนล่างทั้งหมดเลื่อนลงตามระยะส่วนหัวที่เพิ่ม (12px) */
+  LV_DY = Math.round(12*LVN_K*10)/10;
+  /* แนวคอลัมน์: เส้นกลาง = กึ่งกลางพื้นที่พิมพ์ (ซ้าย/ขวากว้างเท่ากัน) ; rx = พิกัดฝั่งขวาเดิมเลื่อนตามเส้นกลาง ; RE = แนวหลังฝั่งขวา */
+  const CX = Math.round((LVN_L+LVN_R)/2*10)/10, rx = v => nx(v) + CX - nx(466), RE = rx(745)+4, g = 19.9;
+  /* ลงชื่อผู้ลา: เริ่มชิดเส้นกลาง */
+  h += lvSignAppA(CX, rx(478)+168, ny(491), nm, g);
   /* สถิติการลา */
   h += lvT(LVN_L, ny(549), 'สถิติการลาในปีงบประมาณนี้', {u:1});
   const cx = [124,235,347,458].map(nx), ty = [598,660,692].map(v=>Math.round(v*LVN_K*10)/10);
   h += ty.map(y=>lvHL(cx[0],cx[3],y)).join('') + cx.map(x=>lvVL(x,ty[0],ty[2])).join('');
   ['ลามาแล้ว','ลาครั้งนี้','รวมเป็น'].forEach((t,k)=>{ h += lvCT(cx[k],cx[k+1],ny(614),t) + lvCT(cx[k],cx[k+1],ny(645),'(วันทำการ)'); });
   h += lvV(cx[0],cx[1],lvCy(676),lvTh(stats.vac),{center:1,flat:1}) + lvV(cx[1],cx[2],lvCy(676),lvTh(dnum),{center:1,flat:1}) + lvV(cx[2],cx[3],lvCy(676),lvTh(stats.vac+dnum),{center:1,flat:1});
-  /* ผู้ตรวจสอบ (ซ้าย) */
-  const g = 19.9;
-  h += lvLead(LVN_L, ny(727), nx(369)-LVN_L, '(ลงชื่อ)') + lvT(nx(370), ny(727), 'ผู้ตรวจสอบ');
-  h += lvLead(nx(163), ny(758), nx(393)-1.5-nx(163), '(') + lvT(nx(393), ny(758), ')');
-  h += lvLead(LVN_L, ny(788), nx(377)-LVN_L, '(ตำแหน่ง)');
-  h += lvLine(nx(158), ny(820), nx(358)-nx(158), 'วันที่'+'....'+'/'+'........'+'/'+'......');
+  /* ผู้ตรวจสอบ (ซ้าย) — รูปแบบเดียวกับบล็อกลงนามขวา ; "ผู้ตรวจสอบ" อยู่หลังแนว จบไม่เกินขอบขวาตารางสถิติ */
+  const wck = lvTextW('ผู้ตรวจสอบ',16), LE = Math.min(LVN_L+(RE-CX), cx[3]-1-wck);
+  h += lvSignBlkA(LVN_L, LE, ny(727), '', '', g, 'ผู้ตรวจสอบ');
   /* ความเห็นผู้บังคับบัญชา (ขวา) */
-  const sg = lvChiefSigner(nm, cover);
-  h += lvT(nx(466), ny(727), 'ความเห็นผู้บังคับบัญชา', {u:1});
-  h += lvDots(nx(523), ny(760), nx(810)-nx(523)) + lvDots(nx(466), ny(792), nx(802)-nx(466));
-  h += lvSignBlk(nx(478), nx(745), ny(822), sg.name, sg.pos, g);
+  const sg = lvChiefSigner(nm, cover), RA = CX + lvTextW('(ตำแหน่ง)',16);
+  h += lvT(CX, ny(727), 'ความเห็นผู้บังคับบัญชา', {u:1});
+  h += lvDots(RA, ny(760), RE-RA) + lvDots(CX, ny(792), RE-CX);
+  h += lvSignBlkA(CX, RE, ny(822), sg.name, sg.pos, g);
   /* คำสั่ง (ขวาล่าง) — เว้นว่างให้ผู้สั่งการเขียนเอง */
-  h += lvT(nx(474), ny(942), 'คำสั่ง', {u:1});
-  h += lvBoxAt(nx(484), ny(973), false, 10) + lvT(nx(511), ny(973), 'อนุญาต') + lvBoxAt(nx(606), ny(973), false, 10) + lvT(nx(632), ny(973), 'ไม่อนุญาต');
-  h += lvDots(nx(516), ny(1007), nx(836)-nx(516)) + lvDots(nx(461), ny(1038), nx(836)-nx(461));
-  h += lvSignBlk(nx(494), nx(765), ny(1068), '', '', g);
+  h += lvT(CX, ny(942), 'คำสั่ง', {u:1});
+  h += lvBoxAt(rx(484), ny(973), false, 10) + lvT(rx(511), ny(973), 'อนุญาต') + lvBoxAt(rx(606), ny(973), false, 10) + lvT(rx(632), ny(973), 'ไม่อนุญาต');
+  h += lvDots(RA, ny(1007), RE-RA) + lvDots(CX, ny(1038), RE-CX);
+  h += lvSignBlkA(CX, RE, ny(1068), '', '', g);
+  LV_DY = 0;
   document.getElementById('print-leave-form').innerHTML = lvWrap(h,'vac');
+}
+/* ---------- เครื่องมือบล็อกลงนามแบบจัดแนว (ใช้ในใบลาพักผ่อน) ---------- */
+/* ข้อความชิดขวา จบที่ xR พอดี */
+function lvRT(xR,y,s){ return `<div class="lv-t" style="left:${xR-120}pt;width:120pt;text-align:right;top:${y+LV_DY-LV_BASE}pt">${s}</div>`; }
+/* ช่องวันที่ วัน/เดือน/ปี สัดส่วน 6:11:9 — วัน ๒ หลัก / เดือน (ชื่อย่อหรือเลข) / ปี พ.ศ. ๔ หลัก */
+function lvDateSlots(A,y,E){ return lvLine(A,y,E-A,'......'+'/'+'...........'+'/'+'.........'); }
+/* บล็อกลงนาม 4 บรรทัด: "(ตำแหน่ง)" เริ่มที่ px ; "(ลงชื่อ)" "(" "วันที่" ชิดขวาจบที่แนว A = ท้าย "(ตำแหน่ง)" ; เส้นจุดเริ่มที่ A ;
+   ทุกบรรทัดจบที่แนวหลัง E (")" ชิดขวาที่ E) ; after = ข้อความต่อท้ายบรรทัดลงชื่อ (เช่น "ผู้ตรวจสอบ") วางหลังแนว E ; g = ระยะบรรทัด (pt) */
+function lvSignBlkA(px,E,y,name,role,g,after){
+  const A = px + lvTextW('(ตำแหน่ง)',16), pw = lvTextW(')',16);
+  return lvRT(A,y,'(ลงชื่อ)') + lvDots(A,y,E-A) + (after ? lvT(E+1,y,after) : '')
+    + lvRT(A,y+g,'(') + lvDots(A,y+g,E-pw-1-A) + lvRT(E,y+g,')') + lvV(A+1,E-pw-1,y+g,name||'',{center:1})
+    + lvRT(A,y+2*g,'(ตำแหน่ง)') + lvDots(A,y+2*g,E-A) + lvV(A+1,E,y+2*g,role||'',{center:1})
+    + lvRT(A,y+3*g,'วันที่') + lvDateSlots(A,y+3*g,E);
+}
+/* ลงชื่อผู้ลา 2 บรรทัด: "(ลงชื่อ)" เริ่มที่ x0 ; "(" จบที่ท้าย "(ลงชื่อ)" ; ทั้งสองบรรทัดจบที่ E (ยืดตามความยาวชื่อ ไม่เกินขอบขวา) */
+function lvSignAppA(x0,eMin,y,nm,g){
+  const A = x0 + lvTextW('(ลงชื่อ)',16), pw = lvTextW(')',16);
+  const E = Math.min(LVN_R, Math.max(eMin, A+lvTextW(nm)+pw+18));
+  return lvRT(A,y,'(ลงชื่อ)') + lvDots(A,y,E-A)
+    + lvRT(A,y+g,'(') + lvDots(A,y+g,E-pw-1-A) + lvRT(E,y+g,')') + lvV(A+1,E-pw-1,y+g,nm,{center:1});
 }
 
 /* ---------- แบบใบลาป่วย ลาคลอดบุตร ลากิจส่วนตัว ---------- */
