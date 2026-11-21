@@ -1458,10 +1458,15 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               บันทึกการใช้รถรายวัน
             </h2>
             <div class="toolbar" style="flex-wrap:nowrap;">
-              <input type="date" id="vd-date" class="edit-input" style="width:150px;flex:none;" onchange="vdGoDate(this.value)">
+              <select id="vd-fy" data-fy class="edit-input" style="width:175px;flex:none;" onchange="vdOnMonthPick()"></select>
+              <select id="vd-month" class="edit-input" style="width:80px;flex:none;" onchange="vdOnMonthPick()">
+                <option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option>
+                <option value="1">ม.ค.</option><option value="2">ก.พ.</option><option value="3">มี.ค.</option>
+                <option value="4">เม.ย.</option><option value="5">พ.ค.</option><option value="6">มิ.ย.</option>
+                <option value="7">ก.ค.</option><option value="8">ส.ค.</option><option value="9">ก.ย.</option>
+              </select>
               <span class="tb-sep"></span>
-              <button type="button" class="btn btn-ghost btn-ic" data-ic="doc" data-tip="ดูแบบฟอร์ม EC 1-W รายคัน" onclick="vdOpenOldTab('machinery')"></button>
-              <button type="button" class="btn btn-ghost btn-ic" data-ic="hist" data-tip="รายการใบขอใช้รถ พ.4-08 ทั้งหมด" onclick="vdOpenOldTab('vehreq')"></button>
+              <button type="button" class="btn btn-ghost btn-ic" data-ic="calchk" data-tip="ปฏิทินภาพรวมการบันทึก/ตรวจรายเดือน" onclick="openVdCal()"></button>
             </div>
           </div>
           <div id="vd-wrap" class="grid-wrap"></div>
@@ -1567,6 +1572,18 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
       <button type="button" class="modal-close" onclick="closeFuelCal()">✕</button>
     </div>
     <div class="modal-body" id="fuel-cal-body"></div>
+  </div>
+</div>
+
+<!-- ============ ปฏิทินภาพรวมรายเดือน ใช้รถรายวัน ============ -->
+<div class="modal-overlay hidden no-print" id="vd-cal-overlay">
+  <div class="modal-box modal-l">
+    <div class="modal-head">
+      <div class="modal-head-icon" data-ic="calchk" style="color:#fff;"></div>
+      <h3>ปฏิทินภาพรวมการใช้รถรายวัน</h3>
+      <button type="button" class="modal-close" onclick="closeVdCal()">✕</button>
+    </div>
+    <div class="modal-body" id="vd-cal-body"></div>
   </div>
 </div>
 
@@ -6869,6 +6886,148 @@ const VD_HR = ['W','M','C','V','O','F','R','S'];
 const VD_USE = ['W','M','C','V','O'];
 let vdDate = null, vdDraft = {}, vdDraftDate = null, vdOpenRow = null;
 const vdAdded = {};
+/* ---- ตรวจ/ยืนยันรายวัน (เหมือน พ.1-03) — ตาราง veh_day_checks (1 วัน = 1 รายการ, dayKey 'YYYY-MM-DD')
+   ผู้มีสิทธิ์ตรวจ (canCheckFuel = เจ้าของระบบ/หมวด/ผู้ช่วยหมวด) ติ๊ก "ตรวจแล้ว" รายคัน → กด "ยืนยันตรวจครบทั้งวัน" = ล็อกวัน แก้ไม่ได้จนกว่าจะปลดล็อก ---- */
+let vehDayChecks = {};
+async function loadVehDayChecksFromApi(){
+  try{
+    (await apiGet('veh_day_checks')).forEach(r=>{
+      vehDayChecks[r.dayKey] = {checked:Array.isArray(r.checkedJson)?r.checkedJson:[], checkedBy:r.checkedBy||'', checkedAt:r.checkedAt||'',
+        confirmed:!!r.confirmed, confirmedBy:r.confirmedBy||'', confirmedAt:r.confirmedAt||''};
+    });
+  }catch(err){
+    console.error('โหลดสถานะตรวจการใช้รถรายวันจากฐานข้อมูลกลางไม่สำเร็จ', err);
+  }
+}
+function vdDayRec(date){ return vehDayChecks[date] || {checked:[], confirmed:false}; }
+async function vdSaveDayCheck(date, patch){
+  const next = Object.assign({checked:[], checkedBy:'', checkedAt:'', confirmed:false, confirmedBy:'', confirmedAt:''}, vehDayChecks[date]||{}, patch);
+  await apiPost('update', 'veh_day_checks', {dayKey:date, checkedJson:next.checked, checkedBy:next.checkedBy, checkedAt:next.checkedAt,
+    confirmed:next.confirmed?'1':'', confirmedBy:next.confirmedBy, confirmedAt:next.confirmedAt});
+  vehDayChecks[date] = next;
+}
+async function vdToggleCheck(date, label){
+  if(!canCheckFuel() || vdDayRec(date).confirmed) return;
+  if(vdDraftDate===date && vdDraft[label]){ showAlertModal('คันนี้มีการแก้ไขที่ยังไม่ได้บันทึก — กด "บันทึก" ก่อนติ๊กตรวจ'); return; }
+  if(!ec1wFindLog(label, date)){ showAlertModal('คันนี้ยังไม่ได้บันทึกการใช้รถของวันนี้ — บันทึกก่อนจึงติ๊กตรวจได้'); return; }
+  const set = new Set(vdDayRec(date).checked);
+  if(set.has(label)) set.delete(label); else set.add(label);
+  try{ await vdSaveDayCheck(date, {checked:Array.from(set), checkedBy:apiCurrentUsername(), checkedAt:new Date().toISOString()}); }
+  catch(err){ showAlertModal('บันทึกสถานะ "ตรวจแล้ว" ไม่สำเร็จ: '+err.message); return; }
+  renderVehDay();
+}
+function vdConfirmDay(date){
+  if(!canCheckFuel()) return;
+  if(vdDraftDate===date && Object.keys(vdDraft).length){ showAlertModal('ยังมีการแก้ไขที่ยังไม่ได้กดบันทึก — กรุณากด "บันทึก" หรือ "ล้างการแก้ไข" ก่อนยืนยันตรวจ'); return; }
+  const rows = vdRowsFor(date), ck = new Set(vdDayRec(date).checked);
+  const notRec = rows.filter(v=>!ec1wFindLog(v.label, date)), notCk = rows.filter(v=>ec1wFindLog(v.label, date) && !ck.has(v.label));
+  if(notRec.length){ showAlertModal('ยังไม่ได้บันทึกการใช้รถ '+notRec.length+' คัน: '+notRec.map(v=>vehicleShortName(v.label)+' '+vehicleRegNo(v.label)).join(', ')+'\nเลือกสถานะให้ครบทุกคันก่อน (คันที่ไม่ได้ใช้ ให้เลือก "ไม่ได้ใช้รถ" หรือ "วันหยุด")'); return; }
+  if(notCk.length){ showAlertModal('ยังไม่ได้ติ๊กตรวจ '+notCk.length+' คัน — ติ๊กช่อง "ตรวจแล้ว" ให้ครบก่อน'); return; }
+  showConfirmModal('ยืนยันตรวจครบทั้งวัน', `ยืนยันว่าตรวจการใช้รถของ ${fuelShortDate(date)} ครบถ้วนแล้ว?\nหลังยืนยัน วันนี้จะแก้ไขไม่ได้ จนกว่าผู้มีสิทธิ์ตรวจจะปลดล็อก`, 'ยืนยัน', async function(){
+    try{ await vdSaveDayCheck(date, {confirmed:true, confirmedBy:apiCurrentUsername(), confirmedAt:new Date().toISOString()}); }
+    catch(err){ showAlertModal('บันทึกการยืนยันตรวจไม่สำเร็จ: '+err.message); return; }
+    renderVehDay();
+  });
+}
+function vdUnlockDay(date){
+  if(!canCheckFuel()) return;
+  showConfirmModal('ปลดล็อกวันที่ตรวจแล้ว', `ปลดล็อก ${fuelShortDate(date)}? หลังปลดล็อกจะแก้ไขการใช้รถของวันนี้ได้อีกครั้ง (รายการที่ติ๊กตรวจแล้วยังคงอยู่)`, 'ปลดล็อก', async function(){
+    try{ await vdSaveDayCheck(date, {confirmed:false, confirmedBy:'', confirmedAt:''}); }
+    catch(err){ showAlertModal('ปลดล็อกไม่สำเร็จ: '+err.message); return; }
+    renderVehDay();
+  });
+}
+/* ---- ปีงบ/เดือน มุมขวาบน + ปฏิทินภาพรวมรายเดือน (หน้าตาเดียวกับ พ.1-03) ---- */
+function vdSyncPickers(date){
+  const fySel = document.getElementById('vd-fy'), mSel = document.getElementById('vd-month');
+  if(!fySel || !mSel) return;
+  const fm = fyMonthOf(String(date).slice(0,7));
+  const years = Array.from(new Set([2569, 2570, TODAY.getFullYear()+543, fm.fy].filter(y=>y>=2569))).sort((a,b)=>b-a);
+  const have = Array.from(fySel.options).map(o=>+o.value).join(',');
+  if(have!==years.join(',')) fySel.innerHTML = years.map(y=>`<option value="${y}">ปีงบประมาณ ${y}</option>`).join('');
+  if(+fySel.value!==fm.fy) fySel.value = String(fm.fy);
+  if(+mSel.value!==fm.month) mSel.value = String(fm.month);
+}
+/* เลือกปีงบ/เดือนใหม่ → เดือนปัจจุบันไปวันนี้ ไม่งั้นไปวันทำการแรกของเดือน */
+function vdOnMonthPick(){
+  const mk = ledgerMonthKey('vd-fy','vd-month');
+  const todayIso = toLocalISODate(TODAY);
+  let iso;
+  if(monthKeyOf(todayIso)===mk) iso = todayIso;
+  else { const d = daysInMonthArr(mk).find(x=>!isWeekendDay(mk, x.day) && !x.hol) || daysInMonthArr(mk)[0]; iso = dateStrFor(mk, d.day); }
+  vdGoDate(iso);
+}
+let vdCalMk = null;
+function vdCalStatus(iso){
+  const rows = vdRowsFor(iso), rec = vdDayRec(iso), ck = new Set(rec.checked||[]);
+  let done = 0, warn = 0, km = 0;
+  rows.forEach(v=>{
+    if(!ec1wFindLog(v.label, iso)) return;
+    done++;
+    const d = vdBase(v, iso);
+    if(!ck.has(v.label) && vdFlags(v, d, iso).length) warn++;
+    const dd = vdDist(v, d, iso); if(dd && dd.val>0 && !vdByHour(v)) km += dd.val;
+  });
+  return { st: rec.confirmed ? 'ok' : !done ? 'none' : warn ? 'bad' : 'wait', rec, warn, done, total: rows.length, ck: rows.filter(v=>ck.has(v.label)).length, km };
+}
+function openVdCal(){
+  vdCalMk = vdCurDate().slice(0,7);
+  renderVdCal();
+  document.getElementById('vd-cal-overlay').classList.remove('hidden');
+}
+function closeVdCal(){ document.getElementById('vd-cal-overlay').classList.add('hidden'); }
+/* ใช้ชุดคลาส fc-* ของปฏิทิน พ.1-03 แต่ข้อความตามงานใช้รถ (ไม่แก้ dayCalHtml ที่ พ.1-02/พ.1-03 ใช้ร่วมกัน) */
+function renderVdCal(){
+  const box = document.getElementById('vd-cal-body');
+  if(!box || !vdCalMk) return;
+  const mk = vdCalMk, [yy,mm] = mk.split('-').map(Number), todayIso = toLocalISODate(TODAY), curIso = vdCurDate();
+  const count = {ok:0, bad:0, wait:0, none:0};
+  const lead = (new Date(yy, mm-1, 1).getDay()+6)%7;
+  let cells = '<div></div>'.repeat(lead);
+  daysInMonthArr(mk).forEach(d=>{
+    const iso = dateStrFor(mk, d.day), s = vdCalStatus(iso);
+    const off = isWeekendDay(mk, d.day) || !!d.hol, future = iso>todayIso;
+    let stHtml = '', tip = '';
+    if(s.st==='ok'){
+      stHtml = `<div class="fc-st">🔒<span class="fc-t"> ยืนยันครบ</span></div><div class="fc-sub">${s.done} คัน</div>`;
+      tip = 'ยืนยันตรวจครบแล้ว'+(s.rec.confirmedBy?' — '+s.rec.confirmedBy:'')+(s.rec.confirmedAt?' · '+fuelStamp(s.rec.confirmedAt):'');
+    } else if(s.st==='bad'){
+      stHtml = `<div class="fc-st">⚠<span class="fc-t"> ผิดปกติ ${s.warn}</span></div><div class="fc-sub">บันทึก ${s.done}/${s.total} · ตรวจ ${s.ck}</div>`;
+      tip = 'พบข้อสังเกต '+s.warn+' คัน · บันทึกแล้ว '+s.done+'/'+s.total+' · ตรวจแล้ว '+s.ck;
+    } else if(s.st==='wait'){
+      const allRec = s.done>=s.total, allCk = allRec && s.ck>=s.done;
+      stHtml = `<div class="fc-st">⏳<span class="fc-t"> ${!allRec?'บันทึกไม่ครบ':allCk?'รอกดยืนยัน':'รอตรวจ'}</span></div><div class="fc-sub">บันทึก ${s.done}/${s.total} · ตรวจ ${s.ck}</div>`;
+      tip = 'บันทึกแล้ว '+s.done+'/'+s.total+' · ตรวจแล้ว '+s.ck;
+    } else if(!off && !future){
+      stHtml = '<div class="fc-mut">ยังไม่บันทึก</div>';
+      count.none++;
+    }
+    if(s.st!=='none') count[s.st]++;
+    if(d.hol){ stHtml += `<div class="fc-mut fc-holn">${esc(d.hol)}</div>`; tip = d.hol+(tip?' · '+tip:''); }
+    const corner = s.km ? fmtNum(s.km,0)+' กม.' : '';
+    cells += `<button type="button" class="fc-d fc-${s.st}${off?' off':''}${iso===todayIso?' today':''}${iso===curIso?' cur':''}" data-fcal="${iso}"${tip?` data-tip="${esc(tip)}"`:''}>
+      <span class="fc-top"><b>${d.day}</b>${corner?`<small>${corner}</small>`:''}</span>${stHtml}</button>`;
+  });
+  const prev = dayCalShiftMk(mk,-1), next = dayCalShiftMk(mk,1);
+  box.innerHTML = `<div class="fc-head">
+      <button type="button" class="btn btn-ghost btn-ic" data-ic="left" data-fcalmk="${prev}" data-tip="เดือนก่อนหน้า"${dayCalCanGo(prev,'vd-fy')?'':' disabled'}></button>
+      <h4>${monthNamesTh[mm-1]} ${yy+543}</h4>
+      <button type="button" class="btn btn-ghost btn-ic" data-ic="right" data-fcalmk="${next}" data-tip="เดือนถัดไป"${dayCalCanGo(next,'vd-fy')?'':' disabled'}></button></div>
+    <div class="fc-sum">
+      <div class="fc-s fc-ok"><b>${count.ok}</b><span>🔒 ยืนยันตรวจครบแล้ว</span></div>
+      <div class="fc-s fc-bad"><b>${count.bad}</b><span>⚠ พบข้อมูลผิดปกติ</span></div>
+      <div class="fc-s fc-wait"><b>${count.wait}</b><span>⏳ บันทึก/ตรวจยังไม่เสร็จ</span></div>
+      <div class="fc-s fc-none"><b>${count.none}</b><span>วันทำการที่ยังไม่บันทึก</span></div>
+    </div>
+    <div class="fc-grid">${[['จันทร์','จ.'],['อังคาร','อ.'],['พุธ','พ.'],['พฤหัสบดี','พฤ.'],['ศุกร์','ศ.'],['เสาร์','ส.'],['อาทิตย์','อา.']].map(w=>`<div class="fc-w"><span class="fc-wf">${w[0]}</span><span class="fc-ws">${w[1]}</span></div>`).join('')}${cells}</div>
+    <div class="fc-note">กดที่วันเพื่อไปยังหน้าบันทึกของวันนั้น</div>`;
+}
+document.getElementById('vd-cal-body')?.addEventListener('click', function(e){
+  const mkBtn = e.target.closest('[data-fcalmk]');
+  if(mkBtn){ if(!mkBtn.disabled){ vdCalMk = mkBtn.dataset.fcalmk; renderVdCal(); } return; }
+  const day = e.target.closest('[data-fcal]');
+  if(day){ closeVdCal(); vdGoDate(day.dataset.fcal); }
+});
 function vdCurDate(){
   if(!vdDate) vdDate = toLocalISODate(TODAY);
   return vdDate;
@@ -6946,8 +7105,10 @@ function renderVehDay(){
   const wrap = document.getElementById('vd-wrap');
   if(!wrap) return;
   const date = vdCurDate();
-  const di = document.getElementById('vd-date'); if(di && di.value!==date) di.value = date;
-  const ro = !isAdmin() || isMonthLocked(date);
+  vdSyncPickers(date);
+  const rec = vdDayRec(date), confirmed = !!rec.confirmed, canCk = canCheckFuel();
+  const ckSet = new Set(rec.checked||[]);
+  const ro = !isAdmin() || isMonthLocked(date) || confirmed;
   const dis = ro ? ' disabled' : '';
   const rows = vdRowsFor(date);
   // เก็บตำแหน่งโฟกัสไว้คืนหลังวาดใหม่ (แบบเดียวกับหน้า พ.1-03)
@@ -6963,7 +7124,8 @@ function renderVehDay(){
     const rs = vdRowsFor(iso), done = rs.filter(v=>ec1wFindLog(v.label, iso)).length;
     const mon = (dt.getDate()===1 || iso===weekIsos[0]) ? ' '+FUEL_SHORT_MONTH[dt.getMonth()] : '';
     const off = wd===0 || wd===6 || hol;
-    const n = done ? `<div class="n ${done>=rs.length?'vd-ok':'vd-part'}">${done>=rs.length?'✔ ':''}${done}/${rs.length}</div>` : '<div class="n">&nbsp;</div>';
+    const lk = vdDayRec(iso).confirmed;
+    const n = (done || lk) ? `<div class="n ${lk||done>=rs.length?'vd-ok':'vd-part'}">${lk?'🔒 ':done>=rs.length?'✔ ':''}${done}/${rs.length}</div>` : '<div class="n">&nbsp;</div>';
     return `<div class="dwk-d${iso===date?' on':''}${off?' off':''}${iso===todayIso?' today':''}" data-vddate="${iso}"${hol?` title="${esc(hol)}"`:''}>
       <small>${FUEL_WEEKDAY_FULL[wd]}${mon}</small><b>${dt.getDate()}</b>${n}</div>`;
   }).join('');
@@ -6983,10 +7145,10 @@ function renderVehDay(){
   });
   const head = `<div class="dwk-bar"><button type="button" class="dwk-arr" data-vdstep="-1" title="สัปดาห์ก่อนหน้า">‹</button><div class="dwk-days fd-days">${chips}</div><button type="button" class="dwk-arr" data-vdstep="1" title="สัปดาห์ถัดไป">›</button></div>
     <div class="fd-dayhead">
-      <h3>วัน${FUEL_WEEKDAY_FULL[dt0.getDay()]}ที่ ${dt0.getDate()} ${monthNamesTh[dt0.getMonth()]} ${dt0.getFullYear()+543}</h3><span class="fd-count">${rows.length} คัน</span>${date===todayIso?' <span class="fd-today">วันนี้</span>':''}${holName?` <span class="fd-hol">${esc(holName)}</span>`:''}${isMonthLocked(date)?' <span class="fd-hol">🔒 เดือนนี้ล็อกบัญชีแล้ว</span>':''}<span style="flex:1"></span>
+      <h3>วัน${FUEL_WEEKDAY_FULL[dt0.getDay()]}ที่ ${dt0.getDate()} ${monthNamesTh[dt0.getMonth()]} ${dt0.getFullYear()+543}</h3><span class="fd-count">${rows.length} คัน</span>${date===todayIso?' <span class="fd-today">วันนี้</span>':''}${holName?` <span class="fd-hol">${esc(holName)}</span>`:''}${isMonthLocked(date)?' <span class="fd-hol">🔒 เดือนนี้ล็อกบัญชีแล้ว</span>':''}${confirmed?' <span class="fd-count" style="background:var(--success-bg);color:var(--success);">🔒 ยืนยันตรวจแล้ว</span>':''}<span style="flex:1"></span>
       <div class="fd-stats"><div>ใช้งาน<b>${nUse} คัน</b></div><div>ระยะทางรวม<b>${fmtNum(km,0)} กม.</b></div><div>ชั่วโมงทำงาน<b>${fmtNum(hr,1).replace(/\.0$/,'')} ชม.</b></div><div>น้ำมัน (พ.1-03)<b>${fmtNum(fuelSum,1)} ล.</b></div></div></div>`;
 
-  const warn = data.filter(x=>x.d.st && vdFlags(x.v, x.d, date).length);
+  const warn = data.filter(x=>x.d.st && !ckSet.has(x.v.label) && vdFlags(x.v, x.d, date).length);   // ติ๊กตรวจแล้ว = รับทราบข้อสังเกตแล้ว (เหมือน พ.1-03)
   const notYet = data.filter(x=>!x.d.st && vdFlags(x.v, x.d, date).length);
   const alertsHtml = (warn.length || notYet.length)
     ? `<div class="fd-alert"><b>⚠ ต้องดูเป็นพิเศษ ${warn.length+notYet.length} รายการ</b>${warn.map(x=>`<div class="fd-li" data-vdgo="${esc(x.v.label)}"><b>${esc(vehicleShortName(x.v.label))} ${esc(vehicleRegNo(x.v.label))}</b> — ${vdFlags(x.v, x.d, date).map(f=>esc(f[1])).join(' · ')}</div>`).join('')}${notYet.length?`<div class="fd-li">ยังไม่บันทึก ${notYet.length} คัน: ${notYet.map(x=>esc(vehicleShortName(x.v.label)+' '+vehicleRegNo(x.v.label).split('-')[0])).join(', ')}</div>`:''}</div>`
@@ -6995,11 +7157,23 @@ function renderVehDay(){
   const weekMon = ec1wMonday(date), weekDates = ec1wWeekDatesFrom(weekMon);
   const nEc = vehicles.filter(v=>weekDates.some(dd=>ec1wFindLog(v.label, dd))).length;
   const nReq = vehicleRequests.filter(r=>r.requestDate===date || r.dateFrom===date).length;
-  const progHtml = `<div class="fd-prog"><b>ความคืบหน้าการบันทึก</b><div class="fd-pb"><i style="width:${rows.length?nDone/rows.length*100:0}%"></i></div><span>บันทึกแล้ว <b>${nDone}</b> / ${rows.length} คัน</span>
+  const nRec = rows.filter(v=>ec1wFindLog(v.label, date)).length;
+  const nCk = rows.filter(v=>ckSet.has(v.label) && ec1wFindLog(v.label, date)).length;
+  let lockHtml;
+  if(confirmed) lockHtml = `<div class="fd-lock">🔒 ยืนยันตรวจครบแล้ว — <span class="fd-nb">${esc(rec.confirmedBy||'')}</span> · <span class="fd-nb">${esc(fuelStamp(rec.confirmedAt))}</span>${canCk?` <a href="#" data-vdunlock="1">ปลดล็อก</a>`:''}</div>`;
+  else if(!rows.length) lockHtml = `<div class="fd-noneed">ไม่มีรถในรายการ — ไม่ต้องยืนยัน</div>`;
+  else if(canCk){
+    const ready = nRec===rows.length && nCk===nRec;
+    lockHtml = `<button class="btn btn-primary" style="width:100%;margin-top:8px;"${ready?' data-vdconfirm="1"':` disabled title="${nRec<rows.length?'บันทึกให้ครบทุกคันก่อน':'ติ๊กตรวจให้ครบทุกคันก่อน'}"`}>✔ ยืนยันตรวจครบทั้งวัน</button>`;
+  } else lockHtml = `<div class="fd-mut" style="margin-top:6px;">เฉพาะผู้มีสิทธิ์ตรวจเท่านั้นที่ติ๊ก/ยืนยันได้</div>`;
+  const progHtml = `<div class="fd-prog"><b>ความคืบหน้าการตรวจ</b><div class="fd-pb"><i style="width:${rows.length?nCk/rows.length*100:0}%"></i></div><span>บันทึกแล้ว <b>${nRec}</b> / ${rows.length} คัน · ตรวจแล้ว <b>${nCk}</b> / ${rows.length}</span>
+    ${lockHtml}
     <div class="fd-print">
       <button type="button" class="btn btn-ghost" onclick="vdPrintEc1w()">🖨️ EC 1-W<small>สัปดาห์นี้ ${nEc} คัน</small></button>
       <button type="button" class="btn btn-ghost" onclick="vdPrintP408()">🖨️ พ.4-08<small>วันนี้ ${nReq} ใบ</small></button>
       ${isAdmin()?'<button type="button" class="btn btn-ghost wide" onclick="openVehReqModal(null)">＋ ใบขอใช้รถล่วงหน้า</button>':''}
+      <button type="button" class="btn btn-ghost" onclick="vdOpenOldTab('machinery')">📄 EC 1-W<small>ดูแบบฟอร์มรายคัน</small></button>
+      <button type="button" class="btn btn-ghost" onclick="vdOpenOldTab('vehreq')">📋 พ.4-08<small>รายการทั้งหมด</small></button>
     </div></div>`;
 
   let addHtml = '';
@@ -7017,8 +7191,10 @@ function renderVehDay(){
   data.forEach(({v, d, dd})=>{
     const label = v.label, la = esc(label), dirty = vdDraftDate===date && !!vdDraft[label];
     const flags = vdFlags(v, d, date), use = vdIsUse(d);
-    const cls = !d.st ? (flags.length ? 'fd-rw' : 'fd-off') : (d.st==='X'||d.st==='OFF') && !flags.length ? 'fd-off'
-      : flags.some(f=>f[0]==='b') ? 'fd-rb' : flags.length ? 'fd-rw' : 'fd-ck';
+    const isRec = !!ec1wFindLog(label, date), on = isRec && ckSet.has(label);
+    const cls = on ? 'fd-ck' : !d.st ? (flags.length ? 'fd-rw' : 'fd-off') : (d.st==='X'||d.st==='OFF') && !flags.length ? 'fd-off'
+      : flags.some(f=>f[0]==='b') ? 'fd-rb' : flags.length ? 'fd-rw' : '';
+    const ckTip = !isRec ? 'บันทึกก่อนจึงติ๊กตรวจได้' : canCk ? 'ติ๊กเมื่อตรวจแล้ว' : 'เฉพาะผู้มีสิทธิ์ตรวจ';
     const base = dirty ? vdBase(v, date) : null;
     const dc = (k)=> dirty && JSON.stringify(d[k])!==JSON.stringify(base[k]) ? ' cell-dirty' : '';
     const stOpts = `<option value="">— เลือก —</option>` + (d.st==='MIX' ? '<option value="MIX" selected>แยกชั่วโมง</option>' : '')
@@ -7028,7 +7204,7 @@ function renderVehDay(){
       : `<div class="vd-rts">${locs.map(x=>`<span class="vd-rt">${esc(vdLocText(x))}</span>`).join('') || '<span class="fd-mut">ยังไม่ระบุ</span>'}</div>${locs.some(x=>x.km)?`<span class="vd-km" title="${esc(locs.map(x=>x.km).filter(Boolean).join(', '))}">กม. ${esc(locs.map(x=>x.km).filter(Boolean).join(', '))}</span>`:''}${d.linked?'<span class="vd-link">🔗 จากใบสั่งการ</span>':''}`;
     const mainHr = vdMainHr(d);
     const hrCell = (!d.st || d.st==='X' || d.st==='OFF') ? '<span class="fd-mut">—</span>'
-      : d.st==='MIX' ? `<b class="fd-big" title="แยกหลายรหัส — แก้ที่ปุ่ม ⋯">${ec1wNum(mainHr)}</b>`
+      : (d.st==='MIX' || ro) ? `<b class="fd-big"${d.st==='MIX'?' title="แยกหลายรหัส — แก้ที่ปุ่ม ⋯"':''}>${ec1wNum(mainHr)}</b>`
       : `<input type="number" min="0" step="0.5" class="fd-in${dc('hrs')}" value="${mainHr||''}" placeholder="—" data-vdf="hr" data-vdl="${la}"${dis}>`;
     const prev = vdHasMile(v) ? mileagePrevBefore(label, date) : null;
     const noMile = !vdHasMile(v);
@@ -7038,6 +7214,7 @@ function renderVehDay(){
     const fuel = vdFuel(label, date);
     const p408Tag = d.p408 ? '<span class="vd-p408" title="ออกใบ พ.4-08 ของวันนี้">พ.4-08</span>' : '';
     body += `<tr class="${cls}" data-vdrow="${la}">
+      <td class="fd-c"><div class="fd-cb${on?' on':''}${canCk&&!confirmed&&isRec?' can':''}"${isRec?` data-vdck="${la}"`:''} title="${ckTip}">✔</div></td>
       <td class="vd-drv"><input class="vd-in-t${dc('driver')}" value="${esc(d.driver)}" placeholder="+ ระบุชื่อ" title="${esc(d.driver)}" data-vdf="driver" data-vdl="${la}"${dis}></td>
       <td class="fd-veh-td" style="text-align:center" title="${esc(vehicleShortName(label))} ${esc(vehicleRegNo(label))}"><b class="fd-vname">${esc(vehicleShortName(label))}</b><div class="fd-vsub" style="justify-content:center"><span class="fd-mut">${esc(vehicleRegNo(label))}</span>${p408Tag}</div></td>
       <td class="fd-in-td"><select class="vd-st s-${d.st||'none'}${dc('st')}" data-vdf="st" data-vdl="${la}"${dis}>${stOpts}</select></td>
@@ -7053,7 +7230,7 @@ function renderVehDay(){
       const loc = i=>{ const x = d.locations[i] || {route:'',km:''};
         return `<div><label>สายทางที่ ${i+1}</label><select class="fd-in t" data-vdf="r${i}" data-vdl="${la}"${dis}>${routeOptionsHtml(x.route)}</select></div>
           <div><label>กม. ${x.officeLabel?'('+esc(x.officeLabel)+')':''}</label><input class="fd-in t" value="${esc(x.km)}" placeholder="เช่น 247+902 - 250+000" data-vdf="k${i}" data-vdl="${la}"${dis}></div>`; };
-      body += `<tr class="vd-sub"><td colspan="10">
+      body += `<tr class="vd-sub"><td colspan="11">
         <div class="vd-subgrid">${VD_HR.map(hin).join('')}
           <div><label>รหัสหน่วยงานที่ปฏิบัติงานอื่นๆ (ชั่วโมง O)</label><input class="fd-in t" value="${esc(d.otherUnitCode)}" placeholder="ถ้ามี" data-vdf="ounit" data-vdl="${la}"${dis}></div></div>
         <div class="vd-subrow2">${loc(0)}${loc(1)}</div>
@@ -7065,11 +7242,11 @@ function renderVehDay(){
         </div></td></tr>`;
     }
   });
-  if(!rows.length) body = `<tr><td colspan="10" class="fd-empty">ยังไม่มีรถในรายการของวันนี้${ro?'':' — เพิ่มได้ที่ช่องด้านบน'}</td></tr>`;
-  const table = `<div class="fd-tablewrap"><table class="fd-table vd-table"><colgroup><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:13%"><col style="width:6.5%"><col style="width:8.5%"><col style="width:9%"><col style="width:7.5%"><col style="width:6.5%"><col style="width:13%"></colgroup><thead><tr>
-    <th>ผู้ขับ / ควบคุม</th><th>หมายเลขเครื่อง/รถ<br><small>ทะเบียน</small></th><th class="fd-cur">สถานะงาน<br><small>รหัส EC 1-W</small></th><th>สายทาง · กม.<br><small>จากใบสั่งการ / แก้ที่ ⋯</small></th>
+  if(!rows.length) body = `<tr><td colspan="11" class="fd-empty">ยังไม่มีรถในรายการของวันนี้${ro?'':' — เพิ่มได้ที่ช่องด้านบน'}</td></tr>`;
+  const table = `<div class="fd-tablewrap"><table class="fd-table vd-table"><colgroup><col style="width:5%"><col style="width:11.5%"><col style="width:11%"><col style="width:11.5%"><col style="width:12.5%"><col style="width:6%"><col style="width:8%"><col style="width:8.5%"><col style="width:7%"><col style="width:6%"><col style="width:13%"></colgroup><thead><tr>
+    <th style="width:54px">ตรวจ<br>แล้ว</th><th>ผู้ขับ / ควบคุม</th><th>หมายเลขเครื่อง/รถ<br><small>ทะเบียน</small></th><th class="fd-cur">สถานะงาน<br><small>รหัส EC 1-W</small></th><th>สายทาง · กม.<br><small>จากใบสั่งการ / แก้ที่ ⋯</small></th>
     <th class="fd-cur">ชั่วโมง</th><th>มิเตอร์<br>ครั้งก่อน</th><th class="fd-cur">มิเตอร์<br>เลิกงาน</th><th>ระยะทาง</th><th>น้ำมัน<br><small>พ.1-03</small></th><th>ผลตรวจ</th></tr></thead>
-    <tbody>${body}</tbody><tfoot><tr><td colspan="4" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${fmtNum(hr,1).replace(/\.0$/,'')} ชม.</td><td></td><td></td><td class="fd-c">${fmtNum(km,0)} กม.</td><td class="fd-c">${fmtNum(fuelSum,1)} ล.</td><td></td></tr></tfoot></table></div>`;
+    <tbody>${body}</tbody><tfoot><tr><td colspan="5" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${fmtNum(hr,1).replace(/\.0$/,'')} ชม.</td><td></td><td></td><td class="fd-c">${fmtNum(km,0)} กม.</td><td class="fd-c">${fmtNum(fuelSum,1)} ล.</td><td></td></tr></tfoot></table></div>`;
 
   wrap.innerHTML = head + `<div class="fd-top"><div class="fd-left">${alertsHtml}${workAreaBoxHtml('vd', date)}</div>${progHtml}</div>` + addHtml + table;
   wrap.scrollLeft = sx;
@@ -7133,7 +7310,7 @@ function vdGoDate(iso){
   const go = ()=>{ vdDraft = {}; vdDraftDate = null; vdOpenRow = null; vdDate = iso; renderVehDay(); };
   if(vdDraftDate && Object.keys(vdDraft).length){
     showConfirmModal('ยังไม่ได้บันทึก', `มีการแก้ไข ${Object.keys(vdDraft).length} คันของวันที่ ${fmtDate(vdDraftDate)} ที่ยังไม่ได้บันทึก — ต้องการทิ้งการแก้ไขแล้วเปลี่ยนวันหรือไม่?`, 'ทิ้งแล้วเปลี่ยนวัน', go);
-    const di = document.getElementById('vd-date'); if(di) di.value = vdCurDate();
+    vdSyncPickers(vdCurDate());   // ยังไม่เปลี่ยนวัน → คืนตัวเลือกปีงบ/เดือนให้ตรงวันเดิม
     return;
   }
   go();
@@ -7163,6 +7340,7 @@ async function vdSave(){
   const date = vdDraftDate, labels = Object.keys(vdDraft);
   if(!date || !labels.length) return;
   if(blockIfMonthLocked(date)) return;
+  if(vdDayRec(date).confirmed){ showAlertModal('วันที่ '+fmtDate(date)+' ยืนยันตรวจครบแล้ว — แก้ไขไม่ได้ จนกว่าผู้มีสิทธิ์ตรวจจะปลดล็อก'); return; }
   for(const label of labels){
     const d = vdDraft[label];
     if(vdIsUse(d) && !String(d.driver||'').trim()){ showAlertModal('กรุณาระบุชื่อผู้ขับของ '+vehicleShortName(label)+' '+vehicleRegNo(label)); return; }
@@ -7256,6 +7434,9 @@ function vdPrintP408(){
     const chip = e.target.closest('[data-vddate]'); if(chip){ vdGoDate(chip.dataset.vddate); return; }
     const st = e.target.closest('[data-vdstep]');
     if(st){ const d = new Date(vdCurDate()+'T00:00:00'); d.setDate(d.getDate()+7*(+st.dataset.vdstep)); vdGoDate(toLocalISODate(d)); return; }
+    const ck = e.target.closest('[data-vdck]'); if(ck){ vdToggleCheck(vdCurDate(), ck.dataset.vdck); return; }
+    if(e.target.closest('[data-vdconfirm]')){ vdConfirmDay(vdCurDate()); return; }
+    const ul = e.target.closest('[data-vdunlock]'); if(ul){ e.preventDefault(); vdUnlockDay(vdCurDate()); return; }
     const mo = e.target.closest('[data-vdmore]'); if(mo){ vdOpenRow = vdOpenRow===mo.dataset.vdmore ? null : mo.dataset.vdmore; renderVehDay(); return; }
     const go = e.target.closest('[data-vdgo]');
     if(go){ const tr = Array.from(wrap.querySelectorAll('tr[data-vdrow]')).find(r=>r.dataset.vdrow===go.dataset.vdgo); if(tr){ tr.scrollIntoView({block:'center', behavior:'smooth'}); tr.classList.add('fd-hl'); setTimeout(()=>tr.classList.remove('fd-hl'), 1600); } }
@@ -7769,6 +7950,7 @@ try{ const last = sessionStorage.getItem('cn_supplies_tab'); const t = last && d
     loadLedgerLocksFromApi(),
     loadFuelDayChecksFromApi(),
     loadMatDayChecksFromApi(),
+    loadVehDayChecksFromApi(),
     loadLedgerOverridesFromApi(),
     loadVehicleMileageFromApi(),
     loadMachineryLogsFromApi(),
