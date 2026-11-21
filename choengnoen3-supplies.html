@@ -477,7 +477,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .vd-subgrid .fd-in{height:34px;font-size:14px;}
   .vd-subgrid .t{font-family:'Sarabun',sans-serif;font-weight:500;text-align:left;padding:0 9px;color:var(--ink-900);}
   .vd-subgrid select.t{padding:0 4px;}
-  .vd-subrow2{display:grid;grid-template-columns:110px 1fr 110px 1fr;gap:8px;margin-top:10px;align-items:end;}
+  .vd-subrow2{display:grid;grid-template-columns:120px 1fr 32px 120px 1fr 32px;gap:8px;margin-top:10px;align-items:end;}
+  .vd-locdel{width:32px;height:34px;border-radius:8px;border:1px solid #f6d0d0;background:#fdeeee;color:#d33a3a;cursor:pointer;font-size:13px;}
+  .vd-locdel:hover{background:#d33a3a;color:#fff;}
   .vd-subrow3{display:grid;grid-template-columns:1.2fr 1.6fr 90px 1.4fr;gap:8px;margin-top:10px;align-items:end;}
   .vd-ck{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#6a3fb5;height:34px;white-space:nowrap;}
   .vd-ck input{width:18px;height:18px;}
@@ -490,7 +492,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .dwk-d.on .n.vd-ok,.dwk-d.on .n.vd-part{color:#a9bbcc;}
   .vd-pg{break-after:page;}
   .vd-pg:last-child{break-after:auto;}
-  @media (max-width:900px){.vd-subgrid{grid-template-columns:repeat(4,1fr);} .vd-subgrid>div:last-child{grid-column:1/-1;} .vd-subrow2,.vd-subrow3{grid-template-columns:1fr 1fr;}}
+  @media (max-width:900px){.vd-subgrid{grid-template-columns:repeat(4,1fr);} .vd-subgrid>div:last-child{grid-column:1/-1;} .vd-subrow3{grid-template-columns:1fr 1fr;} .vd-subrow2{grid-template-columns:1fr 1fr 32px;}}
   tr.mileage-row input.mi-decrease,tr.mileage-row td.mi-decrease{background:var(--danger-bg)!important;}
   tr.mileage-row input.mi-decrease{border-color:var(--danger)!important;color:var(--danger);font-weight:600;}
   tr.mileage-row input.mi-jump,tr.mileage-row td.mi-jump{background:#fff4e0!important;}
@@ -3726,10 +3728,30 @@ function openVehReqModal(id){
 }
 const SECTION_HEAD_NAME = 'นายอิศรินทร์  อรุณสวัสดิ์';
 const SECTION_ASSISTANT_NAME = 'นางสาวนันท์นภัสธ์  รัตนเสถียร';
-function determineVehReqApprover(dateStr){
-  if(dateStr && approvedLeaveOnDate(SECTION_HEAD_NAME, dateStr)) return SECTION_ASSISTANT_NAME;
-  return SECTION_HEAD_NAME;
+/* ผู้ควบคุมงาน/ผู้สั่งการ ณ วันที่ — อ่านทะเบียนผู้บริหารหมวด (exec_terms ของงานสารบรรณ) แบบเดียวกับใบลาและงานบัญชี (21 พ.ย. 2569)
+   หัวหน้าหมวดลาในวันนั้น → ผู้ช่วยหมวด ตำแหน่ง "รก.ชม.ขท.เชิงเนิน" ; ทะเบียนว่าง/อ่านไม่ได้ (ไม่มีสิทธิ์ดูงานสารบรรณ) → ใช้ชื่อเดิมด้านบน */
+const SECTION_HEAD_POS = 'ชม.ขท.เชิงเนิน';
+let execTermsS3 = [];
+async function loadExecTermsS3(){
+  try{ execTermsS3 = await apiGet('exec_terms'); }
+  catch(e){ console.warn('โหลดทะเบียนผู้บริหารหมวดไม่สำเร็จ — ใช้ชื่อสำรองแทน', e); execTermsS3 = []; }
 }
+function sectionExecNameAt(role, iso){
+  const t = (execTermsS3||[]).find(x=>x.role===role && x.startDate<=iso && (!x.endDate || x.endDate>=iso));
+  if(!t) return '';
+  const s = staff.find(x=>t.staffId ? x.id===t.staffId : x.name===t.staffName);
+  return String(s ? s.name : (t.staffName||'')).trim();
+}
+function sectionSupervisorAt(iso){
+  iso = iso || toLocalISODate(TODAY);
+  const head = sectionExecNameAt('head', iso) || SECTION_HEAD_NAME;
+  if(approvedLeaveOnDate(head, iso)){
+    const asst = sectionExecNameAt('assist', iso) || SECTION_ASSISTANT_NAME;
+    return {name: asst, pos: 'รก.'+SECTION_HEAD_POS, acting: true};
+  }
+  return {name: head, pos: SECTION_HEAD_POS, acting: false};
+}
+function determineVehReqApprover(dateStr){ return sectionSupervisorAt(dateStr).name; }
 function onVehReqDateFromChange(){
   const vehicle = document.getElementById('vr-vehicle')?.value;
   const dateFrom = document.getElementById('vr-reqdate')?.value || toLocalISODate(TODAY);
@@ -3756,7 +3778,7 @@ function onVehReqDateFromChange(){
   if(approverEl) approverEl.value = approverName;
   const approverHint = document.getElementById('vr-approver-hint');
   if(approverHint){
-    approverHint.textContent = approverName===SECTION_HEAD_NAME
+    approverHint.textContent = !sectionSupervisorAt(dateFrom).acting
       ? `ผู้อนุมัติ: ${approverName} (หัวหน้าหมวด)`
       : `ผู้อนุมัติ: ${approverName} (ผู้ช่วยหัวหน้าหมวด — หัวหน้าหมวดลาในวันที่เลือก)`;
   }
@@ -6633,7 +6655,11 @@ function ec1wNum(n){ n = Number(n)||0; return n ? String(Math.round(n*100)/100) 
 /* สถานที่ปฏิบัติงาน (ฟอร์มมีได้ 2 บรรทัดต่อวัน) — สายทางแสดงเฉพาะหมายเลขแบบต้นฉบับ เช่น "3574" */
 function ec1wLocLines(l, vehicle, date){
   const locs = (l && l.locations && l.locations.length) ? l.locations : dailyWorkOrderLocationsForVehicleDate(vehicle, date);
-  return (locs||[]).map(x=>({ route: x.route ? x.route : (x.officeLabel || (x.km ? 'อื่นๆ' : '')), km: x.km || '' }));
+  const lines = (locs||[]).map(x=>({ route: x.route ? x.route : (x.officeLabel || (x.km ? 'อื่นๆ' : '')), km: x.km || '' }));
+  /* แบบฟอร์มมีวันละ 2 บรรทัด — เกิน 2 สายทาง (เช่น เพิ่มสายทางที่ไปตรวจ) บรรทัดที่ 2 รวมที่เหลือไว้ด้วยกัน */
+  if(lines.length<=2) return lines;
+  const rest = lines.slice(1);
+  return [lines[0], { route: Array.from(new Set(rest.map(x=>x.route).filter(Boolean))).join(', '), km: rest.map(x=>x.km).filter(Boolean).join(', ') }];
 }
 /* ชื่อพนักงานขับ/ควบคุม: ใช้ชื่อที่รายงานบ่อยที่สุดในสัปดาห์ ถ้ายังไม่มีใช้ผู้รับผิดชอบรถตามทะเบียนที่มีผลมากวันที่สุดในสัปดาห์นั้น */
 function ec1wDriverForWeek(vehicle, dates){
@@ -6675,6 +6701,7 @@ function ec1wSheetHtml(vehicle, dates, interactive){
     return tr + (open ? `<tr class="ed"><td colspan="19">${ec1wEditorHtml(vehicle, date)}</td></tr>` : '');
   }).join('');
   const cols = [99,22.5,46,141.5,27,27,27,27,27,54,27,27,27,53.5,27,27.5,27,38.5,39].map(w=>`<col style="width:${w}pt">`).join('');
+  const sup = sectionSupervisorAt(toLocalISODate(TODAY));   // ผู้ควบคุมงาน ณ วันที่ลงนาม (วันที่พิมพ์) — หัวหน้าหมวดลา = รก.
   return `<div class="ec1w-sheet${ec1wHasThaiFont()?'':' nofont'}">
     <div class="f-top">
       <div class="f-title">รายงานการปฏิบัติงานของเครื่องจักร - ยานพาหนะประจำสัปดาห์</div>
@@ -6694,7 +6721,7 @@ function ec1wSheetHtml(vehicle, dates, interactive){
       <div><h4>สถานที่ปฏิบัติงาน</h4>กรณีไม่ได้ปฏิบัติงาน<br>สนาม ให้ระบุหน่วย-<br>งานที่ปฏิบัติงาน</div>
       <div><h4>ชั่วโมงปฏิบัติงาน</h4>W = งานตามหน้าที่ปกติของหน่วยงาน<br>M = งานของผู้ให้เช่า<br>C = งานฉุกเฉิน/บริการสาธารณะ<br>V = งานอื่นๆของหน่วยงานที่ไม่ใช้หน้าที่<br>O = งานที่ใช้งบประมาณส่วนราชการอื่น</div>
       <div><h4>ชั่วโมงที่ไม่ปฏิบัติงาน</h4>F = ความผิดของผู้ให้เช่า<br><span class="in">หรืออุปสรรคธรรมชาติ</span><br>R = ชำรุด/บริการหล่อลื่น<br>S = รองานทุกกรณี</div>
-      <div class="sig"><div class="l"><span>ลงชื่อ</span></div>( ${esc(SECTION_HEAD_NAME)} )<br>${EC1W_SUPERVISOR_POS}<br>ผู้ควบคุมงาน
+      <div class="sig"><div class="l"><span>ลงชื่อ</span></div>( ${esc(sup.name)} )<br>${esc(sup.pos)}<br>ผู้ควบคุมงาน
         <div class="l"><span>วันที่</span>${fmtDateFull(toLocalISODate(TODAY)).replace(' พ.ศ.','')}</div></div>
       <div class="sig"><div class="l"><span>ลงชื่อ</span>${can?'<button type="button" class="ec1w-lessor-btn" onclick="openEc1wLessorEdit()" title="แก้ไขชื่อผู้ให้เช่า" aria-label="แก้ไขชื่อผู้ให้เช่า"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>':''}</div>( ${esc(EC1W_LESSOR.name)} )<br>${esc(EC1W_LESSOR.pos)}<br>ผู้ให้เช่า
         <div class="l"><span>วันที่</span></div></div>
@@ -7050,12 +7077,19 @@ function vdBase(v, date){
   if(l){ const nz = VD_HR.filter(k=>hrs[k]>0); st = nz.length>1 ? 'MIX' : nz.length===1 ? nz[0] : (l.dayOff ? 'OFF' : 'X'); }
   const own = l && l.locations && l.locations.length ? l.locations : null;
   const linked = own ? [] : dailyWorkOrderLocationsForVehicleDate(v.label, date);
-  const locs = (own || linked).slice(0,2).map(x=>({route:x.route||'', km:x.km||'', officeLabel:x.officeLabel||''}));
+  const locs = (own || linked).map(x=>({route:x.route||'', km:x.km||'', officeLabel:x.officeLabel||''}));
   const m = vehicleMileage[v.label+'|'+date];
-  return { st, hrs, driver: l ? (l.driver||'') : (vehicleOperatorOn(v, date)||''), locations: locs, linked: !own && linked.length>0,
+  /* ผู้ขับ: ชื่อที่บันทึกไว้ใน EC 1-W ก่อน — ถ้าว่าง ใช้ vdDefaultDriver (ผู้เบิกใน พ.1-03 → ผู้รับผิดชอบตามทะเบียน) */
+  return { st, hrs, driver: (l && String(l.driver||'').trim()) || vdDefaultDriver(v, date), locations: locs, linked: !own && linked.length>0,
     otherUnitCode: l ? l.otherUnitCode : '', otherReason: l ? l.otherReason : '', note: l ? l.note : '',
     end: m!=null ? String(m) : '', p408: !!req, purpose: req ? (req.purpose||'') : '',
     passengers: req && req.passengers!=null ? String(req.passengers) : '' };
+}
+/* ชื่อผู้ขับตั้งต้น — ไม่ต้องกรอกซ้ำกับ พ.1-03: ผู้เบิกน้ำมันของคัน/วันนั้น (กรอกไว้เมื่อคนเบิกไม่ใช่ผู้รับผิดชอบ เช่น เบิกแทนคนลา)
+   ถ้าไม่มี ใช้ผู้รับผิดชอบเครื่อง ณ วันนั้นตามทะเบียนเครื่องจักร */
+function vdDefaultDriver(v, date){
+  if(!v) return '';
+  return fuelEffWho('ดีเซล', v.label, date) || fuelEffWho('เบนซิน', v.label, date) || vehicleOperatorOn(v, date) || '';
 }
 function vdGet(v, date){ return (vdDraftDate===date && vdDraft[v.label]) || vdBase(v, date); }
 function vdEdit(label){
@@ -7091,6 +7125,7 @@ function vdFlags(v, d, date){
   if(use && !d.locations.some(x=>x.route||x.km||x.officeLabel)) f.push(['w','ยังไม่ระบุสายทางที่ปฏิบัติงาน','ไม่มีสายทาง']);
   if(d.hrs.O>0 && !String(d.otherUnitCode||'').trim()) f.push(['w','มีชั่วโมง O แต่ยังไม่ระบุรหัสหน่วยงาน','ไม่มีรหัสหน่วย']);
   if(use && !String(d.driver||'').trim()) f.push(['w','ยังไม่ระบุผู้ขับ','ไม่มีผู้ขับ']);
+  else if(use && approvedLeaveOnDate(String(d.driver).trim(), date)) f.push(['b','ผู้ขับ "'+String(d.driver).trim()+'" ลาในวันนี้ — แก้ชื่อเป็นคนขับแทน (หรือแก้ผู้เบิกใน พ.1-03)','ผู้ขับลา']);
   return f;
 }
 function vdFlagHtml(v, d, date){
@@ -7215,7 +7250,7 @@ function renderVehDay(){
     const p408Tag = d.p408 ? '<span class="vd-p408" title="ออกใบ พ.4-08 ของวันนี้">พ.4-08</span>' : '';
     body += `<tr class="${cls}" data-vdrow="${la}">
       <td class="fd-c"><div class="fd-cb${on?' on':''}${canCk&&!confirmed&&isRec?' can':''}"${isRec?` data-vdck="${la}"`:''} title="${ckTip}">✔</div></td>
-      <td class="vd-drv"><input class="vd-in-t${dc('driver')}" value="${esc(d.driver)}" placeholder="+ ระบุชื่อ" title="${esc(d.driver)}" data-vdf="driver" data-vdl="${la}"${dis}></td>
+      <td class="vd-drv"><input class="vd-in-t${dc('driver')}" value="${esc(d.driver)}" placeholder="${esc(vdDefaultDriver(v, date)||'+ ระบุชื่อ')}" title="${esc(d.driver)}" data-vdf="driver" data-vdl="${la}"${dis}></td>
       <td class="fd-veh-td" style="text-align:center" title="${esc(vehicleShortName(label))} ${esc(vehicleRegNo(label))}"><b class="fd-vname">${esc(vehicleShortName(label))}</b><div class="fd-vsub" style="justify-content:center"><span class="fd-mut">${esc(vehicleRegNo(label))}</span>${p408Tag}</div></td>
       <td class="fd-in-td"><select class="vd-st s-${d.st||'none'}${dc('st')}" data-vdf="st" data-vdl="${la}"${dis}>${stOpts}</select></td>
       <td>${routeCell}</td>
@@ -7227,13 +7262,17 @@ function renderVehDay(){
       <td class="fd-flags"><div class="fd-flagrow">${vdFlagHtml(v, d, date)}<button type="button" class="vd-more${vdOpenRow===label?' on':''}" data-vdmore="${la}" title="รายละเอียดเพิ่มเติม: แยกชั่วโมง / สายทาง-กม. / พ.4-08 / หมายเหตุ">⋯</button></div></td></tr>`;
     if(vdOpenRow===label){
       const hin = k=>`<div class="hr${['F','R','S'].includes(k)?' nw':''}"><label>${k}</label><input type="number" min="0" step="0.5" class="fd-in" value="${d.hrs[k]||''}" data-vdf="h${k}" data-vdl="${la}"${dis}></div>`;
-      const loc = i=>{ const x = d.locations[i] || {route:'',km:''};
-        return `<div><label>สายทางที่ ${i+1}</label><select class="fd-in t" data-vdf="r${i}" data-vdl="${la}"${dis}>${routeOptionsHtml(x.route)}</select></div>
-          <div><label>กม. ${x.officeLabel?'('+esc(x.officeLabel)+')':''}</label><input class="fd-in t" value="${esc(x.km)}" placeholder="เช่น 247+902 - 250+000" data-vdf="k${i}" data-vdl="${la}"${dis}></div>`; };
+      /* สายทาง: แถวจากใบสั่งการ/ที่บันทึกไว้ + แถวว่าง 1 แถวไว้เพิ่ม (เช่น ใช้รถตรวจสายทางเพิ่มในวันนั้น) — ไม่จำกัดจำนวน
+         แบบฟอร์ม EC 1-W มีวันละ 2 บรรทัด ถ้าเกิน บรรทัดที่ 2 รวมสายทางที่เหลือไว้ (ดู ec1wLocLines) ; ใบ พ.4-08 ได้ครบทุกสายทาง */
+      const loc = i=>{ const x = d.locations[i] || {route:'',km:''}, isNew = i>=d.locations.length;
+        return `<div><label>${isNew?'＋ เพิ่มสายทาง':'สายทางที่ '+(i+1)}</label><select class="fd-in t" data-vdf="r${i}" data-vdl="${la}"${dis}>${routeOptionsHtml(x.route)}</select></div>
+          <div><label>กม. ${x.officeLabel?'('+esc(x.officeLabel)+')':''}</label><input class="fd-in t" value="${esc(x.km)}" placeholder="เช่น 247+902 - 250+000" data-vdf="k${i}" data-vdl="${la}"${dis}></div>
+          <div>${isNew||ro?'':`<button type="button" class="vd-locdel" data-vdlocdel="${i}" data-vdl="${la}" title="เอาสายทางนี้ออก">✕</button>`}</div>`; };
+      const locSlots = ro ? Math.max(d.locations.length, 1) : d.locations.length + 1;
       body += `<tr class="vd-sub"><td colspan="11">
         <div class="vd-subgrid">${VD_HR.map(hin).join('')}
           <div><label>รหัสหน่วยงานที่ปฏิบัติงานอื่นๆ (ชั่วโมง O)</label><input class="fd-in t" value="${esc(d.otherUnitCode)}" placeholder="ถ้ามี" data-vdf="ounit" data-vdl="${la}"${dis}></div></div>
-        <div class="vd-subrow2">${loc(0)}${loc(1)}</div>
+        <div class="vd-subrow2">${Array.from({length:locSlots}, (_,i)=>loc(i)).join('')}</div>
         <div class="vd-subrow3">
           <div><label>สาเหตุอื่นๆ ที่ไม่ปฏิบัติงาน</label><input class="fd-in t" value="${esc(d.otherReason)}" placeholder="เช่น รอซ่อม, ฝนตก" data-vdf="reason" data-vdl="${la}"${dis}></div>
           <div><label class="vd-ck"><input type="checkbox" data-vdf="p408" data-vdl="${la}"${d.p408?' checked':''}${dis}> ออกใบ พ.4-08 — ภารกิจ (เพื่อ)</label><input class="fd-in t" value="${esc(d.purpose)}" placeholder="${esc(vdDefaultPurpose(label))}" data-vdf="purpose" data-vdl="${la}"${dis}></div>
@@ -7296,8 +7335,8 @@ function vdApplyInput(el){
   else if(f==='purpose') d.purpose = val;
   else if(f==='pass') d.passengers = val;
   else if(f==='p408') d.p408 = !!val;
-  else if(/^[rk][01]$/.test(f)){
-    const i = +f[1];
+  else if(/^[rk]\d+$/.test(f)){
+    const i = +f.slice(1);
     while(d.locations.length<=i) d.locations.push({route:'', km:'', officeLabel:''});
     if(f[0]==='r'){ d.locations[i].route = val==='__other__' ? '' : val; if(val) d.locations[i].officeLabel = ''; }
     else d.locations[i].km = String(val).trim();
@@ -7360,7 +7399,7 @@ async function vdSave(){
   else showSuccessModal('บันทึกการใช้รถวันที่ '+fmtDate(date)+' เรียบร้อยแล้ว ('+labels.length+' คัน)');
 }
 async function vdSaveOne(label, date, d){
-  const use = vdIsUse(d), driver = String(d.driver||'').trim();
+  const use = vdIsUse(d), driver = String(d.driver||'').trim() || vdDefaultDriver(vehicles.find(x=>x.label===label), date);
   const locations = d.locations.filter(x=>x.route || x.km).map(x=>({route:x.route||'', km:String(x.km||'').trim()}));
   /* 1) EC 1-W */
   if(d.st){
@@ -7434,6 +7473,8 @@ function vdPrintP408(){
     const chip = e.target.closest('[data-vddate]'); if(chip){ vdGoDate(chip.dataset.vddate); return; }
     const st = e.target.closest('[data-vdstep]');
     if(st){ const d = new Date(vdCurDate()+'T00:00:00'); d.setDate(d.getDate()+7*(+st.dataset.vdstep)); vdGoDate(toLocalISODate(d)); return; }
+    const ld = e.target.closest('[data-vdlocdel]');
+    if(ld){ const d = vdEdit(ld.dataset.vdl); d.locations.splice(+ld.dataset.vdlocdel, 1); d.linked = false; renderVehDay(); return; }
     const ck = e.target.closest('[data-vdck]'); if(ck){ vdToggleCheck(vdCurDate(), ck.dataset.vdck); return; }
     if(e.target.closest('[data-vdconfirm]')){ vdConfirmDay(vdCurDate()); return; }
     const ul = e.target.closest('[data-vdunlock]'); if(ul){ e.preventDefault(); vdUnlockDay(vdCurDate()); return; }
@@ -7938,7 +7979,7 @@ try{ const last = sessionStorage.getItem('cn_supplies_tab'); const t = last && d
   // รายชื่อบุคลากรจริงจากฐานข้อมูลบุคลากร (ระบบ 1) แทนรายชื่อตั้งต้นที่เขียนไว้ในหน้านี้ — ใช้กับช่อง "ผู้เบิก" ของ พ.1-02/พ.1-03 และผู้ขอใช้รถ
   try{
     const rows = await apiGet('staff');
-    if(rows.length){ staff.length = 0; rows.forEach(r=>staff.push({name:String(r.name||'').trim(), role:r.role||'', ptype:r.ptype||'', status:r.status||'ok', nickname:r.nickname||'',
+    if(rows.length){ staff.length = 0; rows.forEach(r=>staff.push({id:r.id, name:String(r.name||'').trim(), role:r.role||'', ptype:r.ptype||'', status:r.status||'ok', nickname:r.nickname||'',
       startDate:r.startDate||'', birth:r.birth||'', retiredDate:r.retiredDate||'', resignedDate:r.resignedDate||''})); }
   }catch(e){ console.error('โหลดรายชื่อบุคลากรจากระบบที่ 1 ไม่สำเร็จ', e); }
   await Promise.all([
@@ -7951,6 +7992,7 @@ try{ const last = sessionStorage.getItem('cn_supplies_tab'); const t = last && d
     loadFuelDayChecksFromApi(),
     loadMatDayChecksFromApi(),
     loadVehDayChecksFromApi(),
+    loadExecTermsS3(),
     loadLedgerOverridesFromApi(),
     loadVehicleMileageFromApi(),
     loadMachineryLogsFromApi(),
