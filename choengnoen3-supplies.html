@@ -445,6 +445,52 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
     body:has(#print-vehreq.show-print) .app{display:none !important;}
     #print-vehreq.show-print{page:vehreqpage;}
   }
+  /* ===== ใช้รถรายวัน (EC 1-W + พ.4-08) — ใช้ชุด fd- และ dwk- ของหน้า พ.1-03 + ส่วนเพิ่มด้านล่าง ===== */
+  #vd-wrap{max-height:none;padding:0 20px 20px;}
+  table.fd-table.vd-table{min-width:1060px;}
+  .vd-table td.fd-in-td{padding-left:6px;padding-right:6px;text-align:center;}
+  .vd-table td.vd-drv{padding-left:6px;padding-right:6px;}
+  .vd-in-t{width:100%;height:38px;border:1px solid transparent;border-radius:8px;padding:0 8px;font-family:'Sarabun',sans-serif;font-size:13.5px;font-weight:700;color:var(--navy-900);background:transparent;text-overflow:ellipsis;}
+  .vd-in-t:hover{border-color:#c9cfd6;background:#fff;}
+  .vd-in-t:focus{outline:none;border-color:var(--orange-500);background:#fff;box-shadow:0 0 0 3px rgba(224,98,15,.18);}
+  .vd-in-t.cell-dirty{background:#fff6e6;border-color:var(--amber-400);}
+  .vd-st{width:100%;height:38px;border:1.5px solid var(--line);border-radius:8px;font-family:'Sarabun',sans-serif;font-weight:700;font-size:13px;padding:0 4px;cursor:pointer;background:#fff;color:var(--ink-900);}
+  .vd-st.s-W,.vd-st.s-M,.vd-st.s-V{border-color:#9fd0b3;background:var(--success-bg);color:var(--success);}
+  .vd-st.s-C{border-color:#f0b4aa;background:var(--danger-bg);color:var(--danger);}
+  .vd-st.s-O{border-color:#b7cbe3;background:#e6eef8;color:#1d5fa8;}
+  .vd-st.s-R,.vd-st.s-S,.vd-st.s-F{border-color:#f0cf6b;background:#fdf1de;color:#a3660a;}
+  .vd-st.s-X,.vd-st.s-OFF,.vd-st.s-MIX{background:var(--paper-100);color:var(--ink-600);}
+  .vd-st.cell-dirty{box-shadow:0 0 0 2px var(--amber-400);}
+  .vd-st:disabled,.vd-in-t:disabled{cursor:default;opacity:1;}
+  .vd-rts{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+  .vd-rt{background:var(--navy-900);color:#fff;border-radius:6px;padding:0 8px;font-weight:600;font-size:12.5px;line-height:20px;}
+  .vd-km{display:block;font-size:11.5px;color:var(--ink-600);overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+  .vd-link{font-size:10.5px;color:#1d5fa8;}
+  .vd-p408{font-size:10.5px;font-weight:700;border-radius:6px;padding:0 6px;background:#efe7fb;color:#6a3fb5;white-space:nowrap;}
+  .vd-more{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink-600);font-size:15px;line-height:1;flex:none;margin-left:auto;}
+  .vd-more.on{background:var(--navy-900);color:#fff;border-color:var(--navy-900);}
+  .fd-table tr.vd-sub td{height:auto;white-space:normal;overflow:visible;background:var(--paper-50);padding:12px 14px;}
+  .vd-subgrid{display:grid;grid-template-columns:repeat(8,minmax(52px,64px)) 1fr;gap:8px;align-items:end;}
+  .vd-subgrid label{display:block;font-size:11.5px;font-weight:700;color:var(--ink-600);margin-bottom:2px;}
+  .vd-subgrid .hr label{text-align:center;}
+  .vd-subgrid .hr.nw label{color:var(--danger);}
+  .vd-subgrid .fd-in{height:34px;font-size:14px;}
+  .vd-subgrid .t{font-family:'Sarabun',sans-serif;font-weight:500;text-align:left;padding:0 9px;color:var(--ink-900);}
+  .vd-subgrid select.t{padding:0 4px;}
+  .vd-subrow2{display:grid;grid-template-columns:110px 1fr 110px 1fr;gap:8px;margin-top:10px;align-items:end;}
+  .vd-subrow3{display:grid;grid-template-columns:1.2fr 1.6fr 90px 1.4fr;gap:8px;margin-top:10px;align-items:end;}
+  .vd-ck{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#6a3fb5;height:34px;white-space:nowrap;}
+  .vd-ck input{width:18px;height:18px;}
+  .fd-print{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);}
+  .fd-print .btn{justify-content:center;font-size:13px;height:auto;min-height:42px;padding:5px 8px;flex-direction:column;gap:0;line-height:1.3;}
+  .fd-print .btn small{font-weight:400;color:var(--ink-400);font-size:11px;}
+  .fd-print .btn.wide{grid-column:1/-1;flex-direction:row;min-height:36px;}
+  .dwk-d .n.vd-ok{color:var(--success);font-weight:700;}
+  .dwk-d .n.vd-part{color:#a3660a;font-weight:700;}
+  .dwk-d.on .n.vd-ok,.dwk-d.on .n.vd-part{color:#a9bbcc;}
+  .vd-pg{break-after:page;}
+  .vd-pg:last-child{break-after:auto;}
+  @media (max-width:900px){.vd-subgrid{grid-template-columns:repeat(4,1fr);} .vd-subgrid>div:last-child{grid-column:1/-1;} .vd-subrow2,.vd-subrow3{grid-template-columns:1fr 1fr;}}
   tr.mileage-row input.mi-decrease,tr.mileage-row td.mi-decrease{background:var(--danger-bg)!important;}
   tr.mileage-row input.mi-decrease{border-color:var(--danger)!important;color:var(--danger);font-weight:600;}
   tr.mileage-row input.mi-jump,tr.mileage-row td.mi-jump{background:#fff4e0!important;}
@@ -1267,8 +1313,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         <div class="sec-tab" data-sec="inbound">ใบเบิกรับเข้า</div>
         <div class="sec-tab" data-sec="report">พ.1-02 วัสดุ</div>
         <div class="sec-tab" data-sec="reportfuel">พ.1-03 น้ำมัน</div>
-        <div class="sec-tab" data-sec="machinery">EC 1-W</div>
-        <div class="sec-tab" data-sec="vehreq">พ.4-08 ใช้รถ</div>
+        <div class="sec-tab" data-sec="vehday">ใช้รถรายวัน</div>
+        <!-- แท็บ EC 1-W / พ.4-08 เดิมรวมเข้าแท็บ "ใช้รถรายวัน" แล้ว (21 พ.ย. 2569) — ซ่อนปุ่มไว้ แต่หน้าเดิมยังเปิดได้จากปุ่มในแท็บใหม่ -->
+        <div class="sec-tab" data-sec="machinery" style="display:none">EC 1-W</div>
+        <div class="sec-tab" data-sec="vehreq" style="display:none">พ.4-08 ใช้รถ</div>
         <div class="sec-tab" data-sec="vehicles">ทะเบียนเครื่องจักร</div>
       </div>
 
@@ -1398,6 +1446,31 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <span style="flex:1;"></span>
             <button class="dc-btn dc-clear" onclick="discardDraftReport('fuel')">ล้างการแก้ไข</button>
             <button class="dc-btn dc-save" onclick="reviewDraftReport('fuel')">บันทึก</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ ใช้รถรายวัน (EC 1-W + พ.4-08 + เลขไมล์) — 21 พ.ย. 2569 ============ -->
+      <div class="panel" id="panel-vehday">
+        <div class="section">
+          <div class="section-head">
+            <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><circle cx="7" cy="17" r="2.3"/><circle cx="17" cy="17" r="2.3"/><path d="M5 17h-.5A2.5 2.5 0 0 1 2 14.5V13l3-5h9l3 4h2a2 2 0 0 1 2 2v3h-2"/></svg></span>
+              บันทึกการใช้รถรายวัน
+            </h2>
+            <div class="toolbar" style="flex-wrap:nowrap;">
+              <input type="date" id="vd-date" class="edit-input" style="width:150px;flex:none;" onchange="vdGoDate(this.value)">
+              <span class="tb-sep"></span>
+              <button type="button" class="btn btn-ghost btn-ic" data-ic="doc" data-tip="ดูแบบฟอร์ม EC 1-W รายคัน" onclick="vdOpenOldTab('machinery')"></button>
+              <button type="button" class="btn btn-ghost btn-ic" data-ic="hist" data-tip="รายการใบขอใช้รถ พ.4-08 ทั้งหมด" onclick="vdOpenOldTab('vehreq')"></button>
+            </div>
+          </div>
+          <div id="vd-wrap" class="grid-wrap"></div>
+          <div class="draft-chip hidden" id="draft-vd-chip" style="margin:12px 20px;">
+            <span class="dc-dot"></span>
+            <span id="draft-vd-count-text"></span>
+            <span style="flex:1;"></span>
+            <button class="dc-btn dc-clear" onclick="vdDiscard()">ล้างการแก้ไข</button>
+            <button class="dc-btn dc-save" id="vd-save-btn" onclick="vdSave()">บันทึก</button>
           </div>
         </div>
       </div>
@@ -1791,6 +1864,7 @@ document.querySelectorAll('.sec-tab').forEach(t=>{
       renderMaterials();
     }
     if(t.dataset.sec==='inbound') renderInbound();
+    if(t.dataset.sec==='vehday') renderVehDay();
     try{ sessionStorage.setItem('cn_supplies_tab', t.dataset.sec); }catch(e){}
   });
 });
@@ -4185,7 +4259,19 @@ async function loadVehicleMileageFromApi(){
     console.error('โหลดเลขไมล์จากฐานข้อมูลกลางไม่สำเร็จ', err);
   }
 }
-async function __saveMileageEntry(vehicle, date){
+/* บันทึกเลขไมล์ทีละครั้งต่อ คัน|วัน (21 พ.ย. 2569) — เดิมถ้าสั่งบันทึกช่องเดิมซ้ำเร็วๆ ก่อนครั้งแรกเสร็จ
+   ครั้งหลังยังไม่รู้ id ของแถวแรก จึงสร้างแถวใหม่ซ้ำ (เคยเกิด 129 แถวขยะของรถ 23 วันที่ 17 ส.ค.)
+   ตอนนี้ครั้งหลังรอครั้งก่อนเสร็จ แล้วอ่านค่า/ id ล่าสุดค่อยบันทึก */
+const __mileageSaveQueue = {};
+function __saveMileageEntry(vehicle, date){
+  const key = vehicle+'|'+date;
+  const prev = __mileageSaveQueue[key] || Promise.resolve();
+  const p = prev.then(()=>__saveMileageEntryNow(vehicle, date));
+  __mileageSaveQueue[key] = p;
+  p.then(()=>{ if(__mileageSaveQueue[key]===p) delete __mileageSaveQueue[key]; });
+  return p;
+}
+async function __saveMileageEntryNow(vehicle, date){
   const key = vehicle+'|'+date;
   const value = vehicleMileage[key];
   const existingId = vehicleMileageIds[key];
@@ -6288,7 +6374,7 @@ function ensureDwoMonths(dates){
     FBL.apiQueryRange('daily_work_orders', 'date', ym, ym+'\uf8ff').then(rows=>{
       __dwoRows = __dwoRows.filter(r=>String(r.date||'').slice(0,7)!==ym).concat(rows);
     }).catch(e=>{ console.error('โหลดใบสั่งการรายวันเดือน '+ym+' ไม่สำเร็จ', e); __dwoErr[ym] = true; })
-      .then(()=>{ __dwoMonths[ym] = true; delete __dwoLoading[ym]; if(typeof renderMachinery==='function') renderMachinery(); refreshWorkAreaBoxes(); });
+      .then(()=>{ __dwoMonths[ym] = true; delete __dwoLoading[ym]; if(typeof renderMachinery==='function') renderMachinery(); refreshWorkAreaBoxes(); if(typeof renderVehDay==='function') renderVehDay(); });
   });
 }
 /* ---- พื้นที่ปฏิบัติงานของวัน (แบบ ก, 2569-11-21) ----
@@ -6349,7 +6435,7 @@ function workAreaBoxHtml(kind, date){
   return `<div class="fd-wa" id="fd-wa-${kind}" data-wdate="${esc(date)}">${workAreaInner(date)}</div>`;
 }
 function refreshWorkAreaBoxes(){
-  ['fuel','mat'].forEach(k=>{ const el = document.getElementById('fd-wa-'+k); if(el) el.innerHTML = workAreaInner(el.dataset.wdate); });
+  ['fuel','mat','vd'].forEach(k=>{ const el = document.getElementById('fd-wa-'+k); if(el) el.innerHTML = workAreaInner(el.dataset.wdate); });
 }
 function getDailyWorkOrdersX(){
   return __dwoRows.map(r=>{
@@ -6770,6 +6856,426 @@ function printMachinery(){
 }
 
 /* ============================================================
+   ใช้รถรายวัน (21 พ.ย. 2569) — รวม EC 1-W + พ.4-08 + มิเตอร์เลิกงาน ไว้ในหน้าเดียว หน้าตาเดียวกับหน้าตรวจ พ.1-03
+   1 แถว = รถ 1 คันของวันที่เลือก ; กรอกแล้วเก็บเป็นร่าง (vdDraft) จนกด "บันทึก" ที่แถบล่าง
+   บันทึกลงตารางเดิมทั้งหมด (ไม่มีตาราง/สิทธิ์ใหม่):
+     - machinery_logs      = EC 1-W (ชั่วโมง W..S, สายทาง/กม., ผู้ขับ, หมายเหตุ)
+     - vehicle_mileage_log = มิเตอร์เลิกงาน (ค่าเดียวกับแถวเลขไมล์ใน พ.1-03)
+     - vehicle_requests    = ใบ พ.4-08 ของคัน/วันนั้น (ติ๊ก "ออกใบ พ.4-08" — ค่าเริ่มต้นติ๊กให้รถที่มีเลขไมล์เมื่อเลือกสถานะที่ใช้รถ)
+   ============================================================ */
+const VD_ST = [['W','ทำงานปกติ'],['C','งานฉุกเฉิน'],['O','ช่วยหน่วยงานอื่น'],['V','งานอื่นของหน่วยงาน'],['M','งานของผู้ให้เช่า'],
+  ['R','ชำรุด/ซ่อม'],['S','รองาน'],['F','ผู้ให้เช่าผิด/ธรรมชาติ'],['X','ไม่ได้ใช้รถ'],['OFF','วันหยุด']];
+const VD_HR = ['W','M','C','V','O','F','R','S'];
+const VD_USE = ['W','M','C','V','O'];
+let vdDate = null, vdDraft = {}, vdDraftDate = null, vdOpenRow = null;
+const vdAdded = {};
+function vdCurDate(){
+  if(!vdDate) vdDate = toLocalISODate(TODAY);
+  return vdDate;
+}
+function vdHasMile(v){ return !!v && v.fuelType==='ดีเซล'; }
+function vdByHour(v){ return !!v && /ชม/.test(v.fuelRateUnit||''); }
+function vdFuel(label, date){ return fuelForVehicleDate(label, date, 'ดีเซล') + fuelForVehicleDate(label, date, 'เบนซิน'); }
+function vdReq(label, date){ return vehicleRequests.find(r=>r.vehicleLabel===label && (r.requestDate===date || r.dateFrom===date)); }
+/* รถที่ขึ้นเป็นแถว: รถดีเซลที่ยังไม่คืนแขวง + คันที่มีบันทึก EC 1-W/ใบ พ.4-08/เบิกดีเซลในวันนั้น + คันที่กดเพิ่มเอง */
+function vdRowsFor(date){
+  const added = vdAdded[date] || new Set();
+  return vehicles.filter(v=> added.has(v.label) || ec1wFindLog(v.label, date) || vdReq(v.label, date)
+    || (vdHasMile(v) && vehicleActiveOn(v, date)) || fuelForVehicleDate(v.label, date, 'ดีเซล')>0);
+}
+/* ค่าที่บันทึกไว้แล้วของคัน/วัน → รูปแบบร่างของหน้านี้ */
+function vdBase(v, date){
+  const l = ec1wFindLog(v.label, date), req = vdReq(v.label, date);
+  const hrs = {}; VD_HR.forEach(k=>{ hrs[k] = l ? (Number(l['hr'+k])||0) : 0; });
+  let st = '';
+  if(l){ const nz = VD_HR.filter(k=>hrs[k]>0); st = nz.length>1 ? 'MIX' : nz.length===1 ? nz[0] : (l.dayOff ? 'OFF' : 'X'); }
+  const own = l && l.locations && l.locations.length ? l.locations : null;
+  const linked = own ? [] : dailyWorkOrderLocationsForVehicleDate(v.label, date);
+  const locs = (own || linked).slice(0,2).map(x=>({route:x.route||'', km:x.km||'', officeLabel:x.officeLabel||''}));
+  const m = vehicleMileage[v.label+'|'+date];
+  return { st, hrs, driver: l ? (l.driver||'') : (vehicleOperatorOn(v, date)||''), locations: locs, linked: !own && linked.length>0,
+    otherUnitCode: l ? l.otherUnitCode : '', otherReason: l ? l.otherReason : '', note: l ? l.note : '',
+    end: m!=null ? String(m) : '', p408: !!req, purpose: req ? (req.purpose||'') : '',
+    passengers: req && req.passengers!=null ? String(req.passengers) : '' };
+}
+function vdGet(v, date){ return (vdDraftDate===date && vdDraft[v.label]) || vdBase(v, date); }
+function vdEdit(label){
+  const date = vdCurDate();
+  if(vdDraftDate!==date){ vdDraft = {}; vdDraftDate = date; }
+  if(!vdDraft[label]){ const v = vehicles.find(x=>x.label===label); vdDraft[label] = JSON.parse(JSON.stringify(vdBase(v, date))); }
+  return vdDraft[label];
+}
+function vdIsUse(d){ return VD_USE.includes(d.st) || (d.st==='MIX' && VD_USE.some(k=>d.hrs[k]>0)); }
+function vdMainHr(d){ return VD_HR.includes(d.st) ? d.hrs[d.st] : (d.st==='MIX' ? VD_USE.reduce((s,k)=>s+(d.hrs[k]||0),0) : 0); }
+function vdDefaultPurpose(label){ return vehicleRegNo(label)==='44-0254-17-0' ? 'ตรวจสายทาง' : 'ปฏิบัติงานตามใบสั่งการรายวัน'; }
+function vdDist(v, d, date){
+  if(!vdHasMile(v)) return null;
+  const now = mileageNumeric(d.end), prev = mileagePrevBefore(v.label, date);
+  if(now==null || !prev) return null;
+  return { val: now-prev.val, prev };
+}
+function vdFlags(v, d, date){
+  const f = [], fuel = vdFuel(v.label, date), use = vdIsUse(d);
+  if(!d.st){
+    if(fuel>0 || !ec1wAutoDayOff(date)) f.push(['w','ยังไม่บันทึกการใช้รถของวันนี้','ยังไม่บันทึก']);
+    return f;
+  }
+  if(!use && fuel>0) f.push(['b','ไม่ได้ใช้รถ แต่มีการเบิกน้ำมัน '+fmtNum(fuel,1)+' ล. ใน พ.1-03','ไม่ใช้แต่เบิก']);
+  if(use && vdHasMile(v) && fuel>0 && mileageNumeric(d.end)==null) f.push(['w','เบิกน้ำมันแต่ยังไม่กรอกมิเตอร์เลิกงาน','ไม่มีไมล์']);
+  const dd = vdDist(v, d, date);
+  if(dd){
+    const maxPerDay = (v.maxKmPerDay!=null && v.maxKmPerDay!=='') ? parseFloat(v.maxKmPerDay) : FUEL_CHECK_MAX_KM_PER_DAY;
+    const gap = Math.max(1, Math.round((new Date(date)-new Date(dd.prev.date))/86400000));
+    if(dd.val<0) f.push(['b','มิเตอร์ลดลง '+fmtNum(-dd.val,0)+' จากครั้งก่อน','ไมล์ลดลง']);
+    else if(!vdByHour(v) && !/^44-/.test(vehicleRegNo(v.label)) && dd.val>maxPerDay*gap) f.push(['w','มิเตอร์เพิ่ม '+fmtNum(dd.val,0)+' กม. สูงผิดปกติ','ไมล์ผิดปกติ']);
+  }
+  if(use && !d.locations.some(x=>x.route||x.km||x.officeLabel)) f.push(['w','ยังไม่ระบุสายทางที่ปฏิบัติงาน','ไม่มีสายทาง']);
+  if(d.hrs.O>0 && !String(d.otherUnitCode||'').trim()) f.push(['w','มีชั่วโมง O แต่ยังไม่ระบุรหัสหน่วยงาน','ไม่มีรหัสหน่วย']);
+  if(use && !String(d.driver||'').trim()) f.push(['w','ยังไม่ระบุผู้ขับ','ไม่มีผู้ขับ']);
+  return f;
+}
+function vdFlagHtml(v, d, date){
+  const f = vdFlags(v, d, date);
+  if(!d.st && !f.length) return '<span class="fd-fl fd-n">วันหยุด</span>';
+  if(!d.st) return '<span class="fd-fl fd-n">ยังไม่บันทึก</span>';
+  if(!f.length) return (d.st==='X'||d.st==='OFF') ? `<span class="fd-fl fd-n">${d.st==='OFF'?'วันหยุด':'ไม่ใช้รถ'}</span>` : '<span class="fd-fl fd-ok">✔ ปกติ</span>';
+  return `<span class="fd-fl ${f.some(x=>x[0]==='b')?'fd-b':'fd-w'}" title="${esc(f.map(x=>x[1]).join(' · '))}">${f[0][0]==='b'?'⛔':'⚠'} ${esc(f[0][2])}${f.length>1?' +'+(f.length-1):''}</span>`;
+}
+function vdLocText(x){ return x.route ? x.route : (x.officeLabel || (x.km ? 'อื่นๆ' : '')); }
+function renderVehDay(){
+  const wrap = document.getElementById('vd-wrap');
+  if(!wrap) return;
+  const date = vdCurDate();
+  const di = document.getElementById('vd-date'); if(di && di.value!==date) di.value = date;
+  const ro = !isAdmin() || isMonthLocked(date);
+  const dis = ro ? ' disabled' : '';
+  const rows = vdRowsFor(date);
+  // เก็บตำแหน่งโฟกัสไว้คืนหลังวาดใหม่ (แบบเดียวกับหน้า พ.1-03)
+  const ae = document.activeElement;
+  const focusKey = (ae && wrap.contains(ae) && ae.dataset && ae.dataset.vdf) ? ae.dataset.vdf+'|'+ae.dataset.vdl : null;
+  const sx = wrap.scrollLeft;
+
+  /* แถบสัปดาห์: ใต้วันที่ = บันทึกแล้วกี่คัน / ทั้งหมด */
+  const weekIsos = fuelWeekDays(date), todayIso = toLocalISODate(TODAY);
+  ensureDwoMonths(weekIsos);
+  const chips = weekIsos.map(iso=>{
+    const dt = new Date(iso+'T00:00:00'), wd = dt.getDay(), hol = THAI_HOLIDAYS[iso] || null;
+    const rs = vdRowsFor(iso), done = rs.filter(v=>ec1wFindLog(v.label, iso)).length;
+    const mon = (dt.getDate()===1 || iso===weekIsos[0]) ? ' '+FUEL_SHORT_MONTH[dt.getMonth()] : '';
+    const off = wd===0 || wd===6 || hol;
+    const n = done ? `<div class="n ${done>=rs.length?'vd-ok':'vd-part'}">${done>=rs.length?'✔ ':''}${done}/${rs.length}</div>` : '<div class="n">&nbsp;</div>';
+    return `<div class="dwk-d${iso===date?' on':''}${off?' off':''}${iso===todayIso?' today':''}" data-vddate="${iso}"${hol?` title="${esc(hol)}"`:''}>
+      <small>${FUEL_WEEKDAY_FULL[wd]}${mon}</small><b>${dt.getDate()}</b>${n}</div>`;
+  }).join('');
+  const dt0 = new Date(date+'T00:00:00');
+  const holName = THAI_HOLIDAYS[date] || '';
+
+  /* ตัวเลขสรุปของวัน */
+  let nUse = 0, km = 0, hr = 0, fuelSum = 0, nDone = 0;
+  const data = rows.map(v=>{
+    const d = vdGet(v, date), dd = vdDist(v, d, date);
+    if(vdIsUse(d)) nUse++;
+    if(d.st) nDone++;
+    if(dd && dd.val>0 && !vdByHour(v)) km += dd.val;
+    hr += VD_USE.reduce((s,k)=>s+(d.hrs[k]||0),0);
+    fuelSum += vdFuel(v.label, date);
+    return {v, d, dd};
+  });
+  const head = `<div class="dwk-bar"><button type="button" class="dwk-arr" data-vdstep="-1" title="สัปดาห์ก่อนหน้า">‹</button><div class="dwk-days fd-days">${chips}</div><button type="button" class="dwk-arr" data-vdstep="1" title="สัปดาห์ถัดไป">›</button></div>
+    <div class="fd-dayhead">
+      <h3>วัน${FUEL_WEEKDAY_FULL[dt0.getDay()]}ที่ ${dt0.getDate()} ${monthNamesTh[dt0.getMonth()]} ${dt0.getFullYear()+543}</h3><span class="fd-count">${rows.length} คัน</span>${date===todayIso?' <span class="fd-today">วันนี้</span>':''}${holName?` <span class="fd-hol">${esc(holName)}</span>`:''}${isMonthLocked(date)?' <span class="fd-hol">🔒 เดือนนี้ล็อกบัญชีแล้ว</span>':''}<span style="flex:1"></span>
+      <div class="fd-stats"><div>ใช้งาน<b>${nUse} คัน</b></div><div>ระยะทางรวม<b>${fmtNum(km,0)} กม.</b></div><div>ชั่วโมงทำงาน<b>${fmtNum(hr,1).replace(/\.0$/,'')} ชม.</b></div><div>น้ำมัน (พ.1-03)<b>${fmtNum(fuelSum,1)} ล.</b></div></div></div>`;
+
+  const warn = data.filter(x=>x.d.st && vdFlags(x.v, x.d, date).length);
+  const notYet = data.filter(x=>!x.d.st && vdFlags(x.v, x.d, date).length);
+  const alertsHtml = (warn.length || notYet.length)
+    ? `<div class="fd-alert"><b>⚠ ต้องดูเป็นพิเศษ ${warn.length+notYet.length} รายการ</b>${warn.map(x=>`<div class="fd-li" data-vdgo="${esc(x.v.label)}"><b>${esc(vehicleShortName(x.v.label))} ${esc(vehicleRegNo(x.v.label))}</b> — ${vdFlags(x.v, x.d, date).map(f=>esc(f[1])).join(' · ')}</div>`).join('')}${notYet.length?`<div class="fd-li">ยังไม่บันทึก ${notYet.length} คัน: ${notYet.map(x=>esc(vehicleShortName(x.v.label)+' '+vehicleRegNo(x.v.label).split('-')[0])).join(', ')}</div>`:''}</div>`
+    : `<div class="fd-alert fd-alert-ok"><b>${rows.length?'✔ บันทึกครบ ไม่พบความผิดปกติ':'วันนี้ไม่มีรถในรายการ'}</b>${rows.length?'<div>มิเตอร์ สายทาง และการเบิกน้ำมันสอดคล้องกัน</div>':''}</div>`;
+
+  const weekMon = ec1wMonday(date), weekDates = ec1wWeekDatesFrom(weekMon);
+  const nEc = vehicles.filter(v=>weekDates.some(dd=>ec1wFindLog(v.label, dd))).length;
+  const nReq = vehicleRequests.filter(r=>r.requestDate===date || r.dateFrom===date).length;
+  const progHtml = `<div class="fd-prog"><b>ความคืบหน้าการบันทึก</b><div class="fd-pb"><i style="width:${rows.length?nDone/rows.length*100:0}%"></i></div><span>บันทึกแล้ว <b>${nDone}</b> / ${rows.length} คัน</span>
+    <div class="fd-print">
+      <button type="button" class="btn btn-ghost" onclick="vdPrintEc1w()">🖨️ EC 1-W<small>สัปดาห์นี้ ${nEc} คัน</small></button>
+      <button type="button" class="btn btn-ghost" onclick="vdPrintP408()">🖨️ พ.4-08<small>วันนี้ ${nReq} ใบ</small></button>
+      ${isAdmin()?'<button type="button" class="btn btn-ghost wide" onclick="openVehReqModal(null)">＋ ใบขอใช้รถล่วงหน้า</button>':''}
+    </div></div>`;
+
+  let addHtml = '';
+  if(!ro){
+    const shown = new Set(rows.map(v=>v.label));
+    const opts = vehicles.filter(v=>!shown.has(v.label) && vehicleActiveOn(v, date))
+      .map(v=>`<option value="${esc(vehicleShortName(v.label)+' '+vehicleRegNo(v.label))}"></option>`).join('');
+    addHtml = `<div class="md-add"><b>➕ เพิ่มรถ</b>
+      <label class="md-f md-f-item"><span>รถ/เครื่อง</span><input id="vd-add-veh" list="vd-add-list" autocomplete="off" placeholder="รถที่ไม่อยู่ในตาราง — พิมพ์ชื่อ/ทะเบียน แล้วเลือก" onkeydown="if(event.key==='Enter'){event.preventDefault();vdAddRow();}"></label>
+      <datalist id="vd-add-list">${opts}</datalist>
+      <button type="button" class="btn btn-primary md-add-btn" onclick="vdAddRow()">เพิ่ม</button></div>`;
+  }
+
+  let body = '';
+  data.forEach(({v, d, dd})=>{
+    const label = v.label, la = esc(label), dirty = vdDraftDate===date && !!vdDraft[label];
+    const flags = vdFlags(v, d, date), use = vdIsUse(d);
+    const cls = !d.st ? (flags.length ? 'fd-rw' : 'fd-off') : (d.st==='X'||d.st==='OFF') && !flags.length ? 'fd-off'
+      : flags.some(f=>f[0]==='b') ? 'fd-rb' : flags.length ? 'fd-rw' : 'fd-ck';
+    const base = dirty ? vdBase(v, date) : null;
+    const dc = (k)=> dirty && JSON.stringify(d[k])!==JSON.stringify(base[k]) ? ' cell-dirty' : '';
+    const stOpts = `<option value="">— เลือก —</option>` + (d.st==='MIX' ? '<option value="MIX" selected>แยกชั่วโมง</option>' : '')
+      + VD_ST.map(([k,t])=>`<option value="${k}"${d.st===k?' selected':''}>${t}${VD_HR.includes(k)?' ('+k+')':''}</option>`).join('');
+    const locs = d.locations.filter(x=>vdLocText(x));
+    const routeCell = (!use && d.st) ? '<span class="fd-mut">—</span>'
+      : `<div class="vd-rts">${locs.map(x=>`<span class="vd-rt">${esc(vdLocText(x))}</span>`).join('') || '<span class="fd-mut">ยังไม่ระบุ</span>'}</div>${locs.some(x=>x.km)?`<span class="vd-km" title="${esc(locs.map(x=>x.km).filter(Boolean).join(', '))}">กม. ${esc(locs.map(x=>x.km).filter(Boolean).join(', '))}</span>`:''}${d.linked?'<span class="vd-link">🔗 จากใบสั่งการ</span>':''}`;
+    const mainHr = vdMainHr(d);
+    const hrCell = (!d.st || d.st==='X' || d.st==='OFF') ? '<span class="fd-mut">—</span>'
+      : d.st==='MIX' ? `<b class="fd-big" title="แยกหลายรหัส — แก้ที่ปุ่ม ⋯">${ec1wNum(mainHr)}</b>`
+      : `<input type="number" min="0" step="0.5" class="fd-in${dc('hrs')}" value="${mainHr||''}" placeholder="—" data-vdf="hr" data-vdl="${la}"${dis}>`;
+    const prev = vdHasMile(v) ? mileagePrevBefore(label, date) : null;
+    const noMile = !vdHasMile(v);
+    const miCell = noMile ? '<span class="fd-mut">ไม่มีเลขไมล์</span>'
+      : ro ? `<b>${d.end?esc(d.end):'—'}</b>`
+      : `<input type="text" inputmode="decimal" class="fd-in${dd&&dd.val<0?' fd-inbad':''}${dc('end')}" value="${esc(d.end)}" placeholder="${vdByHour(v)?'ชม.เครื่อง':'เลขไมล์'}" data-vdf="end" data-vdl="${la}">`;
+    const fuel = vdFuel(label, date);
+    const p408Tag = d.p408 ? '<span class="vd-p408" title="ออกใบ พ.4-08 ของวันนี้">พ.4-08</span>' : '';
+    body += `<tr class="${cls}" data-vdrow="${la}">
+      <td class="vd-drv"><input class="vd-in-t${dc('driver')}" value="${esc(d.driver)}" placeholder="+ ระบุชื่อ" title="${esc(d.driver)}" data-vdf="driver" data-vdl="${la}"${dis}></td>
+      <td class="fd-veh-td" style="text-align:center" title="${esc(vehicleShortName(label))} ${esc(vehicleRegNo(label))}"><b class="fd-vname">${esc(vehicleShortName(label))}</b><div class="fd-vsub" style="justify-content:center"><span class="fd-mut">${esc(vehicleRegNo(label))}</span>${p408Tag}</div></td>
+      <td class="fd-in-td"><select class="vd-st s-${d.st||'none'}${dc('st')}" data-vdf="st" data-vdl="${la}"${dis}>${stOpts}</select></td>
+      <td>${routeCell}</td>
+      <td class="fd-in-td">${hrCell}</td>
+      <td class="fd-r">${prev?`<b>${fmtNum(prev.val,0)}</b><div class="fd-mut">${fuelShortDate(prev.date)}</div>`:'<span class="fd-mut">—</span>'}</td>
+      <td class="fd-in-td">${miCell}</td>
+      <td class="fd-c">${dd?`<b${dd.val<0?' class="fd-neg"':''}>${dd.val>=0?'+':''}${fmtNum(dd.val,vdByHour(v)?1:0)} ${vdByHour(v)?'ชม.':'กม.'}</b>`:'<span class="fd-mut">—</span>'}</td>
+      <td class="fd-c">${fuel>0?`<b>${fmtNum(fuel,1)} ล.</b>`:'<span class="fd-mut">—</span>'}</td>
+      <td class="fd-flags"><div class="fd-flagrow">${vdFlagHtml(v, d, date)}<button type="button" class="vd-more${vdOpenRow===label?' on':''}" data-vdmore="${la}" title="รายละเอียดเพิ่มเติม: แยกชั่วโมง / สายทาง-กม. / พ.4-08 / หมายเหตุ">⋯</button></div></td></tr>`;
+    if(vdOpenRow===label){
+      const hin = k=>`<div class="hr${['F','R','S'].includes(k)?' nw':''}"><label>${k}</label><input type="number" min="0" step="0.5" class="fd-in" value="${d.hrs[k]||''}" data-vdf="h${k}" data-vdl="${la}"${dis}></div>`;
+      const loc = i=>{ const x = d.locations[i] || {route:'',km:''};
+        return `<div><label>สายทางที่ ${i+1}</label><select class="fd-in t" data-vdf="r${i}" data-vdl="${la}"${dis}>${routeOptionsHtml(x.route)}</select></div>
+          <div><label>กม. ${x.officeLabel?'('+esc(x.officeLabel)+')':''}</label><input class="fd-in t" value="${esc(x.km)}" placeholder="เช่น 247+902 - 250+000" data-vdf="k${i}" data-vdl="${la}"${dis}></div>`; };
+      body += `<tr class="vd-sub"><td colspan="10">
+        <div class="vd-subgrid">${VD_HR.map(hin).join('')}
+          <div><label>รหัสหน่วยงานที่ปฏิบัติงานอื่นๆ (ชั่วโมง O)</label><input class="fd-in t" value="${esc(d.otherUnitCode)}" placeholder="ถ้ามี" data-vdf="ounit" data-vdl="${la}"${dis}></div></div>
+        <div class="vd-subrow2">${loc(0)}${loc(1)}</div>
+        <div class="vd-subrow3">
+          <div><label>สาเหตุอื่นๆ ที่ไม่ปฏิบัติงาน</label><input class="fd-in t" value="${esc(d.otherReason)}" placeholder="เช่น รอซ่อม, ฝนตก" data-vdf="reason" data-vdl="${la}"${dis}></div>
+          <div><label class="vd-ck"><input type="checkbox" data-vdf="p408" data-vdl="${la}"${d.p408?' checked':''}${dis}> ออกใบ พ.4-08 — ภารกิจ (เพื่อ)</label><input class="fd-in t" value="${esc(d.purpose)}" placeholder="${esc(vdDefaultPurpose(label))}" data-vdf="purpose" data-vdl="${la}"${dis}></div>
+          <div><label>คนนั่ง</label><input type="number" min="1" class="fd-in" value="${esc(d.passengers)}" placeholder="—" data-vdf="pass" data-vdl="${la}"${dis}></div>
+          <div><label>หมายเหตุ (EC 1-W)</label><input class="fd-in t" value="${esc(d.note)}" placeholder="ถ้ามี" data-vdf="note" data-vdl="${la}"${dis}></div>
+        </div></td></tr>`;
+    }
+  });
+  if(!rows.length) body = `<tr><td colspan="10" class="fd-empty">ยังไม่มีรถในรายการของวันนี้${ro?'':' — เพิ่มได้ที่ช่องด้านบน'}</td></tr>`;
+  const table = `<div class="fd-tablewrap"><table class="fd-table vd-table"><colgroup><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:13%"><col style="width:6.5%"><col style="width:8.5%"><col style="width:9%"><col style="width:7.5%"><col style="width:6.5%"><col style="width:13%"></colgroup><thead><tr>
+    <th>ผู้ขับ / ควบคุม</th><th>หมายเลขเครื่อง/รถ<br><small>ทะเบียน</small></th><th class="fd-cur">สถานะงาน<br><small>รหัส EC 1-W</small></th><th>สายทาง · กม.<br><small>จากใบสั่งการ / แก้ที่ ⋯</small></th>
+    <th class="fd-cur">ชั่วโมง</th><th>มิเตอร์<br>ครั้งก่อน</th><th class="fd-cur">มิเตอร์<br>เลิกงาน</th><th>ระยะทาง</th><th>น้ำมัน<br><small>พ.1-03</small></th><th>ผลตรวจ</th></tr></thead>
+    <tbody>${body}</tbody><tfoot><tr><td colspan="4" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${fmtNum(hr,1).replace(/\.0$/,'')} ชม.</td><td></td><td></td><td class="fd-c">${fmtNum(km,0)} กม.</td><td class="fd-c">${fmtNum(fuelSum,1)} ล.</td><td></td></tr></tfoot></table></div>`;
+
+  wrap.innerHTML = head + `<div class="fd-top"><div class="fd-left">${alertsHtml}${workAreaBoxHtml('vd', date)}</div>${progHtml}</div>` + addHtml + table;
+  wrap.scrollLeft = sx;
+  const days = wrap.querySelector('.fd-days'), sel = days && days.querySelector('.on');
+  if(sel) days.scrollLeft = sel.offsetLeft - (days.clientWidth - sel.offsetWidth)/2;
+  if(focusKey){
+    const i = focusKey.indexOf('|'), f = focusKey.slice(0,i), l = focusKey.slice(i+1);
+    const t = Array.from(wrap.querySelectorAll('[data-vdf]')).find(e=>e.dataset.vdf===f && e.dataset.vdl===l);
+    if(t) t.focus();
+  }
+  vdUpdateChip();
+}
+function vdUpdateChip(){
+  const chip = document.getElementById('draft-vd-chip');
+  if(!chip) return;
+  const n = vdDraftDate ? Object.keys(vdDraft).length : 0;
+  chip.classList.toggle('hidden', !n);
+  const t = document.getElementById('draft-vd-count-text');
+  if(t) t.textContent = n ? `แก้ไขแล้ว ${n} คัน (${fmtDate(vdDraftDate)}) — ยังไม่ได้บันทึก` : '';
+}
+/* ค่าที่กรอกในแต่ละช่อง → ร่าง */
+function vdApplyInput(el){
+  const f = el.dataset.vdf, label = el.dataset.vdl;
+  if(!f || !label) return;
+  const d = vdEdit(label), v = vehicles.find(x=>x.label===label);
+  const val = el.type==='checkbox' ? el.checked : el.value;
+  if(f==='st'){
+    if(val==='MIX') return;
+    const keep = vdMainHr(d) || 8;
+    VD_HR.forEach(k=>{ d.hrs[k] = 0; });
+    d.st = val;
+    if(VD_HR.includes(val)) d.hrs[val] = keep;
+    const use = VD_USE.includes(val);
+    if(use && !d.p408 && !vdReq(label, vdCurDate()) && vdHasMile(v) && !vdByHour(v)) d.p408 = true;
+    if(!use) d.p408 = false;
+  } else if(f==='hr'){
+    if(VD_HR.includes(d.st)) d.hrs[d.st] = parseFloat(val)||0;
+  } else if(/^h[A-Z]$/.test(f)){
+    d.hrs[f.slice(1)] = parseFloat(val)||0;
+    const nz = VD_HR.filter(k=>d.hrs[k]>0);
+    d.st = nz.length>1 ? 'MIX' : nz.length===1 ? nz[0] : (d.st && !VD_HR.includes(d.st) && d.st!=='MIX' ? d.st : 'X');
+  } else if(f==='end') d.end = String(val).trim();
+  else if(f==='driver') d.driver = val;
+  else if(f==='ounit') d.otherUnitCode = val;
+  else if(f==='reason') d.otherReason = val;
+  else if(f==='note') d.note = val;
+  else if(f==='purpose') d.purpose = val;
+  else if(f==='pass') d.passengers = val;
+  else if(f==='p408') d.p408 = !!val;
+  else if(/^[rk][01]$/.test(f)){
+    const i = +f[1];
+    while(d.locations.length<=i) d.locations.push({route:'', km:'', officeLabel:''});
+    if(f[0]==='r'){ d.locations[i].route = val==='__other__' ? '' : val; if(val) d.locations[i].officeLabel = ''; }
+    else d.locations[i].km = String(val).trim();
+    d.linked = false;
+  }
+  vdUpdateChip();
+}
+function vdGoDate(iso){
+  if(!iso || iso===vdCurDate()) return;
+  const go = ()=>{ vdDraft = {}; vdDraftDate = null; vdOpenRow = null; vdDate = iso; renderVehDay(); };
+  if(vdDraftDate && Object.keys(vdDraft).length){
+    showConfirmModal('ยังไม่ได้บันทึก', `มีการแก้ไข ${Object.keys(vdDraft).length} คันของวันที่ ${fmtDate(vdDraftDate)} ที่ยังไม่ได้บันทึก — ต้องการทิ้งการแก้ไขแล้วเปลี่ยนวันหรือไม่?`, 'ทิ้งแล้วเปลี่ยนวัน', go);
+    const di = document.getElementById('vd-date'); if(di) di.value = vdCurDate();
+    return;
+  }
+  go();
+}
+function vdDiscard(){ vdDraft = {}; vdDraftDate = null; renderVehDay(); }
+function vdAddRow(){
+  const el = document.getElementById('vd-add-veh');
+  const q = (el && el.value || '').trim();
+  const v = vehicles.find(x=>(vehicleShortName(x.label)+' '+vehicleRegNo(x.label))===q) || vehicles.find(x=>q && (vehicleRegNo(x.label)===q || x.label===q));
+  if(!v){ showAlertModal(q ? 'ไม่พบรถ/เครื่องจักร "'+q+'" — เลือกจากรายการที่ขึ้นให้' : 'กรุณาเลือกรถ/เครื่องจักรที่จะเพิ่ม'); if(el) el.focus(); return; }
+  const date = vdCurDate();
+  (vdAdded[date] || (vdAdded[date] = new Set())).add(v.label);
+  vdOpenRow = null;
+  renderVehDay();
+  const sel = Array.from(document.querySelectorAll('#vd-wrap select[data-vdf="st"]')).find(s=>s.dataset.vdl===v.label);
+  if(sel){ sel.closest('tr').scrollIntoView({block:'nearest', behavior:'smooth'}); sel.focus(); }
+}
+function vdOpenOldTab(sec){
+  const t = document.querySelector(`.sec-tab[data-sec="${sec}"]`);
+  if(!t) return;
+  if(sec==='machinery'){ const w = document.getElementById('ec1w-week-date'); if(w) w.value = vdCurDate(); }
+  t.click();
+}
+/* บันทึกร่างทุกคัน — ทีละคัน คันไหนพลาดแจ้งรวมท้ายสุด (คันที่สำเร็จไม่ต้องบันทึกซ้ำ) */
+async function vdSave(){
+  if(!isAdmin()) return;
+  const date = vdDraftDate, labels = Object.keys(vdDraft);
+  if(!date || !labels.length) return;
+  if(blockIfMonthLocked(date)) return;
+  for(const label of labels){
+    const d = vdDraft[label];
+    if(vdIsUse(d) && !String(d.driver||'').trim()){ showAlertModal('กรุณาระบุชื่อผู้ขับของ '+vehicleShortName(label)+' '+vehicleRegNo(label)); return; }
+    if(d.end && mileageNumeric(d.end)==null && !/ชำรุด|เสีย/.test(d.end)){ showAlertModal('มิเตอร์เลิกงานของ '+vehicleShortName(label)+' '+vehicleRegNo(label)+' ต้องเป็นตัวเลข (หรือคำว่า "ชำรุด")'); return; }
+  }
+  const btn = document.getElementById('vd-save-btn');
+  if(btn){ btn.disabled = true; btn.textContent = 'กำลังบันทึก...'; }
+  const fails = [];
+  for(const label of labels){
+    try{ await vdSaveOne(label, date, vdDraft[label]); delete vdDraft[label]; }
+    catch(err){ fails.push(vehicleShortName(label)+' '+vehicleRegNo(label)+': '+err.message); }
+  }
+  if(btn){ btn.disabled = false; btn.textContent = 'บันทึก'; }
+  if(!Object.keys(vdDraft).length) vdDraftDate = null;
+  renderAll();
+  if(fails.length) showAlertModal('บันทึกไม่สำเร็จ '+fails.length+' คัน:\n'+fails.join('\n')+'\nคันอื่นบันทึกเรียบร้อยแล้ว — กด "บันทึก" อีกครั้งเพื่อลองคันที่ค้าง');
+  else showSuccessModal('บันทึกการใช้รถวันที่ '+fmtDate(date)+' เรียบร้อยแล้ว ('+labels.length+' คัน)');
+}
+async function vdSaveOne(label, date, d){
+  const use = vdIsUse(d), driver = String(d.driver||'').trim();
+  const locations = d.locations.filter(x=>x.route || x.km).map(x=>({route:x.route||'', km:String(x.km||'').trim()}));
+  /* 1) EC 1-W */
+  if(d.st){
+    const existing = ec1wFindLog(label, date);
+    const entry = { vehicle:label, date, driver, locations,
+      hrW:d.hrs.W||0, hrM:d.hrs.M||0, hrC:d.hrs.C||0, hrV:d.hrs.V||0, hrO:d.hrs.O||0,
+      otherUnitCode:String(d.otherUnitCode||'').trim(), hrF:d.hrs.F||0, hrR:d.hrs.R||0, hrS:d.hrs.S||0,
+      otherReason:String(d.otherReason||'').trim(),
+      dayOff: d.st==='OFF' ? true : (existing ? !!existing.dayOff : ec1wAutoDayOff(date)),
+      note:String(d.note||'').trim() };
+    if(existing){
+      const upd = Object.assign({}, existing, entry, {id:existing.id});
+      await apiPost('update', 'machinery_logs', machineryLogToApi(upd));
+      Object.assign(existing, upd);
+    } else {
+      const saved = await apiPost('add', 'machinery_logs', machineryLogToApi(entry));
+      machineryLogs.push(machineryLogFromApi(saved));
+    }
+  }
+  /* 2) มิเตอร์เลิกงาน — ตารางเดียวกับแถวเลขไมล์ของ พ.1-03 */
+  const key = label+'|'+date, cur = vehicleMileage[key], nv = String(d.end||'').trim();
+  if(nv !== String(cur!=null ? cur : '')){
+    if(nv==='') delete vehicleMileage[key]; else vehicleMileage[key] = nv;
+    await __saveMileageEntry(label, date);
+  }
+  /* 3) ใบ พ.4-08 ของคัน/วันนี้ */
+  const req = vdReq(label, date);
+  if(d.p408 && use){
+    const prev = mileagePrevBefore(label, date), endN = mileageNumeric(nv);
+    const pass = String(d.passengers||'').trim();
+    const routeNos = Array.from(new Set(locations.map(x=>x.route).filter(Boolean)));
+    const data = { requestDate: req ? req.requestDate : date, requesterName: driver, requesterPosition: req && req.requesterPosition ? req.requesterPosition : 'พขร.',
+      passengers: pass!=='' ? parseInt(pass) : (req ? req.passengers : undefined), routeNos: routeNos.length ? routeNos : (req ? req.routeNos : []),
+      purpose: String(d.purpose||'').trim() || (req && req.purpose) || vdDefaultPurpose(label), dateFrom: date, dateTo: date,
+      vehicleLabel: label, driverName: driver,
+      mileageStart: prev ? prev.val : (req ? req.mileageStart : undefined), mileageEnd: endN!=null ? endN : (req ? req.mileageEnd : undefined),
+      approverName: req && req.approverName ? req.approverName : determineVehReqApprover(date) };
+    if(req){
+      const upd = Object.assign({}, req, data);
+      await apiPost('update', 'vehicle_requests', vehReqToApi(upd));
+      Object.assign(req, upd);
+    } else {
+      const saved = await apiPost('add', 'vehicle_requests', vehReqToApi(Object.assign({status:'pending'}, data)));
+      vehicleRequests.push(vehReqFromApi(saved));
+    }
+  } else if(req && !d.p408){
+    await apiPost('delete', 'vehicle_requests', null, req.id);   // ลบ = ย้ายเข้าถังขยะ กู้คืนได้
+    const i = vehicleRequests.indexOf(req); if(i>-1) vehicleRequests.splice(i,1);
+  }
+}
+function vdPrintEc1w(){
+  const week = ec1wWeekDatesFrom(ec1wMonday(vdCurDate()));
+  ensureDwoMonths(week);
+  const labels = vehicles.filter(v=>week.some(d=>ec1wFindLog(v.label, d))).map(v=>v.label);
+  if(!labels.length){ showAlertModal('สัปดาห์นี้ยังไม่มีการบันทึกใช้รถ — ยังไม่มีแบบฟอร์ม EC 1-W ให้พิมพ์'); return; }
+  document.getElementById('print-ec1w').innerHTML = labels.map(l=>`<div class="vd-pg">${ec1wSheetHtml(l, week, false)}</div>`).join('');
+  printForm('print-ec1w');
+}
+function vdPrintP408(){
+  const date = vdCurDate();
+  const reqs = vehicleRequests.filter(r=>r.requestDate===date || r.dateFrom===date);
+  if(!reqs.length){ showAlertModal('วันนี้ยังไม่มีใบ พ.4-08 — ติ๊ก "ออกใบ พ.4-08" ที่ปุ่ม ⋯ ของรถคันนั้นแล้วกดบันทึกก่อน'); return; }
+  document.getElementById('print-vehreq').innerHTML = reqs.map(r=>`<div class="vd-pg">${buildP408Svg(r)}</div>`).join('');
+  printForm('print-vehreq');
+}
+/* เหตุการณ์ของหน้า (ผูกครั้งเดียว) */
+(function(){
+  const wrap = document.getElementById('vd-wrap');
+  if(!wrap) return;
+  wrap.addEventListener('click', function(e){
+    const chip = e.target.closest('[data-vddate]'); if(chip){ vdGoDate(chip.dataset.vddate); return; }
+    const st = e.target.closest('[data-vdstep]');
+    if(st){ const d = new Date(vdCurDate()+'T00:00:00'); d.setDate(d.getDate()+7*(+st.dataset.vdstep)); vdGoDate(toLocalISODate(d)); return; }
+    const mo = e.target.closest('[data-vdmore]'); if(mo){ vdOpenRow = vdOpenRow===mo.dataset.vdmore ? null : mo.dataset.vdmore; renderVehDay(); return; }
+    const go = e.target.closest('[data-vdgo]');
+    if(go){ const tr = Array.from(wrap.querySelectorAll('tr[data-vdrow]')).find(r=>r.dataset.vdrow===go.dataset.vdgo); if(tr){ tr.scrollIntoView({block:'center', behavior:'smooth'}); tr.classList.add('fd-hl'); setTimeout(()=>tr.classList.remove('fd-hl'), 1600); } }
+  });
+  wrap.addEventListener('input', function(e){ if(e.target.dataset && e.target.dataset.vdf && e.target.type!=='checkbox' && e.target.tagName!=='SELECT') vdApplyInput(e.target); });
+  wrap.addEventListener('change', function(e){
+    if(!(e.target.dataset && e.target.dataset.vdf)) return;
+    vdApplyInput(e.target);
+    setTimeout(renderVehDay, 0);   // รอโฟกัสย้ายไปช่องถัดไปก่อนแล้วค่อยวาดใหม่ (วาดแล้วคืนโฟกัสให้)
+  });
+  wrap.addEventListener('keydown', function(e){
+    if(e.key!=='Enter' || !(e.target.dataset && e.target.dataset.vdf==='end')) return;
+    e.preventDefault();
+    const all = Array.from(wrap.querySelectorAll('input[data-vdf="end"]'));
+    const next = all[all.indexOf(e.target)+1];
+    if(next) next.focus(); else e.target.blur();
+  });
+})();
+
+/* ============================================================
    รายงานสรุปวัสดุประจำปี พ.2-04 (ปุ่มพิมพ์ในแท็บ พัสดุในบัญชี / พัสดุนอกบัญชี)
    - กดปุ่ม → เลือกเดือน (สรุปสิ้นเดือนไหน) ในโมดัล → พิมพ์ ; ค่าเริ่มต้น = เดือนที่ดูอยู่ในหน้าทะเบียน
    - ยอดใช้ materialMonthSummary() (ชุดเดียวกับการ์ด) — ไม่สนตัวกรอง/คำค้น พิมพ์ทุกรายการของบัญชีนั้น
@@ -7006,6 +7512,7 @@ function renderAll(){
   renderMachinery();
   renderVehicleRequests();
   renderReport();
+  renderVehDay();
   updateDraftChips();
 }
 populateLogin();
