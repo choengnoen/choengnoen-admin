@@ -414,8 +414,8 @@
     ensureGate();
     document.getElementById('fbl-card').innerHTML =
       '<img class="fbl-logo" src="' + logoSrc() + '" alt="ตรากรมทางหลวง">' +
-      '<div class="fbl-title">ระบบงานหมวด</div>' +
-      '<div class="fbl-sub">หมวดทางหลวงเชิงเนิน · แขวงทางหลวงระยอง</div>' + html;
+      '<div class="fbl-title">หมวดทางหลวงเชิงเนิน</div>' +
+      '<div class="fbl-sub">แขวงทางหลวงระยอง</div>' + html;
     gateEl.classList.remove('hidden');
   }
   function hideGate() { if (gateEl) gateEl.classList.add('hidden'); }
