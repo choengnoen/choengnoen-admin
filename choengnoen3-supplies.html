@@ -7063,11 +7063,12 @@ function vdHasMile(v){ return !!v && v.fuelType==='ดีเซล'; }
 function vdByHour(v){ return !!v && /ชม/.test(v.fuelRateUnit||''); }
 function vdFuel(label, date){ return fuelForVehicleDate(label, date, 'ดีเซล') + fuelForVehicleDate(label, date, 'เบนซิน'); }
 function vdReq(label, date){ return vehicleRequests.find(r=>r.vehicleLabel===label && (r.requestDate===date || r.dateFrom===date)); }
-/* รถที่ขึ้นเป็นแถว: รถดีเซลที่ยังไม่คืนแขวง + คันที่มีบันทึก EC 1-W/ใบ พ.4-08/เบิกดีเซลในวันนั้น + คันที่กดเพิ่มเอง */
+/* รถที่ขึ้นเป็นแถว: รถดีเซลประจำหมวดที่ยังไม่คืน (ขึ้นอัตโนมัติ) + คันที่มีบันทึก EC 1-W/ใบ พ.4-08/เบิกดีเซลในวันนั้น + คันที่กดเพิ่มเอง
+   เครื่องจักรแขวง (machSource='แขวง') ไม่ขึ้นอัตโนมัติ — ขึ้นเฉพาะวันที่มีบันทึก/ใบขอใช้/เบิกน้ำมัน หรือกดเพิ่มเอง */
 function vdRowsFor(date){
   const added = vdAdded[date] || new Set();
   return vehicles.filter(v=> added.has(v.label) || ec1wFindLog(v.label, date) || vdReq(v.label, date)
-    || (vdHasMile(v) && vehicleActiveOn(v, date)) || fuelForVehicleDate(v.label, date, 'ดีเซล')>0);
+    || (vdHasMile(v) && !vehIsDistrict(v) && vehicleActiveOn(v, date)) || fuelForVehicleDate(v.label, date, 'ดีเซล')>0);
 }
 /* ค่าที่บันทึกไว้แล้วของคัน/วัน → รูปแบบร่างของหน้านี้ */
 function vdBase(v, date){
