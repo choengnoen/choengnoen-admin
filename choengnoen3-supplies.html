@@ -925,6 +925,17 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .fd-alert .fd-li{padding:3px 0;cursor:pointer;}
   .fd-alert .fd-li:hover{text-decoration:underline;}
   .fd-prog{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:13px;}
+  /* พื้นที่ปฏิบัติงานของวัน (จากใบสั่งการรายวัน) ใต้กล่องสถานะ — 2569-11-21 */
+  .fd-left{display:flex;flex-direction:column;gap:8px;min-width:0;}
+  .fd-wa{flex:1;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:13px;}
+  .fd-wa-h{font-weight:700;margin-bottom:4px;}
+  .fd-wa-r{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line);}
+  .fd-wa-code{font-size:12px;background:var(--paper-100);border-radius:6px;padding:1px 8px;white-space:nowrap;color:var(--ink-600,#555);}
+  .fd-wa-loc{flex:1;min-width:0;}
+  .fd-wa-sub{color:var(--ink-400,#888);font-size:12px;}
+  .fd-wa-q{white-space:nowrap;font-weight:700;text-align:right;}
+  .fd-wa-q.pend{font-weight:400;color:#b7791f;}
+  .fd-wa-none{color:var(--ink-400,#888);}
   .fd-pb{height:12px;background:#e4e8ec;border-radius:6px;overflow:hidden;margin:6px 0;}
   .fd-pb i{display:block;height:100%;background:#3fae6c;transition:width .25s;}
   .fd-lock{background:var(--success-bg);color:var(--success);border-radius:8px;padding:7px 10px;margin-top:8px;font-weight:600;}
@@ -5437,7 +5448,7 @@ function renderReportFuel(mk){
     <th style="width:54px">ตรวจ<br>แล้ว</th><th>ผู้เบิก</th><th>หมายเลขเครื่อง/รถ<br><small>ทะเบียน · ชนิดน้ำมัน</small></th><th>เบิกครั้งล่าสุด<br><small>จำนวน · วันที่</small></th><th class="fd-cur">เบิกครั้งนี้<br><small>(ลิตร)</small></th><th>เลขไมล์<br>ครั้งก่อน</th><th class="fd-cur">เลขไมล์<br>ครั้งนี้</th><th>ระยะทาง</th><th>ผลตรวจ</th></tr></thead>
     <tbody>${body}</tbody><tfoot><tr><td colspan="4" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${fmtNum(grand,1)} ล.</td><td colspan="4"></td></tr></tfoot></table></div>`;
 
-  wrap.innerHTML = head + `<div class="fd-top">${alertsHtml}${progHtml}</div>` + addHtml + table;
+  wrap.innerHTML = head + `<div class="fd-top"><div class="fd-left">${alertsHtml}${workAreaBoxHtml('fuel', date)}</div>${progHtml}</div>` + addHtml + table;
   wrap.scrollLeft = sx; wrap.scrollTop = sy;
   const fdDays = wrap.querySelector('.fd-days'), fdSel = fdDays && fdDays.querySelector('.on');
   if(fdSel) fdDays.scrollLeft = fdSel.offsetLeft - (fdDays.clientWidth - fdSel.offsetWidth)/2;
@@ -6087,7 +6098,7 @@ function renderReportMaterialDay(mk){
     <th style="width:54px">ตรวจ<br>แล้ว</th><th>ผู้เบิก</th><th>ชื่อพัสดุ</th><th>หน่วย</th><th>ประเภทบัญชี</th><th>เบิกครั้งล่าสุด<br><small>จำนวน · วันที่</small></th><th class="fd-cur">เบิกวันนี้<br><small>(จำนวน)</small></th><th>คงเหลือ<br>หลังเบิก</th><th>ผลตรวจ</th></tr></thead>
     <tbody>${body}</tbody><tfoot><tr><td colspan="6" style="text-align:right;">รวมวันนี้</td><td class="fd-c">${real.length} รายการ</td><td colspan="2"></td></tr></tfoot></table></div>`;
 
-  wrap.innerHTML = head + `<div class="fd-top">${alertsHtml}${sumHtml}</div>` + addHtml + table;
+  wrap.innerHTML = head + `<div class="fd-top"><div class="fd-left">${alertsHtml}${workAreaBoxHtml('mat', date)}</div>${sumHtml}</div>` + addHtml + table;
   wrap.scrollLeft = sx; wrap.scrollTop = sy;
   const fdDays = wrap.querySelector('.fd-days'), fdSel = fdDays && fdDays.querySelector('.on');
   if(fdSel) fdDays.scrollLeft = fdSel.offsetLeft - (fdDays.clientWidth - fdSel.offsetWidth)/2;
@@ -6267,7 +6278,7 @@ function ec1wFindLog(vehicle, date){ return machineryLogs.find(x=>x.vehicle===ve
    แปลงคอลัมน์ฐานข้อมูลเป็นรูปแบบที่ฟังก์ชันด้านล่างใช้ (date/route/kmStart/kmEnd/vehicles[].label) แบบเดียวกับ dwoFromApi ของระบบที่ 2 */
 /* ใบสั่งการโตทุกปี → ไม่ฟังทั้งตารางแล้ว โหลดเป็นรายเดือนตามสัปดาห์ที่เปิดดูใน EC 1-W (ครั้งเดียวต่อเดือนต่อการเปิดหน้า) */
 let __dwoRows = [];
-const __dwoMonths = {}, __dwoLoading = {};
+const __dwoMonths = {}, __dwoLoading = {}, __dwoErr = {};
 function ensureDwoMonths(dates){
   if(!(window.FBL && FBL.apiQueryRange)) return;
   dates.forEach(d=>{
@@ -6276,9 +6287,69 @@ function ensureDwoMonths(dates){
     __dwoLoading[ym] = true;
     FBL.apiQueryRange('daily_work_orders', 'date', ym, ym+'\uf8ff').then(rows=>{
       __dwoRows = __dwoRows.filter(r=>String(r.date||'').slice(0,7)!==ym).concat(rows);
-    }).catch(e=>{ console.error('โหลดใบสั่งการรายวันเดือน '+ym+' ไม่สำเร็จ', e); })
-      .then(()=>{ __dwoMonths[ym] = true; delete __dwoLoading[ym]; if(typeof renderMachinery==='function') renderMachinery(); });
+    }).catch(e=>{ console.error('โหลดใบสั่งการรายวันเดือน '+ym+' ไม่สำเร็จ', e); __dwoErr[ym] = true; })
+      .then(()=>{ __dwoMonths[ym] = true; delete __dwoLoading[ym]; if(typeof renderMachinery==='function') renderMachinery(); refreshWorkAreaBoxes(); });
   });
+}
+/* ---- พื้นที่ปฏิบัติงานของวัน (แบบ ก, 2569-11-21) ----
+   แสดงใต้กล่อง "ไม่พบความผิดปกติ" ของหน้า พ.1-02 และ พ.1-03: 1 แถว = ใบสั่งการรายวัน 1 ใบของวันนั้น
+   (รหัส/ชื่องาน · ทล. + ตอน · กม. เริ่ม–สิ้นสุด · ปริมาณงาน) อ่านอย่างเดียวจาก daily_work_orders — แก้ที่ระบบงานสถิติฯ
+   ชื่อตอนอ่านจาก routeLabel ที่บันทึกไว้ตอนออกใบสั่งการ (รูปแบบ "ทล.3574 (ชื่อตอน) กม...") ถ้าไม่มีค่อยหาจากฐานสายทางกลาง
+   ชื่องานอ่านจาก job_code_reference (โหลดครั้งเดียว ถ้าโหลดไม่ได้แสดงแค่รหัสงาน) */
+let __waJobNames = null, __waJobLoading = false;
+function ensureWaJobNames(){
+  if(__waJobNames || __waJobLoading || typeof apiGet!=='function') return;
+  __waJobLoading = true;
+  apiGet('job_code_reference').then(rows=>{
+    const map = {};
+    (rows||[]).forEach(r=>{ if(r && r.jobCode) map[r.jobCode] = r.jobName||''; });
+    __waJobNames = map;
+  }).catch(e=>{ console.error('โหลดชื่อรหัสงานไม่สำเร็จ', e); __waJobNames = {}; })
+    .then(()=>{ __waJobLoading = false; refreshWorkAreaBoxes(); });
+}
+function waNum(v){ return Number(v).toLocaleString('th-TH', {maximumFractionDigits:2}); }
+function workAreaInner(date){
+  const ym = String(date||'').slice(0,7);
+  const h = `<div class="fd-wa-h">🛣️ พื้นที่ปฏิบัติงานวันนี้</div>`;
+  if(__dwoErr[ym] || !(window.FBL && FBL.apiQueryRange)) return h+`<div class="fd-wa-none">โหลดใบสั่งการรายวันไม่สำเร็จ — ลองรีเฟรชหน้า</div>`;
+  if(!__dwoMonths[ym]) return h+`<div class="fd-wa-none">กำลังโหลดใบสั่งการรายวัน…</div>`;
+  const orders = __dwoRows.filter(r=>r.date===date)
+    .sort((a,b)=>String(a.routeValue||'').localeCompare(String(b.routeValue||''),'th',{numeric:true}) || String(a.kmStart||'').localeCompare(String(b.kmStart||''),'th',{numeric:true}));
+  if(!orders.length) return `<div class="fd-wa-h">🛣️ พื้นที่ปฏิบัติงานวันนี้</div><div class="fd-wa-none">ไม่มีใบสั่งการรายวันในวันนี้</div>`;
+  const names = __waJobNames || {};
+  const rowsHtml = orders.map(o=>{
+    const rv = String(o.routeValue||''), label = String(o.routeLabel||'');
+    const office = officeRouteLabelX(rv);
+    let place;
+    if(office) place = office;
+    else if(rv && rv!=='__other__'){
+      const m = label.match(/\(([^)]+)\)/);
+      const r = (typeof findRoute==='function') ? findRoute(rv) : null;
+      const sec = m ? m[1] : (r && r.section ? r.section : '');
+      place = 'ทล.'+rv + (sec ? ' ตอน '+sec : '');
+    } else place = 'สถานที่อื่น';
+    const ks = String(o.kmStart||'').trim(), ke = String(o.kmEnd||'').trim();
+    const km = ks ? (ke ? `กม. ${ks} – ${ke}` : `กม. ${ks}`) : '';
+    let veh = o.machineryJson;
+    if(typeof veh==='string'){ try{ veh = JSON.parse(veh||'[]'); }catch(e){ veh = []; } }
+    const nVeh = Array.isArray(veh) ? veh.length : 0;
+    const sub = [km, nVeh ? 'รถ/เครื่อง '+nVeh+' คัน' : ''].filter(Boolean).join(' · ');
+    const qty = Number(o.workQuantity)||0;
+    const qHtml = o.qtyPending ? '<span class="fd-wa-q pend">รอระบุปริมาณ</span>'
+      : qty>0 ? `<span class="fd-wa-q">${waNum(qty)} ${esc(o.unit||'')}</span>` : '<span class="fd-wa-q pend">—</span>';
+    const jn = o.jobCode && names[o.jobCode] ? names[o.jobCode] : '';
+    return `<div class="fd-wa-r"><span class="fd-wa-code"${jn?` title="${esc(jn)}"`:''}>${esc(o.jobCode||'—')}</span>
+      <div class="fd-wa-loc">${jn?`<div>${esc(jn)}</div>`:''}<div${jn?' class="fd-wa-sub"':''}>${esc(place)}</div>${sub?`<div class="fd-wa-sub">${esc(sub)}</div>`:''}</div>${qHtml}</div>`;
+  }).join('');
+  return `<div class="fd-wa-h">🛣️ พื้นที่ปฏิบัติงานวันนี้ (${orders.length} ใบสั่งการ)</div>${rowsHtml}`;
+}
+function workAreaBoxHtml(kind, date){
+  ensureDwoMonths([date]);
+  ensureWaJobNames();
+  return `<div class="fd-wa" id="fd-wa-${kind}" data-wdate="${esc(date)}">${workAreaInner(date)}</div>`;
+}
+function refreshWorkAreaBoxes(){
+  ['fuel','mat'].forEach(k=>{ const el = document.getElementById('fd-wa-'+k); if(el) el.innerHTML = workAreaInner(el.dataset.wdate); });
 }
 function getDailyWorkOrdersX(){
   return __dwoRows.map(r=>{
