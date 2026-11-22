@@ -877,6 +877,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .dwc-cb.on{background:var(--success);border-color:var(--success);color:#fff;}
   .dwt-card.chk{border-color:#b9ddc6;}
   .dwc-ack{display:block;margin-top:6px;font-size:12px;font-weight:600;color:#a3660a;}
+  .dwc-miss{background:#fdf3df;border:1px solid #e3c07a;border-radius:12px;padding:9px 14px;margin:-4px 0 12px;font-size:13px;color:#7a4a08;line-height:1.55;}
   .dwc-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 14px;margin:0 0 12px;font-size:13px;color:var(--ink-600);}
   .dwc-bar.ok{background:var(--success-bg);border-color:#b9ddc6;color:var(--success);font-weight:600;}
   .dwc-pb{flex:1;min-width:80px;height:8px;border-radius:99px;background:var(--paper-100);overflow:hidden;}
@@ -1612,9 +1613,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <!-- รับทราบข้อสังเกตของใบที่ผิดปกติก่อนติ๊กตรวจ -->
           <div class="modal-overlay hidden no-print" id="dwc-ack-overlay">
             <div class="modal-box">
-              <div class="dwv-hd"><div class="dwv-r"><div class="dwv-ty" style="font-size:20px">ตรวจใบที่มีข้อสังเกต</div><button type="button" class="dwv-x" onclick="dwCloseAck()" title="ปิด">✕</button></div></div>
+              <div class="dwv-hd"><div class="dwv-r"><div class="dwv-ty" style="font-size:20px" id="dwc-ack-title">ตรวจใบที่มีข้อสังเกต</div><button type="button" class="dwv-x" onclick="dwCloseAck()" title="ปิด">✕</button></div></div>
               <div class="dwv-body" id="dwc-ack-body"></div>
-              <div class="dwv-foot"><button type="button" class="btn btn-ghost" onclick="dwCloseAck()">ยกเลิก</button><button type="button" class="btn btn-primary" onclick="dwAckSubmit()">ยืนยันว่าตรวจแล้ว</button></div>
+              <div class="dwv-foot"><button type="button" class="btn btn-ghost" onclick="dwCloseAck()">ยกเลิก</button><button type="button" class="btn btn-primary" id="dwc-ack-ok" onclick="dwAckSubmit()">ยืนยันว่าตรวจแล้ว</button></div>
             </div>
           </div>
       </div>
@@ -4884,8 +4885,8 @@ function renderDwStaffChips(){
    (ผู้ใช้ยังต้องตรวจสอบว่าวันนั้นเบิกจริงหรือไม่ — ไม่เบิกจริงให้กดลบแถวทิ้ง เบิกจริงให้กรอกลิตรน้ำมันที่เบิก) */
 function bulkAddCrew(){
   const sel = document.getElementById('dw-crew-bulk');
-  const crewId = +sel.value;
-  const crew = fieldCrews.find(c=>c.id===crewId);
+  /* เทียบรหัสชุดแบบข้อความ — รหัสจากฐานข้อมูลอาจเป็นตัวอักษร (เดิมแปลงเป็นตัวเลขด้วย + ทำให้หาไม่เจอแล้วไม่เพิ่มใครเลยแบบเงียบ ๆ) */
+  const crew = sel.value ? fieldCrews.find(c=>String(c.id)===String(sel.value)) : null;
   /* ดึงเครื่องจักรอัตโนมัติ — ใช้เฉพาะเมื่อเลือก "ชุดตัดหญ้า" เท่านั้น และดึงเฉพาะเครื่องตัดหญ้า (isMowerVehicle) ตามรายชื่อเจ้าหน้าที่ในชุดนั้น
      ชุดทำงานอื่นๆ เพิ่มแค่รายชื่อคนงาน ไม่ดึงเครื่องจักรให้เลย */
   const autoVeh = crew && crew.name === 'ชุดตัดหญ้า';
@@ -6318,10 +6319,32 @@ function blockIfOrderChecked(d){
   alert('ใบสั่งการนี้ผู้ตรวจติ๊ก "ตรวจแล้ว" ไว้ — แก้ไข/ลบไม่ได้\nให้ผู้ตรวจเอาติ๊กออกก่อน แล้วจึงแก้ไขได้');
   return true;
 }
+/* คนงานตกหล่น (22 พ.ย. 2569): คนงาน (ตำแหน่ง "คนงาน" สถานะปกติ — เกณฑ์เดียวกับรายชื่อให้เลือกในใบสั่งการ) ที่ไม่ได้ลาในวันนั้น
+   แต่ไม่มีชื่อในใบสั่งการใดเลยของวันนั้น ; ตรวจเฉพาะวันที่มีใบสั่งการอย่างน้อย 1 ใบ
+   ถ้าหาตำแหน่ง "คนงาน" ไม่พบเลย (ชื่อฟิลด์ไม่ตรง) จะไม่เตือน กันขึ้นเตือนทุกคน
+   เหตุผลที่ผู้ตรวจกรอกตอนยืนยันทั้งวัน เก็บที่ notesJson.__missing = {names, reason} ของ order_day_checks */
+function dwMissingWorkers(date){
+  const list = dailyWorkOrders.filter(d=>d.date===date);
+  if(!list.length) return [];
+  const assigned = new Set();
+  list.forEach(d=>dwStaffNames(d).forEach(n=>assigned.add(normName(n))));
+  const workers = getStaffX().filter(s=>s && s.name && (s.status||'ok')==='ok' && isFieldWorkerStaff(s));
+  if(!workers.length) return [];
+  const leaves = getLeaveHistoryX();
+  const out = [];
+  workers.forEach(s=>{
+    const n = normName(s.name);
+    if(assigned.has(n) || out.includes(s.name)) return;
+    if(leaves.some(l=>normName(l.name)===n && l.from<=date && date<=l.to)) return;
+    out.push(s.name);
+  });
+  return out;
+}
 function dwDayStat(iso){
   const list = dailyWorkOrders.filter(d=>d.date===iso), rec = dwDayRec(iso), ck = new Set(rec.checked);
   const bad = list.filter(d=>!ck.has(dwOid(d)) && dwProblems(d).length).length;
-  return { st: rec.confirmed ? 'ok' : !list.length ? 'none' : bad ? 'bad' : 'wait', total: list.length, ck: list.filter(d=>ck.has(dwOid(d))).length, bad, rec };
+  const missing = rec.confirmed ? [] : dwMissingWorkers(iso);
+  return { st: rec.confirmed ? 'ok' : !list.length ? 'none' : (bad || missing.length) ? 'bad' : 'wait', total: list.length, ck: list.filter(d=>ck.has(dwOid(d))).length, bad, missing, rec };
 }
 function dwDayMark(iso){
   const st = dwDayStat(iso).st;
@@ -6357,10 +6380,12 @@ async function dwToggleCheck(no){
   catch(err){ alert('บันทึกสถานะ "ตรวจแล้ว" ไม่สำเร็จ: '+err.message); return; }
   dwRefreshCheck();
 }
-let __dwAckNo = null;
+let __dwAckNo = null, __dwAckDay = null;   /* __dwAckDay = {date, names} เมื่อหน้าต่างใช้กรอกเหตุผลคนงานตกหล่นตอนยืนยันทั้งวัน */
 function dwOpenAck(no){
   const d = dailyWorkOrders.find(x=>x.no===no); if(!d) return;
-  __dwAckNo = no;
+  __dwAckNo = no; __dwAckDay = null;
+  document.getElementById('dwc-ack-title').textContent = 'ตรวจใบที่มีข้อสังเกต';
+  document.getElementById('dwc-ack-ok').textContent = 'ยืนยันว่าตรวจแล้ว';
   const job = findJob(d.code);
   document.getElementById('dwc-ack-body').innerHTML =
     `<div style="font-weight:600;margin-bottom:8px">${esc(d.code)} ${esc(job?job.name:'')}</div>`
@@ -6369,11 +6394,19 @@ function dwOpenAck(no){
     + `<textarea id="dwc-ack-note" rows="3" placeholder="เช่น ไปปฏิบัติงานทั้งสองรหัสจริง แบ่งเป็นช่วงเช้า/บ่าย"></textarea>`;
   document.getElementById('dwc-ack-overlay').classList.remove('hidden');
 }
-function dwCloseAck(){ document.getElementById('dwc-ack-overlay')?.classList.add('hidden'); __dwAckNo = null; }
+function dwCloseAck(){ document.getElementById('dwc-ack-overlay')?.classList.add('hidden'); __dwAckNo = null; __dwAckDay = null; }
 async function dwAckSubmit(){
-  const d = dailyWorkOrders.find(x=>x.no===__dwAckNo); if(!d) return;
   const note = (document.getElementById('dwc-ack-note').value||'').trim();
-  if(note.length < 3){ alert('กรุณาระบุเหตุผลที่รับทราบข้อสังเกต (อย่างน้อย 3 ตัวอักษร)'); return; }
+  if(note.length < 3){ alert('กรุณาระบุเหตุผล (อย่างน้อย 3 ตัวอักษร)'); return; }
+  if(__dwAckDay){
+    /* ยืนยันตรวจครบทั้งวัน พร้อมเหตุผลของคนงานที่ไม่อยู่ในใบใดเลย */
+    const {date, names} = __dwAckDay, rec = dwDayRec(date);
+    const notes = Object.assign({}, rec.notes, {__missing:{names, reason:note}});
+    try{ await dwSaveDayCheck(date, {notes, confirmed:true, confirmedBy:apiCurrentUsername(), confirmedAt:new Date().toISOString()}); }
+    catch(err){ alert('บันทึกการยืนยันตรวจไม่สำเร็จ: '+err.message); return; }
+    dwCloseAck(); dwRefreshCheck(); return;
+  }
+  const d = dailyWorkOrders.find(x=>x.no===__dwAckNo); if(!d) return;
   const rec = dwDayRec(d.date), id = dwOid(d), set = new Set(rec.checked); set.add(id);
   const notes = Object.assign({}, rec.notes); notes[id] = note;
   try{ await dwSaveDayCheck(d.date, {checked:Array.from(set), notes, checkedBy:apiCurrentUsername(), checkedAt:new Date().toISOString()}); }
@@ -6386,8 +6419,24 @@ function dwConfirmDay(date){
   if(!list.length){ alert('วันนี้ยังไม่มีใบสั่งการ'); return; }
   const ck = new Set(dwDayRec(date).checked), notCk = list.filter(d=>!ck.has(dwOid(d)));
   if(notCk.length){ alert('ยังไม่ได้ติ๊กตรวจ '+notCk.length+' ใบ: '+notCk.map(d=>d.code).join(', ')+'\nติ๊กช่อง "ตรวจแล้ว" ให้ครบก่อน'); return; }
+  const missing = dwMissingWorkers(date);
+  if(missing.length){
+    /* มีคนงานไม่อยู่ในใบใดเลย → ต้องกรอกเหตุผลก่อนยืนยันทั้งวัน */
+    __dwAckNo = null; __dwAckDay = {date, names:missing};
+    document.getElementById('dwc-ack-title').textContent = 'คนงานไม่อยู่ในใบสั่งการ';
+    document.getElementById('dwc-ack-ok').textContent = 'ยืนยันตรวจครบทั้งวัน';
+    document.getElementById('dwc-ack-body').innerHTML =
+      `<div style="font-weight:600;margin-bottom:8px">${esc(fmtDayHeading(date))}</div>`
+      + `<div class="dwv-warn"><div>⚠ คนงานที่ไม่ได้ลา แต่ไม่มีชื่อในใบสั่งการใดเลย ${missing.length} คน:</div><div>${esc(missing.join(', '))}</div></div>`
+      + `<div style="font-size:12.5px;color:var(--ink-400);margin-bottom:6px">ถ้าลืมเพิ่มชื่อ ให้กดยกเลิกแล้วแก้ใบสั่งการก่อน (ต้องเอาติ๊กใบนั้นออกก่อนจึงแก้ได้)</div>`
+      + `<label style="display:block;font-size:13px;font-weight:600;margin:6px 0">เหตุผล (บังคับกรอก)</label>`
+      + `<textarea id="dwc-ack-note" rows="3" placeholder="เช่น ขาดงาน ยังไม่ส่งใบลา / ไปช่วยงานสำนักงาน"></textarea>`;
+    document.getElementById('dwc-ack-overlay').classList.remove('hidden');
+    return;
+  }
   showConfirmModal('ยืนยันตรวจครบทั้งวัน', `ยืนยันว่าตรวจใบสั่งการของ ${fmtDateShort(date)} ครบถ้วนแล้ว?\nหลังยืนยัน วันนี้จะเพิ่ม/แก้ไข/ลบใบไม่ได้ จนกว่าผู้ตรวจจะปลดล็อก`, 'ยืนยัน', async function(){
-    try{ await dwSaveDayCheck(date, {confirmed:true, confirmedBy:apiCurrentUsername(), confirmedAt:new Date().toISOString()}); }
+    const notes = Object.assign({}, dwDayRec(date).notes); delete notes.__missing;
+    try{ await dwSaveDayCheck(date, {notes, confirmed:true, confirmedBy:apiCurrentUsername(), confirmedAt:new Date().toISOString()}); }
     catch(err){ alert('บันทึกการยืนยันตรวจไม่สำเร็จ: '+err.message); return; }
     dwRefreshCheck();
   });
@@ -6405,26 +6454,37 @@ function dwDayBarHtml(date, list){
   if(!list.length) return '';
   const rec = dwDayRec(date), ck = new Set(rec.checked), n = list.filter(d=>ck.has(dwOid(d))).length, can = canCheckOrders();
   if(rec.confirmed){
+    const ms = (rec.notes||{}).__missing;
     return `<div class="dwc-bar ok"><span>🔒 ผู้ตรวจยืนยันตรวจครบแล้ว${rec.confirmedBy?' — '+esc(rec.confirmedBy):''}${rec.confirmedAt?' · '+esc(dwFmtDT(rec.confirmedAt)):''}</span>`
-      + (can ? `<button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="dwUnlockDay('${date}')">ปลดล็อกวันนี้</button>` : '') + '</div>';
+      + (can ? `<button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="dwUnlockDay('${date}')">ปลดล็อกวันนี้</button>` : '') + '</div>'
+      + (ms && Array.isArray(ms.names) && ms.names.length ? `<div class="dwc-ack" style="margin:-6px 2px 12px">คนงานไม่อยู่ในใบ ${ms.names.length} คน (${esc(ms.names.join(', '))}) — เหตุผล: ${esc(ms.reason||'')}</div>` : '');
   }
-  const pend = list.filter(d=>!ck.has(dwOid(d)) && dwProblems(d).length).length;
+  const missing = dwMissingWorkers(date);
+  const missHtml = missing.length ? `<div class="dwc-miss">⚠ คนงานที่ไม่ได้ลา แต่ยังไม่อยู่ในใบสั่งการใดเลย <b>${missing.length} คน</b>: ${esc(missing.join(', '))}</div>` : '';
+  const pend = list.filter(d=>!ck.has(dwOid(d)) && dwProblems(d).length).length + (missing.length ? 1 : 0);
   return `<div class="dwc-bar"><b>${can?'ความคืบหน้าการตรวจ':'สถานะการตรวจ'}</b><div class="dwc-pb"><i style="width:${n/list.length*100}%"></i></div>`
     + `<span>ตรวจแล้ว <b>${n}</b> / ${list.length} ใบ</span>`
     + (pend ? `<button type="button" class="btn btn-ghost btn-sm" onclick="dwCopyPending('${date}')" title="คัดลอกรายการใบที่มีข้อสังเกตและยังไม่ตรวจ ส่งให้เจ้าหน้าที่ทางไลน์/ข้อความ">คัดลอกรายการที่ต้องตรวจ (${pend})</button>` : '')
-    + (can ? `<button type="button" class="btn btn-primary btn-sm" ${n>=list.length?'':'disabled'} onclick="dwConfirmDay('${date}')">ยืนยันตรวจครบทั้งวัน</button>` : '') + '</div>';
+    + (can ? `<button type="button" class="btn btn-primary btn-sm" ${n>=list.length?'':'disabled'} onclick="dwConfirmDay('${date}')">ยืนยันตรวจครบทั้งวัน</button>` : '') + '</div>'
+    + missHtml;
 }
 /* คัดลอกรายการใบที่มีข้อสังเกตและยังไม่ตรวจของวันนั้น ไปวางส่งเจ้าหน้าที่ (แทนปุ่ม "คัดลอกรายการ" ของหน้าต่างจุดที่ต้องตรวจสอบเดิม) */
 async function dwCopyPending(date){
   const ck = new Set(dwDayRec(date).checked);
   const items = dailyWorkOrders.filter(d=>d.date===date && !ck.has(dwOid(d))).map(d=>({d, probs:dwProblems(d)})).filter(x=>x.probs.length);
-  if(!items.length){ alert('วันนี้ไม่มีใบที่มีข้อสังเกตค้างอยู่'); return; }
-  const lines = ['รายการที่ต้องตรวจสอบ — ใบสั่งการรายวัน '+fmtDateShort(date)+' รวม '+items.length+' ใบ',''];
+  const missing = dwDayLocked(date) ? [] : dwMissingWorkers(date);
+  if(!items.length && !missing.length){ alert('วันนี้ไม่มีรายการที่ต้องตรวจค้างอยู่'); return; }
+  const lines = ['รายการที่ต้องตรวจสอบ — ใบสั่งการรายวัน '+fmtDateShort(date)+(items.length?' รวม '+items.length+' ใบ':''),''];
   items.forEach((x,i)=>{
     const job = findJob(x.d.code);
     lines.push((i+1)+'. รหัสงาน '+x.d.code+(job?' '+job.name:'')+' · '+dwPlaceText(x.d));
     x.probs.forEach(p=>lines.push('   - '+p));
   });
+  if(missing.length){
+    if(items.length) lines.push('');
+    lines.push('คนงานที่ไม่ได้ลา แต่ยังไม่อยู่ในใบสั่งการใดเลย '+missing.length+' คน:');
+    missing.forEach(n=>lines.push('   - '+n));
+  }
   lines.push('','กรุณาตรวจเทียบกับเอกสารจริง แล้วแจ้งผลกลับ');
   const t = lines.join('\n');
   let ok = false;
@@ -6465,8 +6525,8 @@ function renderDwCal(){
       stHtml = `<div class="fc-st">🔒 ยืนยันครบ</div><div class="fc-sub">${s.total} ใบ</div>`;
       tip = 'ยืนยันตรวจครบแล้ว'+(s.rec.confirmedBy?' — '+s.rec.confirmedBy:'');
     } else if(s.st==='bad'){
-      stHtml = `<div class="fc-st">⚠ ผิดปกติ ${s.bad}</div><div class="fc-sub">ตรวจ ${s.ck}/${s.total} ใบ</div>`;
-      tip = 'พบใบที่มีข้อสังเกต '+s.bad+' ใบ · ตรวจแล้ว '+s.ck+'/'+s.total;
+      stHtml = `<div class="fc-st">⚠ ${s.bad ? 'ผิดปกติ '+s.bad : 'คนงานตกหล่น'}</div><div class="fc-sub">${s.missing.length ? 'ตกหล่น '+s.missing.length+' คน · ' : ''}ตรวจ ${s.ck}/${s.total}</div>`;
+      tip = (s.bad ? 'พบใบที่มีข้อสังเกต '+s.bad+' ใบ · ' : '')+(s.missing.length ? 'คนงานไม่อยู่ในใบ '+s.missing.length+' คน · ' : '')+'ตรวจแล้ว '+s.ck+'/'+s.total;
     } else if(s.st==='wait'){
       stHtml = `<div class="fc-st">⏳ ${s.ck>=s.total?'รอกดยืนยัน':'รอตรวจ'}</div><div class="fc-sub">ตรวจ ${s.ck}/${s.total} ใบ</div>`;
       tip = 'ตรวจแล้ว '+s.ck+'/'+s.total;
@@ -6572,6 +6632,7 @@ function editDailyEntry(no){
   const rec = dailyWorkOrders.find(d=>d.no===no);
   if(!rec) return;
   if(blockIfDayLocked(rec.date) || blockIfOrderChecked(rec)) return;
+  populateDwCrewVehicle();   /* เติมรายการ "เพิ่มทั้งชุด" — เดิมเติมเฉพาะตอนเปิดฟอร์มใบใหม่ เปิดแก้ไขก่อนจึงว่าง */
   __dwEditingNo = no;
   document.getElementById('daily-form-overlay').classList.remove('hidden');
   document.getElementById('daily-form-title').textContent = 'แก้ไขใบสั่งการรายวัน';
