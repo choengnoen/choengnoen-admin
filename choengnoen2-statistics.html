@@ -6131,7 +6131,7 @@ function renderDailyLog(){
   day.innerHTML = `<div class="dwt-head"><b>${fmtDayHeading(dwSel)}</b><span class="dwt-count">${list.length} ใบ</span></div>`
     + dwDayBarHtml(dwSel, list)
     + (list.length ? dwTimelineHtml(list)
-      : `<div class="dwt-empty"><div class="big">🗓️</div><p style="margin:6px 0 14px;">ยังไม่มีใบสั่งการในวันนี้</p><button class="btn btn-primary" onclick="toggleDailyForm()">+ บันทึกใบสั่งการ</button></div>`);
+      : `<div class="dwt-empty"><div class="big">🗓️</div><p style="margin:6px 0 0;">ยังไม่มีใบสั่งการในวันนี้</p></div>`);   /* ปุ่มบันทึกใช้ปุ่มเดียวที่มุมขวาบน (22 พ.ย. 2569) */
 }
 
 /* ---------- หน้าต่างรายละเอียดใบสั่งการ ---------- */
