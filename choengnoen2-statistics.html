@@ -1072,7 +1072,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         <!-- ปุ่มหลักของหน้า (แบบ ค: อยู่แถวบนขวา) — ปุ่มของแต่ละหน้าย้ายมารวมที่นี่ แสดงทีละหน้าด้วย showView() -->
         <div class="nav-routine" id="nav-routine">
           <button type="button" class="icb" id="doh-imp-btn" onclick="DohImp.openImport()" title="นำเข้าข้อมูลจากกรม — ไฟล์ CSV จากระบบ rmms สร้างเป็นรายการใบสั่งการรายวัน (ตัดคลังน้ำมัน/วัสดุให้อัตโนมัติ)" aria-label="นำเข้าข้อมูลจากกรม" data-ic="down"></button>
-          <button type="button" class="icb" id="doh-ck-btn" style="position:relative;" onclick="DohImp.openCheck()" title="จุดที่ต้องตรวจสอบ — รายการใบที่นำเข้าจากกรมแล้วข้อมูลไม่ครบ คัดลอกส่งเจ้าหน้าที่ได้" aria-label="จุดที่ต้องตรวจสอบ" data-ic="search"></button>
           <button type="button" class="icb" id="dwc-cal-btn" onclick="openDwCal()" title="ปฏิทินภาพรวมการตรวจใบสั่งการรายเดือน" aria-label="ปฏิทินภาพรวมการตรวจ" data-ic="calchk"></button>
         </div>
         <button type="button" class="btn btn-primary" id="nav-add-btn" data-ic="plus" onclick="toggleDailyForm()">บันทึกใบสั่งการ</button>
@@ -6080,6 +6079,8 @@ function dwProblems(d){
   if(onLeave.length) out.push('มีผู้ปฏิบัติงานที่ลาในวันนี้ '+onLeave.length+' คน');
   const dup = staff.filter(n=> dailyWorkOrders.some(x=>x.date===d.date && x.no!==d.no && x.code!==d.code && dwStaffNames(x).includes(n)));
   if(dup.length) out.push('มีผู้ปฏิบัติงานซ้ำกับรหัสงานอื่นวันเดียวกัน '+dup.length+' คน');
+  /* ข้อสังเกตของใบที่นำเข้าจากกรม (ไม่พบเครื่องจักร/วัสดุในทะเบียน, ค่าตอบแทน-ค่าใช้สอย-ล่วงเวลาที่ไม่ได้นำเข้า) — เดิมอยู่ในหน้าต่าง "จุดที่ต้องตรวจสอบ" ซึ่งยุบรวมเข้าที่นี่แล้ว (22 พ.ย. 2569) */
+  try{ if(window.DohImp && DohImp.orderProbs) DohImp.orderProbs(d).forEach(p=>out.push(p)); }catch(e){}
   return out;
 }
 function dwTimelineHtml(list){
@@ -6407,9 +6408,32 @@ function dwDayBarHtml(date, list){
     return `<div class="dwc-bar ok"><span>🔒 ผู้ตรวจยืนยันตรวจครบแล้ว${rec.confirmedBy?' — '+esc(rec.confirmedBy):''}${rec.confirmedAt?' · '+esc(dwFmtDT(rec.confirmedAt)):''}</span>`
       + (can ? `<button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="dwUnlockDay('${date}')">ปลดล็อกวันนี้</button>` : '') + '</div>';
   }
+  const pend = list.filter(d=>!ck.has(dwOid(d)) && dwProblems(d).length).length;
   return `<div class="dwc-bar"><b>${can?'ความคืบหน้าการตรวจ':'สถานะการตรวจ'}</b><div class="dwc-pb"><i style="width:${n/list.length*100}%"></i></div>`
     + `<span>ตรวจแล้ว <b>${n}</b> / ${list.length} ใบ</span>`
+    + (pend ? `<button type="button" class="btn btn-ghost btn-sm" onclick="dwCopyPending('${date}')" title="คัดลอกรายการใบที่มีข้อสังเกตและยังไม่ตรวจ ส่งให้เจ้าหน้าที่ทางไลน์/ข้อความ">คัดลอกรายการที่ต้องตรวจ (${pend})</button>` : '')
     + (can ? `<button type="button" class="btn btn-primary btn-sm" ${n>=list.length?'':'disabled'} onclick="dwConfirmDay('${date}')">ยืนยันตรวจครบทั้งวัน</button>` : '') + '</div>';
+}
+/* คัดลอกรายการใบที่มีข้อสังเกตและยังไม่ตรวจของวันนั้น ไปวางส่งเจ้าหน้าที่ (แทนปุ่ม "คัดลอกรายการ" ของหน้าต่างจุดที่ต้องตรวจสอบเดิม) */
+async function dwCopyPending(date){
+  const ck = new Set(dwDayRec(date).checked);
+  const items = dailyWorkOrders.filter(d=>d.date===date && !ck.has(dwOid(d))).map(d=>({d, probs:dwProblems(d)})).filter(x=>x.probs.length);
+  if(!items.length){ alert('วันนี้ไม่มีใบที่มีข้อสังเกตค้างอยู่'); return; }
+  const lines = ['รายการที่ต้องตรวจสอบ — ใบสั่งการรายวัน '+fmtDateShort(date)+' รวม '+items.length+' ใบ',''];
+  items.forEach((x,i)=>{
+    const job = findJob(x.d.code);
+    lines.push((i+1)+'. รหัสงาน '+x.d.code+(job?' '+job.name:'')+' · '+dwPlaceText(x.d));
+    x.probs.forEach(p=>lines.push('   - '+p));
+  });
+  lines.push('','กรุณาตรวจเทียบกับเอกสารจริง แล้วแจ้งผลกลับ');
+  const t = lines.join('\n');
+  let ok = false;
+  try{ await navigator.clipboard.writeText(t); ok = true; }
+  catch(e){
+    const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;opacity:0;'; document.body.appendChild(ta); ta.select();
+    try{ ok = document.execCommand('copy'); }catch(e2){} ta.remove();
+  }
+  alert(ok ? 'คัดลอกแล้ว นำไปวางในไลน์/ข้อความได้เลย' : 'คัดลอกไม่สำเร็จ');
 }
 /* ปฏิทินภาพรวมการตรวจรายเดือน */
 let dwCalMk = null;
