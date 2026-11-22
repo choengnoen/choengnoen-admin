@@ -269,7 +269,7 @@
       dates.forEach((date, i)=>{
         const mk = date.slice(0,7);
         const token = '[กรม:'+mk+':'+a.plan+']';
-        if(typeof ledgerLocks!=='undefined' && ledgerLocks[mk]){ out.skipLocked.push(dateTh(date)+' · '+label); return; }
+        if((typeof ledgerLocks!=='undefined' && ledgerLocks[mk]) || (typeof dwDayLocked==='function' && dwDayLocked(date))){ out.skipLocked.push(dateTh(date)+' · '+label); return; }
         if(dailyWorkOrders.some(d=>d.date===date && String(d.note||'').indexOf(token)>=0)){ out.skipDone++; return; }
         const issues = [];
         /* s = ข้อความสั้นที่เก็บลงหมายเหตุของใบ (ใช้แสดงในหน้าต่าง "ตรวจสอบ" ภายหลัง) */

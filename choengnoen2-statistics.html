@@ -870,6 +870,53 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .dwt-card.bad{border:2px solid #d92d20;background:#fff8f7;box-shadow:0 0 0 3px rgba(217,45,32,.12);}
   .dwt-item.bad::before{border-color:#d92d20;}
   .dwt-bad-tag{display:inline-block;margin-top:6px;font-size:12px;font-weight:600;color:#b42318;}
+  /* ตรวจใบสั่งการรายวัน (22 พ.ย. 2569) — ติ๊กตรวจรายใบ + ยืนยันทั้งวัน + ปฏิทินรายเดือน (แบบเดียวกับ พ.1-03) */
+  .dwc-cb{width:26px;height:26px;border-radius:8px;border:2px solid var(--line);background:#fff;color:transparent;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:none;padding:0;cursor:default;margin-right:2px;}
+  .dwc-cb.can{cursor:pointer;}
+  .dwc-cb.can:hover{border-color:var(--success);}
+  .dwc-cb.on{background:var(--success);border-color:var(--success);color:#fff;}
+  .dwt-card.chk{border-color:#b9ddc6;}
+  .dwc-ack{display:block;margin-top:6px;font-size:12px;font-weight:600;color:#a3660a;}
+  .dwc-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 14px;margin:0 0 12px;font-size:13px;color:var(--ink-600);}
+  .dwc-bar.ok{background:var(--success-bg);border-color:#b9ddc6;color:var(--success);font-weight:600;}
+  .dwc-pb{flex:1;min-width:80px;height:8px;border-radius:99px;background:var(--paper-100);overflow:hidden;}
+  .dwc-pb i{display:block;height:100%;background:var(--success);}
+  .dwc-bar .btn[disabled]{opacity:.4;cursor:not-allowed;}
+  #dwc-cal-overlay .modal-box,#dwc-ack-overlay .modal-box{border-radius:20px;overflow:hidden;padding:0;background:var(--paper-50);display:flex;flex-direction:column;max-height:calc(100vh - 56px);}
+  #dwc-cal-overlay .modal-box{max-width:860px;}
+  #dwc-ack-overlay .modal-box{max-width:480px;}
+  #dwc-ack-note{width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;font:14px 'Sarabun',sans-serif;resize:vertical;}
+  .fc-head{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;}
+  .fc-head h4{margin:0;min-width:170px;text-align:center;font-family:'Kanit',sans-serif;font-size:19px;font-weight:600;color:var(--navy-900);}
+  .fc-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+  .fc-s{display:flex;align-items:center;gap:8px;border-radius:10px;padding:7px 12px;font-size:12.5px;font-weight:600;line-height:1.3;}
+  .fc-s b{font-family:'Kanit',sans-serif;font-size:21px;font-weight:600;}
+  .fc-s.fc-ok{background:var(--success-bg);color:var(--success);}
+  .fc-s.fc-bad{background:var(--danger-bg);color:var(--danger);}
+  .fc-s.fc-wait{background:#fdf1de;color:#a3660a;}
+  .fc-s.fc-none{background:var(--paper-100);color:var(--ink-600);}
+  .fc-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;}
+  .fc-w{text-align:center;font-size:12.5px;font-weight:600;color:var(--ink-600);padding:2px 0 3px;}
+  .fc-d{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:3px;min-width:0;min-height:84px;padding:6px 8px;border:1px solid var(--line);border-radius:10px;background:#fff;font-family:'Sarabun',sans-serif;text-align:left;cursor:pointer;transition:box-shadow .12s;}
+  .fc-d:hover{box-shadow:0 0 0 2px var(--orange-500);}
+  .fc-d.off{background:var(--paper-50);}
+  .fc-d.fc-ok{background:var(--success-bg);border-color:#b9ddc6;}
+  .fc-d.fc-bad{background:var(--danger-bg);border-color:#efb9b5;}
+  .fc-d.fc-wait{background:#fdf1de;border-color:#f0cf6b;}
+  .fc-d.cur{box-shadow:0 0 0 2px var(--navy-900);}
+  .fc-top{display:flex;align-items:baseline;justify-content:space-between;gap:4px;}
+  .fc-top b{font-family:'Kanit',sans-serif;font-size:17px;font-weight:600;color:var(--navy-900);line-height:1.2;}
+  .fc-d.off .fc-top b{color:var(--ink-400);}
+  .fc-d.today .fc-top b{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;border-radius:50%;background:var(--orange-500);color:#fff;}
+  .fc-st{font-size:12px;font-weight:700;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .fc-d.fc-ok .fc-st{color:var(--success);}
+  .fc-d.fc-bad .fc-st{color:var(--danger);}
+  .fc-d.fc-wait .fc-st{color:#a3660a;}
+  .fc-sub{font-size:11px;color:var(--ink-600);line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .fc-mut{font-size:11px;color:var(--ink-400);line-height:1.3;}
+  .fc-note{margin-top:10px;text-align:center;font-size:12px;color:var(--ink-400);}
+  .fc-ws{display:none;}
+  @media(max-width:700px){.fc-wf{display:none;}.fc-ws{display:inline;}.fc-sum{grid-template-columns:repeat(2,1fr);}.fc-grid{gap:3px;}.fc-d{min-height:64px;padding:4px 5px;}}
   .dwt-card:hover{border-color:var(--orange-500);box-shadow:0 8px 20px -12px rgba(10,37,64,.3);}
   .dwt-h{display:flex;gap:10px;align-items:center;}
   .dwt-code{font-family:'Kanit',sans-serif;font-size:12px;font-weight:600;background:var(--navy-900);color:#fff;border-radius:6px;padding:1px 8px;white-space:nowrap;}
@@ -1026,6 +1073,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         <div class="nav-routine" id="nav-routine">
           <button type="button" class="icb" id="doh-imp-btn" onclick="DohImp.openImport()" title="นำเข้าข้อมูลจากกรม — ไฟล์ CSV จากระบบ rmms สร้างเป็นรายการใบสั่งการรายวัน (ตัดคลังน้ำมัน/วัสดุให้อัตโนมัติ)" aria-label="นำเข้าข้อมูลจากกรม" data-ic="down"></button>
           <button type="button" class="icb" id="doh-ck-btn" style="position:relative;" onclick="DohImp.openCheck()" title="จุดที่ต้องตรวจสอบ — รายการใบที่นำเข้าจากกรมแล้วข้อมูลไม่ครบ คัดลอกส่งเจ้าหน้าที่ได้" aria-label="จุดที่ต้องตรวจสอบ" data-ic="search"></button>
+          <button type="button" class="icb" id="dwc-cal-btn" onclick="openDwCal()" title="ปฏิทินภาพรวมการตรวจใบสั่งการรายเดือน" aria-label="ปฏิทินภาพรวมการตรวจ" data-ic="calchk"></button>
         </div>
         <button type="button" class="btn btn-primary" id="nav-add-btn" data-ic="plus" onclick="toggleDailyForm()">บันทึกใบสั่งการ</button>
         <button class="btn btn-primary hidden" id="rollup-commit-btn" style="flex:none;white-space:nowrap;" onclick="commitRollupToActual()">ปิดยอดเดือนนี้</button>
@@ -1554,6 +1602,21 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <!-- หน้าต่างรายละเอียดใบสั่งการ (กดที่การ์ดในไทม์ไลน์) -->
           <div class="modal-overlay hidden no-print" id="dw-view-overlay">
             <div class="modal-box dwv-box" id="dw-view-box"></div>
+          </div>
+          <!-- ปฏิทินภาพรวมการตรวจใบสั่งการรายเดือน (แบบเดียวกับ พ.1-03) -->
+          <div class="modal-overlay hidden no-print" id="dwc-cal-overlay">
+            <div class="modal-box">
+              <div class="dwv-hd"><div class="dwv-r"><div class="dwv-ty">ปฏิทินภาพรวมการตรวจใบสั่งการ</div><button type="button" class="dwv-x" onclick="closeDwCal()" title="ปิด">✕</button></div></div>
+              <div class="dwv-body" id="dwc-cal-body"></div>
+            </div>
+          </div>
+          <!-- รับทราบข้อสังเกตของใบที่ผิดปกติก่อนติ๊กตรวจ -->
+          <div class="modal-overlay hidden no-print" id="dwc-ack-overlay">
+            <div class="modal-box">
+              <div class="dwv-hd"><div class="dwv-r"><div class="dwv-ty" style="font-size:20px">ตรวจใบที่มีข้อสังเกต</div><button type="button" class="dwv-x" onclick="dwCloseAck()" title="ปิด">✕</button></div></div>
+              <div class="dwv-body" id="dwc-ack-body"></div>
+              <div class="dwv-foot"><button type="button" class="btn btn-ghost" onclick="dwCloseAck()">ยกเลิก</button><button type="button" class="btn btn-primary" onclick="dwAckSubmit()">ยืนยันว่าตรวจแล้ว</button></div>
+            </div>
           </div>
       </div>
 
@@ -6022,11 +6085,15 @@ function dwProblems(d){
 function dwTimelineHtml(list){
   return '<div class="dwt-list">'+list.map(d=>{
     const job = findJob(d.code), crews = dwCrewNames(d), n = dwStaffNames(d).length;
-    const probs = dwProblems(d), bad = probs.length ? ' bad' : '';
-    return `<div class="dwt-item ${d.qtyPending?'pend':''}${bad}"><div class="dwt-card${bad}" ondblclick="if(!event.target.closest('button,a,input,select,textarea'))openDwView(${d.no})">
-      <div class="dwt-h"><span class="dwt-code">${esc(d.code)}</span><div class="dwt-name">${esc(job?job.name:'')}</div><div class="dwt-amt">${fmtMoney(dwTotal(d))}</div></div>
+    const rawProbs = dwProblems(d), chk = dwIsChecked(d), probs = chk ? [] : rawProbs, bad = probs.length ? ' bad' : '';
+    const dayLk = dwDayLocked(d.date), canCk = canCheckOrders(), ckNote = (dwDayRec(d.date).notes||{})[dwOid(d)];
+    const ckBtn = (canCk || chk)
+      ? `<button type="button" class="dwc-cb${chk?' on':''}${canCk&&!dayLk?' can':''}" ${canCk&&!dayLk?`onclick="event.stopPropagation();dwToggleCheck(${d.no})"`:''} title="${canCk ? (dayLk ? 'วันนี้ยืนยันตรวจครบแล้ว — ปลดล็อกวันก่อน' : (chk ? 'ตรวจแล้ว — กดเพื่อเอาติ๊กออก' : 'ติ๊กเมื่อตรวจแล้ว')) : 'ผู้ตรวจติ๊กตรวจแล้ว'}">✔</button>` : '';
+    return `<div class="dwt-item ${d.qtyPending?'pend':''}${bad}"><div class="dwt-card${bad}${chk?' chk':''}" ondblclick="if(!event.target.closest('button,a,input,select,textarea'))openDwView(${d.no})">
+      <div class="dwt-h">${ckBtn}<span class="dwt-code">${esc(d.code)}</span><div class="dwt-name">${esc(job?job.name:'')}</div><div class="dwt-amt">${fmtMoney(dwTotal(d))}</div></div>
       <div class="dwt-meta"><span>📍 ${esc(dwPlaceText(d))}</span><span>${dwQtyHtml(d)}</span><span>👥 ${crews.length ? esc(crews.join(', '))+' · ' : ''}${n} คน</span></div>
       ${probs.length ? `<div class="dwt-bad-tag">⚠ ผิดปกติ — ต้องตรวจสอบ: ${esc(probs.join(' · '))}</div>` : ''}
+      ${chk && rawProbs.length ? `<div class="dwc-ack">✔ ตรวจแล้ว — รับทราบข้อสังเกต: ${esc(rawProbs.join(' · '))}${ckNote?' (เหตุผล: '+esc(ckNote)+')':''}</div>` : ''}
     </div></div>`;
   }).join('')+'</div>';
 }
@@ -6055,11 +6122,12 @@ function renderDailyLog(){
     + days.map(iso=>{
       const dt = new Date(iso+'T00:00:00'), n = cnt[iso]||0, wd = dt.getDay();
       const mon = (dt.getDate()===1 || iso===days[0]) ? ' '+THDATE_MONTHS[dt.getMonth()] : '';
-      return `<div class="dwk-d ${iso===dwSel?'on':''} ${iso===todayIso?'today':''} ${(wd===0||wd===6)?'off':''}" onclick="dwPickDay('${iso}')"><small>${TH_WEEKDAYS[wd]}${mon}</small><b>${dt.getDate()}</b><div class="n">${n?n+' ใบ':''}</div></div>`;
+      return `<div class="dwk-d ${iso===dwSel?'on':''} ${iso===todayIso?'today':''} ${(wd===0||wd===6)?'off':''}" onclick="dwPickDay('${iso}')"><small>${TH_WEEKDAYS[wd]}${mon}</small><b>${dt.getDate()}</b><div class="n">${n?n+' ใบ'+dwDayMark(iso):''}</div></div>`;
     }).join('')
     + `</div><button type="button" class="dwk-arr" onclick="dwShiftWeek(1)" title="สัปดาห์ถัดไป">›</button></div>`;
   const list = dailyWorkOrders.filter(d=>d.date===dwSel).sort((a,b)=> a.no-b.no);
   day.innerHTML = `<div class="dwt-head"><b>${fmtDayHeading(dwSel)}</b><span class="dwt-count">${list.length} ใบ</span></div>`
+    + dwDayBarHtml(dwSel, list)
     + (list.length ? dwTimelineHtml(list)
       : `<div class="dwt-empty"><div class="big">🗓️</div><p style="margin:6px 0 14px;">ยังไม่มีใบสั่งการในวันนี้</p><button class="btn btn-primary" onclick="toggleDailyForm()">+ บันทึกใบสั่งการ</button></div>`);
 }
@@ -6139,7 +6207,7 @@ function dwViewInfo(d){
   else if(tx.fuel>=expF && tx.material>=expM) stock = {ic:'✓', cl:'dwv-ok', v:'ตัดออกจากบัญชีแล้ว', s:'น้ำมัน '+tx.fuel+' รายการ · วัสดุ '+tx.material+' รายการ (พ.1-02 / พ.1-03)'};
   else { stock = {ic:'⚠', cl:'dwv-bad', v:'พบรายการตัดคลังไม่ครบ', s:'น้ำมัน '+tx.fuel+'/'+expF+' · วัสดุ '+tx.material+'/'+expM+' (ใบเก่าที่สร้างก่อนผูกกับคลังอาจเป็นเรื่องปกติ)'}; }
   const locked = !!ledgerLocks[String(d.date).slice(0,7)];
-  return {staff, warns, stock, locked};
+  return {staff, warns, stock, locked, dayLocked: dwDayLocked(d.date) || dwIsChecked(d)};
 }
 function dwViewTabBody(d, info){
   const noteRaw = String(d.note||'');
@@ -6159,7 +6227,10 @@ function dwViewTabBody(d, info){
     return (info.warns.length ? `<div class="dwv-warn">${info.warns.map(w=>`<div>⚠ ${esc(w)}</div>`).join('')}</div>` : '')
       + row(info.stock.ic, info.stock.cl, 'ตัดคลัง', info.stock.v, info.stock.s)
       + (info.locked ? row('🔒','dwv-bad','สถานะเดือน','เดือนนี้ล็อกบัญชีแล้ว','แก้ไข/ลบใบสั่งการของเดือนนี้ไม่ได้ (ปลดล็อกที่ระบบพัสดุ)')
-                     : row('✓','dwv-ok','สถานะเดือน','ยังแก้ไขได้','บัญชี พ.1-02 / พ.1-03 ยังไม่ล็อก'));
+                     : row('✓','dwv-ok','สถานะเดือน','ยังแก้ไขได้','บัญชี พ.1-02 / พ.1-03 ยังไม่ล็อก'))
+      + (dwDayLocked(d.date) ? row('🔒','dwv-bad','การตรวจ','วันนี้ผู้ตรวจยืนยันครบแล้ว','เพิ่ม/แก้ไข/ลบใบของวันนี้ไม่ได้ จนกว่าผู้ตรวจปลดล็อก')
+                              : dwIsChecked(d) ? row('✔','dwv-ok','การตรวจ','ตรวจแล้ว','แก้ไข/ลบไม่ได้ จนกว่าผู้ตรวจเอาติ๊กออก')
+                              : row('⏳','','การตรวจ','ยังไม่ได้ตรวจ',''));
   }
   /* ประวัติ — ใช้ช่องที่มี: lastUpdated (ระบบบันทึกให้ทุกครั้งอยู่แล้ว) และ createdBy/createdAt/updatedBy ถ้ามีในตาราง */
   let h = '';
@@ -6193,7 +6264,7 @@ function renderDwView(){
         <div class="dwv-bx"><h4>💰 ค่าใช้จ่าย</h4><div class="dwv-rec">${recLine('ค่าวัสดุ',d.material||0)}${recLine('ค่าแรงงาน',d.labor||0)}${recLine('ค่าเช่าเครื่องจักร',d.rent||0)}${recLine('ค่าน้ำมันเชื้อเพลิง',d.fuel||0)}<div class="dwv-ln" style="padding-top:8px"><span><b>รวมทั้งสิ้น</b></span><i></i><span class="dwv-grand">${fmtNum(dwTotal(d),2)}</span></div></div></div>
       </div>
     </div>
-    ${canEdit ? `<div class="dwv-foot"><button type="button" class="btn btn-danger" ${info.locked?'disabled':''} onclick="closeDwView();deleteDailyEntry(${d.no})">ลบ</button><button type="button" class="btn btn-ghost" onclick="closeDwView()">ปิด</button><button type="button" class="btn btn-primary" ${info.locked?'disabled':''} onclick="closeDwView();editDailyEntry(${d.no})">แก้ไข</button></div>` : '<div style="height:8px"></div>'}`;
+    ${canEdit ? `<div class="dwv-foot"><button type="button" class="btn btn-danger" ${(info.locked||info.dayLocked)?'disabled':''} onclick="closeDwView();deleteDailyEntry(${d.no})">ลบ</button><button type="button" class="btn btn-ghost" onclick="closeDwView()">ปิด</button><button type="button" class="btn btn-primary" ${(info.locked||info.dayLocked)?'disabled':''} onclick="closeDwView();editDailyEntry(${d.no})">แก้ไข</button></div>` : '<div style="height:8px"></div>'}`;
 }/* ลบใบสั่งการรายวัน — ต้องลบธุรกรรมน้ำมัน/วัสดุที่เชื่อมโยงไว้ในระบบรองที่ 3 (พ.1-02/พ.1-03) ด้วยเสมอ ไม่เช่นนั้นตัวเลขจะยังค้างอยู่ในรายงานแม้ลบใบสั่งการนี้ไปแล้ว */
 /* สถานะล็อกเดือนของบัญชี พ.1-02/พ.1-03 (2569-09-19) — ใบสั่งการตัดสต็อกวัสดุ/น้ำมันเข้าบัญชีเหล่านั้นอัตโนมัติ
    จึงต้องกันไม่ให้บันทึก/แก้/ลบใบสั่งการของเดือนที่ถูกล็อกแล้ว (ล็อก/ปลดล็อกทำที่หน้ารายงาน พ.1-02/03 ของระบบ 3) */
@@ -6211,10 +6282,196 @@ function blockIfMonthLocked(dateStr){
   alert(`เดือนของวันที่ ${dateStr} ถูกล็อกบัญชีพัสดุ/น้ำมัน (พ.1-02/พ.1-03) แล้ว — บันทึก/แก้ไข/ลบใบสั่งการของเดือนนี้ไม่ได้\nหากจำเป็นต้องแก้ไข ให้เจ้าของระบบปลดล็อกเดือนนี้ที่หน้ารายงาน พ.1-02/พ.1-03 ในระบบพัสดุก่อน`);
   return true;
 }
+/* ===== ตรวจใบสั่งการรายวัน (22 พ.ย. 2569) — แบบเดียวกับ พ.1-03 =====
+   ตาราง order_day_checks: 1 วัน = 1 รายการ (dayKey 'YYYY-MM-DD')
+   checkedJson = รหัสใบสั่งการ (__backendId) ที่ติ๊ก "ตรวจแล้ว" · notesJson = {รหัสใบ: เหตุผลที่รับทราบข้อสังเกต}
+   confirmed = ยืนยันตรวจครบทั้งวัน → ล็อกวัน: เพิ่ม/แก้/ลบใบของวันนั้นไม่ได้ จนกว่าผู้ตรวจปลดล็อก
+   ใบที่ติ๊กตรวจแล้วแก้/ลบไม่ได้ จนกว่าผู้ตรวจเอาติ๊กออก · ผู้ตรวจ = เจ้าของระบบ/หมวด/ผู้ช่วยหมวด (FBL.canCheckFuel) */
+let orderDayChecks = {};
+async function loadOrderDayChecksFromApi(){
+  try{
+    (await apiGet('order_day_checks')).forEach(r=>{
+      orderDayChecks[r.dayKey] = {
+        checked: Array.isArray(r.checkedJson) ? r.checkedJson.map(String) : [],
+        notes: (r.notesJson && typeof r.notesJson==='object' && !Array.isArray(r.notesJson)) ? r.notesJson : {},
+        checkedBy: r.checkedBy||'', checkedAt: r.checkedAt||'',
+        confirmed: !!r.confirmed, confirmedBy: r.confirmedBy||'', confirmedAt: r.confirmedAt||''
+      };
+    });
+  }catch(err){
+    console.error('โหลดสถานะตรวจใบสั่งการรายวันจากฐานข้อมูลกลางไม่สำเร็จ', err);
+  }
+}
+function canCheckOrders(){ return !!(window.FBL && FBL.canCheckFuel && FBL.canCheckFuel()); }
+function dwOid(d){ return String(d.__backendId || d.no); }
+function dwDayRec(date){ return orderDayChecks[date] || {checked:[], notes:{}, confirmed:false}; }
+function dwDayLocked(date){ return !!dwDayRec(date).confirmed; }
+function dwIsChecked(d){ return dwDayRec(d.date).checked.indexOf(dwOid(d)) >= 0; }
+function blockIfDayLocked(date){
+  if(!dwDayLocked(date)) return false;
+  alert(`วันที่ ${fmtDateShort(date)} ผู้ตรวจยืนยันตรวจครบแล้ว (🔒) — เพิ่ม/แก้ไข/ลบใบสั่งการของวันนี้ไม่ได้\nหากจำเป็น ให้ผู้ตรวจ (เจ้าของระบบ/หมวด/ผู้ช่วยหมวด) ปลดล็อกวันนี้ก่อน`);
+  return true;
+}
+function blockIfOrderChecked(d){
+  if(!d || !dwIsChecked(d)) return false;
+  alert('ใบสั่งการนี้ผู้ตรวจติ๊ก "ตรวจแล้ว" ไว้ — แก้ไข/ลบไม่ได้\nให้ผู้ตรวจเอาติ๊กออกก่อน แล้วจึงแก้ไขได้');
+  return true;
+}
+function dwDayStat(iso){
+  const list = dailyWorkOrders.filter(d=>d.date===iso), rec = dwDayRec(iso), ck = new Set(rec.checked);
+  const bad = list.filter(d=>!ck.has(dwOid(d)) && dwProblems(d).length).length;
+  return { st: rec.confirmed ? 'ok' : !list.length ? 'none' : bad ? 'bad' : 'wait', total: list.length, ck: list.filter(d=>ck.has(dwOid(d))).length, bad, rec };
+}
+function dwDayMark(iso){
+  const st = dwDayStat(iso).st;
+  return st==='ok' ? ' 🔒' : st==='bad' ? ' ⚠' : '';
+}
+async function dwSaveDayCheck(date, patch){
+  const next = Object.assign({checked:[], notes:{}, checkedBy:'', checkedAt:'', confirmed:false, confirmedBy:'', confirmedAt:''}, orderDayChecks[date]||{}, patch);
+  await apiPost('update', 'order_day_checks', {dayKey:date, checkedJson:next.checked, notesJson:next.notes, checkedBy:next.checkedBy, checkedAt:next.checkedAt,
+    confirmed:next.confirmed?'1':'', confirmedBy:next.confirmedBy, confirmedAt:next.confirmedAt});
+  orderDayChecks[date] = next;
+}
+function dwRefreshCheck(){
+  renderDailyLog();
+  if(!document.getElementById('dwc-cal-overlay')?.classList.contains('hidden')) renderDwCal();
+  if(__dwViewNo!=null) renderDwView();
+}
+async function dwToggleCheck(no){
+  if(!canCheckOrders()) return;
+  const d = dailyWorkOrders.find(x=>x.no===no); if(!d) return;
+  const rec = dwDayRec(d.date);
+  if(rec.confirmed){ alert('วันนี้ยืนยันตรวจครบแล้ว (🔒) — ปลดล็อกวันก่อนจึงเปลี่ยนการติ๊กได้'); return; }
+  const id = dwOid(d), set = new Set(rec.checked);
+  if(set.has(id)){
+    set.delete(id);
+    const notes = Object.assign({}, rec.notes); delete notes[id];
+    try{ await dwSaveDayCheck(d.date, {checked:Array.from(set), notes, checkedBy:apiCurrentUsername(), checkedAt:new Date().toISOString()}); }
+    catch(err){ alert('บันทึกสถานะ "ตรวจแล้ว" ไม่สำเร็จ: '+err.message); return; }
+    dwRefreshCheck(); return;
+  }
+  if(dwProblems(d).length){ dwOpenAck(no); return; }   /* ใบที่มีข้อสังเกต ต้องระบุเหตุผลที่รับทราบก่อน */
+  set.add(id);
+  try{ await dwSaveDayCheck(d.date, {checked:Array.from(set), checkedBy:apiCurrentUsername(), checkedAt:new Date().toISOString()}); }
+  catch(err){ alert('บันทึกสถานะ "ตรวจแล้ว" ไม่สำเร็จ: '+err.message); return; }
+  dwRefreshCheck();
+}
+let __dwAckNo = null;
+function dwOpenAck(no){
+  const d = dailyWorkOrders.find(x=>x.no===no); if(!d) return;
+  __dwAckNo = no;
+  const job = findJob(d.code);
+  document.getElementById('dwc-ack-body').innerHTML =
+    `<div style="font-weight:600;margin-bottom:8px">${esc(d.code)} ${esc(job?job.name:'')}</div>`
+    + `<div class="dwv-warn">${dwProblems(d).map(p=>`<div>⚠ ${esc(p)}</div>`).join('')}</div>`
+    + `<label style="display:block;font-size:13px;font-weight:600;margin:6px 0">เหตุผลที่รับทราบ (บังคับกรอก)</label>`
+    + `<textarea id="dwc-ack-note" rows="3" placeholder="เช่น ไปปฏิบัติงานทั้งสองรหัสจริง แบ่งเป็นช่วงเช้า/บ่าย"></textarea>`;
+  document.getElementById('dwc-ack-overlay').classList.remove('hidden');
+}
+function dwCloseAck(){ document.getElementById('dwc-ack-overlay')?.classList.add('hidden'); __dwAckNo = null; }
+async function dwAckSubmit(){
+  const d = dailyWorkOrders.find(x=>x.no===__dwAckNo); if(!d) return;
+  const note = (document.getElementById('dwc-ack-note').value||'').trim();
+  if(note.length < 3){ alert('กรุณาระบุเหตุผลที่รับทราบข้อสังเกต (อย่างน้อย 3 ตัวอักษร)'); return; }
+  const rec = dwDayRec(d.date), id = dwOid(d), set = new Set(rec.checked); set.add(id);
+  const notes = Object.assign({}, rec.notes); notes[id] = note;
+  try{ await dwSaveDayCheck(d.date, {checked:Array.from(set), notes, checkedBy:apiCurrentUsername(), checkedAt:new Date().toISOString()}); }
+  catch(err){ alert('บันทึกสถานะ "ตรวจแล้ว" ไม่สำเร็จ: '+err.message); return; }
+  dwCloseAck(); dwRefreshCheck();
+}
+function dwConfirmDay(date){
+  if(!canCheckOrders()) return;
+  const list = dailyWorkOrders.filter(d=>d.date===date);
+  if(!list.length){ alert('วันนี้ยังไม่มีใบสั่งการ'); return; }
+  const ck = new Set(dwDayRec(date).checked), notCk = list.filter(d=>!ck.has(dwOid(d)));
+  if(notCk.length){ alert('ยังไม่ได้ติ๊กตรวจ '+notCk.length+' ใบ: '+notCk.map(d=>d.code).join(', ')+'\nติ๊กช่อง "ตรวจแล้ว" ให้ครบก่อน'); return; }
+  showConfirmModal('ยืนยันตรวจครบทั้งวัน', `ยืนยันว่าตรวจใบสั่งการของ ${fmtDateShort(date)} ครบถ้วนแล้ว?\nหลังยืนยัน วันนี้จะเพิ่ม/แก้ไข/ลบใบไม่ได้ จนกว่าผู้ตรวจจะปลดล็อก`, 'ยืนยัน', async function(){
+    try{ await dwSaveDayCheck(date, {confirmed:true, confirmedBy:apiCurrentUsername(), confirmedAt:new Date().toISOString()}); }
+    catch(err){ alert('บันทึกการยืนยันตรวจไม่สำเร็จ: '+err.message); return; }
+    dwRefreshCheck();
+  });
+}
+function dwUnlockDay(date){
+  if(!canCheckOrders()) return;
+  showConfirmModal('ปลดล็อกวันที่ตรวจแล้ว', `ปลดล็อก ${fmtDateShort(date)}? หลังปลดล็อกจะเพิ่ม/แก้ไขใบสั่งการของวันนี้ได้อีกครั้ง (ใบที่ติ๊กตรวจแล้วยังคงติ๊กอยู่ ต้องเอาติ๊กออกก่อนจึงแก้ใบนั้นได้)`, 'ปลดล็อก', async function(){
+    try{ await dwSaveDayCheck(date, {confirmed:false, confirmedBy:'', confirmedAt:''}); }
+    catch(err){ alert('ปลดล็อกไม่สำเร็จ: '+err.message); return; }
+    dwRefreshCheck();
+  });
+}
+/* แถบความคืบหน้าการตรวจของวันที่เลือก (เหนือรายการใบสั่งการ) */
+function dwDayBarHtml(date, list){
+  if(!list.length) return '';
+  const rec = dwDayRec(date), ck = new Set(rec.checked), n = list.filter(d=>ck.has(dwOid(d))).length, can = canCheckOrders();
+  if(rec.confirmed){
+    return `<div class="dwc-bar ok"><span>🔒 ผู้ตรวจยืนยันตรวจครบแล้ว${rec.confirmedBy?' — '+esc(rec.confirmedBy):''}${rec.confirmedAt?' · '+esc(dwFmtDT(rec.confirmedAt)):''}</span>`
+      + (can ? `<button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="dwUnlockDay('${date}')">ปลดล็อกวันนี้</button>` : '') + '</div>';
+  }
+  return `<div class="dwc-bar"><b>${can?'ความคืบหน้าการตรวจ':'สถานะการตรวจ'}</b><div class="dwc-pb"><i style="width:${n/list.length*100}%"></i></div>`
+    + `<span>ตรวจแล้ว <b>${n}</b> / ${list.length} ใบ</span>`
+    + (can ? `<button type="button" class="btn btn-primary btn-sm" ${n>=list.length?'':'disabled'} onclick="dwConfirmDay('${date}')">ยืนยันตรวจครบทั้งวัน</button>` : '') + '</div>';
+}
+/* ปฏิทินภาพรวมการตรวจรายเดือน */
+let dwCalMk = null;
+async function openDwCal(){
+  dwCalMk = dwSel.slice(0,7);
+  await loadDailyWorkOrdersForFy([fyOfDate(dwCalMk+'-01'), fyOfDate(dwCalMk+'-28')]);
+  renderDwCal();
+  document.getElementById('dwc-cal-overlay').classList.remove('hidden');
+}
+function closeDwCal(){ document.getElementById('dwc-cal-overlay')?.classList.add('hidden'); }
+async function dwCalShift(n){
+  const [y,m] = dwCalMk.split('-').map(Number), t = new Date(y, m-1+n, 1);
+  dwCalMk = t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');
+  await loadDailyWorkOrdersForFy([fyOfDate(dwCalMk+'-01'), fyOfDate(dwCalMk+'-28')]);
+  renderDwCal();
+}
+function dwCalPick(iso){ closeDwCal(); dwPickDay(iso); }
+function renderDwCal(){
+  const box = document.getElementById('dwc-cal-body');
+  if(!box || !dwCalMk) return;
+  const [yy,mm] = dwCalMk.split('-').map(Number), todayIso = isoLocal(new Date()), nDays = new Date(yy, mm, 0).getDate();
+  const count = {ok:0, bad:0, wait:0, none:0};
+  let cells = '<div></div>'.repeat((new Date(yy, mm-1, 1).getDay()+6)%7);
+  for(let day=1; day<=nDays; day++){
+    const iso = dwCalMk+'-'+String(day).padStart(2,'0'), s = dwDayStat(iso), wd = new Date(yy, mm-1, day).getDay();
+    const off = wd===0 || wd===6, future = iso>todayIso;
+    let stHtml = '', tip = '';
+    if(s.st==='ok'){
+      stHtml = `<div class="fc-st">🔒 ยืนยันครบ</div><div class="fc-sub">${s.total} ใบ</div>`;
+      tip = 'ยืนยันตรวจครบแล้ว'+(s.rec.confirmedBy?' — '+s.rec.confirmedBy:'');
+    } else if(s.st==='bad'){
+      stHtml = `<div class="fc-st">⚠ ผิดปกติ ${s.bad}</div><div class="fc-sub">ตรวจ ${s.ck}/${s.total} ใบ</div>`;
+      tip = 'พบใบที่มีข้อสังเกต '+s.bad+' ใบ · ตรวจแล้ว '+s.ck+'/'+s.total;
+    } else if(s.st==='wait'){
+      stHtml = `<div class="fc-st">⏳ ${s.ck>=s.total?'รอกดยืนยัน':'รอตรวจ'}</div><div class="fc-sub">ตรวจ ${s.ck}/${s.total} ใบ</div>`;
+      tip = 'ตรวจแล้ว '+s.ck+'/'+s.total;
+    } else if(!off && !future){
+      stHtml = '<div class="fc-mut">ไม่มีใบสั่งการ</div>';
+      count.none++;
+    }
+    if(s.st!=='none') count[s.st]++;
+    cells += `<button type="button" class="fc-d fc-${s.st}${off?' off':''}${iso===todayIso?' today':''}${iso===dwSel?' cur':''}" onclick="dwCalPick('${iso}')"${tip?` title="${esc(tip)}"`:''}>
+      <span class="fc-top"><b>${day}</b></span>${stHtml}</button>`;
+  }
+  box.innerHTML = `<div class="fc-head">
+      <button type="button" class="btn btn-ghost btn-ic" onclick="dwCalShift(-1)" title="เดือนก่อนหน้า">‹</button>
+      <h4>${TH_MONTHS_LONG[mm-1]} ${yy+543}</h4>
+      <button type="button" class="btn btn-ghost btn-ic" onclick="dwCalShift(1)" title="เดือนถัดไป">›</button></div>
+    <div class="fc-sum">
+      <div class="fc-s fc-ok"><b>${count.ok}</b><span>🔒 ยืนยันตรวจครบแล้ว</span></div>
+      <div class="fc-s fc-bad"><b>${count.bad}</b><span>⚠ มีใบที่ผิดปกติ</span></div>
+      <div class="fc-s fc-wait"><b>${count.wait}</b><span>⏳ ตรวจยังไม่เสร็จ</span></div>
+      <div class="fc-s fc-none"><b>${count.none}</b><span>วันทำการที่ไม่มีใบ</span></div>
+    </div>
+    <div class="fc-grid">${[['จันทร์','จ.'],['อังคาร','อ.'],['พุธ','พ.'],['พฤหัสบดี','พฤ.'],['ศุกร์','ศ.'],['เสาร์','ส.'],['อาทิตย์','อา.']].map(w=>`<div class="fc-w"><span class="fc-wf">${w[0]}</span><span class="fc-ws">${w[1]}</span></div>`).join('')}${cells}</div>
+    <div class="fc-note">กดที่วันเพื่อไปยังรายการใบสั่งการของวันนั้น</div>`;
+}
 function deleteDailyEntry(no){
   if(!isAdmin()) return;
   const d = dailyWorkOrders.find(x=>x.no===no); if(!d) return;
   if(blockIfMonthLocked(d.date)) return;
+  if(blockIfDayLocked(d.date) || blockIfOrderChecked(d)) return;
   showConfirmModal(
     `ยืนยันลบใบสั่งการรายวัน\n${fmtDateShort(d.date)} (รหัสงาน ${d.code})?`,
     'รายการน้ำมัน/วัสดุที่เบิกตามใบสั่งการนี้ในระบบพัสดุ/น้ำมัน (พ.1-02/พ.1-03) จะถูกลบไปด้วย',
@@ -6290,6 +6547,7 @@ function editDailyEntry(no){
   if(!requireAdmin()) return;
   const rec = dailyWorkOrders.find(d=>d.no===no);
   if(!rec) return;
+  if(blockIfDayLocked(rec.date) || blockIfOrderChecked(rec)) return;
   __dwEditingNo = no;
   document.getElementById('daily-form-overlay').classList.remove('hidden');
   document.getElementById('daily-form-title').textContent = 'แก้ไขใบสั่งการรายวัน';
@@ -6396,7 +6654,8 @@ function dwCaseToken(text){ const m = String(text||'').match(/\[เคส:[a-z]+
 function saveDailyEntry(){
   if(!isAdmin()) return;
   if(blockIfMonthLocked(document.getElementById('dw-date').value)) return;
-  if(__dwEditingNo!=null){ const old = dailyWorkOrders.find(x=>x.no===__dwEditingNo); if(old && blockIfMonthLocked(old.date)) return; }
+  if(__dwEditingNo!=null){ const old = dailyWorkOrders.find(x=>x.no===__dwEditingNo); if(old && blockIfMonthLocked(old.date)) return; if(old && (blockIfDayLocked(old.date) || blockIfOrderChecked(old))) return; }
+  if(blockIfDayLocked(document.getElementById('dw-date').value)) return;
   const code = document.getElementById('dw-job').value;
   if(!code){ alert('กรุณาเลือกรหัสงานจากรายการค้นหา'); return; }
   const kmStart = document.getElementById('dw-loc').value.trim();
@@ -7006,7 +7265,8 @@ function applyCaseHandoff(){
     loadEmergenciesFromApi(),
     loadContractsFromApi(),
     loadSubsys3RefDataFromApi(),
-    loadLedgerLocksFromApi()
+    loadLedgerLocksFromApi(),
+    loadOrderDayChecksFromApi()
   ]);
   // เลข id ที่ backend สร้างให้ controlled_routes/field_crews เป็น timestamp (เช่น RTE-...) ไม่ใช่ตัวเลขล้วน
   // แต่โค้ดเดิมยังมีบางจุด (rf-id ในฟอร์ม, การเทียบ id) ที่คาดว่า __routesNextId/__crewNextId เป็นตัวเลขถัดไปสำหรับ
