@@ -6072,14 +6072,25 @@ function dwQtyHtml(d){
     ? '<span class="pill pill-warn">รอปริมาณงาน</span>'+(d.unit ? ' <span style="color:var(--ink-400)">หน่วย '+esc(d.unit)+'</span>' : '')
     : '<b>'+fmtQtyShort(d.qty)+'</b> '+esc(d.unit||'');
 }
-/* ความผิดปกติของใบ (ล้อมกรอบแดงในรายการ): มีผู้ปฏิบัติงานลาในวันนั้น หรือชื่อซ้ำกับใบอื่นวันเดียวกัน (ใช้เกณฑ์เดียวกับคำเตือนตอนกรอกฟอร์ม) */
+/* คีย์เทียบชื่อคน: ตัดคำนำหน้าและช่องว่างทั้งหมด — ใบที่คีย์เอง ("น.ส.พรนพิน คุชนาค") กับใบที่นำเข้า/ทะเบียน ("นางสาวพรนพิน  คุชนาค") ถือเป็นคนเดียวกัน (23 พ.ย. 2569) */
+function dwPersonKey(s){ return String(s||'').replace(/^\s*(นางสาว|น\.ส\.|นาง|นาย|ว่าที่ร้อยตรี|ว่าที่ ร\.ต\.)\s*/,'').replace(/\s+/g,''); }
+function dwOnLeave(staff, date){
+  const keys = new Set(getLeaveHistoryX().filter(l=>l.from<=date && date<=l.to).map(l=>dwPersonKey(l.name)));
+  return staff.filter(n=>keys.has(dwPersonKey(n)));
+}
+/* ชื่อในใบนี้ที่ไปอยู่ในใบอื่นวันเดียวกันด้วย — ทุกใบ ไม่ว่ารหัสงานเดียวกันหรือต่างกัน (เช่น งานปะซ่อมคนละสายทาง) */
+function dwDupStaff(d, staff){
+  const keys = new Set();
+  dailyWorkOrders.forEach(x=>{ if(x.date===d.date && x.no!==d.no) dwStaffNames(x).forEach(n=>keys.add(dwPersonKey(n))); });
+  return (staff||dwStaffNames(d)).filter(n=>keys.has(dwPersonKey(n)));
+}
+/* ความผิดปกติของใบ (ล้อมกรอบแดงในรายการ): มีผู้ปฏิบัติงานลาในวันนั้น หรือชื่อซ้ำกับใบอื่นวันเดียวกัน */
 function dwProblems(d){
   const staff = dwStaffNames(d), out = [];
-  const leaves = getLeaveHistoryX();
-  const onLeave = staff.filter(n=> leaves.some(l=>l.name===n && l.from<=d.date && d.date<=l.to));
+  const onLeave = dwOnLeave(staff, d.date);
   if(onLeave.length) out.push('มีผู้ปฏิบัติงานที่ลาในวันนี้ '+onLeave.length+' คน');
-  const dup = staff.filter(n=> dailyWorkOrders.some(x=>x.date===d.date && x.no!==d.no && x.code!==d.code && dwStaffNames(x).includes(n)));
-  if(dup.length) out.push('มีผู้ปฏิบัติงานซ้ำกับรหัสงานอื่นวันเดียวกัน '+dup.length+' คน');
+  const dup = dwDupStaff(d, staff);
+  if(dup.length) out.push('มีผู้ปฏิบัติงานซ้ำกับใบอื่นวันเดียวกัน '+dup.length+' คน');
   /* ข้อสังเกตของใบที่นำเข้าจากกรม (ไม่พบเครื่องจักร/วัสดุในทะเบียน, ค่าตอบแทน-ค่าใช้สอย-ล่วงเวลาที่ไม่ได้นำเข้า) — เดิมอยู่ในหน้าต่าง "จุดที่ต้องตรวจสอบ" ซึ่งยุบรวมเข้าที่นี่แล้ว (22 พ.ย. 2569) */
   try{ if(window.DohImp && DohImp.orderProbs) DohImp.orderProbs(d).forEach(p=>out.push(p)); }catch(e){}
   return out;
@@ -6194,10 +6205,9 @@ function dwViewInfo(d){
   const staff = dwStaffNames(d);
   const warns = [];
   if(d.qtyPending) warns.push('รอปริมาณงาน — ยังไม่นับในสรุปรายเดือน');
-  const dup = staff.filter(n=> dailyWorkOrders.some(x=>x.date===d.date && x.no!==d.no && dwStaffNames(x).includes(n)));
+  const dup = dwDupStaff(d, staff);
   if(dup.length) warns.push('มีผู้ปฏิบัติงานซ้ำในใบอื่นวันเดียวกัน '+dup.length+' คน ('+dup.join(', ')+')');
-  const leaves = getLeaveHistoryX();
-  const onLeave = staff.filter(n=> leaves.some(l=>l.name===n && l.from<=d.date && d.date<=l.to));
+  const onLeave = dwOnLeave(staff, d.date);
   if(onLeave.length) warns.push('มีบันทึกการลาในวันนี้: '+onLeave.join(', '));
   const veh = dwVehRows(d);
   const expF = veh.filter(v=>v.liters>0).length, expM = (d.parts||[]).length;
