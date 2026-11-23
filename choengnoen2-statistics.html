@@ -6337,15 +6337,16 @@ function dwMissingWorkers(date){
   const list = dailyWorkOrders.filter(d=>d.date===date);
   if(!list.length) return [];
   const assigned = new Set();
-  list.forEach(d=>dwStaffNames(d).forEach(n=>assigned.add(normName(n))));
+  /* เทียบด้วย dwPersonKey (ตัดคำนำหน้า+ช่องว่าง) — ใบเก่าที่คีย์ "น.ส.พรนพิน คุชนาค" ต้องนับเป็นคนเดียวกับทะเบียน "นางสาวพรนพิน  คุชนาค" (23 พ.ย. 2569) */
+  list.forEach(d=>dwStaffNames(d).forEach(n=>assigned.add(dwPersonKey(n))));
   const workers = getStaffX().filter(s=>s && s.name && (s.status||'ok')==='ok' && isFieldWorkerStaff(s));
   if(!workers.length) return [];
   const leaves = getLeaveHistoryX();
   const out = [];
   workers.forEach(s=>{
-    const n = normName(s.name);
+    const n = dwPersonKey(s.name);
     if(assigned.has(n) || out.includes(s.name)) return;
-    if(leaves.some(l=>normName(l.name)===n && l.from<=date && date<=l.to)) return;
+    if(leaves.some(l=>dwPersonKey(l.name)===n && l.from<=date && date<=l.to)) return;
     out.push(s.name);
   });
   return out;
