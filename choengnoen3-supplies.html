@@ -3167,7 +3167,7 @@ function renderVehicles(){
    data-date บนช่องชื่อ = วันที่มีผลของแถว ให้รายชื่อแสดงคนที่ปฏิบัติงานอยู่ในวันนั้น (ดู pickItems) */
 function vmOperatorRowHtml(r, first){
   return `<div class="vm-op-row">
-    <input class="edit-input vm-op-name" data-pick="staff" ${first ? '' : `data-date="${esc(r.from||'')}" `}autocomplete="off" value="${esc(r.name||'')}" data-orig="${esc(r.name||'')}" placeholder="ชื่อผู้รับผิดชอบ" oninput="onVmOpNameInput(this)">
+    <input class="edit-input vm-op-name" data-pick="staff" data-noleave="1" ${first ? '' : `data-date="${esc(r.from||'')}" `}autocomplete="off" value="${esc(r.name||'')}" data-orig="${esc(r.name||'')}" placeholder="ชื่อผู้รับผิดชอบ" oninput="onVmOpNameInput(this)">
     ${first ? '<div class="vm-op-since">ตั้งแต่เริ่มต้น</div>' : `<input type="date" class="edit-input vm-op-from" value="${esc(r.from||'')}" data-orig="${esc(r.from||'')}" onchange="this.closest('.vm-op-row').querySelector('.vm-op-name').dataset.date=this.value">`}
     ${first ? '' : `<button type="button" class="btn btn-ghost btn-ic btn-ic-danger btn-sm vm-op-del" data-ic="trash" data-tip="ลบ" onclick="this.closest('.vm-op-row').remove();vmSyncOps()"></button>`}
     <div class="vm-op-warn hidden">แก้ชื่อตรงนี้จะมีผลย้อนหลังทั้งช่วง (ใช้แก้คำผิด) — ถ้าเปลี่ยนคน ให้กด "เปลี่ยนผู้รับผิดชอบ" แล้วระบุวันที่</div>
@@ -3190,7 +3190,7 @@ function vmSyncOps(){
 function vmOpDateProblem(name, date){
   if(!staff.some(s=>__personNamesMatch(s.name, name))) return '';
   if(!staffWorkingOn(date).some(s=>__personNamesMatch(s.name, name))) return `${name} ไม่ได้ปฏิบัติงานในวันที่ ${fmtDateFull(date)} (ยังไม่เริ่มงาน เกษียณ หรือลาออกแล้ว)`;
-  if(approvedLeaveOnDate(name, date)) return `${name} มีบันทึกการลาในวันที่ ${fmtDateFull(date)}`;
+  // ผู้รับผิดชอบประจำเครื่องเป็นการมอบหมายระยะยาว ไม่เกี่ยวกับการลารายวัน จึงไม่ตรวจการลา
   return '';
 }
 /* อ่านแถวผู้รับผิดชอบจากฟอร์ม → แถวแรกคงเดิม แถวที่เหลือเรียงตามวันที่ (คืน null ถ้ากรอกไม่ครบ/วันที่ซ้ำ/คนไม่ได้ปฏิบัติงานในวันนั้น) */
@@ -5965,8 +5965,10 @@ function pickItems(kind, inp){
     const date = (inp && inp.dataset.date) || (inp && inp.id==='mat-add-who' ? dateStrFor(currentMatMk(), matCheckDay)
                : inp && inp.id==='fuel-add-who' ? dateStrFor(currentFuelMk(), fuelCheckDay) : '');
     // คนที่ลาในวันนั้น: แสดงในรายการพร้อมป้าย "ลา" ให้รู้เท่านั้น เลือกไม่ได้ (off)
+    // data-noleave (ผู้รับผิดชอบประจำเครื่อง) = ไม่เกี่ยวกับการลา เลือกได้ทุกคนที่ปฏิบัติงานอยู่
+    const ignoreLeave = !!(inp && inp.dataset.noleave);
     return staffWorkingOn(date).map(s=>{
-      const onLeave = !!approvedLeaveOnDate(s.name, date);
+      const onLeave = !ignoreLeave && !!approvedLeaveOnDate(s.name, date);
       return {value:s.name,
         sub:[s.role||'', s.status==='retired'?'เกษียณอายุ':s.status==='resigned'?'ลาออก':''].filter(Boolean).join(' · '),
         tag:onLeave?'ลา':'', off:onLeave};
