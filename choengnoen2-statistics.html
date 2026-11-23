@@ -6333,7 +6333,19 @@ function blockIfOrderChecked(d){
    แต่ไม่มีชื่อในใบสั่งการใดเลยของวันนั้น ; ตรวจเฉพาะวันที่มีใบสั่งการอย่างน้อย 1 ใบ
    ถ้าหาตำแหน่ง "คนงาน" ไม่พบเลย (ชื่อฟิลด์ไม่ตรง) จะไม่เตือน กันขึ้นเตือนทุกคน
    เหตุผลที่ผู้ตรวจกรอกตอนยืนยันทั้งวัน เก็บที่ notesJson.__missing = {names, reason} ของ order_day_checks */
+/* วันเสาร์-อาทิตย์ และวันหยุดนักขัตฤกษ์ (ตาราง public_holidays ของระบบที่ 1 + รายการในโค้ด labor-calc.js) ไม่มีการทำงานตามปกติ
+   → ไม่เตือนคนงานตกหล่น (23 พ.ย. 2569) ; เพิ่มวันหยุดที่ระบบที่ 1 → การลา → ปุ่มวันหยุดนักขัตฤกษ์ */
+function dwIsOffDay(date){
+  const wd = new Date(date+'T00:00:00').getDay();
+  if(wd===0 || wd===6) return true;
+  try{
+    const ph = (window.FBL && FBL.rows) ? FBL.rows('public_holidays') : [];
+    if(window.LaborCalc && LaborCalc.holidaysOf) return LaborCalc.holidaysOf(date.slice(0,7), ph).some(h=>h.day===parseInt(date.slice(8,10),10));
+    return ph.some(h=>h.date===date);
+  }catch(e){ return false; }
+}
 function dwMissingWorkers(date){
+  if(dwIsOffDay(date)) return [];
   const list = dailyWorkOrders.filter(d=>d.date===date);
   if(!list.length) return [];
   const assigned = new Set();
@@ -7350,6 +7362,8 @@ function applyCaseHandoff(){
   // Firestore โหลดพร้อมกันได้ทุกตาราง (ไม่มีปัญหา quota แบบ Apps Script เดิม) — เร็วกว่าโหลดทีละตารางมาก
   // staff/leave_requests ของระบบที่ 1 โหลดเก็บไว้ให้ getStaffX()/getLeaveHistoryX() อ่าน
   try{ await apiGetMultiple(['staff','leave_requests']); }catch(e){ console.error('โหลดรายชื่อบุคลากร/การลาจากระบบที่ 1 ไม่สำเร็จ', e); }
+  /* วันหยุดนักขัตฤกษ์ — ใช้ข้ามการเตือนคนงานตกหล่น ; โหลดแยก ถ้าไม่สำเร็จยังใช้วันเสาร์-อาทิตย์และรายการใน labor-calc.js ได้ */
+  try{ await apiGetMultiple(['public_holidays']); }catch(e){ console.error('โหลดวันหยุดนักขัตฤกษ์ไม่สำเร็จ', e); }
   await Promise.all([
     loadControlledRoutesFromApi(),
     loadFieldCrewsFromApi(),
