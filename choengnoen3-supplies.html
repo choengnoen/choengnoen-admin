@@ -5488,7 +5488,7 @@ function renderReportFuel(mk){
     const dr = fuelDayRec(iso), dt = new Date(iso+'T00:00:00'), wd = dt.getDay(), hol = THAI_HOLIDAYS[iso] || null;
     const mon = (dt.getDate()===1 || iso===weekIsos[0]) ? ' '+FUEL_SHORT_MONTH[dt.getMonth()] : '';
     return `<div class="dwk-d fd-d${iso===date?' on':''}${(wd===0||wd===6||hol)?' off':''}${hol?' hol':''}${iso===todayIso?' today':''}" data-fdate="${iso}"${hol?` title="${esc(hol)}"`:''}>
-      <small>${FUEL_WEEKDAY_FULL[wd]}${mon}</small><b>${dt.getDate()}</b><div class="n">${dr.confirmed?'🔒 ':''}${dayAgg[iso]?fmtNum(dayAgg[iso],1):'&nbsp;'}</div></div>`;
+      <small>${FUEL_WEEKDAY_FULL[wd]}${mon}</small><b>${dt.getDate()}</b><div class="n">${dr.confirmed?'🔒 ':''}${dayAgg[iso]?fmtNum(dayAgg[iso],1)+' ลิตร':'&nbsp;'}</div></div>`;
   }).join('');
   const [yy, mm] = mk.split('-').map(Number);
   const holName = holidayNameFor(mk, dayNum);
