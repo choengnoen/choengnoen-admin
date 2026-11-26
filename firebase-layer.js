@@ -211,7 +211,7 @@
     encroachments: { section: 's2', label: 'งานรุกล้ำ', idField: 'code', idPrefix: null, columns: ['code', 'name', 'km', 'dist', 'structure', 'stage', 'stageDate', 'cleared', 'clearedDate', 'lastUpdated'], numericFields: ['dist', 'stage'] },
     emergencies: { section: 's2', label: 'เหตุฉุกเฉิน', idField: 'no', idPrefix: null, columns: ['no', 'type', 'loc', 'start', 'lastUpdate', 'status', 'lastUpdated'], numericFields: ['no'] },
     // งานสัญญา (17 ต.ค. 2569): 1 สัญญา = 1 รายการ, ช่วงทางหลวงหลายช่วงเก็บใน rangesJson = [{route, k1, k2}] (กม. เป็นกิโลเมตร ทศนิยม) / status = สถานะพิเศษ (ระงับงาน, ยกเลิกสัญญา) ว่าง = คำนวณจากวันที่
-    contracts: { section: 's2', label: 'สัญญา', idField: 'id', idPrefix: 'CON', columns: ['id', 'fiscalYear', 'contractNo', 'name', 'contractor', 'amount', 'startDate', 'endDate', 'warrantyEnd', 'supervisor', 'status', 'note', 'rangesJson', 'lastUpdated', 'workQty', 'deliveryDate', 'acceptDate', 'workType', 'warrantyYears', 'reflectNeeded', 'refl12Done', 'refl24Done', 'signDate', 'durationDays', 'penaltyPerDay', 'committee', 'negotiateDate', 'notifyDate'], numericFields: ['fiscalYear', 'amount', 'warrantyYears', 'durationDays', 'penaltyPerDay'], jsonFields: ['rangesJson'] },
+    contracts: { section: 's2', label: 'สัญญา', idField: 'id', idPrefix: 'CON', columns: ['id', 'fiscalYear', 'contractNo', 'name', 'contractor', 'amount', 'startDate', 'endDate', 'warrantyEnd', 'supervisor', 'status', 'note', 'rangesJson', 'lastUpdated', 'workQty', 'deliveryDate', 'acceptDate', 'workType', 'warrantyYears', 'reflectNeeded', 'refl12Done', 'refl24Done', 'signDate', 'durationDays', 'penaltyPerDay', 'committee', 'negotiateDate', 'notifyDate', 'reflNotify12', 'reflNotify24', 'damageCheckDate', 'damageResult'], numericFields: ['fiscalYear', 'amount', 'warrantyYears', 'durationDays', 'penaltyPerDay'], jsonFields: ['rangesJson'] },
 
     materials: { section: 's3', label: 'ทะเบียนพัสดุ', idField: 'code', idPrefix: null, columns: ['code', 'itemName', 'category', 'unit', 'openingStock', 'reorderPoint', 'status', 'lastUpdated', 'unitPrice', 'usage'], numericFields: ['openingStock', 'reorderPoint', 'unitPrice'] },
     material_transactions: { section: 's3', label: 'รับ-จ่ายวัสดุ', idField: 'id', idPrefix: 'MTX', columns: ['id', 'materialId', 'type', 'qty', 'unitPrice', 'totalPrice', 'refNo', 'date', 'note', 'relatedDailyWorkOrderId', 'lastUpdated', 'requester'], numericFields: ['qty', 'unitPrice', 'totalPrice'] },
@@ -972,6 +972,7 @@
      - ทดสอบ: ตั้ง localStorage 'fbl_idle_test' = "วินาทีออก,วินาทีเตือน" (ใช้ได้เฉพาะ "ลดเวลา" ลง ไม่ทำให้ยาวขึ้น) */
   (function (FBL, auth, db, pid) {
     var IDLE_MIN = 60, WARN_MIN = 5;
+    var AUTO_LOGOUT = false; // 26 พ.ย. 2569: ปิดการออกจากระบบอัตโนมัติเมื่อไม่ได้ใช้งาน ตามที่ผู้ใช้ขอ (ปุ่มออกจากระบบยังล้างแคชเหมือนเดิม) — เปิดกลับ = true
     var idleMs = IDLE_MIN * 60000, warnMs = WARN_MIN * 60000;
     try {
       var tst = String(localStorage.getItem('fbl_idle_test') || '').split(',');
@@ -1076,7 +1077,7 @@
       window.addEventListener(t, touch, { passive: true, capture: true });
     });
     // เหตุการณ์ล็อกอินครั้งแรกหลังเปิดหน้า: ถ้าเป็นเซสชันเก่าที่ค้างมานานเกินกำหนด ให้ออกจากระบบทันที (ไม่ให้แค่ขยับเมาส์แล้วเข้าได้เลย)
-    auth.onAuthStateChanged(function (u) { if (u && staleOnLoad && !leaving) FBL.logout(); staleOnLoad = false; });
+    if (AUTO_LOGOUT) auth.onAuthStateChanged(function (u) { if (u && staleOnLoad && !leaving) FBL.logout(); staleOnLoad = false; });
     function tick() {
       if (leaving || !auth.currentUser) { if (!auth.currentUser) hideWarn(); return; }
       var idle = Date.now() - lastActive();
@@ -1084,8 +1085,8 @@
       else if (idle >= idleMs - warnMs) showWarn(idleMs - idle);
       else if (warnEl) hideWarn();
     }
-    setInterval(tick, 1000);
-    document.addEventListener('visibilitychange', function () { if (!document.hidden) tick(); });
+    if (AUTO_LOGOUT) setInterval(tick, 1000);
+    if (AUTO_LOGOUT) document.addEventListener('visibilitychange', function () { if (!document.hidden) tick(); });
   })(FBL, auth, db, firebaseConfig.projectId);
 
   // เปลี่ยนรหัสผ่านของตัวเอง
@@ -1338,7 +1339,34 @@
     batch.set(logRef(), logEntry('update', 'leave_requests', id, (decision === 'approved' ? 'อนุมัติใบลา' : 'ไม่อนุมัติใบลา') + (note ? ' — ' + String(note).slice(0, 120) : '')));
     lastLocalWrite = Date.now();
     try { await batch.commit(); } catch (e) { throw new Error(thErr(e)); }
-  };  // อ่านเฉพาะช่วงของตารางครั้งเดียว (ไม่ฟังสด ไม่เก็บค้างในหน่วยความจำของชั้นนี้) — ใช้กับตารางที่โตทุกปี เช่น ใบสั่งการรายวัน
+  };
+  // บันทึกการติดตามสัญญาหลังรับพื้นที่คืน (เพิ่ม 26 พ.ย. 2569) — ผู้บริหารหรือเจ้าหน้าที่ที่เห็นงานสัญญา (ระบบ 2 ไม่ใช่ "ไม่เห็น" หรือเข้าหน้าหลักได้)
+  // แตะเฉพาะ 4 ฟิลด์นี้ ไม่แก้ข้อมูลสัญญาอื่น — ต้องตรงกับ isContractFollowUpOnly() ใน firestore.rules
+  const CT_FOLLOW_FIELDS = ['reflNotify12', 'reflNotify24', 'damageCheckDate', 'damageResult'];
+  const CT_DAMAGE_RESULTS = ['', 'ok', 'repair', 'fixed'];
+  FBL.canFollowUpContract = function () { return !!(FBL.user && (FBL.canView('s2') || FBL.can('main'))); };
+  FBL.saveContractFollowUp = async function (id, fields) {
+    if (!FBL.canFollowUpContract()) throw new Error('ไม่มีสิทธิ์บันทึกการติดตามสัญญา');
+    if (!id) throw new Error('ไม่พบรหัสสัญญา');
+    const at = nowIso();
+    const upd = { lastUpdated: at };
+    const parts = [];
+    Object.keys(fields || {}).forEach(function (k) {
+      if (CT_FOLLOW_FIELDS.indexOf(k) === -1) throw new Error('ฟิลด์ไม่ถูกต้อง: ' + k);
+      const v = String(fields[k] == null ? '' : fields[k]).trim();
+      if (k === 'damageResult') { if (CT_DAMAGE_RESULTS.indexOf(v) === -1) throw new Error('ผลตรวจไม่ถูกต้อง'); }
+      else if (v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) throw new Error('รูปแบบวันที่ไม่ถูกต้อง');
+      upd[k] = v;
+      if (v) parts.push(k + '=' + v);
+    });
+    await FBL.ready;
+    const batch = db.batch();
+    batch.update(db.collection('contracts').doc(docKey(id)), upd);
+    batch.set(logRef(), logEntry('update', 'contracts', id, 'บันทึกการติดตามสัญญา' + (parts.length ? ' — ' + parts.join(', ') : '')));
+    lastLocalWrite = Date.now();
+    try { await batch.commit(); } catch (e) { throw new Error(thErr(e)); }
+  };
+  // อ่านเฉพาะช่วงของตารางครั้งเดียว (ไม่ฟังสด ไม่เก็บค้างในหน่วยความจำของชั้นนี้) — ใช้กับตารางที่โตทุกปี เช่น ใบสั่งการรายวัน
   // field ต้องเป็นฟิลด์เดียว (ช่วงค่า from..to) เพื่อไม่ต้องสร้างดัชนีเพิ่มใน Firestore
   FBL.apiQueryRange = async function (table, field, from, to) {
     if (!TABLES[table]) throw new Error('ไม่รู้จักตาราง: ' + table);
