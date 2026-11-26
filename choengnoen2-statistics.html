@@ -418,11 +418,39 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ctv-step.empty .ctv-dt{color:var(--ink-400);font-weight:400;}
   .ctv-hint{font-size:11.5px;font-weight:600;line-height:1.3;}
   .ctv-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
-  .ctv-card{background:var(--paper-50);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0;}
+  .ctv-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px 6px;min-width:0;}
   .ctv-card.full{grid-column:1/-1;}
-  .ctv-kv{display:grid;gap:10px;margin:0;}
-  .ctv-kv dt{font-size:12px;color:var(--ink-400);}
-  .ctv-kv dd{margin:0;font-size:14px;font-weight:500;color:var(--ink-900);overflow-wrap:break-word;}
+  .ctv-card > .ctv-title{padding-bottom:10px;margin-bottom:0;border-bottom:1px solid var(--line);}
+  .ctv-tag{margin-left:auto;font-family:'Sarabun',sans-serif;font-size:11.5px;font-weight:400;color:var(--ink-400);}
+  /* แถว หัวข้อ | ค่า — คอลัมน์หัวข้อกว้างเท่ากันทุกการ์ด */
+  .ctv-kv{display:block;margin:0;}
+  .ctv-row{display:grid;grid-template-columns:128px 1fr;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line);align-items:baseline;}
+  .ctv-row:last-child{border-bottom:0;}
+  .ctv-kv.stack .ctv-row{grid-template-columns:1fr;gap:4px;}
+  .ctv-kv dt{font-size:12.5px;color:var(--ink-400);}
+  .ctv-kv dd{margin:0;font-size:14px;font-weight:500;color:var(--ink-900);overflow-wrap:break-word;line-height:1.55;}
+  .ctv-sub{font-size:12.5px;font-weight:400;color:var(--ink-600);}
+  .ctv-muted{color:var(--ink-400);font-weight:400;}
+  .ctv-empty{padding:14px 0 12px;font-size:13.5px;color:var(--ink-400);}
+  .ctv-badge{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:999px;white-space:nowrap;vertical-align:1px;background:#eef1f4;color:#5b6773;}
+  .ctv-badge.green{background:#e3f4ea;color:#17784a;} .ctv-badge.amber{background:#fdf0dc;color:#a35f00;} .ctv-badge.red{background:#fbe5e2;color:#b2372a;}
+  .ctv-people{list-style:none;margin:0;padding:0;display:grid;gap:5px;}
+  .ctv-people li{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+  .ctv-people em{flex:none;font-style:normal;font-size:11.5px;font-weight:600;color:var(--navy-800);background:#e4eefa;padding:1px 8px;border-radius:999px;white-space:nowrap;}
+  .ctv-tbl{width:100%;border-collapse:collapse;font-size:13.5px;margin:2px 0 8px;}
+  .ctv-tbl th{font-size:12px;font-weight:500;color:var(--ink-400);text-align:left;padding:8px 6px 6px;border-bottom:1px solid var(--line);}
+  .ctv-tbl td{padding:9px 6px;border-bottom:1px dashed var(--line);color:var(--ink-900);}
+  .ctv-tbl tr:last-child td{border-bottom:0;}
+  .ctv-tbl th:first-child,.ctv-tbl td:first-child{padding-left:0;}
+  /* แถบต้องติดตาม (บนสุดของเนื้อหา) */
+  .ctv-alerts{display:grid;gap:8px;margin-bottom:16px;}
+  .ctv-alert{display:flex;gap:12px;align-items:flex-start;padding:11px 14px;border-radius:12px;border:1px solid;border-left-width:5px;}
+  .ctv-alert .ic{flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;margin-top:1px;}
+  .ctv-alert b{display:block;font-family:'Kanit',sans-serif;font-size:15px;font-weight:600;line-height:1.35;}
+  .ctv-alert span:not(.ic){display:block;font-size:13px;color:var(--ink-600);margin-top:1px;}
+  .ctv-alert.red{background:#fdf1ef;border-color:#f3c5be;border-left-color:#c1402f;} .ctv-alert.red .ic{background:#c1402f;} .ctv-alert.red b{color:#b2372a;}
+  .ctv-alert.amber{background:#fff7ea;border-color:#f3d9ad;border-left-color:#d68a10;} .ctv-alert.amber .ic{background:#d68a10;} .ctv-alert.amber b{color:#a35f00;}
+  .ctv-alert.blue{background:#f0f5fc;border-color:#c9daf0;border-left-color:#2f6fb3;} .ctv-alert.blue .ic{background:#2f6fb3;} .ctv-alert.blue b{color:#1f5f9e;}
   .ctv-stamp{display:none;}
   /* ปุ่มไอคอน "คัดลอกเป็นรูป" — หน้าตาเดียวกับปุ่มในโมดัลนำเข้า rmms (doh-import.js .dohi-sec-h .cp) */
   .img-copy-btn{width:36px;height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid #dfe2dd;background:#fff;color:#4d5a66;border-radius:10px;cursor:pointer;flex:none;transition:.15s;}
@@ -433,7 +461,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .gmodal-footer .img-copy-btn{width:42px;height:42px;border-radius:12px;}
   .ct-toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;background:#111827;color:#fff;padding:10px 18px;border-radius:12px;font-size:14px;z-index:9999;transition:.25s;pointer-events:none;max-width:calc(100vw - 32px);text-align:center;}
   .ct-toast.show{opacity:1;transform:translate(-50%,0);}
-  @media(max-width:560px){.ctv-grid{grid-template-columns:1fr;} .ctv-top{flex-direction:column;align-items:flex-start;gap:6px;} .ctv-money{text-align:left;} .ctv-money .val{font-size:20px;} .ctv-name{font-size:15px;}}
+  @media(max-width:560px){.ctv-grid{grid-template-columns:1fr;} .ctv-top{flex-direction:column;align-items:flex-start;gap:6px;} .ctv-money{text-align:left;} .ctv-money .val{font-size:20px;} .ctv-name{font-size:15px;} .ctv-row{grid-template-columns:1fr;gap:2px;} .ctv-tag{display:none;}}
   /* โหมดถ่ายรูป (ใช้เฉพาะในสำเนาที่ html2canvas วาดตอนกด "คัดลอกรูป"): แสดงเนื้อหาครบไม่ตัด ซ่อนปุ่ม */
   html.ct-snap #ct-detail-overlay{position:static !important;display:block !important;padding:0 !important;background:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;animation:none !important;}
   html.ct-snap #ct-detail-overlay .modal-box{max-height:none !important;box-shadow:none !important;border-radius:0 !important;animation:none !important;margin:0 !important;}
@@ -3391,7 +3419,7 @@ function openContractDetail(id){
     (c.contractor ? `<div class="ctv-contractor">ผู้รับจ้าง: ${esc(c.contractor)}</div>` : '') + `</div>` +
     `<div class="ctv-money">
        <div class="lb">เงินค่างาน</div><div class="val">${c.amount ? fmtNum(c.amount,2)+'<small>บาท</small>' : '—'}</div></div></div>
-       <div class="ctv-chips">${(c.workQty ? chip('ปริมาณงาน', esc(c.workQty)) : '') + chip('ช่วงทางหลวง', ctRangeText(c)) + (ctArea(c).text ? chip('พื้นที่', esc(ctArea(c).text)) : '') + (c.durationDays ? chip('ระยะเวลา', c.durationDays+' วัน') : '')}
+       <div class="ctv-chips">${chip('ช่วงทางหลวง', ctRangeText(c)) + (c.workQty ? chip('ปริมาณงาน', esc(c.workQty)) : '') + (ctArea(c).text ? chip('พื้นที่', esc(ctArea(c).text)) : '')}
      </div>`;
   // ไทม์ไลน์วันสำคัญ: ผ่านมาแล้ว = จุดส้มทึบ · ถัดไป = วงส้ม · ยังไม่ระบุ = เส้นประ
   const today = ctTodayIso();
@@ -3414,31 +3442,65 @@ function openContractDetail(id){
     return `<div class="ctv-step ${cls}"><div class="ctv-dot">${cls==='done'?'✓':''}</div><div class="ctv-lb">${s.lb}</div><div class="ctv-dt">${s.iso ? fmtDateShort(s.iso) : '—'}</div>${s.hint ? `<div class="ctv-hint">${s.hint}</div>` : ''}</div>`;
   }).join('');
   const half = `calc(100% / ${n} / 2)`, span = `calc(100% - 100% / ${n})`;
-  const kv = (k, val) => `<div><dt>${k}</dt><dd>${val}</dd></div>`;
-  const card = (title, body, full) => `<div class="ctv-card${full?' full':''}"><div class="ctv-title">${title}</div><dl class="ctv-kv">${body}</dl></div>`;
+  /* ===== ส่วนรายละเอียด (จัดใหม่ 26 พ.ย. 2569) =====
+     1) แถบ "ต้องติดตาม" บนสุด (เกณฑ์จาก contract-followup.js) 2) ไทม์ไลน์
+     3) การ์ด 4 ใบ ข้อมูลแบบแถว "หัวข้อ | ค่า" เรียงตรงกันทุกการ์ด: ข้อมูลสัญญา · ผู้รับผิดชอบ · ค้ำประกัน · วัดค่าสะท้อนแสง (ตารางรอบ) */
+  const kv = (k, val) => `<div class="ctv-row"><dt>${k}</dt><dd>${val}</dd></div>`;
+  const card = (title, body, full, tag) => `<div class="ctv-card${full?' full':''}"><div class="ctv-title">${title}${tag?`<span class="ctv-tag">${tag}</span>`:''}</div>${body}</div>`;
+  const dl = body => `<dl class="ctv-kv">${body}</dl>`;
+  const muted = s => `<span class="ctv-muted">${s}</span>`;
+  const badge = (cls, s) => `<span class="ctv-badge ${cls}">${s}</span>`;
+  // แถบต้องติดตาม: สีตามระดับ red / amber / blue
+  const FU = window.CTFollow;
+  const fuItems = FU ? [FU.refl(c), FU.damage(c)].filter(x=>x && x.level) : [];
+  const fuIcon = {red:'!', amber:'!', blue:'i'};
+  const alertHtml = fuItems.length ? `<div class="ctv-alerts">${fuItems.map(x=>`<div class="ctv-alert ${x.level}"><span class="ic">${fuIcon[x.level]}</span><div><b>${esc(x.text)}</b><span>${esc(x.sub)}</span></div></div>`).join('')}</div>` : '';
+  // ข้อมูลสัญญา
+  const period = (c.startDate || c.endDate) ? `${d(c.startDate)} – ${d(c.endDate)}` : dash;
+  const endHint = st.key==='running' && dEnd!==null ? (dEnd<0 ? badge('red','เลยกำหนด '+(-dEnd)+' วัน') : badge(dEnd<=60?'red':'gray','เหลือ '+dEnd+' วัน')) : '';
+  const infoCard = card('ข้อมูลสัญญา', dl(
+    (c.fiscalYear ? kv('ปีงบประมาณ', esc(c.fiscalYear)) : '') +
+    kv('ประเภทงาน', c.workType ? 'งาน'+esc(c.workType) : dash) +
+    kv('ระยะเวลา', (c.durationDays ? `<b>${c.durationDays} วัน</b><br>` : '') + `<span class="ctv-sub">${period}</span> ${endHint}`) +
+    kv('ค่าปรับวันละ', c.penaltyPerDay ? fmtNum(c.penaltyPerDay,2)+' บาท' : dash)));
+  // ผู้รับผิดชอบ: แยกบทบาทท้ายบรรทัด (ประธานกรรมการ / กรรมการ / กรรมการและเลขานุการ / ผู้ควบคุมงาน) เป็นป้ายเล็ก
+  const ROLE_RX = /\s*(ประธานกรรมการ|กรรมการและเลขานุการ|กรรมการ|ผู้ควบคุมงาน)\s*$/;
+  const people = (txt, showRole) => {
+    const lines = String(txt||'').split(/\n+/).map(s=>s.trim()).filter(Boolean);
+    if(!lines.length) return dash;
+    return `<ul class="ctv-people">${lines.map(l=>{ const m = l.match(ROLE_RX); const who = m ? l.slice(0, m.index) : l;
+      return `<li><span>${esc(who)}</span>${m && showRole ? `<em>${esc(m[1])}</em>` : ''}</li>`; }).join('')}</ul>`;
+  };
+  // การ์ดนี้ชื่อยาว จึงวางหัวข้อไว้บนรายชื่อ (stack) ไม่วางข้างกัน
+  const peopleCard = card('ผู้รับผิดชอบ', `<dl class="ctv-kv stack">${kv('ผู้ควบคุมงาน', people(c.supervisor, false)) + kv('คณะกรรมการตรวจรับ', people(c.committee, true))}</dl>`);
+  // ค้ำประกัน
+  const wBase = ctWarrantyBase(c);
+  const wEndVal = !c.warrantyEnd ? dash : `<b>${d(c.warrantyEnd)}</b> ` + (wa ? badge(wa.months===1?'red':'amber','เหลือ '+wa.days+' วัน') : c.warrantyEnd < today ? badge('green','ครบกำหนดแล้ว') : (ctDaysTo(c.warrantyEnd)!==null ? badge('gray','อีก '+ctDaysTo(c.warrantyEnd)+' วัน') : ''));
+  const dmgVal = c.damageCheckDate ? `${d(c.damageCheckDate)}` + (c.damageResult ? `<br><span class="ctv-sub">${esc((FU && FU.RESULTS[c.damageResult])||c.damageResult)}</span>` : '') : muted('ยังไม่บันทึก');
+  const warrCard = card('ค้ำประกัน', dl(
+    kv('ระยะค้ำประกัน', c.warrantyYears ? `${c.warrantyYears} ปี` + (wBase ? ` <span class="ctv-sub">นับจาก ${d(wBase)}</span>` : '') : dash) +
+    kv('คืนค้ำประกัน', wEndVal) +
+    kv('ตรวจความเสียหาย', dmgVal)));
+  // วัดค่าสะท้อนแสง: ตารางรอบ 12 / 24 เดือน
+  let reflBody;
+  if(!c.reflectNeeded) reflBody = `<div class="ctv-empty">สัญญานี้ไม่ต้องวัดค่าสะท้อนแสง</div>`;
+  else if(!c.deliveryDate) reflBody = `<div class="ctv-empty">รอวันส่งงาน จึงจะคำนวณกำหนดวัดได้</div>`;
+  else reflBody = `<table class="ctv-tbl"><thead><tr><th>รอบ</th><th>กำหนดวัด</th><th>แจ้งแขวง</th><th>ผล</th></tr></thead><tbody>${ctReflDates(c).map(r=>{
+      const dd = ctDaysTo(r.date), nt = c['reflNotify'+r.months];
+      const res = r.done ? badge('green','✓ วัดแล้ว '+fmtDateShort(r.done)) : dd<0 ? badge('red','เลยกำหนด '+(-dd)+' วัน') : dd<=60 ? badge(dd<=30?'red':'amber','อีก '+dd+' วัน') : badge('gray','อีก '+dd+' วัน');
+      return `<tr><td><b>${r.months} เดือน</b></td><td>${fmtDateShort(r.date)}</td><td>${nt ? fmtDateShort(nt) : muted('—')}</td><td>${res}</td></tr>`; }).join('')}</tbody></table>`;
+  const reflCard = card('วัดค่าสะท้อนแสง', reflBody, false, c.reflectNeeded && c.deliveryDate ? 'นับจากวันส่งงาน '+d(c.deliveryDate) : '');
   const hasExtra = c.status || c.note || c.negotiateDate || c.notifyDate;
   document.getElementById('ct-detail-body').innerHTML =
+    alertHtml +
     `<div class="ctv-title">ลำดับเหตุการณ์ของสัญญา</div>
      <div class="ctv-tl"><div class="ctv-track">
        <div class="ctv-line" style="left:${half};width:${span};"></div>
        ${last > 0 ? `<div class="ctv-prog" style="left:${half};width:calc(${span} * ${last} / ${n-1});"></div>` : ''}
        ${stepHtml}
      </div></div>
-     <div class="ctv-grid">` +
-    card('ผู้รับผิดชอบ',
-      kv('ผู้ควบคุมงาน', c.supervisor ? esc(c.supervisor).replace(/\n/g,'<br>') : dash) +
-      kv('คณะกรรมการตรวจรับ', c.committee ? esc(c.committee).replace(/\n/g,'<br>') : dash) +
-      kv('ค่าปรับวันละ', c.penaltyPerDay ? fmtNum(c.penaltyPerDay,2)+' บาท' : dash)) +
-    card('ค้ำประกัน และวัดค่าสะท้อนแสง',
-      kv('ประเภทงาน', c.workType ? 'งาน'+esc(c.workType) : dash) + kv('กำหนดค้ำประกัน', c.warrantyYears ? c.warrantyYears+' ปี' : dash) +
-      kv('คืนค้ำประกัน', d(c.warrantyEnd) + (wa ? ` <span style="color:${wa.months===1?'var(--danger)':'#b7791f'};font-weight:600;">⚠ ภายใน ${wa.months} เดือน (เหลือ ${wa.days} วัน)</span>` : c.warrantyEnd && c.warrantyEnd < today ? ' <span style="color:var(--success);">· ครบกำหนดแล้ว</span>' : '')) +
-      kv('วัดค่าสะท้อนแสง', refl) +
-      // ติดตามสัญญา (26 พ.ย. 2569): วันแจ้งแขวง / ตรวจความเสียหาย — บันทึกได้ทั้งผู้บริหารและเจ้าหน้าที่ ผ่านปุ่ม "บันทึกการติดตาม"
-      (c.reflectNeeded ? kv('แจ้งแขวง (ขอวัดค่าสะท้อนแสง)', `รอบ 12 ด.: ${c.reflNotify12 ? d(c.reflNotify12) : dash}<br>รอบ 24 ด.: ${c.reflNotify24 ? d(c.reflNotify24) : dash}`) : '') +
-      kv('ตรวจความเสียหาย', c.damageCheckDate ? d(c.damageCheckDate) + (c.damageResult ? ' · ' + esc(CTFollow.RESULTS[c.damageResult]||c.damageResult) : '') : dash) +
-      (()=>{ const r = CTFollow.refl(c), g = CTFollow.damage(c); const items = [r, g].filter(x=>x && x.level);
-             return items.length ? kv('ต้องติดตาม', items.map(x=>`<span style="color:${x.level==='red'?'var(--danger)':x.level==='amber'?'#b7791f':'var(--navy-700,#1c4b73)'};font-weight:600;">${x.text}</span> <span style="color:var(--ink-600);font-size:12px;">${x.sub}</span>`).join('<br>')) : ''; })()) +
-    (hasExtra ? card('สถานะพิเศษและหมายเหตุ', (c.negotiateDate ? kv('ต่อรองเป็นที่ยุติ', d(c.negotiateDate)) : '') + (c.notifyDate ? kv('แจ้งทำสัญญา', d(c.notifyDate)) : '') + (c.status ? kv('สถานะพิเศษ', esc(c.status)) : '') + (c.note ? kv('หมายเหตุ', esc(c.note).replace(/\n/g,'<br>')) : ''), true) : '') +
+     <div class="ctv-grid">` + infoCard + peopleCard + warrCard + reflCard +
+    (hasExtra ? card('สถานะพิเศษและหมายเหตุ', dl((c.negotiateDate ? kv('ต่อรองเป็นที่ยุติ', d(c.negotiateDate)) : '') + (c.notifyDate ? kv('แจ้งทำสัญญา', d(c.notifyDate)) : '') + (c.status ? kv('สถานะพิเศษ', esc(c.status)) : '') + (c.note ? kv('หมายเหตุ', esc(c.note).replace(/\n/g,'<br>')) : '')), true) : '') +
     `</div>`;
   document.getElementById('ct-detail-actions').style.display = isAdmin() ? 'flex' : 'none';
   document.getElementById('ct-detail-edit').style.display = isAdmin() ? '' : 'none';
