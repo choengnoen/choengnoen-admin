@@ -2083,8 +2083,7 @@ function openMatAction(kind, code){
         : '<div class="ma-hint low">การปรับยอดทำได้เฉพาะผู้ดูแลระบบ — แจ้งผู้ดูแลให้ตรวจสอบรายการนี้</div>');
     foot.innerHTML = `<button type="button" class="btn btn-ghost" onclick="closeMatActModal()">ปิด</button>
       <button type="button" class="btn btn-ghost" data-ic="hist" onclick="closeMatActModal();openItemHistoryModal('material','${cj}')">ประวัติทั้งหมด</button>` +
-      (admin ? `<button type="button" class="btn btn-ghost" data-ic="down" onclick="closeMatActModal();openReceiveFor('${cj}')">บันทึกรับเข้า</button>
-        <button type="button" class="btn btn-primary" id="ma-save-btn" onclick="saveMatCheck('${cj}')">บันทึกการปรับยอด</button>` : '');
+      (admin ? `<button type="button" class="btn btn-primary" id="ma-save-btn" onclick="saveMatCheck('${cj}')">บันทึกการปรับยอด</button>` : '');
   } else {
     BtnStd.setIcon(icon, 'cart'); title.textContent = 'แจ้งจัดซื้อ: '+m.name;
     const qty = m.reorder>0 ? m.reorder : 1;
