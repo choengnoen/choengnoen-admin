@@ -8016,9 +8016,15 @@ async function __publishStockSnapshot(){
   try{
     const materialStock = {};
     materials.forEach(m=>{ materialStock[m.code] = currentStock(m); });
-    /* น้ำมันคงเหลือเดือนปัจจุบัน (ตรงกับการ์ดน้ำมันในหน้านี้) + จุดสั่งซื้อ ไว้แสดงในการ์ดพัสดุหน้าภาพรวม */
+    /* น้ำมันคงเหลือเดือนปัจจุบัน (ตรงกับการ์ดน้ำมันในหน้านี้) + จุดสั่งซื้อ ไว้แสดงในการ์ดพัสดุหน้าภาพรวม
+       month/opening/recvOv: ยอดยกมาของเดือน (รวมค่าแก้ยอดที่เก็บในเครื่องนี้) — หน้าภาพรวมใช้ตั้งต้นแล้วบวก/ลบรายการรับ-จ่ายจริงเอง
+       เพื่อให้ได้ยอด ณ วันนี้ แม้ไม่มีใครเปิดหน้านี้ (เช่น เบิกน้ำมันจากใบสั่งการรายวัน) */
     const fuelStock = {};
-    ['ดีเซล','เบนซิน'].forEach(ft=>{ fuelStock[ft] = { stock: fuelMonthSummary(ft, currentMonthKey()).closing, reorder: fuelSettings[ft] || 0 }; });
+    const curMk = currentMonthKey();
+    ['ดีเซล','เบนซิน'].forEach(ft=>{
+      const sm = fuelMonthSummary(ft, curMk), rov = fuelReceivedOverride[ft+'|'+curMk];
+      fuelStock[ft] = { stock: sm.closing, reorder: fuelSettings[ft] || 0, month: curMk, opening: sm.opening, recvOv: rov!==undefined ? Number(rov) : null };
+    });
     const sj = JSON.stringify({materialStock, fuelStock});
     if(sj === __lastStockJson) return;
     __lastStockJson = sj;
