@@ -2030,8 +2030,8 @@ function renderMaterialCols(){
     const lab = act==='recv' ? 'รับเข้า' : act==='check' ? 'ตรวจสอบ' : act==='buy' ? 'แจ้งซื้อ' : 'ประวัติ';
     const cj0 = jsArg(r.m.code);
     const onclick = act==='history' ? `openItemHistoryModal('material','${cj0}')` : act==='recv' ? `openReceiveFor('${cj0}')` : `openMatAction('${act}','${cj0}')`;
-    // ไอคอนตาชั่ง (ปรับยอด)
-    const alt = act==='recv' ? `<button type="button" class="mc-ed" data-ic="scale" data-tip="ตรวจสอบ/ปรับยอด" aria-label="ตรวจสอบ/ปรับยอด" onclick="openMatAction('check','${cj0}')"></button>` : '';
+    // ไอคอนตาชั่ง (ตรวจสอบยอดติดลบ) เอาออก 2569-11-26 — ปรับยอดยังทำได้ผ่านปุ่มแก้ไข → "ปรับยอดตามที่นับจริง"
+    const alt = '';
     // แก้ไขทีละรายการ (ผู้ดูแล, เฉพาะเดือนปัจจุบัน) — แทนโหมดแก้ทั้งตารางเดิม
     const ed = isCur && isAdmin() ? `<button type="button" class="mc-ed" data-ic="pen" data-tip="แก้ไขรายการ" aria-label="แก้ไขรายการ" onclick="openMatEdit('${cj0}')"></button>` : '';
     return `<div class="mc-card mc-row">
