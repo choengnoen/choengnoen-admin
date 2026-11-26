@@ -1322,8 +1322,8 @@ function getWaterPhotoAlertItem(){
     detail:`ถ่ายรูปวันที่ 1 ${cycleLabel(cur)} แล้วบันทึกที่ระบบที่ 4 → ทะเบียนคุมสาธารณูปโภค → คำนวณค่าน้ำประปา`, dueDate:`${cur}-01`, due:daysUntil(`${cur}-01`) };
 }
 function recurringTasks(){
+  /* ตัด "แผนการใช้น้ำมัน เดือนถัดไป" ออก (26 พ.ย. 2569) — หน่วยงานไม่ได้ให้ดำเนินการ */
   return [
-    {id:'fuel-plan', task:'แผนการใช้น้ำมัน เดือนถัดไป', detail:'กำหนดส่งภายในวันที่ 25 ของเดือนนี้', due:dueRollingDayOfMonth(25), cycle:monthKeyNow()},
     {id:'fuel-result', task:'ผลการใช้น้ำมัน เดือนนี้', detail:'กำหนดส่งภายในวันที่ 5 ของเดือนถัดไป', due:dueDayOfMonth(5,1)},
     {id:'labor-daily', task:'บัญชีแรงงานรายวัน', detail:'แจ้งเตือนทุกสิ้นเดือน', due:dueEndOfMonth(), cycle:monthKeyNow()},
     {id:'ec1w', task:'รายงานการใช้เครื่องจักร (EC1-W)', detail:'ประจำสัปดาห์ — ส่งทุกวันจันทร์', due:dueNextWeekday(1)}
