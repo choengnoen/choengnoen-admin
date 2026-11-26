@@ -349,7 +349,7 @@
      ส่วนแสดงผลที่ไฟล์นี้ฉีดเข้าไปในทุกหน้า: หน้าล็อกอิน / ไม่มีสิทธิ์ / ยังไม่ตั้งค่า / แจ้งข้อมูลอัปเดต
      ====================================================================== */
   const CSS = `
-  .fbl-gate{position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto;background:radial-gradient(1100px 520px at 15% -10%,#4b5563 0%,#111827 60%);font-family:'Sarabun',sans-serif}
+  .fbl-gate{position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto;background:radial-gradient(1100px 520px at 15% -10%,#1c4b73 0%,#0a2540 60%,#071b30 100%);font-family:'Sarabun',sans-serif}
   .fbl-gate.hidden{display:none}
   .fbl-card{background:#fff;border-radius:18px;padding:30px 28px 26px;width:100%;max-width:410px;box-shadow:0 16px 40px -14px rgba(0,0,0,.45);text-align:center;font-size:15px;line-height:1.55;color:#182430}
   .fbl-logo{display:block;width:72px;height:72px;margin:0 auto 6px;border-radius:50%;object-fit:contain}
