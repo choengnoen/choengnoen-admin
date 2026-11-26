@@ -281,6 +281,26 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .uc-tab{border:0;background:transparent;font-family:'Kanit',sans-serif;font-size:13.5px;color:var(--ink-600);padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;}
   .uc-tab.active{background:#fff;color:var(--navy-900);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12);}
   .ucref-diff{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+  .uc-ref-line{font-size:11.5px;color:var(--ink-400);margin-top:3px;white-space:nowrap;}
+  .uc-det{max-width:980px;}
+  .uc-formula{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 20px;margin-bottom:12px;}
+  .uc-big{font-family:'Kanit',sans-serif;font-size:22px;font-weight:700;color:var(--navy-900);}
+  .uc-eq{font-size:12.5px;color:var(--ink-600);margin-left:6px;}
+  .uc-mix{display:flex;height:12px;border-radius:7px;overflow:hidden;background:var(--paper-100);}
+  .uc-mix-legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--ink-600);margin:8px 0 14px;}
+  .uc-mix-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
+  .uc-ord-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .uc-ord-table th{font-size:11.5px;color:var(--ink-400);font-weight:500;text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);background:#fff;}
+  .cost-detail .uc-ord-table td{font-size:13px;padding:9px 12px !important;border-bottom:1px solid var(--paper-100) !important;background:#fff !important;}
+  .uc-ord-table .num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+  .uc-ord{cursor:pointer;} .cost-detail .uc-ord:hover td{background:#fbfbfa !important;}
+  .uc-ord.row-open .row-chev{transform:rotate(90deg);}
+  .cost-detail .uc-ord.uc-odd td{background:#fff6f0 !important;}
+  .uc-ord-det{display:none;} .uc-ord-det.open{display:table-row;}
+  .cost-detail .uc-ord-det td{background:var(--paper-50) !important;padding:8px 16px 12px !important;}
+  .uc-kv{display:grid;grid-template-columns:120px 1fr;gap:10px;font-size:12px;line-height:1.6;padding:2px 0;}
+  .uc-kv span{color:var(--ink-400);} .uc-kv div{color:var(--ink-600);}
+  .uc-std{margin-top:12px;font-size:12.5px;} .uc-std summary{cursor:pointer;color:var(--navy-700);font-weight:600;padding:4px 0;}
   .ucref-diff.lo{background:#e3f4ea;color:#1f7a45;} .ucref-diff.hi{background:#fde4e4;color:#b42323;} .ucref-diff.na{background:var(--paper-100);color:var(--ink-600);font-weight:500;}
   .pr-pct{text-align:right;}
   .pr-pct b{font-family:'Kanit',sans-serif;font-size:19px;display:block;line-height:1.2;}
@@ -4724,6 +4744,31 @@ let __crewNextId = 3;
 let __crewDraft = null; /* {id: number|null, name, leader, members:[]} — working copy edited inside the modal */
 function crewAllMembers(crew){ return crew ? [crew.leader, ...crew.members] : []; }
 
+/* ผู้ที่เกษียณ/ลาออกแล้ว (สถานะในระบบที่ 1 ไม่ใช่ 'ok' และพ้นวันสุดท้ายที่ปฏิบัติงานแล้ว) — ไม่แสดงในชุดทำงาน
+   ชื่อที่ไม่พบในรายชื่อบุคลากรเลย ไม่ถือว่าพ้นสภาพ (กันตัดชื่อผิดตอนรายชื่อยังโหลดไม่เสร็จ) */
+function staffIsGone(s){
+  if(!s || (s.status||'ok')==='ok') return false;
+  let last = null;
+  if(s.status==='retired') last = s.retiredDate || null;
+  else if(s.status==='resigned' && s.resignedDate){
+    const d = new Date(s.resignedDate+'T00:00:00'); d.setDate(d.getDate()-1);
+    last = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  if(!last) return true;
+  const t = new Date(); const todayIso = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  return last < todayIso;
+}
+function activeStaffNamesX(){ return getStaffX().filter(s=>!staffIsGone(s)).map(s=>s.name); }
+/* ตัดผู้เกษียณ/ลาออกออกจากชุดในหน่วยความจำ — ฐานข้อมูลจะสะอาดตามเมื่อกดบันทึกชุดนั้นครั้งถัดไป */
+function pruneGoneFromCrews(){
+  const gone = new Set(getStaffX().filter(staffIsGone).map(s=>s.name));
+  if(!gone.size) return;
+  fieldCrews.forEach(c=>{
+    if(c.leader && gone.has(c.leader)) c.leader = '';
+    c.members = c.members.filter(n=>!gone.has(n));
+  });
+}
+
 /* หา "ชุด" ที่ชื่อนี้สังกัดอยู่แล้ว (หัวหน้าหรือสมาชิก) โดยไม่นับ excludeCrewId — บังคับกติกา "1 รายชื่อ อยู่ได้เพียง 1 ชุด" */
 function findPersonCrew(name, excludeCrewId){
   if(!name) return null;
@@ -4741,6 +4786,7 @@ function renderRoutineKpiBand(){
   const todaysOrders = dailyWorkOrders.filter(d=>d.date===todayIso);
   const todaysTotal = todaysOrders.reduce((s,d)=>s+dwTotal(d),0);
 
+  pruneGoneFromCrews();
   __todaysCrewStatus = {};
   let workingCount = 0;
   fieldCrews.forEach(c=>{
@@ -4815,7 +4861,7 @@ function renderCrewLeaderSuggest(){
   __updateCrewModalCount();
   const box = document.getElementById('crew-modal-leader-suggest');
   const q = (document.getElementById('crew-modal-leader').value||'').trim().toLowerCase();
-  const names = getStaffX().map(s=>s.name);
+  const names = activeStaffNamesX();
   const matches = names.filter(n=> !q || n.toLowerCase().includes(q)).slice(0,30);
   if(!matches.length){
     box.innerHTML = `<div style="padding:9px 12px;color:var(--ink-400);font-size:13px;">ไม่พบชื่อที่ตรงกับคำค้น</div>`;
@@ -4845,7 +4891,7 @@ function renderCrewMemberSuggest(){
   if(!__crewDraft) return;
   const box = document.getElementById('crew-modal-member-suggest');
   const q = (document.getElementById('crew-modal-add-member').value||'').trim().toLowerCase();
-  const names = getStaffX().map(s=>s.name);
+  const names = activeStaffNamesX();
   const matches = names.filter(n=> !__crewDraft.members.includes(n) && n!==__crewDraft.leader && (!q || n.toLowerCase().includes(q))).slice(0,30);
   if(!matches.length){
     box.innerHTML = `<div style="padding:9px 12px;color:var(--ink-400);font-size:13px;">ไม่พบชื่อที่ตรงกับคำค้น หรือเพิ่มไว้แล้วทุกคน</div>`;
@@ -4885,6 +4931,7 @@ function renderCrewModalMembers(){
   }
 }
 function openCrewModal(id){
+  pruneGoneFromCrews();
   const editable = isAdmin();
   if(id==null){
     __crewDraft = {id:null, name:'', leader:'', members:[]};
@@ -7508,46 +7555,82 @@ function renderUnitCostReport(){
   body.innerHTML = rows.map(r=>{
     const job = findJob(r.code);
     const unitLabel = (job && job.unit ? job.unit.split(',')[0].trim() : (r.unit||'')) || 'หน่วย';
+    const ref = ucRefRate(rows.__fy, r.code, r.unit);
     return `<tr class="cost-row" onclick="toggleCostRow(this)" title="กดเพื่อดูที่มาของค่าเฉลี่ย">
       <td><span class="bmm-code">${esc(r.code)}</span> ${esc(job?job.name:'—')}${job && job.unit ? `<div class="bmm-sub">หน่วย: ${esc(job.unit)}</div>` : ''}</td>
       <td class="num">${fmtQtyShort(r.qty)}</td>
       <td class="num"><b>${fmtMoney(r.total)}</b></td>
-      <td class="num"><b>${fmtNum(r.unitCost,2)}</b> บาท/${esc(unitLabel)}</td>
+      <td class="num"><b>${fmtNum(r.unitCost,2)}</b> บาท/${esc(unitLabel)}${ref ? `<div class="uc-ref-line">ราคาแขวง ${fmtNum(ref,2)} ${ucCmpPill(r.unitCost, ref)}</div>` : ''}</td>
       <td class="num"><span class="row-chev">▸</span></td>
     </tr>
-    <tr class="cost-detail"><td colspan="5">
-      ${bmmCostChipsHtml(r.material, r.labor, r.rent, r.fuel, 0)}
-      <div class="table-wrap" style="margin-top:10px;"><table class="uc-source-table">
-        <thead><tr><th>วันที่</th><th>ตำแหน่ง/สายทาง</th><th class="num">ปริมาณงาน</th><th class="num">วัสดุ</th><th class="num">แรงงาน</th><th class="num">เช่า</th><th class="num">น้ำมัน</th><th class="num">รวม</th></tr></thead>
-        <tbody>
-          ${r.orders.slice().sort((a,b)=> a.date<b.date?-1:a.date>b.date?1:0).map((o,i)=>{
-            const g = i%2 ? ' uc-order-group-b' : '';
-            return `<tr class="${g.trim()}" style="border-top:${i?'2px solid var(--line)':'none'};">
-              <td style="text-align:left;white-space:nowrap;">${fmtDateShort(o.date)}</td>
-              <td style="text-align:left;">${esc(o.loc)||'—'}</td>
-              <td class="num">${fmtQtyShort(o.qty)}</td>
-              <td class="num">${fmtMoney(o.material)}</td>
-              <td class="num">${fmtMoney(o.labor)}</td>
-              <td class="num">${fmtMoney(o.rent)}</td>
-              <td class="num">${fmtMoney(o.fuel)}</td>
-              <td class="num"><b>${fmtMoney(o.total)}</b></td>
-            </tr><tr class="${g.trim()}"><td colspan="8" style="padding:0;border-bottom:1px solid var(--paper-100);">${unitCostOrderDetailHtml(o)}</td></tr>`;
-          }).join('')}
-        </tbody>
-        <tfoot><tr style="font-weight:600;background:var(--paper-50);">
-          <td colspan="2" style="text-align:left;">รวม ${r.count} ใบ</td>
-          <td class="num">${fmtQtyShort(r.qty)}</td>
-          <td class="num">${fmtMoney(r.material)}</td>
-          <td class="num">${fmtMoney(r.labor)}</td>
-          <td class="num">${fmtMoney(r.rent)}</td>
-          <td class="num">${fmtMoney(r.fuel)}</td>
-          <td class="num">${fmtMoney(r.total)}</td>
-        </tr></tfoot>
-      </table></div>
-      <div style="margin-top:8px;font-size:12px;color:var(--ink-600);">ค่างานต่อหน่วยเฉลี่ย = รวมต้นทุน <b>${fmtMoney(r.total)}</b> บาท ÷ ปริมาณงานรวม <b>${fmtQtyShort(r.qty)}</b> ${esc(unitLabel)} = <b>${fmtNum(r.unitCost,2)}</b> บาท/${esc(unitLabel)}</div>
-      ${unitCostStandardSectionHtml(r.code)}
-    </td></tr>`;
+    <tr class="cost-detail"><td colspan="5">${unitCostDetailHtml(r, unitLabel, ref)}</td></tr>`;
   }).join('') + excludedNote;
+}
+/* ===== แถวขยายของ "จากงานจริง" แบบอ่านง่าย (26 พ.ย. 2569) =====
+   1) สูตรบรรทัดเดียว + เทียบราคาแขวง  2) แถบสัดส่วนต้นทุน  3) รายการใบสั่งการแบบย่อ (กดดูคน/วัสดุ/รถ)
+   4) สูตรมาตรฐานพับไว้ */
+function ucRefRate(fy, code, unit){
+  let q=0, b=0;
+  bmmEntries.forEach(e=>{ if(e.kind==='plan' && e.fy===fy && e.level==='sub' && e.code===code && (e.unit||'')===(unit||'')){ q+=e.qty||0; b+=bmmBudget(e); } });
+  return q>0 ? b/q : 0;
+}
+function ucCmpPill(real, ref){
+  if(!(ref>0) || !(real>0)) return '';
+  const d = Math.round((real/ref-1)*100);
+  return `<span class="ucref-diff ${d>0?'hi':'lo'}">${d>0?'สูงกว่า':'ต่ำกว่า'} ${Math.abs(d)}%</span>`;
+}
+function ucShortLoc(loc){ return String(loc||'').replace(/\s*\([^)]*\)/,'').replace(/\s*-\s*/g,'–').trim() || '—'; }
+function toggleUcOrder(tr, ev){
+  if(ev) ev.stopPropagation();
+  const next = tr.nextElementSibling; if(!next) return;
+  const open = next.classList.toggle('open');
+  tr.classList.toggle('row-open', open);
+}
+function unitCostDetailHtml(r, unitLabel, ref){
+  const parts = [['แรงงาน', r.labor, '#1c4b73'], ['วัสดุ', r.material, '#f2a930'], ['เช่า', r.rent, '#7a8ca0'], ['น้ำมัน', r.fuel, '#e0620f']].filter(p=>p[1]>0);
+  const tot = r.total || 1;
+  const bar = parts.map(p=>`<div style="width:${(p[1]/tot*100).toFixed(2)}%;background:${p[2]};" title="${p[0]} ${fmtNum(p[1],0)} บาท"></div>`).join('');
+  const legend = parts.map(p=>`<span><i style="background:${p[2]}"></i>${p[0]} <b>${Math.round(p[1]/tot*100)}%</b> · ${fmtNum(p[1],0)}</span>`).join('');
+  const mats = getMaterialsX();
+  const orders = r.orders.slice().sort((a,b)=> a.date<b.date?-1:a.date>b.date?1:0);
+  /* เทียบกับค่ามัธยฐานของต่อหน่วยรายใบ (ไม่ใช่ค่าเฉลี่ย — ใบที่ผิดใบเดียวจะไม่ดึงเกณฑ์จนทุกใบถูกเตือน) ; ต้องมีอย่างน้อย 3 ใบ */
+  const ucs = orders.map(o=>o.qty>0 ? o.total/o.qty : 0).filter(v=>v>0).sort((a,b)=>a-b);
+  const med = ucs.length>=3 ? (ucs.length%2 ? ucs[(ucs.length-1)/2] : (ucs[ucs.length/2-1]+ucs[ucs.length/2])/2) : 0;
+  const orderRows = orders.map(o=>{
+    const uc = o.qty>0 ? o.total/o.qty : 0;
+    const odd = med>0 && uc>0 && (uc < med/5 || uc > med*5);
+    const staff = o.staff && o.staff.length ? o.staff.join(', ') : '—';
+    const partsTxt = o.parts && o.parts.length ? o.parts.map(p=>{ const m=mats.find(mm=>mm.code===p.code); return (m?m.name:p.code)+' '+fmtNum(p.qty,2)+' '+(m?m.unit:''); }).join(' · ') : '—';
+    const vehTxt = o.vehicles && o.vehicles.length ? o.vehicles.map(v=>(vehicleBaseName(v)||v.label||'—')+(v.liters?` (${fmtNum(v.liters,1)} ล.)`:'')).join(' · ') : '—';
+    return `<tr class="uc-ord ${odd?'uc-odd':''}" onclick="toggleUcOrder(this,event)" title="กดเพื่อดูคนงาน วัสดุ และรถของใบนี้">
+        <td style="white-space:nowrap;">${fmtDateShort(o.date)}</td>
+        <td title="${esc(o.loc)}">${esc(ucShortLoc(o.loc))}</td>
+        <td class="num">${fmtQtyShort(o.qty)}</td>
+        <td class="num"><b>${fmtNum(o.total,0)}</b></td>
+        <td class="num">${fmtNum(uc,2)}${odd?' <span class="ucref-diff hi" title="ค่าต่อหน่วยของใบนี้ต่างจากใบอื่นของรหัสเดียวกันเกิน 5 เท่า — ควรตรวจปริมาณงาน">ตรวจ</span>':''}</td>
+        <td class="num"><span class="row-chev">▸</span></td>
+      </tr>
+      <tr class="uc-ord-det"><td colspan="6">
+        <div class="uc-kv"><span>ต้นทุน</span><div>วัสดุ ${fmtNum(o.material,0)} · แรงงาน ${fmtNum(o.labor,0)} · เช่า ${fmtNum(o.rent,0)} · น้ำมัน ${fmtNum(o.fuel,0)} บาท</div></div>
+        <div class="uc-kv"><span>คนงาน ${o.staff ? o.staff.length : 0} คน</span><div>${esc(staff)}</div></div>
+        <div class="uc-kv"><span>วัสดุที่เบิก</span><div>${esc(partsTxt)}</div></div>
+        <div class="uc-kv"><span>รถ/เครื่องจักร</span><div>${esc(vehTxt)}</div></div>
+      </td></tr>`;
+  }).join('');
+  return `<div class="uc-det">
+    <div class="uc-formula">
+      <div><span class="uc-big">${fmtNum(r.unitCost,2)}</span> บาท/${esc(unitLabel)}
+        <span class="uc-eq">= ${fmtNum(r.total,0)} บาท ÷ ${fmtQtyShort(r.qty)} ${esc(unitLabel)} (${r.count} ใบ)</span></div>
+      ${ref ? `<div class="uc-eq">ราคาแขวง ${fmtNum(ref,2)} บาท/${esc(unitLabel)} ${ucCmpPill(r.unitCost, ref)}</div>` : ''}
+    </div>
+    <div class="uc-mix">${bar}</div>
+    <div class="uc-mix-legend">${legend}</div>
+    <table class="uc-ord-table">
+      <thead><tr><th>วันที่</th><th>สายทาง</th><th class="num">ปริมาณ</th><th class="num">ค่าใช้จ่าย (บาท)</th><th class="num">ต่อหน่วย</th><th></th></tr></thead>
+      <tbody>${orderRows}</tbody>
+    </table>
+    <details class="uc-std" onclick="event.stopPropagation();"><summary>สูตรมาตรฐาน (ตั้งไว้ล่วงหน้า)</summary>${unitCostStandardSectionHtml(r.code)}</details>
+  </div>`;
 }
 /* ปิดยอดเดือน: แสดงรายการตรวจก่อน แล้วค่อยบันทึกจริง (doCommitRollupToActual) */
 function commitRollupToActual(){
