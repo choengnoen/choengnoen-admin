@@ -21,6 +21,8 @@
   const pad = n => String(n).padStart(2,'0');
   function todayIso(){ const d = new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
   function fd(iso){ iso = iso10(iso); if(!iso) return '—'; const [y,m,d] = iso.split('-').map(Number); return d+' '+MS[m-1]+' '+String(y+543).slice(2); }
+  // วันที่เต็มรูปแบบมาตรฐาน "9 พ.ย. 2569" (ใช้ในหน้าต่างบันทึก)
+  function fdl(iso){ iso = iso10(iso); if(!iso) return '—'; const [y,m,d] = iso.split('-').map(Number); return d+' '+MS[m-1]+' '+(y+543); }
   // บวกเดือนแบบปฏิทิน (เหมือน ctAddMonths ในระบบที่ 2)
   function addM(iso, n){ const [y,m,d] = iso.split('-').map(Number); const last = new Date(y, m-1+n+1, 0).getDate(); const r = new Date(y, m-1+n, Math.min(d,last)); return r.getFullYear()+'-'+pad(r.getMonth()+1)+'-'+pad(r.getDate()); }
   function daysTo(iso, t){ return Math.round((new Date(iso+'T00:00:00') - new Date((t||todayIso())+'T00:00:00'))/86400000); }
@@ -80,13 +82,29 @@
   function addStyle(){
     if(styled) return; styled = true;
     const st = document.createElement('style');
-    st.textContent = `.ctf-sec{margin-bottom:16px;} .ctf-sec h4{margin:0 0 8px;font-size:14px;color:var(--ink-900,#182430);}
-      .ctf-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;} .ctf-row > label{min-width:120px;font-size:13px;color:var(--ink-600,#4d5a66);}
-      .ctf-row input,.ctf-row select{flex:1;min-width:160px;padding:8px 10px;border:1px solid #d5dbe1;border-radius:8px;font:inherit;font-size:14px;}
-      .ctf-due{font-size:12px;color:var(--ink-400,#8792a0);width:100%;margin:-4px 0 4px 130px;}
-      .ctf-head{font-size:13px;color:var(--ink-600,#4d5a66);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #e6e9ed;}
-      .ctf-head b{color:var(--ink-900,#182430);} .ctf-th{min-width:78px;font-size:13px;font-weight:600;color:var(--navy-800,#123a5e);} .ctf-err{color:var(--danger,#c1402f);font-size:13px;margin-top:6px;min-height:1em;}
-      @media (max-width:520px){ .ctf-due{margin-left:0;} }`;
+    st.textContent = `.ctf-ttl{display:flex;flex-direction:column;gap:5px;min-width:0;}
+      .ctf-no{align-self:flex-start;font-size:12.5px;font-weight:600;letter-spacing:.2px;padding:2px 10px;border-radius:999px;background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.22);}
+      .ctf-info{position:sticky;top:0;z-index:2;background:var(--surface,#fff);padding:2px 0 12px;margin-bottom:14px;border-bottom:1px solid #e6e9ed;}
+      .ctf-name{font-size:15.5px;font-weight:700;line-height:1.45;color:var(--ink-900,#182430);}
+      .ctf-parent{display:flex;align-items:flex-start;gap:6px;margin-top:3px;font-size:12.5px;line-height:1.5;color:var(--ink-400,#8792a0);cursor:pointer;}
+      .ctf-parent span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+      .ctf-parent.open span{white-space:normal;} .ctf-parent i{font-style:normal;font-size:10px;line-height:19px;transition:transform .15s;} .ctf-parent.open i{transform:rotate(180deg);}
+      .ctf-by{margin-top:5px;font-size:12.5px;color:var(--ink-600,#4d5a66);} .ctf-by b{font-weight:600;color:var(--ink-900,#182430);}
+      .ctf-sec{border:1px solid #e3e7eb;border-radius:12px;padding:12px 14px;margin-bottom:12px;}
+      .ctf-sec h4{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px;font-size:14px;color:var(--ink-900,#182430);}
+      .ctf-item + .ctf-item{margin-top:12px;padding-top:12px;border-top:1px dashed #e3e7eb;}
+      .ctf-lbl{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;font-size:13.5px;font-weight:600;color:var(--ink-700,#33414e);}
+      .ctf-item input,.ctf-item select{width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid #d5dbe1;border-radius:9px;font:inherit;font-size:14px;background:#fff;}
+      .ctf-meta{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:5px;font-size:12.5px;color:var(--ink-400,#8792a0);}
+      .ctf-meta .ok{color:var(--success,#1c8a53);font-weight:600;} .ctf-meta .warn{color:#b26a00;}
+      .ctf-meta:has(> .ctf-th:empty:only-child){display:none;}
+      .ctf-th{font-weight:600;color:var(--navy-800,#123a5e);white-space:nowrap;}
+      .ctf-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:12px;} .ctf-grid .ctf-item + .ctf-item{margin-top:0;padding-top:0;border-top:0;}
+      .ctf-bd{flex:none;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap;background:#eef1f4;color:#5b6773;}
+      .ctf-bd.green{background:#e3f4ea;color:#17784a;} .ctf-bd.blue{background:#e4eefa;color:#1f5f9e;} .ctf-bd.amber{background:#fdf0dc;color:#a35f00;} .ctf-bd.red{background:#fbe5e2;color:#b2372a;}
+      .ctf-modal .modal-foot{border-top:1px solid #e6e9ed;background:var(--surface,#fff);}
+      .ctf-err{color:var(--danger,#c1402f);font-size:13px;margin-top:4px;min-height:1em;}
+      @media (max-width:560px){ .ctf-grid{grid-template-columns:1fr;} .ctf-grid .ctf-item + .ctf-item{margin-top:12px;} }`;
     document.head.appendChild(st);
   }
   /* c = แถวสัญญา (ฟิลด์ชื่อเดียวกับใน Firestore) · onSaved(fields) เรียกหลังบันทึกสำเร็จ */
@@ -95,22 +113,57 @@
     addStyle();
     const t = todayIso(), deliv = iso10(c.deliveryDate), reflOn = isTrue(c.reflectNeeded) && !!deliv;
     const w = iso10(c.warrantyEnd);
-    const reflRow = m => {
-      const done = iso10(c['refl'+m+'Done']), due = addM(deliv, m);
-      return `<div class="ctf-row"><label for="ctf-n${m}">รอบ ${m} เดือน</label><input type="date" id="ctf-n${m}" max="${t}" value="${esc(iso10(c['reflNotify'+m]))}"></div>
-        <div class="ctf-due">ครบกำหนดวัด ${fd(due)}${done?' · <b style="color:var(--success,#1c8a53)">วัดแล้ว '+fd(done)+'</b>':''}</div>`;
+    // ป้ายสถานะรอบวัดค่าสะท้อนแสง (เปลี่ยนตามช่องวันที่แจ้งแขวงที่กรอก)
+    const reflBadge = (m, notify) => {
+      const done = iso10(c['refl'+m+'Done']);
+      if(done) return ['green','วัดแล้ว'];
+      if(notify) return ['blue','แจ้งแขวงแล้ว'];
+      const d = daysTo(addM(deliv, m), t);
+      if(d < 0) return ['red','เลยกำหนด'];
+      if(d <= REFL_URGENT_DAYS) return ['red','ต้องแจ้งแขวง'];
+      if(d <= REFL_PREP_DAYS) return ['amber','เตรียมแจ้งแขวง'];
+      return ['','รอถึงกำหนด'];
     };
-    const body = `<div class="ctf-head"><b>${esc(c.contractNo||'(ไม่ระบุเลขสัญญา)')}</b> ${esc(c.name||'')}</div>`
+    const reflRow = m => {
+      const done = iso10(c['refl'+m+'Done']), due = addM(deliv, m), [cl, tx] = reflBadge(m, iso10(c['reflNotify'+m]));
+      return `<div class="ctf-item"><div class="ctf-lbl"><label for="ctf-n${m}">รอบ ${m} เดือน</label><span class="ctf-bd ${cl}" data-bd="${m}">${tx}</span></div>
+        <input type="date" id="ctf-n${m}" max="${t}" value="${esc(iso10(c['reflNotify'+m]))}">
+        <div class="ctf-meta"><span>ครบกำหนดวัด ${fdl(due)}${done?` · <span class="ok">วัดแล้ว ${fdl(done)}</span><span class="warn" data-nn="${m}"> · ยังไม่บันทึกวันแจ้งแขวง</span>`:''}</span><span class="ctf-th" data-th="ctf-n${m}"></span></div></div>`;
+    };
+    // ป้ายสถานะตรวจความเสียหาย
+    const dmgBadge = () => {
+      const r = c.damageResult || '';
+      if(iso10(c.damageCheckDate) && r==='repair') return ['amber','รอผู้รับจ้างซ่อม'];
+      const s = damage(c, t);
+      if(s && s.done) return ['green','ตรวจแล้ว'];
+      if(s && s.level) return [s.level, s.level==='blue' ? 'ใกล้ถึงรอบตรวจ' : 'ถึงเวลาตรวจ'];
+      if(iso10(c.damageCheckDate) && (r==='ok' || r==='fixed')) return ['green','ตรวจแล้ว'];
+      return ['','ยังไม่ถึงรอบ'];
+    };
+    // ชื่อสัญญา: แยก "ชื่องาน" (ส่วนท้ายที่ขึ้นต้นด้วย "งาน") ออกจากชื่อโครงการ/กิจกรรมด้านหน้า
+    const full = String(c.name||'').replace(/\s+/g,' ').trim();
+    let main = full, parent = '';
+    const cut = full.search(/ งาน[^ ]*(?!.* งาน)/);
+    if(cut > 10){ main = full.slice(cut+1); parent = full.slice(0, cut).replace(/^(งาน)?จ้างเหมา(ทำการ)?\s*/, '').replace(/ (?=กิจกรรม)/g, ' › '); }
+    const info = `<div class="ctf-info"><div class="ctf-name" title="${esc(full)}">${esc(main || '(ไม่ระบุชื่องาน)')}</div>`
+      + (parent ? `<div class="ctf-parent" title="${esc(parent)}"><span>${esc(parent)}</span><i>▼</i></div>` : '')
+      + ((c.contractor || deliv) ? `<div class="ctf-by">${c.contractor?`ผู้รับจ้าง <b>${esc(c.contractor)}</b>`:''}${c.contractor&&deliv?' · ':''}${deliv?`ส่งงาน <b>${fdl(deliv)}</b>`:''}</div>` : '')
+      + '</div>';
+    const [dcl, dtx] = dmgBadge();
+    const body = info
       + (reflOn ? `<div class="ctf-sec"><h4>วันที่แจ้งแขวง (ขอวัดค่าสะท้อนแสง)</h4>${reflRow(12)}${reflRow(24)}</div>` : '')
-      + (w ? `<div class="ctf-sec"><h4>ตรวจความเสียหาย</h4>
-          <div class="ctf-row"><label for="ctf-dc">วันที่ตรวจ</label><input type="date" id="ctf-dc" max="${t}" value="${esc(iso10(c.damageCheckDate))}"></div>
-          <div class="ctf-row"><label for="ctf-dr">ผลตรวจ</label><select id="ctf-dr"><option value="">— เลือก —</option>${Object.keys(RESULTS).map(k=>`<option value="${k}"${c.damageResult===k?' selected':''}>${RESULTS[k]}</option>`).join('')}</select></div>
-          <div class="ctf-due">คืนค้ำประกัน ${fd(w)}</div></div>` : '')
+      + (w ? `<div class="ctf-sec"><h4><span>ตรวจความเสียหาย</span><span class="ctf-bd ${dcl}">${dtx}</span></h4>
+          <div class="ctf-grid">
+            <div class="ctf-item"><div class="ctf-lbl"><label for="ctf-dc">วันที่ตรวจ</label></div><input type="date" id="ctf-dc" max="${t}" value="${esc(iso10(c.damageCheckDate))}">
+              <div class="ctf-meta"><span class="ctf-th" data-th="ctf-dc"></span></div></div>
+            <div class="ctf-item"><div class="ctf-lbl"><label for="ctf-dr">ผลตรวจ</label></div><select id="ctf-dr"><option value="">— เลือก —</option>${Object.keys(RESULTS).map(k=>`<option value="${k}"${c.damageResult===k?' selected':''}>${RESULTS[k]}</option>`).join('')}</select></div>
+          </div>
+          <div class="ctf-meta"><span>คืนค้ำประกัน ${fdl(w)} · ${dayTxt(daysTo(w, t))}</span></div></div>` : '')
       + (!reflOn && !w ? '<div>สัญญานี้ยังไม่มีวันส่งงาน / วันคืนค้ำประกัน จึงยังไม่มีรายการให้ติดตาม</div>' : '')
       + '<div class="ctf-err" id="ctf-err"></div>';
     const ov = document.createElement('div');
-    ov.className = 'modal-overlay';
-    ov.innerHTML = `<div class="modal-box modal-s"><div class="modal-head"><h3>บันทึกการติดตามสัญญา</h3><button type="button" class="modal-close" aria-label="ปิด">✕</button></div>
+    ov.className = 'modal-overlay ctf-modal';
+    ov.innerHTML = `<div class="modal-box modal-m"><div class="modal-head"><div class="ctf-ttl"><h3>บันทึกการติดตามสัญญา</h3><span class="ctf-no">${esc(c.contractNo||'ไม่ระบุเลขสัญญา')}</span></div><button type="button" class="modal-close" aria-label="ปิด">✕</button></div>
       <div class="modal-body">${body}</div>
       <div class="modal-foot" style="display:flex;justify-content:flex-end;gap:8px;"><button type="button" class="btn btn-ghost" data-x="cancel">ยกเลิก</button>${reflOn||w?'<button type="button" class="btn btn-primary" data-ic="save" data-x="save">บันทึก</button>':''}</div></div>`;
     const close = ()=>ov.remove();
@@ -143,14 +196,26 @@
       close();
       if(typeof onSaved === 'function') onSaved(f);
     };
-    // แสดงวันที่แบบไทยข้างช่องวันที่ (ช่อง date ของเบราว์เซอร์อาจแสดงเป็น ค.ศ./เดือน/วัน)
+    // แสดงวันที่ที่เลือกเป็น พ.ศ. ใต้ช่อง (ช่อง date ของเบราว์เซอร์แสดงเป็น ค.ศ.) + ปรับป้ายสถานะรอบวัดตามค่าที่กรอก
     ov.querySelectorAll('input[type="date"]').forEach(inp=>{
-      const lb = document.createElement('span'); lb.className = 'ctf-th';
-      const sync = ()=>{ lb.textContent = inp.value ? fd(inp.value) : 'ยังไม่ระบุ'; };
+      const lb = ov.querySelector(`[data-th="${inp.id}"]`), m = (inp.id.match(/^ctf-n(\d+)$/)||[])[1];
+      const sync = ()=>{
+        const v = iso10(inp.value);
+        if(lb) lb.textContent = v ? '= ' + fdl(v) : '';
+        if(m){
+          const bd = ov.querySelector(`[data-bd="${m}"]`), [cl, tx] = reflBadge(+m, v);
+          if(bd){ bd.className = 'ctf-bd ' + cl; bd.textContent = tx; }
+          const nn = ov.querySelector(`[data-nn="${m}"]`); if(nn) nn.style.display = v ? 'none' : '';
+        }
+      };
       inp.addEventListener('input', sync); inp.addEventListener('change', sync); sync();
-      inp.insertAdjacentElement('afterend', lb);
     });
+    const par = ov.querySelector('.ctf-parent');
+    if(par) par.onclick = ()=>par.classList.toggle('open');
     document.body.appendChild(ov);
+    // ตรึงชื่องานไว้ชิดขอบบนของส่วนเนื้อหา (ชดเชยระยะ padding ของ modal-body เพื่อไม่ให้เนื้อหาโผล่เหนือชื่อตอนเลื่อน)
+    const mb = ov.querySelector('.modal-body'), inf = ov.querySelector('.ctf-info');
+    if(mb && inf){ const p = parseFloat(getComputedStyle(mb).paddingTop) || 0; inf.style.top = (-p) + 'px'; inf.style.marginTop = (-p) + 'px'; inf.style.paddingTop = (p + 2) + 'px'; }
   }
 
   window.CTFollow = { refl, damage, open, canEdit, RESULTS, fd, todayIso };
