@@ -1450,15 +1450,15 @@ function computeAlerts(){
     if(r && r.level) rf.push({c, x:r});
     if(g && g.level) dm.push({c, x:g});
   });
-  fuCard('ct-refl-red', 'วัดค่าสะท้อนแสง — ต้องแจ้งแขวง / เลยกำหนดวัด', rf.filter(o=>o.x.level==='red'), 'red', 'pill-danger');
+  fuCard('ct-refl-red', 'วัดค่าสะท้อนแสง — ต้องส่งหนังสือแจ้งแขวงแล้ว',rf.filter(o=>o.x.level==='red'), 'red', 'pill-danger');
   fuCard('ct-dmg-red', 'ตรวจความเสียหายก่อนคืนค้ำประกัน (เหลือไม่เกิน 1 เดือน)', dm.filter(o=>o.x.level==='red'), 'red', 'pill-danger');
   const endSoon = cts.filter(c=>c.status!=='ระงับงาน' && !ctIso(c.deliveryDate) && ctIso(c.endDate) && (!ctIso(c.startDate) || daysUntil(ctIso(c.startDate))<=0) && daysUntil(ctIso(c.endDate))>=0 && daysUntil(ctIso(c.endDate))<=60)
     .map(c=>({c, d:daysUntil(ctIso(c.endDate))})).sort((a,b)=>a.d-b.d);
   if(endSoon.length) out.blue.push({id:'ct-end-60', noAssign:true, task:'สัญญาใกล้สิ้นสุด (ภายใน 60 วัน)', detailHTML:ctList(endSoon,'d'), pillHTML:`<span class="pill pill-neutral">${endSoon.length} สัญญา</span>`});
   fuCard('ct-refl-prep', 'เตรียมทำหนังสือแจ้งแขวง ขอวัดค่าสะท้อนแสง (ภายใน 60 วัน)', rf.filter(o=>o.x.level==='amber'), 'blue', 'pill-warn');
   fuCard('ct-dmg-amber', 'ตรวจความเสียหาย — ใกล้ถึงกำหนด / เลยรอบ', dm.filter(o=>o.x.level==='amber'), 'blue', 'pill-warn');
-  fuCard('ct-refl-wait', 'แจ้งแขวงแล้ว รอเขตชลบุรีมาวัดค่าสะท้อนแสง', rf.filter(o=>o.x.level==='blue'), 'blue', 'pill-neutral');
-  fuCard('ct-dmg-blue', 'ตรวจความเสียหาย — วางแผน / ตามรอบ 6 เดือน / รอผู้รับจ้างซ่อม', dm.filter(o=>o.x.level==='blue'), 'blue', 'pill-neutral');
+  // ส่งหนังสือแจ้งแขวงแล้ว = จบรอบนั้น (หมวดไม่รู้วันที่เขตมาวัดจริง) จึงไม่มีการ์ด "รอเขตมาวัด" แล้ว
+  fuCard('ct-dmg-blue', 'ตรวจความเสียหาย — วางแผน / ตามรอบ 6 เดือน',dm.filter(o=>o.x.level==='blue'), 'blue', 'pill-neutral');
   return out;
 }
 function renderAlerts(){

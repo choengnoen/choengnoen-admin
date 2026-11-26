@@ -423,14 +423,20 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   /* โมดัลรายละเอียดสัญญา (แบบ 1: หัวสรุปยอดเงิน + ไทม์ไลน์วันสำคัญ) */
   #ct-detail-overlay .modal-box{max-width:980px;} /* ไซส์ L เท่าฟอร์มสัญญา */ .ct-detail-head{flex-wrap:wrap;padding:12px 20px !important;row-gap:8px !important;} .ct-detail-head .gmodal-head-icon{width:32px;height:32px;border-radius:9px;} .ct-detail-head .gmodal-head-icon svg{width:17px;height:17px;} .ct-detail-head > div:nth-child(2){display:flex;align-items:center;flex-wrap:wrap;gap:2px 10px;min-width:0;flex:1;} .ct-detail-head .gmodal-subtitle{margin:0;}
   .ctv-hero{flex-basis:100%;min-width:0;display:grid;gap:12px;padding-top:2px;}
-  .ctv-name{font-family:'Kanit',sans-serif;font-size:19px;font-weight:600;color:#fff;line-height:1.35;}
+  .ctv-name{font-family:'Kanit',sans-serif;font-size:16.5px;font-weight:500;color:#fff;line-height:1.55;}
   /* แถบสรุป 4 ช่อง: หัวข้อเล็กบน ค่าล่าง คั่นด้วยเส้นบาง ๆ */
-  .ctv-facts{display:grid;grid-template-columns:minmax(0,1.25fr) auto minmax(0,1.6fr) minmax(0,.9fr);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;}
-  .ctv-fact{padding:9px 14px 10px;min-width:0;}
+  .ctv-facts{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1.35fr);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;}
+  .ctv-fact{padding:11px 18px 12px;min-width:0;}
   .ctv-fact + .ctv-fact{border-left:1px solid rgba(255,255,255,.12);}
-  .ctv-fact .k{font-size:11.5px;color:#94a3b8;margin-bottom:2px;}
-  .ctv-fact .v{font-size:13.5px;font-weight:500;color:#fff;line-height:1.45;overflow-wrap:break-word;}
-  .ctv-fact .sub{font-size:12px;font-weight:400;color:#cbd5e1;margin-top:2px;}
+  .ctv-fact .k{font-size:12px;color:#a9b6c8;margin-bottom:4px;}
+  .ctv-fact .v{font-size:14.5px;font-weight:500;color:#fff;line-height:1.5;overflow-wrap:break-word;}
+  .ctv-fact .sub{font-size:12.5px;font-weight:400;color:#cbd5e1;margin-top:5px;}
+  /* ช่วงทางหลวง: บรรทัดสายทาง/ตอน แล้ว กม. + ปริมาณ */
+  .ctv-fact .rg + .rg{margin-top:7px;padding-top:7px;border-top:1px dashed rgba(255,255,255,.14);}
+  .ctv-fact .rt{font-weight:600;}
+  .ctv-fact .km{color:#e2e8f0;font-size:14px;} .ctv-fact .nw{white-space:nowrap;}
+  .ctv-fact .qty{color:#fdba74;font-weight:600;white-space:nowrap;}
+  .ctv-fact .tot{margin-top:6px;font-size:13px;color:#fdba74;font-weight:600;}
   .ctv-fact .sub.in::before{content:"● ";color:#4ade80;} .ctv-fact .sub.part::before{content:"● ";color:#fbbf24;} .ctv-fact .sub.out::before{content:"● ";color:#94a3b8;}
   .ctv-fact.money .v{font-family:'Kanit',sans-serif;font-size:20px;font-weight:600;color:#fdba74;white-space:nowrap;line-height:1.25;}
   .ctv-fact.money .v small{font-family:'Sarabun',sans-serif;font-size:12.5px;color:#cbd5e1;font-weight:400;margin-left:4px;}
@@ -480,11 +486,13 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ctv-tbl tr:last-child td{border-bottom:0;}
   .ctv-tbl th:first-child,.ctv-tbl td:first-child{padding-left:0;}
   /* แถบต้องติดตาม (บนสุดของเนื้อหา) */
-  .ctv-alerts{display:grid;gap:8px;margin-bottom:16px;}
-  .ctv-alert{display:flex;gap:12px;align-items:flex-start;padding:11px 14px;border-radius:12px;border:1px solid;border-left-width:5px;}
-  .ctv-alert .ic{flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;margin-top:1px;}
-  .ctv-alert b{display:block;font-family:'Kanit',sans-serif;font-size:15px;font-weight:600;line-height:1.35;}
-  .ctv-alert span:not(.ic){display:block;font-size:13px;color:var(--ink-600);margin-top:1px;}
+  /* แถบต้องติดตาม: กระชับ บรรทัดเดียว (หัวข้อตัวหนา + รายละเอียดต่อท้าย ตัดบรรทัดเองเมื่อจอแคบ) */
+  .ctv-alerts{display:grid;gap:6px;margin-bottom:20px;}
+  .ctv-alert{display:flex;gap:10px;align-items:center;padding:9px 14px;border-radius:10px;border:1px solid;border-left-width:4px;}
+  .ctv-alert .ic{flex:none;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;}
+  .ctv-alert > div{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:12px;row-gap:1px;min-width:0;}
+  .ctv-alert b{font-family:'Kanit',sans-serif;font-size:14.5px;font-weight:600;line-height:1.4;}
+  .ctv-alert span:not(.ic){font-size:13px;color:var(--ink-600);line-height:1.45;}
   .ctv-alert.red{background:#fdf1ef;border-color:#f3c5be;border-left-color:#c1402f;} .ctv-alert.red .ic{background:#c1402f;} .ctv-alert.red b{color:#b2372a;}
   .ctv-alert.amber{background:#fff7ea;border-color:#f3d9ad;border-left-color:#d68a10;} .ctv-alert.amber .ic{background:#d68a10;} .ctv-alert.amber b{color:#a35f00;}
   .ctv-alert.blue{background:#f0f5fc;border-color:#c9daf0;border-left-color:#2f6fb3;} .ctv-alert.blue .ic{background:#2f6fb3;} .ctv-alert.blue b{color:#1f5f9e;}
@@ -498,7 +506,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .gmodal-footer .img-copy-btn{width:42px;height:42px;border-radius:12px;}
   .ct-toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;background:#111827;color:#fff;padding:10px 18px;border-radius:12px;font-size:14px;z-index:9999;transition:.25s;pointer-events:none;max-width:calc(100vw - 32px);text-align:center;}
   .ct-toast.show{opacity:1;transform:translate(-50%,0);}
-  @media(max-width:560px){.ctv-grid{grid-template-columns:1fr;} .ctv-name{font-size:16px;} .ctv-facts{grid-template-columns:1fr 1fr;} .ctv-fact.route{grid-column:1/-1;border-left:0 !important;border-top:1px solid rgba(255,255,255,.12);order:3;} .ctv-fact:nth-child(4){order:4;grid-column:1/-1;border-left:0 !important;border-top:1px solid rgba(255,255,255,.12);} .ctv-fact.money .v{font-size:18px;} .ctv-row{grid-template-columns:1fr;gap:2px;} .ctv-tag{display:none;}}
+  @media(max-width:560px){.ctv-grid{grid-template-columns:1fr;} .ctv-name{font-size:16px;} .ctv-facts{grid-template-columns:1fr 1fr;} .ctv-fact.route{grid-column:1/-1;border-left:0 !important;border-top:1px solid rgba(255,255,255,.12);order:3;} .ctv-fact.money .v{font-size:18px;} .ctv-row{grid-template-columns:1fr;gap:2px;} .ctv-tag{display:none;}}
   /* โหมดถ่ายรูป (ใช้เฉพาะในสำเนาที่ html2canvas วาดตอนกด "คัดลอกรูป"): แสดงเนื้อหาครบไม่ตัด ซ่อนปุ่ม */
   html.ct-snap #ct-detail-overlay{position:static !important;display:block !important;padding:0 !important;background:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;animation:none !important;}
   html.ct-snap #ct-detail-overlay .modal-box{max-height:none !important;box-shadow:none !important;border-radius:0 !important;animation:none !important;margin:0 !important;}
@@ -673,7 +681,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ct-collapsible{margin-top:13px;}
   .ct-check{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;cursor:pointer;}
   #ct-form-overlay .ct-check input{width:16px;height:16px;min-height:0;margin:0;padding:0;accent-color:var(--orange-600);flex:none;}
-  /* การวัดค่าสะท้อนแสง: แยกการ์ดตามรอบ ติ๊กวัดแล้วจึงเลือกวันที่ได้ */
+  /* การวัดค่าสะท้อนแสง: แยกการ์ดตามรอบ แสดงกำหนดวัด + สถานะหนังสือแจ้งแขวง (บันทึกผ่านปุ่ม "บันทึกการติดตาม") */
+  .ct-round-note{font-size:12.5px;color:var(--ink-500);}
+  .ct-round-note.ok{color:var(--success);font-weight:600;}
+  .ct-round-note.late{color:var(--danger,#dc2626);font-weight:600;}
   .ct-round{grid-column:span 2;padding:11px 13px 13px;border:1px solid var(--line);border-radius:12px;background:#fff;transition:opacity .15s;}
   .ct-round.off{opacity:.6;}
   .ct-round-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;font-size:13px;}
@@ -1440,8 +1451,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                     <div class="ct-sub">การวัดค่าสะท้อนแสง <small>นับจากวันที่ส่งงาน</small>
                       <label class="ct-check ct-sub-action"><input type="checkbox" id="ct-refl" onchange="ctReflToggled()"> สัญญานี้ต้องวัด</label></div>
                     <div class="ct-g4">
-                      <div class="ct-round" id="ct-round12"><div class="ct-round-head"><b>รอบ 12 เดือน</b><span class="ct-due" id="ct-due12"></span></div><div class="ct-round-body"><label class="ct-check"><input type="checkbox" id="ct-done12" onchange="ctReflDoneChanged(12,this)"> วัดแล้ว</label><div class="f-row"><div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-refl12" class="thdate-native" onchange="thdateSync(this);ctAutoDates()"><div class="thdate-box"><span class="thdate-text placeholder" data-placeholder="ยังไม่วัด">ยังไม่วัด</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div></div></div>
-                      <div class="ct-round" id="ct-round24"><div class="ct-round-head"><b>รอบ 24 เดือน</b><span class="ct-due" id="ct-due24"></span></div><div class="ct-round-body"><label class="ct-check"><input type="checkbox" id="ct-done24" onchange="ctReflDoneChanged(24,this)"> วัดแล้ว</label><div class="f-row"><div class="thdate-wrap" onclick="openThaiDatePicker(this)"><input type="date" id="ct-refl24" class="thdate-native" onchange="thdateSync(this);ctAutoDates()"><div class="thdate-box"><span class="thdate-text placeholder" data-placeholder="ยังไม่วัด">ยังไม่วัด</span><svg class="thdate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div></div></div></div>
+                      <div class="ct-round" id="ct-round12"><div class="ct-round-head"><b>รอบ 12 เดือน</b><span class="ct-due" id="ct-due12"></span></div><div class="ct-round-note" id="ct-note12"></div></div>
+                      <div class="ct-round" id="ct-round24"><div class="ct-round-head"><b>รอบ 24 เดือน</b><span class="ct-due" id="ct-due24"></span></div><div class="ct-round-note" id="ct-note24"></div></div>
                     </div>
                   </div>
                 </div>
@@ -3409,12 +3420,17 @@ function ctWarrAlert(c){
   for(const m of [1,2,3]) if(t >= ctAddMonths(c.warrantyEnd, -m)) return {months:m, days:ctDaysTo(c.warrantyEnd)};
   return null;
 }
-/* กำหนดวัดค่าสะท้อนแสง รอบ 12 / 24 เดือน ถัดจากวันส่งงาน · done = วันที่วัดแล้ว (ว่าง = ยังไม่วัด) */
+/* กำหนดวัดค่าสะท้อนแสง รอบ 12 / 24 เดือน ถัดจากวันส่งงาน
+   notify = วันที่หนังสือแจ้งแขวง · measured = วันที่วัดแล้ว (ข้อมูลเดิม) · done = จบรอบ (มีอย่างใดอย่างหนึ่ง)
+   (แก้ 26 พ.ย. 2569: หมวดไม่รู้วันที่เขตมาวัดจริง → ส่งหนังสือแจ้งแขวงแล้ว = จบรอบนั้น) */
 function ctReflDates(c){
   if(!c.reflectNeeded || !c.deliveryDate) return [];
-  return [12,24].map(m=>({months:m, date:ctAddMonths(c.deliveryDate, m), done:c['refl'+m+'Done']||''}));
+  return [12,24].map(m=>{ const notify = c['reflNotify'+m]||'', measured = c['refl'+m+'Done']||'';
+    return {months:m, date:ctAddMonths(c.deliveryDate, m), notify, measured, done:notify||measured}; });
 }
-/* รอบแรกที่ยังไม่วัด → days ติดลบ = เลยกำหนด (เตือนต่อจนกว่าจะบันทึกวันที่วัดแล้ว) */
+/* ข้อความรอบที่จบแล้ว: "แจ้งแขวง 9 ธ.ค. 69" (หรือ "วัดแล้ว ..." ของข้อมูลเดิมที่ไม่มีวันแจ้งแขวง) */
+function ctReflDoneText(r){ return r.notify ? 'แจ้งแขวง '+fmtDateShort(r.notify) : 'วัดแล้ว '+fmtDateShort(r.measured); }
+/* รอบแรกที่ยังไม่แจ้งแขวง → days ติดลบ = เลยกำหนด (เตือนต่อจนกว่าจะบันทึกวันที่หนังสือแจ้งแขวง) */
 function ctNextRefl(c){
   const n = ctReflDates(c).find(r=>!r.done);
   return n ? {...n, days:ctDaysTo(n.date)} : null;
@@ -3425,7 +3441,7 @@ function ctReflCell(c){
   if(!c.reflectNeeded) return '<span style="color:var(--ink-400);">—</span>';
   if(!c.deliveryDate) return '<span style="color:var(--ink-400);">รอวันส่งงาน</span>';
   const n = ctNextRefl(c);
-  if(!n) return '<span style="color:var(--success);">✓ วัดครบแล้ว</span>';
+  if(!n) return '<span style="color:var(--success);">✓ แจ้งแขวงครบแล้ว</span>';
   const hint = n.days<0 ? ` · <b>เลยกำหนด ${-n.days} วัน</b>` : n.days<=30 ? ` · อีก ${n.days} วัน` : '';
   return `<span style="${n.days<=30?'color:var(--danger);font-weight:600;':''}">รอบ ${n.months} ด. · ${fmtDateShort(n.date)}${hint}</span>`;
 }
@@ -3443,9 +3459,9 @@ function openContractDetail(id){
   // แต่ละท่อนห้ามตัดกลางคำ (nw) — ขึ้นบรรทัดใหม่ได้เฉพาะที่ " · "
   const nw = s => `<span style="white-space:nowrap;">${s}</span>`;
   const refl = c.reflectNeeded ? (c.deliveryDate ? ctReflDates(c).map(r=>{
-    if(r.done) return `<div style="color:var(--success);">${nw('รอบ '+r.months+' เดือน')} · ${nw('กำหนด '+fmtDateShort(r.date))} · ${nw('✓ วัดแล้ว '+fmtDateShort(r.done))}</div>`;
+    if(r.done) return `<div style="color:var(--success);">${nw('รอบ '+r.months+' เดือน')} · ${nw('กำหนด '+fmtDateShort(r.date))} · ${nw('✓ '+ctReflDoneText(r))}</div>`;
     const dd = ctDaysTo(r.date);
-    return `<div style="${dd<=30?'color:var(--danger);font-weight:600;':''}">${nw('รอบ '+r.months+' เดือน')} · ${nw('กำหนด '+fmtDateShort(r.date))} · ${nw(dd<0?'เลยกำหนด '+(-dd)+' วัน (ยังไม่วัด)':'ยังไม่วัด'+(dd<=30?' (อีก '+dd+' วัน)':''))}</div>`;
+    return `<div style="${dd<=30?'color:var(--danger);font-weight:600;':''}">${nw('รอบ '+r.months+' เดือน')} · ${nw('กำหนด '+fmtDateShort(r.date))} · ${nw(dd<0?'เลยกำหนด '+(-dd)+' วัน (ยังไม่แจ้งแขวง)':'ยังไม่แจ้งแขวง'+(dd<=30?' (อีก '+dd+' วัน)':''))}</div>`;
   }).join('') : 'รอวันส่งงาน') : 'ไม่ต้องวัด';
   document.getElementById('ct-detail-title').textContent = c.contractNo ? 'สัญญาเลขที่ ' + c.contractNo : 'รายละเอียดสัญญา';
   document.getElementById('ct-detail-sub').innerHTML = `<span class="pill ${st.cls}" style="font-size:11px;">${st.label}</span>${c.fiscalYear && !c.contractNo?' &nbsp;ปีงบประมาณ '+esc(c.fiscalYear):''}`;
@@ -3458,8 +3474,7 @@ function openContractDetail(id){
      <div class="ctv-facts">` +
       fact('ผู้รับจ้าง', c.contractor ? esc(c.contractor) : '—') +
       fact('เงินค่างาน', c.amount ? fmtNum(c.amount,2)+'<small>บาท</small>' : '—', 'money') +
-      fact('ช่วงทางหลวง', ctRangeText(c) + (area.text ? `<div class="sub ${area.key}">${esc(area.text)}</div>` : ''), 'route') +
-      fact('ปริมาณงาน', c.workQty ? esc(c.workQty) : '—') +
+      fact('ช่วงทางหลวง', ctvRouteHtml(c) + (area.text ? `<div class="sub ${area.key}">${esc(area.text)}</div>` : ''), 'route') +
     `</div>`;
   // ไทม์ไลน์วันสำคัญ: ผ่านมาแล้ว = จุดส้มทึบ · ถัดไป = วงส้ม · ยังไม่ระบุ = เส้นประ
   const today = ctTodayIso();
@@ -3472,7 +3487,7 @@ function openContractDetail(id){
     {lb:'คืนค้ำประกัน', iso:c.warrantyEnd, hint: wa ? `<span style="color:${wa.months===1?'var(--danger)':'#b7791f'};">⚠ เหลือ ${wa.days} วัน</span>` : ''}
   ].filter(Boolean);
   // รอบวัดแสง (เฉพาะสัญญาที่ต้องวัดและมีวันส่งงาน) เรียงตามวันที่ร่วมกับคืนค้ำประกัน · เลยกำหนดแล้วยังไม่วัด = วงแดง
-  const reflSteps = ctReflDates(c).map(r => { const dd = ctDaysTo(r.date); return {lb:'วัดแสง รอบ '+r.months+' เดือน', iso:r.date, refl:true, done:r.done, hint: r.done ? `<span style="color:var(--success);">✓ วัดแล้ว ${fmtDateShort(r.done)}</span>` : dd<0 ? `<span style="color:var(--danger);">เลยกำหนด ${-dd} วัน</span>` : dd<=30 ? `<span style="color:var(--danger);">อีก ${dd} วัน</span>` : ''}; });
+  const reflSteps = ctReflDates(c).map(r => { const dd = ctDaysTo(r.date); return {lb:'วัดแสง รอบ '+r.months+' เดือน', iso:r.date, refl:true, done:r.done, hint: r.done ? `<span style="color:var(--success);">✓ ${ctReflDoneText(r)}</span>` : dd<0 ? `<span style="color:var(--danger);">เลยกำหนด ${-dd} วัน</span>` : dd<=30 ? `<span style="color:var(--danger);">อีก ${dd} วัน</span>` : ''}; });
   steps.push(...[...reflSteps, steps.pop()].sort((a,b) => (a.iso||'9') < (b.iso||'9') ? -1 : 1));
   const n = steps.length; let last = -1, nextMarked = false;
   steps.forEach((s,i) => { if(s.iso && (s.done || s.iso <= today)) last = i; });
@@ -3527,10 +3542,10 @@ function openContractDetail(id){
   let reflBody;
   if(!c.reflectNeeded) reflBody = `<div class="ctv-empty">สัญญานี้ไม่ต้องวัดค่าสะท้อนแสง</div>`;
   else if(!c.deliveryDate) reflBody = `<div class="ctv-empty">รอวันส่งงาน จึงจะคำนวณกำหนดวัดได้</div>`;
-  else reflBody = `<table class="ctv-tbl"><thead><tr><th>รอบ</th><th>กำหนดวัด</th><th>แจ้งแขวง</th><th>ผล</th></tr></thead><tbody>${ctReflDates(c).map(r=>{
-      const dd = ctDaysTo(r.date), nt = c['reflNotify'+r.months];
-      const res = r.done ? badge('green','✓ วัดแล้ว '+fmtDateShort(r.done)) : dd<0 ? badge('red','เลยกำหนด '+(-dd)+' วัน') : dd<=60 ? badge(dd<=30?'red':'amber','อีก '+dd+' วัน') : badge('gray','อีก '+dd+' วัน');
-      return `<tr><td><b>${r.months} เดือน</b></td><td>${fmtDateShort(r.date)}</td><td>${nt ? fmtDateShort(nt) : muted('—')}</td><td>${res}</td></tr>`; }).join('')}</tbody></table>`;
+  else reflBody = `<table class="ctv-tbl"><thead><tr><th>รอบ</th><th>กำหนดวัด</th><th>หนังสือแจ้งแขวง</th></tr></thead><tbody>${ctReflDates(c).map(r=>{
+      const dd = ctDaysTo(r.date);
+      const res = r.done ? badge('green','✓ '+ctReflDoneText(r)) : dd<0 ? badge('red','ยังไม่แจ้ง · เลยกำหนด '+(-dd)+' วัน') : dd<=60 ? badge(dd<=45?'red':'amber','ยังไม่แจ้ง · อีก '+dd+' วัน') : badge('gray','อีก '+dd+' วัน');
+      return `<tr><td><b>${r.months} เดือน</b></td><td>${fmtDateShort(r.date)}</td><td>${res}</td></tr>`; }).join('')}</tbody></table>`;
   const reflCard = card('วัดค่าสะท้อนแสง', reflBody, false, c.reflectNeeded && c.deliveryDate ? 'นับจากวันส่งงาน '+d(c.deliveryDate) : '');
   const hasExtra = c.status || c.note || c.negotiateDate || c.notifyDate;
   document.getElementById('ct-detail-body').innerHTML =
@@ -3651,6 +3666,17 @@ function ctSecInfo(r){
 function ctRangeText(c){
   return (c.ranges||[]).map(r=>{ const s = ctSecInfo(r);
     return `ทล.${esc(r.route)}${s.name?' ตอน '+esc(s.name):s.controlNo?' ตอน '+esc(s.controlNo):''} กม.${kmFmt(r.k1)} - กม.${kmFmt(r.k2)}${r.qty?' · '+esc(r.qty):''}`; }).join('<br>') || '<span style="color:var(--ink-400);">— ไม่ระบุช่วง —</span>';
+}
+/* หัวหน้าต่างรายละเอียด: แต่ละช่วง 2 บรรทัด — "ทล.X ตอน ชื่อ" / "กม.a – กม.b · ปริมาณ"
+   ปริมาณต่อท้าย กม. ของช่วงนั้น (ช่วงเดียวและไม่มีปริมาณรายช่วง → ใช้ปริมาณงานรวม workQty · หลายช่วง → ปริมาณรวมเป็นบรรทัดท้าย) */
+function ctvRouteHtml(c){
+  const rs = c.ranges||[];
+  if(!rs.length) return (c.workQty ? `<div class="rg"><span class="km">${esc(c.workQty)}</span></div>` : '—');
+  const single = rs.length===1;
+  const html = rs.map(r=>{ const s = ctSecInfo(r), sec = s.name ? ' ตอน '+esc(s.name) : s.controlNo ? ' ตอน '+esc(s.controlNo) : '';
+    const qty = r.qty || (single ? c.workQty : '');
+    return `<div class="rg"><div class="rt">ทล.${esc(r.route)}${sec}</div><div class="km"><span class="nw">กม.${kmFmt(r.k1)} – กม.${kmFmt(r.k2)}</span>${qty ? ` <span class="qty">· ${esc(qty)}</span>` : ''}</div></div>`; }).join('');
+  return html + (!single && c.workQty ? `<div class="tot">รวม ${esc(c.workQty)}</div>` : '');
 }
 /* ช่องตาราง: แสดงบรรทัดเดียว เฉพาะช่วงแรก ที่เหลือบอกจำนวน (รายการครบอยู่ในโมดัลรายละเอียด) */
 function ctRangeCell(c){
@@ -4048,19 +4074,9 @@ function ctTypeChanged(){
   document.getElementById('ct-warr').dataset.manual = '';
   ctReflToggled();
 }
-function ctSetRefl(m, iso){ const el = document.getElementById('ct-refl'+m); el.value = iso; thdateSync(el); }
-/* ปิด "ต้องวัด" แล้ววันที่วัดของทั้งสองรอบไม่มีความหมาย จึงล้างทิ้ง */
-function ctReflToggled(){
-  if(!document.getElementById('ct-refl').checked){ ctSetRefl(12,''); ctSetRefl(24,''); }
-  ctAutoDates();
-}
-/* ติ๊กวัดแล้ว = ใส่วันนี้ให้ (แก้เป็นวันวัดจริงได้) · เอาติ๊กออก = ล้างวันที่ */
-function ctReflDoneChanged(m, el){
-  if(el.checked && !document.getElementById('ct-deliver').value){ el.checked = false; alert('กรุณากรอกวันที่ส่งงานก่อน'); return; }
-  ctSetRefl(m, el.checked ? ctTodayIso() : '');
-  if(el.checked) document.getElementById('ct-refl').checked = true;
-  ctAutoDates();
-}
+function ctReflToggled(){ ctAutoDates(); }
+/* สัญญาที่กำลังแก้ (ใช้แสดงสถานะหนังสือแจ้งแขวงในการ์ดรอบวัด และคงค่าวันที่วัดแล้วเดิมไว้ตอนบันทึก) */
+let ctFormPrev = {};
 /* คำนวณวันคืนค้ำประกัน (วันตรวจรับ + ปี; ยังไม่ตรวจรับใช้วันส่งงาน) และแสดงกำหนดวัดค่าสะท้อนแสงของแต่ละรอบ */
 function ctAutoDates(){
   const v = id => document.getElementById(id).value;
@@ -4072,16 +4088,17 @@ function ctAutoDates(){
   document.getElementById('ct-warr-tag').hidden = !(calc && warrEl.value===calc);
   document.getElementById('ct-auto-msg').innerHTML = (calc && warrEl.value!==calc)
     ? `วันคืนค้ำประกันตามสูตร: <b>${fmtDateShort(calc)}</b> (${c.acceptDate?'วันตรวจรับ':'วันส่งงาน'} + ${yrs} ปี) · <a href="#" onclick="document.getElementById('ct-warr').dataset.manual='';ctAutoDates();return false;">ใช้วันที่ตามสูตร</a>` : '';
-  // ไม่มีวันส่งงาน ระบบไม่บันทึกวันที่วัด จึงล้างให้เห็นตรงกัน
-  if(!c.deliveryDate){ ctSetRefl(12,''); ctSetRefl(24,''); }
-  const dues = ctReflDates(c), today = ctTodayIso();
+  // สถานะแต่ละรอบ: หนังสือแจ้งแขวง (หรือวันที่วัดแล้วของข้อมูลเดิม) มาจากสัญญาที่บันทึกไว้
+  const p = ctFormPrev || {};
+  const dues = ctReflDates({...c, reflNotify12:p.reflNotify12, reflNotify24:p.reflNotify24, refl12Done:p.refl12Done, refl24Done:p.refl24Done}), today = ctTodayIso();
   [12,24].forEach(m=>{
-    const el = document.getElementById('ct-due'+m), box = document.getElementById('ct-round'+m);
-    const done = !!v('ct-refl'+m), due = (dues.find(r=>r.months===m)||{}).date||'';
+    const el = document.getElementById('ct-due'+m), box = document.getElementById('ct-round'+m), note = document.getElementById('ct-note'+m);
+    const r = dues.find(x=>x.months===m), due = r ? r.date : '', done = !!(r && r.done);
     el.textContent = due ? 'กำหนด '+fmtDateShort(due) : (c.reflectNeeded ? 'รอวันที่ส่งงาน' : 'ไม่ต้องวัด');
     el.classList.toggle('on', !!due);
     el.classList.toggle('late', !!due && !done && due<today);
-    document.getElementById('ct-done'+m).checked = done;
+    note.textContent = !due ? '' : done ? '✓ ' + ctReflDoneText(r) : 'ยังไม่แจ้งแขวง';
+    note.className = 'ct-round-note' + (done ? ' ok' : due && due<today ? ' late' : '');
     box.classList.toggle('done', done);
     box.classList.toggle('off', !c.reflectNeeded);
   });
@@ -4111,9 +4128,7 @@ function openContractForm(id){
   document.getElementById('ct-type').value = c ? c.workType : '';
   document.getElementById('ct-wyears').value = c ? c.warrantyYears : '';
   document.getElementById('ct-refl').checked = c ? c.reflectNeeded : false;
-  document.getElementById('ct-refl12').value = c ? c.refl12Done : '';
-  document.getElementById('ct-refl24').value = c ? c.refl24Done : '';
-  ['ct-refl12','ct-refl24'].forEach(i=>thdateSync(document.getElementById(i)));
+  ctFormPrev = c || {};
   const warrEl = document.getElementById('ct-warr');
   warrEl.value = c ? c.warrantyEnd : '';
   // วันคืนค้ำที่ไม่ตรงกับสูตร (กรอกเองไว้เดิม) → ถือว่ากรอกเอง ไม่คำนวณทับ
@@ -4144,10 +4159,6 @@ async function saveContract(){
   if(start && deliver && deliver < start){ alert('วันที่ส่งงานต้องไม่ก่อนวันเริ่มสัญญา'); return; }
   if(deliver && accept && accept < deliver){ alert('วันที่ตรวจรับงานต้องไม่ก่อนวันที่ส่งงาน'); return; }
   if(warr && warr < (accept || deliver || end || '')){ alert('วันที่ครบกำหนดคืนค้ำประกัน ต้องไม่ก่อน'+(accept?'วันตรวจรับงาน':deliver?'วันส่งงาน':'วันสิ้นสุดสัญญา')); return; }
-  const reflOn = document.getElementById('ct-refl').checked && !!deliver;
-  const r12 = reflOn ? g('ct-refl12') : '', r24 = reflOn ? g('ct-refl24') : '';
-  if((r12 && r12 < deliver) || (r24 && r24 < deliver)){ alert('วันที่วัดค่าสะท้อนแสงต้องไม่ก่อนวันที่ส่งงาน'); return; }
-  if(r12 && r24 && r24 < r12){ alert('วันที่วัดรอบ 24 เดือน ต้องไม่ก่อนรอบ 12 เดือน'); return; }
   if(deliver && end && deliver > end && !confirm('วันที่ส่งงานเลยวันสิ้นสุดสัญญา (ส่งงานล่าช้า)\nต้องการบันทึกต่อหรือไม่?')) return;
   const id = g('ct-id');
   const dupNo = no && contractsList.find(x=>String(x.contractNo).trim()===no && String(x.id)!==String(id));
@@ -4159,7 +4170,8 @@ async function saveContract(){
     amount: ctNum(g('ct-amount')), startDate:start, endDate:end, warrantyEnd:warr, supervisor:sup.text,
     workQty, deliveryDate:deliver, acceptDate:accept, workType:g('ct-type'),
     warrantyYears: g('ct-wyears') ? Number(g('ct-wyears')) : '', reflectNeeded:document.getElementById('ct-refl').checked,
-    refl12Done:r12, refl24Done:r24,
+    // วันที่วัดแล้ว: ไม่มีช่องในฟอร์มแล้ว (หมวดไม่รู้วันที่เขตมาวัดจริง) — คงค่าเดิมไว้
+    refl12Done:prev.refl12Done||'', refl24Done:prev.refl24Done||'',
     signDate:sign, durationDays: g('ct-days') ? Number(g('ct-days')) : '', penaltyPerDay: ctNum(g('ct-penalty')),
     committee:cm.text, negotiateDate:prev.negotiateDate||'', notifyDate:prev.notifyDate||'',
     status:prev.status||'', note:g('ct-note'), ranges,
@@ -4201,7 +4213,7 @@ function deleteContract(id){
 function exportContractsCsv(){
   if(!contractsList.length){ alert('ยังไม่มีข้อมูลสัญญา'); return; }
   const cell = v => { v = v==null?'':String(v); return /[",\r\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
-  const rows = [['ชื่อโครงการ','เลขที่สัญญา','ผู้รับจ้าง','ปีงบ','ทล.','ตอน','กม.เริ่ม','กม.สิ้นสุด','วันเริ่มสัญญา','วันสิ้นสุดสัญญา','ค้ำประกันถึง','สถานะ','หมายเหตุ','ปริมาณงาน','วันส่งงาน','วันตรวจรับงาน','ประเภทงาน','ค้ำประกัน(ปี)','วัดค่าสะท้อนแสง 12 ด.','วัดแล้ว 12 ด.','วัดค่าสะท้อนแสง 24 ด.','วัดแล้ว 24 ด.','วันลงนามสัญญา','กำหนดแล้วเสร็จ(วัน)','คณะกรรมการตรวจรับ','ผู้ควบคุมงาน','วันต่อรองเป็นที่ยุติ','วันแจ้งทำสัญญา']];
+  const rows = [['ชื่อโครงการ','เลขที่สัญญา','ผู้รับจ้าง','ปีงบ','ทล.','ตอน','กม.เริ่ม','กม.สิ้นสุด','วันเริ่มสัญญา','วันสิ้นสุดสัญญา','ค้ำประกันถึง','สถานะ','หมายเหตุ','ปริมาณงาน','วันส่งงาน','วันตรวจรับงาน','ประเภทงาน','ค้ำประกัน(ปี)','วัดค่าสะท้อนแสง 12 ด.','แจ้งแขวง 12 ด.','วัดค่าสะท้อนแสง 24 ด.','แจ้งแขวง 24 ด.','วันลงนามสัญญา','กำหนดแล้วเสร็จ(วัน)','คณะกรรมการตรวจรับ','ผู้ควบคุมงาน','วันต่อรองเป็นที่ยุติ','วันแจ้งทำสัญญา']];
   contractsList.forEach(c=>{
     const st = ctStatus(c).label;
     const rs = c.ranges.length ? c.ranges : [{route:'',k1:0,k2:0}];

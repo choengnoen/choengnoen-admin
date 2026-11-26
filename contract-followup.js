@@ -3,13 +3,16 @@
    - choengnoen0-main.html (แจ้งเตือน) และ choengnoen2-statistics.html (แท็บงานสัญญา)
    - เกณฑ์เตือนอยู่ที่ไฟล์นี้ที่เดียว แก้ที่นี่แล้วทั้ง 2 หน้าเปลี่ยนตาม
    ฟิลด์ที่บันทึกได้ (ผู้บริหารหรือเจ้าหน้าที่ที่เห็นงานสัญญา — rules: isContractFollowUpOnly):
-     reflNotify12 / reflNotify24 = วันที่หมวดทำหนังสือแจ้งแขวง ขอวัดค่าสะท้อนแสง รอบ 12 / 24 เดือน
-     damageCheckDate = วันที่ตรวจความเสียหายล่าสุด · damageResult = 'ok' | 'repair' | 'fixed'
+     reflNotify12 / reflNotify24 = วันที่หนังสือหมวดแจ้งแขวง ขอวัดค่าสะท้อนแสง รอบ 12 / 24 เดือน
+       (แก้ 26 พ.ย. 2569: หมวดไม่รู้วันที่เขตมาวัดจริง → ส่งหนังสือแจ้งแขวงแล้ว = จบรอบนั้น · refl12Done/refl24Done เดิมยังนับว่าจบรอบ)
+     damageCheckDate = 'ok' → วันที่ตรวจ · 'repair' → วันที่หนังสือแจ้งแขวงให้ผู้รับจ้างซ่อม
+     damageResult = 'ok' | 'repair' ('fixed' = ข้อมูลเดิม แสดงได้ แต่ไม่มีให้เลือกแล้ว เพราะหมวดไม่รู้วันซ่อมเสร็จ)
    ============================================================ */
 (function(){
   'use strict';
   const MS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-  const RESULTS = { ok:'ไม่พบความเสียหาย', repair:'พบความเสียหาย แจ้งผู้รับจ้างซ่อมแล้ว', fixed:'ผู้รับจ้างซ่อมเสร็จแล้ว' };
+  const RESULTS = { ok:'ไม่พบความเสียหาย', repair:'พบความเสียหาย แจ้งแขวงแล้ว', fixed:'ผู้รับจ้างซ่อมเสร็จแล้ว' };
+  const CHOICES = ['ok','repair']; // ตัวเลือกในหน้าต่างบันทึก
   // เกณฑ์ (วัน / เดือน)
   const REFL_PREP_DAYS = 60;   // เหลือ ≤ 60 วัน และยังไม่แจ้งแขวง → ส้ม "เตรียมทำหนังสือแจ้งแขวง"
   const REFL_URGENT_DAYS = 45; // เหลือ ≤ 45 วัน และยังไม่แจ้งแขวง → แดง "ต้องส่งหนังสือแจ้งแขวงแล้ว"
@@ -29,20 +32,20 @@
   const isTrue = v => v===true || v==='true';
   const dayTxt = d => d<0 ? 'เลยมา '+(-d)+' วัน' : d===0 ? 'วันนี้' : 'อีก '+d+' วัน';
 
-  /* วัดค่าสะท้อนแสง: รอบแรกที่ยังไม่วัด → {round, date, d, notified, level, text, sub}
-     level: 'red' | 'amber' | 'blue' | null (ยังไม่ต้องเตือน) · null ทั้งก้อน = สัญญานี้ไม่ต้องวัด/ยังไม่ส่งงาน */
+  /* วัดค่าสะท้อนแสง: รอบแรกที่ยังไม่แจ้งแขวง → {round, date, d, level, text, sub}
+     รอบที่จบแล้ว = มีวันที่หนังสือแจ้งแขวง (หรือวันที่วัดแล้วจากข้อมูลเดิม)
+     level: 'red' | 'amber' | null (ยังไม่ต้องเตือน) · null ทั้งก้อน = สัญญานี้ไม่ต้องวัด/ยังไม่ส่งงาน */
+  const reflRoundDone = (c, m) => iso10(c['reflNotify'+m]) || iso10(c['refl'+m+'Done']);
   function refl(c, t){
     t = t || todayIso();
     const deliv = iso10(c.deliveryDate);
     if(!isTrue(c.reflectNeeded) || !deliv || c.status==='ยกเลิกสัญญา') return null;
-    const m = [12,24].find(x=>!iso10(c['refl'+x+'Done']));
-    if(!m) return {done:true, level:null, text:'วัดค่าสะท้อนแสงครบแล้ว', sub:'', d:null};
-    const date = addM(deliv, m), d = daysTo(date, t), notified = iso10(c['reflNotify'+m]);
-    const base = {round:m, date, d, notified};
-    if(d < 0) return Object.assign(base, {level:'red', text:'เลยกำหนดวัดค่าสะท้อนแสง',
-      sub:`รอบ ${m} เดือน · ครบ ${fd(date)} · ${dayTxt(d)} · ` + (notified ? `แจ้งแขวงแล้ว ${fd(notified)}` : 'ยังไม่แจ้งแขวง')});
-    if(notified) return Object.assign(base, {level:'blue', text:'รอเขตชลบุรีมาวัดค่าสะท้อนแสง',
-      sub:`รอบ ${m} เดือน · ครบ ${fd(date)} · ${dayTxt(d)} · แจ้งแขวง ${fd(notified)} (ผ่านมา ${Math.max(0,-daysTo(notified,t))} วัน)`});
+    const m = [12,24].find(x=>!reflRoundDone(c, x));
+    if(!m) return {done:true, level:null, text:'แจ้งแขวงขอวัดค่าสะท้อนแสงครบแล้ว', sub:'', d:null};
+    const date = addM(deliv, m), d = daysTo(date, t);
+    const base = {round:m, date, d};
+    if(d < 0) return Object.assign(base, {level:'red', text:'เลยกำหนด ยังไม่แจ้งแขวงขอวัดค่าสะท้อนแสง',
+      sub:`รอบ ${m} เดือน · ครบ ${fd(date)} · ${dayTxt(d)}`});
     const sub = `ขอวัดค่าสะท้อนแสง รอบ ${m} เดือน · ครบ ${fd(date)} · ${d===0?'วันนี้':'เหลือ '+d+' วัน'}`;
     if(d <= REFL_URGENT_DAYS) return Object.assign(base, {level:'red', text:'ต้องส่งหนังสือแจ้งแขวงแล้ว', sub});
     if(d <= REFL_PREP_DAYS) return Object.assign(base, {level:'amber', text:'เตรียมทำหนังสือแจ้งแขวง', sub});
@@ -58,10 +61,10 @@
     const d = daysTo(w, t), winStart = addM(w, -3);
     const chk = iso10(c.damageCheckDate), res = c.damageResult || '';
     const reflHint = isTrue(c.reflectNeeded) ? ' · ใช้ผลวัดค่าสะท้อนแสงประกอบ' : '';
-    if(chk && res==='repair') return {level: d<=30 ? 'amber' : 'blue', text:'รอผู้รับจ้างซ่อม',
-      sub:`ตรวจพบ ${fd(chk)} แจ้งซ่อมแล้ว · คืนค้ำ ${fd(w)} · ${d===0?'วันนี้':'เหลือ '+d+' วัน'}`, d};
-    if(chk && chk >= winStart && (res==='ok' || res==='fixed')) return {level:null, done:true, text:'ตรวจแล้ว พร้อมคืนค้ำประกัน',
-      sub:`${RESULTS[res]} (${fd(chk)}) · คืนค้ำ ${fd(w)} · ${dayTxt(d)}`, d};
+    // ตรวจในช่วง 3 เดือนสุดท้ายแล้ว (ไม่พบ หรือพบแล้วส่งหนังสือแจ้งแขวง) = จบงานของหมวด — หมวดไม่รู้วันซ่อมเสร็จ จึงไม่ติดตามต่อ
+    if(chk && chk >= winStart && RESULTS[res]) return {level:null, done:true,
+      text: res==='repair' ? 'แจ้งแขวงให้ผู้รับจ้างซ่อมแล้ว' : 'ตรวจแล้ว พร้อมคืนค้ำประกัน',
+      sub:`${res==='repair' ? 'หนังสือแจ้งแขวง '+fd(chk) : RESULTS[res]+' ('+fd(chk)+')'} · คืนค้ำ ${fd(w)} · ${dayTxt(d)}`, d};
     const sub = `คืนค้ำ ${fd(w)} · ${d===0?'วันนี้':'เหลือ '+d+' วัน'}${chk?' · ตรวจล่าสุด '+fd(chk):''}${reflHint}`;
     if(t >= addM(w, -1)) return {level:'red', text:'ต้องตรวจความเสียหาย / แจ้งซ่อมด่วน', sub, d};
     if(t >= addM(w, -2)) return {level:'amber', text:'ตรวจความเสียหายก่อนคืนค้ำประกัน', sub, d};
@@ -99,7 +102,7 @@
       .ctf-meta .ok{color:var(--success,#1c8a53);font-weight:600;} .ctf-meta .warn{color:#b26a00;}
       .ctf-meta:has(> .ctf-th:empty:only-child){display:none;}
       .ctf-th{font-weight:600;color:var(--navy-800,#123a5e);white-space:nowrap;}
-      .ctf-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:12px;} .ctf-grid .ctf-item + .ctf-item{margin-top:0;padding-top:0;border-top:0;}
+      .ctf-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:12px;} .ctf-grid .ctf-item + .ctf-item{margin-top:0;padding-top:0;border-top:0;}
       .ctf-bd{flex:none;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap;background:#eef1f4;color:#5b6773;}
       .ctf-bd.green{background:#e3f4ea;color:#17784a;} .ctf-bd.blue{background:#e4eefa;color:#1f5f9e;} .ctf-bd.amber{background:#fdf0dc;color:#a35f00;} .ctf-bd.red{background:#fbe5e2;color:#b2372a;}
       .ctf-modal .modal-foot{border-top:1px solid #e6e9ed;background:var(--surface,#fff);}
@@ -115,9 +118,8 @@
     const w = iso10(c.warrantyEnd);
     // ป้ายสถานะรอบวัดค่าสะท้อนแสง (เปลี่ยนตามช่องวันที่แจ้งแขวงที่กรอก)
     const reflBadge = (m, notify) => {
-      const done = iso10(c['refl'+m+'Done']);
-      if(done) return ['green','วัดแล้ว'];
-      if(notify) return ['blue','แจ้งแขวงแล้ว'];
+      if(notify) return ['green','แจ้งแขวงแล้ว'];
+      if(iso10(c['refl'+m+'Done'])) return ['green','วัดแล้ว'];
       const d = daysTo(addM(deliv, m), t);
       if(d < 0) return ['red','เลยกำหนด'];
       if(d <= REFL_URGENT_DAYS) return ['red','ต้องแจ้งแขวง'];
@@ -128,18 +130,20 @@
       const done = iso10(c['refl'+m+'Done']), due = addM(deliv, m), [cl, tx] = reflBadge(m, iso10(c['reflNotify'+m]));
       return `<div class="ctf-item"><div class="ctf-lbl"><label for="ctf-n${m}">รอบ ${m} เดือน</label><span class="ctf-bd ${cl}" data-bd="${m}">${tx}</span></div>
         <input type="date" id="ctf-n${m}" max="${t}" value="${esc(iso10(c['reflNotify'+m]))}">
-        <div class="ctf-meta"><span>ครบกำหนดวัด ${fdl(due)}${done?` · <span class="ok">วัดแล้ว ${fdl(done)}</span><span class="warn" data-nn="${m}"> · ยังไม่บันทึกวันแจ้งแขวง</span>`:''}</span><span class="ctf-th" data-th="ctf-n${m}"></span></div></div>`;
+        <div class="ctf-meta"><span>ครบกำหนดวัด ${fdl(due)}${done?` · <span class="ok">วัดแล้ว ${fdl(done)}</span>`:''}</span><span class="ctf-th" data-th="ctf-n${m}"></span></div></div>`;
     };
     // ป้ายสถานะตรวจความเสียหาย
     const dmgBadge = () => {
       const r = c.damageResult || '';
-      if(iso10(c.damageCheckDate) && r==='repair') return ['amber','รอผู้รับจ้างซ่อม'];
       const s = damage(c, t);
-      if(s && s.done) return ['green','ตรวจแล้ว'];
+      if(s && s.done) return ['green', r==='repair' ? 'แจ้งแขวงแล้ว' : 'ตรวจแล้ว'];
       if(s && s.level) return [s.level, s.level==='blue' ? 'ใกล้ถึงรอบตรวจ' : 'ถึงเวลาตรวจ'];
-      if(iso10(c.damageCheckDate) && (r==='ok' || r==='fixed')) return ['green','ตรวจแล้ว'];
+      if(iso10(c.damageCheckDate) && RESULTS[r]) return ['green', r==='repair' ? 'แจ้งแขวงแล้ว' : 'ตรวจแล้ว'];
       return ['','ยังไม่ถึงรอบ'];
     };
+    // ผลตรวจที่เลือกได้ (ข้อมูลเดิม "ซ่อมเสร็จแล้ว" ยังแสดงไว้ ไม่ให้หายตอนบันทึก)
+    const dmgOpts = CHOICES.concat(c.damageResult==='fixed' ? ['fixed'] : []);
+    const dcLabel = r => r==='repair' ? 'วันที่หนังสือแจ้งแขวง' : 'วันที่ตรวจ';
     // ชื่อสัญญา: แยก "ชื่องาน" (ส่วนท้ายที่ขึ้นต้นด้วย "งาน") ออกจากชื่อโครงการ/กิจกรรมด้านหน้า
     const full = String(c.name||'').replace(/\s+/g,' ').trim();
     let main = full, parent = '';
@@ -151,12 +155,12 @@
       + '</div>';
     const [dcl, dtx] = dmgBadge();
     const body = info
-      + (reflOn ? `<div class="ctf-sec"><h4>วันที่แจ้งแขวง (ขอวัดค่าสะท้อนแสง)</h4>${reflRow(12)}${reflRow(24)}</div>` : '')
+      + (reflOn ? `<div class="ctf-sec"><h4>วันที่หนังสือแจ้งแขวง (ขอวัดค่าสะท้อนแสง)</h4>${reflRow(12)}${reflRow(24)}</div>` : '')
       + (w ? `<div class="ctf-sec"><h4><span>ตรวจความเสียหาย</span><span class="ctf-bd ${dcl}">${dtx}</span></h4>
           <div class="ctf-grid">
-            <div class="ctf-item"><div class="ctf-lbl"><label for="ctf-dc">วันที่ตรวจ</label></div><input type="date" id="ctf-dc" max="${t}" value="${esc(iso10(c.damageCheckDate))}">
+            <div class="ctf-item"><div class="ctf-lbl"><label for="ctf-dr">ผลตรวจ</label></div><select id="ctf-dr"><option value="">— เลือก —</option>${dmgOpts.map(k=>`<option value="${k}"${c.damageResult===k?' selected':''}>${RESULTS[k]}</option>`).join('')}</select></div>
+            <div class="ctf-item"><div class="ctf-lbl"><label for="ctf-dc" id="ctf-dc-lb">${dcLabel(c.damageResult)}</label></div><input type="date" id="ctf-dc" max="${t}" value="${esc(iso10(c.damageCheckDate))}">
               <div class="ctf-meta"><span class="ctf-th" data-th="ctf-dc"></span></div></div>
-            <div class="ctf-item"><div class="ctf-lbl"><label for="ctf-dr">ผลตรวจ</label></div><select id="ctf-dr"><option value="">— เลือก —</option>${Object.keys(RESULTS).map(k=>`<option value="${k}"${c.damageResult===k?' selected':''}>${RESULTS[k]}</option>`).join('')}</select></div>
           </div>
           <div class="ctf-meta"><span>คืนค้ำประกัน ${fdl(w)} · ${dayTxt(daysTo(w, t))}</span></div></div>` : '')
       + (!reflOn && !w ? '<div>สัญญานี้ยังไม่มีวันส่งงาน / วันคืนค้ำประกัน จึงยังไม่มีรายการให้ติดตาม</div>' : '')
@@ -178,16 +182,16 @@
       if(reflOn){
         for(const m of [12,24]){
           const v = val('ctf-n'+m);
-          if(v && v > t){ err.textContent = 'วันที่แจ้งแขวงต้องไม่เกินวันนี้'; return; }
-          if(v && v < deliv){ err.textContent = 'วันที่แจ้งแขวงต้องไม่ก่อนวันที่ส่งงาน'; return; }
+          if(v && v > t){ err.textContent = 'วันที่หนังสือแจ้งแขวงต้องไม่เกินวันนี้'; return; }
+          if(v && v < deliv){ err.textContent = 'วันที่หนังสือแจ้งแขวงต้องไม่ก่อนวันที่ส่งงาน'; return; }
           f['reflNotify'+m] = v || '';
         }
       }
       if(w){
         const dc = val('ctf-dc'), dr = val('ctf-dr');
-        if(dc && dc > t){ err.textContent = 'วันที่ตรวจต้องไม่เกินวันนี้'; return; }
+        if(dc && dc > t){ err.textContent = dcLabel(dr) + 'ต้องไม่เกินวันนี้'; return; }
         if(dc && !dr){ err.textContent = 'กรุณาเลือกผลตรวจ'; return; }
-        if(dr && !dc){ err.textContent = 'กรุณาระบุวันที่ตรวจ'; return; }
+        if(dr && !dc){ err.textContent = 'กรุณาระบุ' + dcLabel(dr); return; }
         f.damageCheckDate = dc || ''; f.damageResult = dr || '';
       }
       saveBtn.disabled = true; const orig = saveBtn.textContent; saveBtn.textContent = 'กำลังบันทึก...';
@@ -205,11 +209,13 @@
         if(m){
           const bd = ov.querySelector(`[data-bd="${m}"]`), [cl, tx] = reflBadge(+m, v);
           if(bd){ bd.className = 'ctf-bd ' + cl; bd.textContent = tx; }
-          const nn = ov.querySelector(`[data-nn="${m}"]`); if(nn) nn.style.display = v ? 'none' : '';
         }
       };
       inp.addEventListener('input', sync); inp.addEventListener('change', sync); sync();
     });
+    // ผลตรวจ "พบความเสียหาย" → ช่องวันที่เป็นวันที่หนังสือแจ้งแขวง
+    const drSel = ov.querySelector('#ctf-dr'), dcLb = ov.querySelector('#ctf-dc-lb');
+    if(drSel && dcLb) drSel.addEventListener('change', ()=>{ dcLb.textContent = dcLabel(drSel.value); });
     const par = ov.querySelector('.ctf-parent');
     if(par) par.onclick = ()=>par.classList.toggle('open');
     document.body.appendChild(ov);
@@ -238,5 +244,5 @@
   // กม. แบบ "กม.12+345" (รับค่าเป็นกิโลเมตร)
   function km(v){ v = Math.round((Number(v)||0)*1000)/1000; const w = Math.floor(v+1e-9); return 'กม.'+w+'+'+pad(Math.round((v-w)*1000)).padStart(3,'0'); }
 
-  window.CTFollow = { refl, damage, open, canEdit, RESULTS, fd, todayIso, section, km };
+  window.CTFollow = { refl, damage, open, canEdit, RESULTS, fd, todayIso, section, km, reflRoundDone };
 })();
