@@ -619,6 +619,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .legend-dot-btn:hover{background:var(--paper-100);}
   .legend-dot-btn.is-open{background:#eef3f8;border-color:#d8e2ec;color:var(--navy-900);}
   .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .toolbar .fyp + .fyp-src + .fyp{margin-left:8px;} /* ตัวกรองขีดเส้นใต้ที่วางติดกัน ให้เว้นห่างอ่านง่าย */
   .search-box{display:flex;align-items:center;gap:7px;background:var(--paper-50);border:1px solid var(--line);border-radius:7px;padding:6px 11px;font-size:13px;color:var(--ink-600);min-width:190px;}
   .search-box input{border:none;background:none;outline:none;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--ink-900);width:100%;}
   select, .edit-input{font-family:'Sarabun',sans-serif;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink-900);}
@@ -1400,7 +1401,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </h2>
             <div class="toolbar">
               <select id="ct-fy" data-fy onchange="renderContracts()"></select>
-              <!-- 24 พ.ย./26 พ.ย. 2569: ตัวกรองทั้ง 3 ใช้ปุ่มขีดเส้นใต้แบบเดียวกัน (fy-picker.js data-fy-label) → เส้นคั่น → ไอคอนค้นหา/ส่งออก → ปุ่มส้ม -->
+              <!-- 26 พ.ย. 2569:ตัวกรองทั้ง 3 ใช้ปุ่มขีดเส้นใต้แบบเดียวกัน (fy-picker.js data-fy-label) → เส้นคั่น → ไอคอนค้นหา/ส่งออก → ปุ่มส้ม -->
               <select id="ct-area" data-fy data-fy-label="พื้นที่" aria-label="กรองตามพื้นที่" onchange="renderContracts()"><option value="">ทั้งหมด</option><option value="in">ในพื้นที่</option><option value="part">บางส่วน</option><option value="out">นอกพื้นที่</option></select>
               <select id="ct-sort" data-fy data-fy-label="เรียง" aria-label="เรียงลำดับ" onchange="renderContracts()"><option value="urgent">ด่วนก่อน</option><option value="new">สัญญาใหม่ก่อน</option></select>
               <span class="tb-sep"></span>
@@ -8039,4 +8040,13 @@ initThaiDateInputs();
   }
   window.__updateWho=upd;
   function boot(){
-    upd(
+    upd();
+    var lb=document.getElementById('login-badge');
+    if(lb) new MutationObserver(upd).observe(lb,{childList:true,characterData:true,subtree:true,attributes:true});
+    var n=0, t=setInterval(function(){ upd(); if(++n>20) clearInterval(t); },500);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+})();
+</script>
+</body>
+</html>
