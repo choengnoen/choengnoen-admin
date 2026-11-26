@@ -133,6 +133,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ov-metric.ok{background:var(--success-bg);}
   .ov-metric.ok .ov-metric-val{color:var(--success);}
   .ov-metric-label{font-size:10.8px;color:var(--ink-600);margin-top:3px;line-height:1.3;}
+  .ov-metric-sub{display:block;color:var(--ink-400);}
+  .ov-metric.warn .ov-metric-sub{color:var(--orange-600);font-weight:600;}
+  .ov-metric.stale .ov-metric-val{color:var(--ink-400);}
   .ov-card.accent-navy{border-top:3px solid var(--navy-800);}
   .ov-card.accent-orange{border-top:3px solid var(--orange-600);}
   .ov-card.accent-amber{border-top:3px solid var(--amber-400);}
@@ -288,6 +291,19 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .alert-row:last-child{margin-bottom:0;}
   .alert-row .a-task{font-weight:600;color:var(--ink-900);}
   .alert-row .a-detail{color:var(--ink-600);font-size:12px;}
+  /* รายการสัญญาในแจ้งเตือน (26 พ.ย. 2569): บรรทัด 1 ข้อมูลงาน · บรรทัด 2 ข้อความเตือน */
+  .ct-a{margin-top:6px;padding:6px 10px;border-left:3px solid var(--ink-400);background:#f6f7f9;border-radius:0 6px 6px 0;}
+  .ct-a.t-red{border-left-color:var(--danger);} .ct-a.t-amber{border-left-color:var(--amber-400);} .ct-a.t-blue{border-left-color:var(--navy-700);}
+  .ct-a-l1{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;color:var(--ink-900);font-size:13px;}
+  .ct-a-no{font-weight:700;color:var(--navy-900);}
+  .ct-a-type{font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;background:#e8eef5;color:var(--navy-800);}
+  .ct-a-type.ty-elec{background:#fff3dc;color:#8a5a00;} .ct-a-type.ty-pave{background:#e9eef2;color:#33414e;}
+  .ct-a-rt b{color:var(--navy-900);}
+  .ct-a-qty{color:var(--ink-600);}
+  .ct-a-l2{margin-top:2px;font-size:12.5px;color:var(--ink-600);}
+  .ct-a-l2 b{color:var(--ink-900);}
+  .ct-a-l2 .hot{font-weight:700;color:var(--danger);} .ct-a-l2 .warm{font-weight:700;color:#b7791f;}
+  .ct-a-more{margin-top:6px;font-size:12px;color:var(--ink-600);}
   .dot-red{width:9px;height:9px;border-radius:50%;background:var(--danger);display:inline-block;flex-shrink:0;}
   .dot-yellow{width:9px;height:9px;border-radius:50%;background:var(--amber-400);display:inline-block;flex-shrink:0;}
   .dot-blue{width:9px;height:9px;border-radius:50%;background:var(--navy-700);display:inline-block;flex-shrink:0;}
@@ -924,8 +940,8 @@ function applyTabVisibility(){
 /* ============================================================
    ข้อมูลจากระบบรอง (Firestore)
    ============================================================ */
-const D = { staff:[], leave:[], holidays:[], complaints:[], enc:[], permits:[], em:[], contracts:[], materials:[], matTx:[], dwo:[], bmm:[], jc:[], budget:[], ot:[], util:[], water:[], s3:{}, s4:{}, main:{} };
-const TABLES_NEEDED = ['staff','leave_requests','public_holidays','complaints','encroachments','permits','emergencies','contracts','materials','material_transactions',
+const D = { staff:[], leave:[], holidays:[], complaints:[], enc:[], permits:[], em:[], contracts:[], materials:[], matTx:[], fuelTx:[], dwo:[], bmm:[], jc:[], budget:[], ot:[], util:[], water:[], s3:{}, s4:{}, main:{} };
+const TABLES_NEEDED = ['staff','leave_requests','public_holidays','complaints','encroachments','permits','emergencies','contracts','materials','material_transactions','fuel_transactions',
   'budget_allocations','ot_requests','utility_bills','water_meter_log'];
 let __dataLoaded = false;
 async function loadAll(){
@@ -934,7 +950,7 @@ async function loadAll(){
     if(!__dataLoaded) statePromise.then(st=>{ if(!__dataLoaded) paintOverviewSnap(st[2] && st[2].overviewSnap); }).catch(()=>{});
     const [t, [s3, s4, mainState]] = await Promise.all([ FBL.apiGetMultiple(TABLES_NEEDED), statePromise ]);
     D.staff = t.staff; D.leave = t.leave_requests; D.holidays = t.public_holidays || []; D.complaints = t.complaints; D.enc = t.encroachments;
-    D.permits = t.permits; D.em = t.emergencies; D.contracts = t.contracts || []; D.materials = t.materials; D.matTx = t.material_transactions;
+    D.permits = t.permits; D.em = t.emergencies; D.contracts = t.contracts || []; D.materials = t.materials; D.matTx = t.material_transactions; D.fuelTx = t.fuel_transactions || [];
     D.budget = t.budget_allocations;
     D.ot = t.ot_requests; D.util = t.utility_bills; D.water = t.water_meter_log;
     D.s3 = s3 || {}; D.s4 = s4 || {};
@@ -1135,6 +1151,35 @@ async function saveBudgetEditModal(){
 /* ============================================================
    ภาพรวม
    ============================================================ */
+/* น้ำมันคงเหลือ ณ วันนี้ — ตั้งต้นจากยอดยกมาที่หน้างานพัสดุส่งมา (D.s3.fuelStock[ft]: month/opening/recvOv)
+   แล้วบวกรับเข้า/ลบเบิกจ่ายจาก fuel_transactions จริงถึงวันนี้ ทีละเดือนจนถึงเดือนปัจจุบัน (สูตรเดียวกับ fuelMonthSummary ในหน้างานพัสดุ)
+   ถ้ายังไม่มี month/opening (หน้างานพัสดุยังเป็นรุ่นเก่า) → ใช้ยอดที่ส่งมาเดิมแต่ทำเครื่องหมาย live:false */
+function fuelNow(){
+  const src = D.s3.fuelStock || {};
+  const today = todayISO(), curMk = today.slice(0,7);
+  const out = {};
+  ['ดีเซล','เบนซิน'].forEach(ft=>{
+    const f = src[ft];
+    if(!f) return;
+    const reorder = Number(f.reorder)||0;
+    if(!f.month || !isFinite(f.opening) || f.month > curMk){
+      if(isFinite(f.stock)) out[ft] = { stock:Number(f.stock), reorder, live:false };
+      return;
+    }
+    const txs = D.fuelTx.filter(t=>t.fuelType===ft && t.date && t.date>=f.month+'-01' && t.date<=today);
+    let bal = Number(f.opening), mk = f.month, guard = 0;
+    while(mk <= curMk && guard++ < 36){
+      const m = txs.filter(t=>String(t.date).slice(0,7)===mk);
+      const recv = (mk===f.month && f.recvOv!=null) ? Number(f.recvOv) : m.filter(t=>t.kind==='receive').reduce((s,t)=>s+(Number(t.qty)||0),0);
+      const iss = m.filter(t=>t.kind==='issue').reduce((s,t)=>s+(Number(t.qty)||0),0);
+      bal = bal + recv - iss;
+      const [y,mo] = mk.split('-').map(Number);
+      mk = mo===12 ? (y+1)+'-01' : y+'-'+String(mo+1).padStart(2,'0');
+    }
+    out[ft] = { stock:Math.round(bal*10)/10, reorder, live:true };
+  });
+  return Object.keys(out).length ? out : null;
+}
 function ovMetric(val, label, cls){ return `<div class="ov-metric ${cls||''}"><div class="ov-metric-val">${val}</div><div class="ov-metric-label">${label}</div></div>`; }
 function renderOverviewStats(){
   const staff = activeStaff();
@@ -1151,7 +1196,7 @@ function renderOverviewStats(){
   /* วัสดุที่ขาดมากที่สุด 3 อันดับ (เทียบสัดส่วนคงเหลือต่อจุดสั่งซื้อ) — เก็บเฉพาะชื่อ/จำนวน/หน่วย */
   const lowList = mats.filter(m=>matStatus(m)==='low').sort((a,b)=>(a.reorder?a.stock/a.reorder:0)-(b.reorder?b.stock/b.reorder:0)).slice(0,3)
     .map(m=>({ n:m.name, s:Math.round(m.stock*100)/100, u:m.unit }));
-  const V = { n:staff.length, lowList, working, onLeave, trip, lowMat, matN:mats.length, fuel:(D.s3.fuelStock||null), cOpen, encOpen, permitPending, emOngoing, date:todayISO() };
+  const V = { n:staff.length, lowList, working, onLeave, trip, lowMat, matN:mats.length, fuel:fuelNow(), cOpen, encOpen, permitPending, emOngoing, date:todayISO() };
   drawOverview(V, '');
   saveOverviewSnap(V);
 }
@@ -1177,14 +1222,18 @@ function drawOverview(V, note){
   const working = num(V.working);
   const lowList = Array.isArray(V.lowList) ? V.lowList : [];
   const lowMat = num(V.lowMat), cOpen = num(V.cOpen), encOpen = num(V.encOpen), permitPending = num(V.permitPending), emOngoing = num(V.emOngoing);
-  /* น้ำมันคงเหลือ (ลิตร) — มาจากระบบที่ 3 สีตามจุดสั่งซื้อเหมือนวัสดุ; ถ้ายังไม่มีข้อมูลจะไม่แสดงแถวนี้ */
+  /* น้ำมันคงเหลือ ณ วันนี้ (ลิตร) — คำนวณใน fuelNow() สีตามจุดสั่งซื้อเหมือนวัสดุ; ถ้ายังไม่มีข้อมูลจะไม่แสดงส่วนนี้
+     live:false = ยอดเดิมที่หน้างานพัสดุส่งมา (ไม่ใช่ยอดวันนี้) → สีเทา + "ยังไม่อัปเดต" */
   const fo = V.fuel || {};
+  const fmtL = x=>Number(x).toLocaleString('th-TH',{maximumFractionDigits:1});
   const fuelHTML = ['ดีเซล','เบนซิน'].filter(ft=>fo[ft] && isFinite(fo[ft].stock)).map(ft=>{
-    const s = Number(fo[ft].stock), r = Number(fo[ft].reorder)||0;
-    const cls = !r ? '' : (s<=r ? 'warn' : (s<=r*1.3 ? '' : 'ok'));
-    return ovMetric(s.toLocaleString('th-TH',{maximumFractionDigits:1}), `น้ำมัน${ft} (ลิตร)${r && s<=r ? ' · ต่ำกว่าจุดสั่งซื้อ' : ''}`, cls);
+    const s = Number(fo[ft].stock), r = Number(fo[ft].reorder)||0, live = fo[ft].live===true;
+    const cls = !live ? 'stale' : (!r ? '' : (s<=r ? 'warn' : (s<=r*1.3 ? '' : 'ok')));
+    const sub = !live ? 'ยังไม่อัปเดต' : (!r ? 'ยังไม่ตั้งจุดสั่งซื้อ' : (s<=r ? 'ต่ำกว่าจุดสั่งซื้อ ' : 'จุดสั่งซื้อ ')+fmtL(r)+' ล.');
+    return ovMetric(fmtL(s), `${ft} (ลิตร)<span class="ov-metric-sub">${sub}</span>`, cls);
   }).join('');
-  const fuelHTML2 = fuelHTML ? `<div class="ov-metrics" style="margin-top:8px;">${fuelHTML}</div>` : '';
+  const td = new Date(todayISO()+'T00:00:00');
+  const fuelHTML2 = fuelHTML ? `<div class="ov-sub">น้ำมันคงเหลือ <span style="font-weight:400;color:var(--ink-400);">ณ ${td.getDate()} ${MONTH_SHORT[td.getMonth()]} ${td.getFullYear()+543}</span></div><div class="ov-metrics">${fuelHTML}</div>` : '';
   const icon = (bg, path)=>`<span class="ov-icon" style="background:${bg};"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">${path}</svg></span>`;
   document.getElementById('overview-stats').innerHTML = (note ? `<div class="hint-box" style="margin-bottom:10px;">${esc(note)}</div>` : '') + `
     <div class="ov-grid">
@@ -1334,17 +1383,19 @@ function computeAlerts(){
   const ctRanges = c => { let r = c.rangesJson; if(typeof r==='string'){ try{ r = JSON.parse(r); }catch(e){ r = []; } } return Array.isArray(r) ? r : []; };
   const ctHead = c => {
     const rs = ctRanges(c), parts = [];
-    parts.push(esc(c.contractNo || '(ไม่ระบุเลขสัญญา)'));
-    if(c.workType) parts.push('งาน'+esc(c.workType));
+    parts.push(`<span class="ct-a-no">${esc(c.contractNo || '(ไม่ระบุเลขสัญญา)')}</span>`);
+    if(c.workType) parts.push(`<span class="ct-a-type ${c.workType==='ไฟฟ้า'?'ty-elec':c.workType==='ผิวทาง'?'ty-pave':''}">งาน${esc(c.workType)}</span>`);
     if(rs.length){
-      const rt = rs.slice(0,2).map(r=>`ทล.${esc(r.route)}${r.controlNo?' ตอน '+esc(r.controlNo):''} กม.${ctKm(r.k1)}–${ctKm(r.k2)}${!c.workQty && r.qty?' ('+esc(r.qty)+')':''}`).join(' , ');
-      parts.push(rt + (rs.length>2?` +อีก ${rs.length-2} ช่วง`:''));
-    } else if(c.name) parts.push(esc(String(c.name).length>60 ? String(c.name).slice(0,60)+'…' : c.name));
-    if(c.workQty) parts.push('ปริมาณ '+esc(c.workQty));
-    return parts.join(' · ');
+      const rt = rs.slice(0,2).map(r=>`<b>ทล.${esc(r.route)}</b>${r.controlNo?' ตอน '+esc(r.controlNo):''} กม.${ctKm(r.k1)}–${ctKm(r.k2)}${!c.workQty && r.qty?' ('+esc(r.qty)+')':''}`).join(' , ');
+      parts.push(`<span class="ct-a-rt">${rt}${rs.length>2?` +อีก ${rs.length-2} ช่วง`:''}</span>`);
+    } else if(c.name) parts.push(`<span>${esc(String(c.name).length>60 ? String(c.name).slice(0,60)+'…' : c.name)}</span>`);
+    if(c.workQty) parts.push(`<span class="ct-a-qty">ปริมาณ ${esc(c.workQty)}</span>`);
+    return parts.join('');
   };
-  const ctItem = (c, msg) => `<div style="margin-top:4px;"><div style="color:var(--ink-900);font-weight:500;">• ${ctHead(c)}</div><div style="padding-left:12px;">${msg}</div></div>`;
-  const ctList = (arr, key) => alMore(arr.map(x=>ctItem(x.c, `สิ้นสุดสัญญา ${fmtDate(ctIso(x.c.endDate))} (เหลือ ${x[key]} วัน)`)), 5, 'สัญญา');
+  // tone = red / amber / blue (สีแถบซ้าย) · msg = ข้อความเตือน (HTML ที่ escape แล้ว)
+  const ctItem = (c, msg, tone) => `<div class="ct-a t-${tone||'blue'}"><div class="ct-a-l1">${ctHead(c)}</div><div class="ct-a-l2">${msg}</div></div>`;
+  const ctDays = (d, hot) => `<span class="${hot?'hot':'warm'}">${d<0?'เลยมา '+(-d):'เหลือ '+d} วัน</span>`;
+  const ctList = (arr, key) => alMore(arr.map(x=>ctItem(x.c, `สิ้นสุดสัญญา <b>${fmtDate(ctIso(x.c.endDate))}</b> · ${ctDays(x[key], x[key]<=15)}`, x[key]<=15?'red':'amber')), 5, 'สัญญา');
   // บวกเดือนแบบปฏิทิน (เหมือน ctAddMonths ในระบบที่ 2)
   const ctAddM = (iso, n) => { const [y,m,d] = iso.split('-').map(Number); const r = new Date(y, m-1+n, Math.min(d, new Date(y, m-1+n+1, 0).getDate())); return r.getFullYear()+'-'+String(r.getMonth()+1).padStart(2,'0')+'-'+String(r.getDate()).padStart(2,'0'); };
   const todayIso = todayISO();
@@ -1360,15 +1411,15 @@ function computeAlerts(){
     return r ? {c, m:r.m, d:daysUntil(r.date)} : null;
   }).filter(Boolean).sort((a,b)=>a.d-b.d);
   const reflOver = reflAll.filter(x=>x.d<0);
-  if(reflOver.length) out.red.push({id:'ct-refl-over', noAssign:true, task:'เลยกำหนดวัดค่าสะท้อนแสง — ยังไม่บันทึกวันที่วัดแล้ว', detailHTML: alMore(reflOver.map(x=>ctItem(x.c, `วัดค่าสะท้อนแสง รอบ ${x.m} เดือน (เลยมา ${-x.d} วัน)`)), 5, 'สัญญา'), pillHTML:`<span class="pill pill-danger">${reflOver.length} สัญญา</span>`});
+  if(reflOver.length) out.red.push({id:'ct-refl-over', noAssign:true, task:'เลยกำหนดวัดค่าสะท้อนแสง — ยังไม่บันทึกวันที่วัดแล้ว', detailHTML: alMore(reflOver.map(x=>ctItem(x.c, `วัดค่าสะท้อนแสง <b>รอบ ${x.m} เดือน</b> · ${ctDays(x.d, true)}`, 'red')), 5, 'สัญญา'), pillHTML:`<span class="pill pill-danger">${reflOver.length} สัญญา</span>`});
   const reflDue = reflAll.filter(x=>x.d>=0 && x.d<=30);
   const endSoon = cts.filter(c=>c.status!=='ระงับงาน' && !ctIso(c.deliveryDate) && ctIso(c.endDate) && (!ctIso(c.startDate) || daysUntil(ctIso(c.startDate))<=0) && daysUntil(ctIso(c.endDate))>=0 && daysUntil(ctIso(c.endDate))<=60)
     .map(c=>({c, d:daysUntil(ctIso(c.endDate))})).sort((a,b)=>a.d-b.d);
-  const wList = arr => alMore(arr.map(x=>ctItem(x.c, `คืนค้ำประกัน ${fmtDate(ctIso(x.c.warrantyEnd))} (ภายใน ${x.m} เดือน · เหลือ ${x.d} วัน)`)), 5, 'สัญญา');
+  const wList = arr => alMore(arr.map(x=>ctItem(x.c, `คืนค้ำประกัน <b>${fmtDate(ctIso(x.c.warrantyEnd))}</b> · ภายใน ${x.m} เดือน · ${ctDays(x.d, x.m===1)}`, x.m===1?'red':'amber')), 5, 'สัญญา');
   if(w30.length) out.red.push({id:'ct-warr-30', noAssign:true, task:'ครบกำหนดคืนค้ำประกันภายใน 1 เดือน — ควรตรวจความเสียหายก่อนคืนค้ำประกัน', detailHTML:wList(w30), pillHTML:`<span class="pill pill-danger">${w30.length} สัญญา</span>`});
   if(endSoon.length) out.blue.push({id:'ct-end-60', noAssign:true, task:'สัญญาใกล้สิ้นสุด (ภายใน 60 วัน)', detailHTML:ctList(endSoon,'d'), pillHTML:`<span class="pill pill-neutral">${endSoon.length} สัญญา</span>`});
   if(w90.length) out.blue.push({id:'ct-warr-90', noAssign:true, task:'ใกล้ครบกำหนดคืนค้ำประกัน (ภายใน 3 / 2 เดือน)', detailHTML:wList(w90), pillHTML:`<span class="pill pill-warn">${w90.length} สัญญา</span>`});
-  if(reflDue.length) out.blue.push({id:'ct-refl-30', noAssign:true, task:'ครบกำหนดวัดค่าสะท้อนแสง (ภายใน 30 วัน)', detailHTML: alMore(reflDue.map(x=>ctItem(x.c, `วัดค่าสะท้อนแสง รอบ ${x.m} เดือน (เหลือ ${x.d} วัน)`)), 5, 'สัญญา'), pillHTML:`<span class="pill pill-neutral">${reflDue.length} สัญญา</span>`});
+  if(reflDue.length) out.blue.push({id:'ct-refl-30', noAssign:true, task:'ครบกำหนดวัดค่าสะท้อนแสง (ภายใน 30 วัน)', detailHTML: alMore(reflDue.map(x=>ctItem(x.c, `วัดค่าสะท้อนแสง <b>รอบ ${x.m} เดือน</b> · ${ctDays(x.d, x.d<=7)}`, x.d<=7?'red':'amber')), 5, 'สัญญา'), pillHTML:`<span class="pill pill-neutral">${reflDue.length} สัญญา</span>`});
   return out;
 }
 function renderAlerts(){

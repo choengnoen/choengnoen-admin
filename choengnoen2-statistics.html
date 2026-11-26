@@ -348,6 +348,25 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ct-route{font-size:12.5px;color:var(--ink-600);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:340px;}
   .ct-route.empty{color:var(--ink-400);}
   .ct-by{font-size:12px;color:var(--ink-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:340px;}
+  /* ตารางงานสัญญา รอบ 26 พ.ย. 2569: ข้อมูลงานขึ้นก่อน ชื่อโครงการเป็นสีเทา · นับวันถอยหลัง · ขั้นถัดไป */
+  .ct-l1{display:flex;flex-wrap:wrap;align-items:center;gap:3px 6px;max-width:400px;}
+  .ct-type{font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;background:#e8eef5;color:var(--navy-800,#123a5e);white-space:nowrap;}
+  .ct-type.ty-elec{background:#fff3dc;color:#8a5a00;} .ct-type.ty-pave{background:#e9eef2;color:#33414e;}
+  .ct-area{font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:999px;white-space:nowrap;}
+  .ct-area.in{background:#e5f4ec;color:#1c8a53;} .ct-area.part{background:#fff3dc;color:#8a5a00;} .ct-area.out{background:#eef0f2;color:var(--ink-600);}
+  .ct-rt{font-size:13px;color:var(--ink-900);} .ct-rt b{color:var(--navy-900,#0a2540);}
+  .ct-qty{font-size:12.5px;color:var(--ink-600);}
+  .ct-name2{font-size:12.5px;color:var(--ink-600);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px;margin-top:2px;}
+  .ct-cd{font-size:11.5px;margin-top:2px;}
+  .ct-cd.hot{color:var(--danger);font-weight:700;} .ct-cd.warm{color:#b7791f;font-weight:600;} .ct-cd.cool{color:var(--ink-400);}
+  td.ct-past{color:var(--ink-400);}
+  .ct-next{font-weight:600;font-size:13px;white-space:nowrap;}
+  .ct-next.hot{color:var(--danger);} .ct-next.warm{color:#b7791f;} .ct-next.ok{color:var(--success,#1c8a53);} .ct-next.cool{color:var(--ink-600);}
+  .ct-next-sub{font-size:11.5px;color:var(--ink-600);white-space:nowrap;margin-top:1px;}
+  .ct-st{font-size:10.5px;color:var(--ink-400);margin-top:3px;}
+  #ct-kpi .routine-kpi-item.ct-k{cursor:pointer;border-radius:8px;transition:background .15s;}
+  #ct-kpi .routine-kpi-item.ct-k:hover{background:rgba(255,255,255,.06);}
+  #ct-kpi .routine-kpi-item.ct-k.active{background:rgba(242,169,48,.18);box-shadow:inset 0 -3px 0 #f2a930;}
   .ct-dl{display:grid;grid-template-columns:140px 1fr;gap:6px 12px;font-size:13.5px;margin:0 0 10px;}
   .ct-dl dt{color:var(--ink-400);}
   .ct-dl dd{margin:0;color:var(--ink-900);}
@@ -1257,6 +1276,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div class="toolbar">
               <select id="ct-fy" data-fy onchange="renderContracts()"></select>
               <select id="ct-area" aria-label="กรองตามพื้นที่" onchange="renderContracts()"><option value="">ทุกพื้นที่</option><option value="in">ในพื้นที่</option><option value="part">บางส่วน</option><option value="out">นอกพื้นที่</option></select>
+<select id="ct-sort" aria-label="เรียงลำดับ" onchange="renderContracts()"><option value="urgent">เรียงตามความเร่งด่วน</option><option value="new">เรียงตามสัญญาใหม่ก่อน</option></select>
 <div class="search-box">🔍 <input id="ct-search" placeholder="ค้นหาเลขที่สัญญา / โครงการ / สายทาง / ผู้รับจ้าง"></div>
               <span class="tb-sep"></span><button class="btn btn-ghost btn-ic" data-ic="down" data-tip="ส่งออก CSV (ให้เครื่องมือแผนที่)" onclick="exportContractsCsv()"></button>
               <button class="btn btn-primary" data-ic="plus" onclick="openContractForm(null)">เพิ่มสัญญา</button>
@@ -1387,7 +1407,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div class="tab" data-cttab="done">สิ้นสุดแล้ว</div>
           </div>
           <div class="table-wrap"><table>
-            <thead><tr><th>เลขที่สัญญา</th><th>โครงการ / สายทาง / ผู้รับจ้าง</th><th>เงินค่างาน (บาท)</th><th>สิ้นสุดสัญญา</th><th>คืนค้ำประกัน</th><th>วัดค่าสะท้อนแสง</th><th>สถานะ</th></tr></thead>
+            <thead><tr><th>เลขที่สัญญา</th><th>งาน / สายทาง / ผู้รับจ้าง</th><th>เงินค่างาน (บาท)</th><th>สิ้นสุดสัญญา</th><th>คืนค้ำประกัน</th><th>ขั้นถัดไป</th></tr></thead>
             <tbody id="ct-body"></tbody>
           </table></div>
           <div class="legend-block" id="ct-foot-block">
@@ -3499,6 +3519,57 @@ function ctRangeCell(c){
   const r = rs[0], text = `ทล.${r.route} กม.${kmFmt(r.k1)} – ${kmFmt(r.k2)}`;
   return `<div class="ct-route" title="${esc(rs.map(x=>`ทล.${x.route} กม.${kmFmt(x.k1)} – ${kmFmt(x.k2)}`).join(' , '))}">${esc(text)}${rs.length>1?` · +อีก ${rs.length-1} ช่วง`:''}</div>`;
 }
+/* ===== ตารางงานสัญญา รอบ 26 พ.ย. 2569 ===== */
+/* ช่องหลัก: บรรทัด 1 = ประเภทงาน · ทล. ตอน กม. · ปริมาณ · พื้นที่ / บรรทัด 2 = ชื่อโครงการ (สีเทา 1 บรรทัด) / บรรทัด 3 = ผู้รับจ้าง */
+function ctCellMain(c){
+  const rs = c.ranges||[], area = ctArea(c);
+  const ctlOf = r => r.controlNo || (ctSectionAt(r.route, r.k1)||{}).controlNo || '';
+  const rTxt = r => `ทล.${r.route}${ctlOf(r)?' ตอน '+ctlOf(r):''} กม.${kmFmt(r.k1)}–${kmFmt(r.k2)}`;
+  const type = c.workType ? `<span class="ct-type ${c.workType==='ไฟฟ้า'?'ty-elec':c.workType==='ผิวทาง'?'ty-pave':''}">งาน${esc(c.workType)}</span>` : '';
+  let rt = '<span class="ct-route empty">— ไม่ระบุช่วง —</span>';
+  if(rs.length){
+    const r = rs[0], ctl = ctlOf(r);
+    rt = `<span class="ct-rt" title="${esc(rs.map(rTxt).join(' , '))}"><b>ทล.${esc(r.route)}</b>${ctl?' ตอน '+esc(ctl):''} กม.${kmFmt(r.k1)}–${kmFmt(r.k2)}${rs.length>1?` · +อีก ${rs.length-1} ช่วง`:''}</span>`;
+  }
+  const qty = c.workQty || (rs.length===1 ? rs[0].qty : '');
+  const areaChip = ['in','part','out'].includes(area.key) ? `<span class="ct-area ${area.key}" title="${esc(area.text)}">${area.label}</span>` : '';
+  return `<div class="ct-l1">${type}${rt}${qty?`<span class="ct-qty">· ${esc(qty)}</span>`:''}${areaChip}</div>`
+    + `<div class="ct-name2" title="${esc(c.name)}">${esc(c.name)||'—'}</div>`
+    + (c.contractor ? `<div class="ct-by" title="${esc(c.contractor)}">${esc(c.contractor)}</div>` : '');
+}
+/* นับวันถอยหลังใต้วันที่: hotAt/warmAt = จำนวนวันที่เริ่มเป็นสีแดง/ส้ม */
+function ctCountdown(d, hotAt, warmAt){
+  if(d===null || d<0) return '';
+  return `<div class="ct-cd ${d<=hotAt?'hot':d<=warmAt?'warm':'cool'}">${d===0?'วันนี้':'อีก '+d+' วัน'}</div>`;
+}
+/* ขั้นถัดไป = เหตุการณ์ที่ยังไม่เกิดและใกล้ที่สุด → {text, sub, tone, rank} (rank ใช้เรียงความเร่งด่วน น้อย = ด่วน) */
+function ctNextStep(c, st){
+  if(st.key==='cancel') return {text:'ยกเลิกสัญญา', sub:'', tone:'cool', rank:1e7};
+  if(st.key==='hold') return {text:'ระงับงาน', sub:c.endDate?'สิ้นสุดสัญญา '+fmtDateShort(c.endDate):'', tone:'warm', rank:5e4};
+  const tone = (d, hot, warm) => d<0 || d<=hot ? 'hot' : d<=warm ? 'warm' : 'cool';
+  const ev = [];
+  if(st.key==='pending'){ const d = ctDaysTo(c.startDate); ev.push({text:'รอเริ่มงาน', sub:`เริ่ม ${fmtDateShort(c.startDate)} · อีก ${d} วัน`, tone:tone(d,-1,7), rank:d}); }
+  if(st.key==='running' || st.key==='unknown'){
+    const d = ctDaysTo(c.endDate);
+    ev.push(d===null ? {text:'รอส่งงาน', sub:'ยังไม่ระบุวันสิ้นสุด', tone:'cool', rank:1e5}
+                     : {text:'รอส่งงาน', sub:`ภายใน ${fmtDateShort(c.endDate)} · เหลือ ${d} วัน`, tone:tone(d,15,60), rank:d});
+  }
+  if(c.deliveryDate && !c.acceptDate && ctDaysTo(c.deliveryDate) <= 0 && ctDaysTo(c.deliveryDate) >= -60)
+    ev.push({text:'รอตรวจรับ', sub:`ส่งงาน ${fmtDateShort(c.deliveryDate)}`, tone:'warm', rank:0});
+  const n = ctNextRefl(c);
+  if(n) ev.push({text:n.days<0?'เลยกำหนดวัดค่าสะท้อนแสง':'วัดค่าสะท้อนแสง', sub:`รอบ ${n.months} เดือน · ${fmtDateShort(n.date)} · ${n.days<0?'เลยมา '+(-n.days):'อีก '+n.days} วัน`, tone:tone(n.days,30,60), rank:n.days});
+  const dW = ctDaysTo(c.warrantyEnd);
+  if(st.key==='warranty' && dW!==null && dW>=0) ev.push({text:'คืนค้ำประกัน', sub:`${fmtDateShort(c.warrantyEnd)} · อีก ${dW} วัน`, tone:tone(dW,30,90), rank:dW});
+  if(!ev.length) return st.key==='done' ? {text:'✓ ครบทุกขั้นแล้ว', sub:'', tone:'ok', rank:1e6} : {text:'—', sub:'', tone:'cool', rank:1e5};
+  return ev.sort((a,b)=>a.rank-b.rank)[0];
+}
+/* ตัวกรองด่วนจากแถบสรุปด้านบน (กดซ้ำ = ยกเลิก · กดแท็บ = ยกเลิก) */
+let ctQuick = '';
+function ctSetQuick(k){
+  ctQuick = ctQuick===k ? '' : k;
+  if(ctQuick){ document.querySelectorAll('[data-cttab]').forEach(x=>x.classList.toggle('active', x.dataset.cttab==='all')); }
+  renderContracts();
+}
 /* ค้นหาสัญญา: "ทล.3" = ตรงเลขสายทางเท่านั้น (ไม่รวม ทล.36, ทล.3139) · คำอื่นค้นแบบมีคำนั้นอยู่ในข้อความ */
 function ctMatchesSearch(c, q){
   const m = q.match(/^ทล\.?\s*(\S+)$/);
@@ -3518,48 +3589,52 @@ function renderContracts(){
   const reflSoon = withSt.filter(x=>x.st.key!=='cancel' && (ctNextRefl(x.c)||{days:99}).days<=30);
   const reflOver = reflSoon.filter(x=>ctReflOverdue(x.c).length).length;
   const sumAmt = running.reduce((s,x)=>s+(x.c.amount||0),0);
-  const kpi = (label,val,sub)=>`<div class="routine-kpi-item"><div class="kpi-label">${label}</div><div class="kpi-val">${val}</div><div class="kpi-sub">${sub}</div></div>`;
+  const kpi = (key,label,val,sub)=>`<div class="routine-kpi-item ct-k${ctQuick===key?' active':''}" role="button" tabindex="0" title="กดเพื่อกรองตาราง" onclick="ctSetQuick('${key}')"><div class="kpi-label">${label}</div><div class="kpi-val">${val}</div><div class="kpi-sub">${sub}</div></div>`;
   document.getElementById('ct-kpi').innerHTML =
-    kpi('กำลังดำเนินการ', running.length+' สัญญา', 'วงเงินรวม '+fmtNum(sumAmt,0)+' บาท') + '<div class="routine-kpi-div"></div>' +
-    kpi('ในระยะค้ำประกัน', warranty.length+' สัญญา', 'พ้นสัญญาแล้ว ยังอยู่ในค้ำประกัน') + '<div class="routine-kpi-div"></div>' +
-    kpi('สิ้นสุดสัญญาภายใน 60 วัน', endSoon.length+' สัญญา', endSoon.length?esc(endSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี') + '<div class="routine-kpi-div"></div>' +
-    kpi('คืนค้ำประกันภายใน 3 เดือน', warrSoon.length+' สัญญา', warrSoon.length?esc(warrSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี') + '<div class="routine-kpi-div"></div>' +
-    kpi('วัดค่าสะท้อนแสง ใกล้ถึง / เลยกำหนด', reflSoon.length+' สัญญา', reflSoon.length?(reflOver?'<span style="color:var(--danger);">เลยกำหนด '+reflOver+' สัญญา</span> · ':'')+esc(reflSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี');
+    kpi('running','กำลังดำเนินการ', running.length+' สัญญา', 'วงเงินรวม '+fmtNum(sumAmt,0)+' บาท') + '<div class="routine-kpi-div"></div>' +
+    kpi('warranty','ในระยะค้ำประกัน', warranty.length+' สัญญา', 'พ้นสัญญาแล้ว ยังอยู่ในค้ำประกัน') + '<div class="routine-kpi-div"></div>' +
+    kpi('end60','สิ้นสุดสัญญาภายใน 60 วัน', endSoon.length+' สัญญา', endSoon.length?esc(endSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี') + '<div class="routine-kpi-div"></div>' +
+    kpi('warr90','คืนค้ำประกันภายใน 3 เดือน', warrSoon.length+' สัญญา', warrSoon.length?esc(warrSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี') + '<div class="routine-kpi-div"></div>' +
+    kpi('refl','วัดค่าสะท้อนแสง ใกล้ถึง / เลยกำหนด', reflSoon.length+' สัญญา', reflSoon.length?(reflOver?'<span style="color:var(--danger);">เลยกำหนด '+reflOver+' สัญญา</span> · ':'')+esc(reflSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี');
+  const quickSets = {running, warranty, end60:endSoon, warr90:warrSoon, refl:reflSoon};
   const ctKey = c=> Number(c.fiscalYear) || fyKey(c.startDate);
   const ctFy = statFyFilter('ct-fy', contractsList.map(ctKey));
   const areaFilter = document.getElementById('ct-area')?.value || '';
   let rows = withSt.filter(x=>{
     if(ctFy && String(ctKey(x.c))!==ctFy) return false;
     if(areaFilter && ctArea(x.c).key!==areaFilter) return false;
+    if(ctQuick && quickSets[ctQuick] && !quickSets[ctQuick].includes(x)) return false;
     if(filter==='running') return x.st.key==='running';
     if(filter==='warranty') return x.st.key==='warranty';
     if(filter==='done') return x.st.key==='done' || x.st.key==='cancel';
     return true;
   });
   if(q) rows = rows.filter(x=> ctMatchesSearch(x.c, q));
-  rows.sort((a,b)=> String(b.c.startDate||'').localeCompare(String(a.c.startDate||'')) || String(b.c.contractNo).localeCompare(String(a.c.contractNo)));
+  rows.forEach(x=>{ x.nx = ctNextStep(x.c, x.st); });
+  const byNew = (a,b)=> String(b.c.startDate||'').localeCompare(String(a.c.startDate||'')) || String(b.c.contractNo).localeCompare(String(a.c.contractNo));
+  if((document.getElementById('ct-sort')?.value || 'urgent')==='urgent') rows.sort((a,b)=> a.nx.rank-b.nx.rank || byNew(a,b));
+  else rows.sort(byNew);
   const can = isAdmin();
-  body.innerHTML = rows.length ? rows.map(({c,st})=>{
-    const dEnd = ctDaysTo(c.endDate);
-    const endHint = (st.key==='running' && dEnd!==null && dEnd<=60) ? `<div style="font-size:11px;color:var(--danger);">เหลือ ${dEnd} วัน</div>` : '';
-    const wa = ctWarrAlert(c);
-    const wHint = wa ? `<div style="font-size:11px;color:${wa.months===1?'var(--danger)':'var(--warn,#b7791f)'};">⚠ ภายใน ${wa.months} เดือน (เหลือ ${wa.days} วัน)</div>` : '';
-    const area = ctArea(c);
+  body.innerHTML = rows.length ? rows.map(({c,st,nx})=>{
+    const dEnd = ctDaysTo(c.endDate), dW = ctDaysTo(c.warrantyEnd);
+    const endHint = (st.key==='running' || st.key==='pending' || st.key==='hold') ? ctCountdown(dEnd, 15, 60) : '';
+    const wHint = st.key==='warranty' ? ctCountdown(dW, 30, 90) : '';
+    const endPast = dEnd!==null && dEnd<0, wPast = dW!==null && dW<0;
     return `<tr data-ct="${esc(c.id)}" onclick="openContractDetail('${jsArg(c.id)}')" title="กดเพื่อดูรายละเอียด">
-      <td style="white-space:nowrap;">${esc(c.contractNo)||'—'}</td>
-      <td><div class="ct-name" title="${esc(c.name)}">${esc(c.name)||'—'}</div>${ctRangeCell(c)}<div class="ct-by" title="${esc(c.contractor)}">${esc(c.contractor)}</div></td>
+      <td style="white-space:nowrap;font-weight:700;">${esc(c.contractNo)||'—'}</td>
+      <td>${ctCellMain(c)}</td>
       <td class="num">${c.amount?fmtNum(c.amount,2):'—'}</td>
-      <td style="white-space:nowrap;">${fmtDateShort(c.endDate)}${endHint}</td>
-      <td style="white-space:nowrap;">${fmtDateShort(c.warrantyEnd)}${wHint}</td>
-      <td style="font-size:12.5px;white-space:nowrap;">${ctReflCell(c)}</td>
-      <td><span class="pill ${st.cls}">${st.label}</span>${area.label?`<div style="margin-top:4px;"><span class="pill ${area.cls}" title="${esc(area.text)}">${area.label}</span></div>`:''}</td>
+      <td style="white-space:nowrap;"${endPast?' class="ct-past"':''}>${fmtDateShort(c.endDate)}${endHint}</td>
+      <td style="white-space:nowrap;"${wPast?' class="ct-past"':''}>${fmtDateShort(c.warrantyEnd)}${wHint}</td>
+      <td><div class="ct-next ${nx.tone}">${nx.text}</div>${nx.sub?`<div class="ct-next-sub">${nx.sub}</div>`:''}<div class="ct-st">${st.label}</div></td>
     </tr>`;
-  }).join('') : `<tr><td colspan="7" style="text-align:center;color:var(--ink-400);padding:22px;">${contractsList.length?'ไม่พบรายการตามเงื่อนไข':'ยังไม่มีข้อมูลสัญญา'+(can?' — กด "+ เพิ่มสัญญา" เพื่อเริ่มบันทึก':'')}</td></tr>`;
+  }).join('') : `<tr><td colspan="6"style="text-align:center;color:var(--ink-400);padding:22px;">${contractsList.length?'ไม่พบรายการตามเงื่อนไข':'ยังไม่มีข้อมูลสัญญา'+(can?' — กด "+ เพิ่มสัญญา" เพื่อเริ่มบันทึก':'')}</td></tr>`;
   document.getElementById('ct-foot').innerHTML = `<ol style="margin:0;padding-left:20px;line-height:1.7;">
       <li>กำลังดำเนินการ = ยังไม่ส่งงาน และยังไม่พ้นวันสิ้นสุดสัญญา</li>
       <li>ในระยะค้ำประกัน = ส่งงาน/ตรวจรับแล้ว แต่ยังไม่ถึงวันคืนค้ำประกัน</li>
       <li>แจ้งเตือนคืนค้ำประกันล่วงหน้า 3 / 2 / 1 เดือน</li>
       <li>วัดค่าสะท้อนแสง 12 และ 24 เดือน นับจากวันส่งงาน</li>
+      <li>ขั้นถัดไป = สิ่งที่ต้องทำต่อที่ใกล้ที่สุด (รอส่งงาน / รอตรวจรับ / วัดค่าสะท้อนแสง / คืนค้ำประกัน)</li>
       <li>ในพื้นที่ / บางส่วน / นอกพื้นที่ = ระบบเทียบช่วง กม. ของสัญญากับช่วงที่หมวดดูแลให้เอง</li>
       <li>เพิ่ม/แก้/ลบได้เฉพาะผู้มีสิทธิ์แก้ไขส่วนงานที่ 2</li>
     </ol>`;
@@ -3974,7 +4049,7 @@ function exportContractsCsv(){
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
 document.querySelectorAll('[data-cttab]').forEach(t=>t.addEventListener('click',()=>{
-  document.querySelectorAll('[data-cttab]').forEach(x=>x.classList.remove('active')); t.classList.add('active'); renderContracts();
+  document.querySelectorAll('[data-cttab]').forEach(x=>x.classList.remove('active')); t.classList.add('active'); ctQuick = ''; renderContracts();
 }));
 document.getElementById('ct-search').addEventListener('input', ()=>renderContracts());
 
