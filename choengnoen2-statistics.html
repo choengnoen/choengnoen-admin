@@ -275,6 +275,13 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .pr-name{font-family:'Kanit',sans-serif;font-weight:600;color:var(--navy-900);line-height:1.35;}
   .pr-name .c{color:var(--ink-400);font-weight:500;margin-right:4px;}
   .pr-subc{font-size:11.5px;color:var(--ink-400);margin-top:2px;}
+  .pr-flag{font-size:11.5px;color:#b42323;margin-top:3px;line-height:1.4;}
+  /* แท็บย่อยในหน้า ค่างานต่อหน่วย: จากงานจริง / ราคาแขวง (อ้างอิง) */
+  .uc-tabs{display:inline-flex;background:var(--paper-100);border-radius:10px;padding:3px;gap:2px;}
+  .uc-tab{border:0;background:transparent;font-family:'Kanit',sans-serif;font-size:13.5px;color:var(--ink-600);padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;}
+  .uc-tab.active{background:#fff;color:var(--navy-900);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12);}
+  .ucref-diff{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+  .ucref-diff.lo{background:#e3f4ea;color:#1f7a45;} .ucref-diff.hi{background:#fde4e4;color:#b42323;} .ucref-diff.na{background:var(--paper-100);color:var(--ink-600);font-weight:500;}
   .pr-pct{text-align:right;}
   .pr-pct b{font-family:'Kanit',sans-serif;font-size:19px;display:block;line-height:1.2;}
   .pr-st{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;}
@@ -423,9 +430,13 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   /* โมดัลรายละเอียดสัญญา (แบบ 1: หัวสรุปยอดเงิน + ไทม์ไลน์วันสำคัญ) */
   #ct-detail-overlay .modal-box{max-width:980px;} /* ไซส์ L เท่าฟอร์มสัญญา */ .ct-detail-head{flex-wrap:wrap;padding:12px 20px !important;row-gap:8px !important;} .ct-detail-head .gmodal-head-icon{width:32px;height:32px;border-radius:9px;} .ct-detail-head .gmodal-head-icon svg{width:17px;height:17px;} .ct-detail-head > div:nth-child(2){display:flex;align-items:center;flex-wrap:wrap;gap:2px 10px;min-width:0;flex:1;} .ct-detail-head .gmodal-subtitle{margin:0;}
   .ctv-hero{flex-basis:100%;min-width:0;display:grid;gap:12px;padding-top:2px;}
-  .ctv-name{font-family:'Kanit',sans-serif;font-size:16.5px;font-weight:500;color:#fff;line-height:1.55;}
+  .ctv-name{font-family:'Sarabun',sans-serif;font-size:15px;font-weight:400;color:#d5deea;line-height:1.6;}
+  #ct-detail-title{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+  .ctv-no-lb{font-family:'Sarabun',sans-serif;font-size:13px;font-weight:400;color:#a9b6c8;}
+  .ctv-no{font-family:'Kanit',sans-serif;font-size:24px;font-weight:600;color:#fff;letter-spacing:.3px;line-height:1.2;}
   /* แถบสรุป 4 ช่อง: หัวข้อเล็กบน ค่าล่าง คั่นด้วยเส้นบาง ๆ */
-  .ctv-facts{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1.35fr);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;}
+  .ctv-amount{font-family:'Kanit',sans-serif;font-size:17px;font-weight:600;color:var(--orange-600,#e0620f);}
+  .ctv-facts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;}
   .ctv-fact{padding:11px 18px 12px;min-width:0;}
   .ctv-fact + .ctv-fact{border-left:1px solid rgba(255,255,255,.12);}
   .ctv-fact .k{font-size:12px;color:#a9b6c8;margin-bottom:4px;}
@@ -506,7 +517,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .gmodal-footer .img-copy-btn{width:42px;height:42px;border-radius:12px;}
   .ct-toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;background:#111827;color:#fff;padding:10px 18px;border-radius:12px;font-size:14px;z-index:9999;transition:.25s;pointer-events:none;max-width:calc(100vw - 32px);text-align:center;}
   .ct-toast.show{opacity:1;transform:translate(-50%,0);}
-  @media(max-width:560px){.ctv-grid{grid-template-columns:1fr;} .ctv-name{font-size:16px;} .ctv-facts{grid-template-columns:1fr 1fr;} .ctv-fact.route{grid-column:1/-1;border-left:0 !important;border-top:1px solid rgba(255,255,255,.12);order:3;} .ctv-fact.money .v{font-size:18px;} .ctv-row{grid-template-columns:1fr;gap:2px;} .ctv-tag{display:none;}}
+  @media(max-width:560px){.ctv-grid{grid-template-columns:1fr;} .ctv-name{font-size:14px;} .ctv-no{font-size:21px;} .ctv-facts{grid-template-columns:1fr;} .ctv-fact.route{grid-column:1/-1;border-left:0 !important;border-top:1px solid rgba(255,255,255,.12);order:3;} .ctv-fact.money .v{font-size:18px;} .ctv-row{grid-template-columns:1fr;gap:2px;} .ctv-tag{display:none;}}
   /* โหมดถ่ายรูป (ใช้เฉพาะในสำเนาที่ html2canvas วาดตอนกด "คัดลอกรูป"): แสดงเนื้อหาครบไม่ตัด ซ่อนปุ่ม */
   html.ct-snap #ct-detail-overlay{position:static !important;display:block !important;padding:0 !important;background:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;animation:none !important;}
   html.ct-snap #ct-detail-overlay .modal-box{max-height:none !important;box-shadow:none !important;border-radius:0 !important;animation:none !important;margin:0 !important;}
@@ -1772,11 +1783,19 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
         <div class="section">
           <div class="section-head">
             <h2><span class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f2a930" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
-              ค่างานต่อหน่วยเฉลี่ย (จากงานจริง)
+              <span id="unitcost-title">ค่างานต่อหน่วยเฉลี่ย (จากงานจริง)</span>
               <span class="head-desc" id="unitcost-ctx"></span>
             </h2>
+            <div class="uc-tabs no-print" role="tablist">
+              <button type="button" class="uc-tab active" data-uctab="real" onclick="setUcTab('real')">จากงานจริง</button>
+              <button type="button" class="uc-tab" data-uctab="ref" onclick="setUcTab('ref')">ราคาแขวง (อ้างอิง)</button>
+            </div>
           </div>
-          <div class="table-wrap"><table>
+          <div class="table-wrap hidden" id="ucref-wrap"><table>
+            <thead><tr><th style="text-align:left;">งาน</th><th>ราคาแขวง/หน่วย</th><th>ปริมาณตามแผน</th><th>งบตามแผน (บาท)</th><th>ค่างานจริงเฉลี่ย/หน่วย</th><th>เทียบราคาแขวง</th></tr></thead>
+            <tbody id="ucref-body"></tbody>
+          </table></div>
+          <div class="table-wrap" id="unitcost-wrap"><table>
             <thead><tr><th style="text-align:left;">งาน</th><th>ปริมาณงานรวม</th><th>รวมต้นทุน (บาท)</th><th>ค่างานต่อหน่วยเฉลี่ย</th><th style="width:60px;"></th></tr></thead>
             <tbody id="unitcost-body" class="rollup-tbody"></tbody>
           </table></div>
@@ -1888,7 +1907,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div class="table-wrap table-wrap-sticky" id="bmm-body-wrap" style="background:#fff;"></div>
           <div class="legend-block" id="bmm-foot-block">
             <button type="button" class="legend-dot-btn no-print" id="bmm-foot-toggle" onclick="__toggleNote('bmm-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="bmm-foot" style="display:none;background:transparent;border-top:none;">แถบสีคือเงินที่ใช้ไปเทียบงบตามแผนทั้งปี เส้นตั้งสีเข้มคือจุดที่ควรถึงตามเวลาที่ผ่านไปของปีงบ — ผลงานต่ำกว่าเส้นเกิน 10% = ช้ากว่าเวลา, สูงกว่าเกิน 10% = เร็วกว่าเวลา, เกิน 100% = เกินแผน<br>ผลงานรวมยอดเดือนที่ปิดแล้ว และยอดคำนวณสดจากใบสั่งการรายวันของเดือนที่ยังไม่ปิด — กดหมวดเพื่อดูรหัสงานย่อย ตัวเลือก "มุมมอง" มีผลกับตารางรหัสงานย่อยเท่านั้น</div>
+            <div class="foot-note" id="bmm-foot" style="display:none;background:transparent;border-top:none;">มูลค่าผลงาน = ปริมาณที่ทำได้ × ราคาต่อหน่วยตามแผนของแขวง (รหัสงาน+หน่วยเดียวกัน) ; "จ่ายจริง" คือค่าวัสดุ+แรงงาน+เช่า+น้ำมันจริง แสดงประกอบ ; ผลที่ไม่มีราคาในแผนใช้ค่าใช้จ่ายจริงแทน<br>แถบสีคือมูลค่าผลงานเทียบงบตามแผนทั้งปี เส้นตั้งสีเข้มคือจุดที่ควรถึงตามเวลาที่ผ่านไปของปีงบ — ผลงานต่ำกว่าเส้นเกิน 10% = ช้ากว่าเวลา, สูงกว่าเกิน 10% = เร็วกว่าเวลา, เกิน 100% = เกินแผน<br>ผลงานรวมยอดเดือนที่ปิดแล้ว และยอดคำนวณสดจากใบสั่งการรายวันของเดือนที่ยังไม่ปิด — กดหมวดเพื่อดูรหัสงานย่อย ตัวเลือก "มุมมอง" มีผลกับตารางรหัสงานย่อยเท่านั้น</div>
           </div>
         </div>
       </div>
@@ -3463,7 +3482,9 @@ function openContractDetail(id){
     const dd = ctDaysTo(r.date);
     return `<div style="${dd<=30?'color:var(--danger);font-weight:600;':''}">${nw('รอบ '+r.months+' เดือน')} · ${nw('กำหนด '+fmtDateShort(r.date))} · ${nw(dd<0?'เลยกำหนด '+(-dd)+' วัน (ยังไม่แจ้งแขวง)':'ยังไม่แจ้งแขวง'+(dd<=30?' (อีก '+dd+' วัน)':''))}</div>`;
   }).join('') : 'รอวันส่งงาน') : 'ไม่ต้องวัด';
-  document.getElementById('ct-detail-title').textContent = c.contractNo ? 'สัญญาเลขที่ ' + c.contractNo : 'รายละเอียดสัญญา';
+  // เลขที่สัญญาคือข้อมูลที่ต้องเห็นชัดที่สุด: คำว่า "สัญญาเลขที่" เล็ก สีจาง · เลขที่ตัวใหญ่
+  document.getElementById('ct-detail-title').innerHTML = c.contractNo
+    ? `<span class="ctv-no-lb">สัญญาเลขที่</span><span class="ctv-no">${esc(c.contractNo)}</span>` : 'รายละเอียดสัญญา';
   document.getElementById('ct-detail-sub').innerHTML = `<span class="pill ${st.cls}" style="font-size:11px;">${st.label}</span>${c.fiscalYear && !c.contractNo?' &nbsp;ปีงบประมาณ '+esc(c.fiscalYear):''}`;
   // หัวสรุป (จัดใหม่ 26 พ.ย. 2569): บรรทัดชื่องานเต็มความกว้าง แล้วตามด้วยแถบสรุป 4 ช่อง หัวข้อเล็กอยู่บน ค่าอยู่ล่าง
   // ผู้รับจ้าง | เงินค่างาน | ช่วงทางหลวง (+พื้นที่เป็นบรรทัดรอง) | ปริมาณงาน
@@ -3473,7 +3494,6 @@ function openContractDetail(id){
     `<div class="ctv-name">${c.name ? esc(c.name) : '—'}</div>
      <div class="ctv-facts">` +
       fact('ผู้รับจ้าง', c.contractor ? esc(c.contractor) : '—') +
-      fact('เงินค่างาน', c.amount ? fmtNum(c.amount,2)+'<small>บาท</small>' : '—', 'money') +
       fact('ช่วงทางหลวง', ctvRouteHtml(c) + (area.text ? `<div class="sub ${area.key}">${esc(area.text)}</div>` : ''), 'route') +
     `</div>`;
   // ไทม์ไลน์วันสำคัญ: ผ่านมาแล้ว = จุดส้มทึบ · ถัดไป = วงส้ม · ยังไม่ระบุ = เส้นประ
@@ -3517,6 +3537,8 @@ function openContractDetail(id){
     (c.fiscalYear ? kv('ปีงบประมาณ', esc(c.fiscalYear)) : '') +
     kv('ประเภทงาน', c.workType ? 'งาน'+esc(c.workType) : dash) +
     kv('ระยะเวลา', (c.durationDays ? `<b>${c.durationDays} วัน</b><br>` : '') + `<span class="ctv-sub">${period}</span> ${endHint}`) +
+    // เงินค่างาน (ย้ายจากหัวหน้าต่าง 26 พ.ย. 2569) อยู่ก่อนค่าปรับ
+    kv('เงินค่างาน', c.amount ? `<span class="ctv-amount">${fmtNum(c.amount,2)}</span> บาท` : dash) +
     kv('ค่าปรับวันละ', c.penaltyPerDay ? fmtNum(c.penaltyPerDay,2)+' บาท' : dash)));
   // ผู้รับผิดชอบ: แยกบทบาทท้ายบรรทัด (ประธานกรรมการ / กรรมการ / กรรมการและเลขานุการ / ผู้ควบคุมงาน) เป็นป้ายเล็ก
   const ROLE_RX = /\s*(ประธานกรรมการ|กรรมการและเลขานุการ|กรรมการ|ผู้ควบคุมงาน)\s*$/;
@@ -4359,8 +4381,8 @@ function bmmRowHtml(e, groupClass, showUnit){
       <td><span class="bmm-code">${esc(e.code)}</span> ${esc(e.name)}${e.unit ? `<div class="bmm-sub">หน่วย: ${esc(e.unit)}</div>` : ''}</td>
       <td>${kindPill}${livePill}</td>
       <td class="num">${fmtQtyShort(e.qty)}</td>
-      <td class="num"><b>${fmtMoney(bmmBudget(e))}</b>${bmmSupplementTotal(e)>0 ? `<br><span style="font-size:10px;color:var(--orange-600);font-weight:600;white-space:nowrap;">+เพิ่มเติม ${fmtNum(bmmSupplementTotal(e),0)}</span>` : ''}</td>
-      <td class="num">${fmtMoney(bmmUnitCost(e))}</td>
+      <td class="num"><b>${fmtMoney(bmmValueOf(e))}</b>${bmmSupplementTotal(e)>0 ? `<br><span style="font-size:10px;color:var(--orange-600);font-weight:600;white-space:nowrap;">+เพิ่มเติม ${fmtNum(bmmSupplementTotal(e),0)}</span>` : ''}${e.kind==='actual' ? `<br><span style="font-size:10.5px;color:var(--ink-400);white-space:nowrap;">จ่ายจริง ${fmtNum(bmmBudget(e),0)}</span>` : ''}</td>
+      <td class="num">${e.kind==='actual' && !bmmRateOf(e) ? `<span style="color:#b42323;font-size:11px;" title="ไม่มีราคาตามแผนสำหรับรหัสงาน/หน่วยนี้ — มูลค่าใช้ค่าใช้จ่ายจริงแทน">${bmmPlanHasCode(e.code) ? 'หน่วยไม่ตรงแผน' : 'ไม่มีในแผน'}</span>` : fmtMoney(e.kind==='actual' ? bmmRateOf(e) : bmmUnitCost(e))}</td>
       <td>${e.no!=null ? `<button class="btn btn-ghost btn-ic btn-sm" data-ic="pen" data-tip="แก้ไข" onclick="event.stopPropagation();openBmmForm(${e.no})"></button>` : ''}</td>
     </tr>
     <tr class="cost-detail"><td colspan="6">${bmmCostChipsHtml(e.material||0, e.labor||0, e.rent||0, e.fuel||0, (e.service||0)+(e.contract||0))}</td></tr>
@@ -4388,7 +4410,7 @@ function bmmTotalsRowHtml(rows, kind, label, showUnit){
   `;
 }
 function bmmTheadHtml(showUnit){
-  return `<tr><th style="width:38%;text-align:left;">งาน</th><th style="width:11%;">แผน/ผล</th><th style="width:13%;">ปริมาณ</th><th style="width:17%;">งบประมาณ (บาท)</th><th style="width:13%;">ราคา/หน่วย</th><th style="width:8%;">จัดการ</th></tr>`;
+  return `<tr><th style="width:38%;text-align:left;">งาน</th><th style="width:11%;">แผน/ผล</th><th style="width:13%;">ปริมาณ</th><th style="width:17%;">มูลค่า (บาท)</th><th style="width:13%;">ราคา/หน่วย (แผน)</th><th style="width:8%;">จัดการ</th></tr>`;
 }
 /* แผนงาน-ผลงาน (แบบ D — ไล่ระดับหลัก→ย่อย): การ์ดหมวดหลักคำนวณแผน/ผลจากทุกรายการของปีงบเสมอ
    (ไม่ขึ้นกับตัวกรอง bmm-kind) เพราะแถบเทียบต้องเห็นทั้งสองค่าพร้อมกันตลอด — ตัวกรอง kind มีผลแค่กับ
@@ -4405,15 +4427,30 @@ function renderBmmTable(){
   const fySub = bmmEntriesWithLive().filter(e=> e.fy===fy && e.level==='sub');
   const subRows = fySub.filter(e=> kind==='all' || e.kind===kind);
 
-  const planMain = bmmAggregateToMain(fySub.filter(e=>e.kind==='plan'));
-  const actualMain = bmmAggregateToMain(fySub.filter(e=>e.kind==='actual'));
-  const mainCodes = Array.from(new Set([...planMain.map(m=>m.code), ...actualMain.map(m=>m.code)])).sort((a,b)=>a.localeCompare(b,'th'));
+  /* มูลค่าผลงาน = ปริมาณผล × ราคาต่อหน่วยตามแผนของแขวง (bmmValueOf) — ค่าใช้จ่ายจริงแยกไว้แสดงประกอบ */
+  bmmBuildRateCache(fySub);
+  const sums = {};
+  fySub.forEach(e=>{
+    const mc = bmmMainCodeOf(e.code); if(!mc) return;
+    const s = sums[mc] || (sums[mc] = {plan:0, actual:0, cost:0, noRate:0});
+    if(e.kind==='plan') s.plan += bmmBudget(e);
+    else { s.actual += bmmValueOf(e); s.cost += bmmBudget(e); if(!bmmRateOf(e)) s.noRate++; }
+  });
+  const mainCodes = Object.keys(sums).sort((a,b)=>a.localeCompare(b,'th'));
+  /* รหัสงานที่ปริมาณผลสะสมเกินปริมาณแผนทั้งปี (มักเป็นข้อมูลกรอกผิด เช่น หน่วยไม่ตรง) */
+  const overQty = {};
+  Object.keys(__bmmRate).forEach(k=>{
+    const [code, unit] = k.split('|'); const r = __bmmRate[k];
+    const got = fySub.filter(e=>e.kind==='actual' && e.code===code && (e.unit||'')===unit).reduce((s,e)=>s+(e.qty||0),0);
+    if(r.qty>0 && got>r.qty) overQty[code] = {got, plan:r.qty, unit};
+  });
 
   /* เวลาที่ผ่านไปของปีงบ (%) — ใช้เป็นเส้น "ควรถึง" เทียบกับ % ผลงาน */
   const fyStart = new Date(fy-544, 9, 1), fyEnd = new Date(fy-543, 9, 1);
   const timePct = Math.max(0, Math.min(100, (TODAY - fyStart) / (fyEnd - fyStart) * 100));
-  const totPlan = planMain.reduce((s,m)=>s+bmmBudget(m),0);
-  const totActual = actualMain.reduce((s,m)=>s+bmmBudget(m),0);
+  const totPlan = mainCodes.reduce((s,c)=>s+sums[c].plan,0);
+  const totActual = mainCodes.reduce((s,c)=>s+sums[c].actual,0);
+  const totCost = mainCodes.reduce((s,c)=>s+sums[c].cost,0);
   const totPct = totPlan>0 ? Math.round(totActual/totPlan*100) : null;
   const asOf = TODAY < fyEnd ? TODAY : new Date(fyEnd - 864e5);
   const asOfTxt = `${asOf.getDate()} ${THAI_MONTHS_FULL[asOf.getMonth()]} ${asOf.getFullYear()+543}`;
@@ -4423,7 +4460,7 @@ function renderBmmTable(){
     <div class="pr-over">
       <div class="pr-kpis">
         <div class="pr-kpi"><div class="k">งบตามแผน ปีงบ ${fy}</div><div class="v">${fmtNum(totPlan,0)}</div><div class="s">บาท · ${mainCodes.length} หมวดงาน</div></div>
-        <div class="pr-kpi"><div class="k">ผลงาน (ใช้ไปแล้ว)</div><div class="v">${fmtNum(totActual,0)}</div><div class="s">บาท · ถึง ${asOfTxt}</div></div>
+        <div class="pr-kpi"><div class="k">มูลค่าผลงาน (ตามราคาแผน)</div><div class="v">${fmtNum(totActual,0)}</div><div class="s">บาท · ถึง ${asOfTxt} · จ่ายจริง ${fmtNum(totCost,0)}</div></div>
         <div class="pr-kpi"><div class="k">คงเหลือตามแผน</div><div class="v" style="${totPlan-totActual<0?'color:#b42323;':''}">${fmtNum(totPlan-totActual,0)}</div><div class="s">บาท</div></div>
         <div class="pr-kpi"><div class="k">ความก้าวหน้า</div><div class="v">${totPct==null?'—':totPct+'%'} <span class="pr-st ${st.cls}" style="vertical-align:4px;">${st.label}</span></div><div class="s">เวลาผ่านไป ${Math.round(timePct)}% ของปี</div></div>
       </div>
@@ -4438,10 +4475,11 @@ function renderBmmTable(){
     </div>` : `<div style="padding:10px 0 0;">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div>`;
 
   const cards = mainCodes.map(code=>{
-    const plan = planMain.find(m=>m.code===code);
-    const actual = actualMain.find(m=>m.code===code);
-    const planBudget = plan ? bmmBudget(plan) : 0;
-    const actualBudget = actual ? bmmBudget(actual) : 0;
+    const planBudget = sums[code].plan;
+    const actualBudget = sums[code].actual;
+    const flags = [];
+    Object.keys(overQty).filter(c=>bmmMainCodeOf(c)===code).forEach(c=>flags.push(`${c} ปริมาณผล ${fmtQtyShort(overQty[c].got)} เกินแผนทั้งปี ${fmtQtyShort(overQty[c].plan)} ${overQty[c].unit}`));
+    if(sums[code].noRate) flags.push(`${sums[code].noRate} รายการไม่มีราคาตามแผน/หน่วยไม่ตรง (ใช้ค่าใช้จ่ายจริงแทน)`);
     const pct = planBudget>0 ? Math.round(actualBudget/planBudget*100) : null;
     const rs = bmmStatusOf(pct, planBudget, actualBudget, timePct);
     const subCount = new Set(fySub.filter(e=>bmmMainCodeOf(e.code)===code).map(e=>e.code)).size;
@@ -4465,15 +4503,37 @@ function renderBmmTable(){
       <div class="pr-nm">
         <div class="pr-name"><span class="c">${esc(code)}</span>${esc(bmmMainName(code))}</div>
         <div class="pr-subc">${subCount} รหัสงาน</div>
+        ${flags.map(f=>`<div class="pr-flag">⚠ ${esc(f)}</div>`).join('')}
       </div>
       <div class="pr-track">${bmmBarInner(pct, rs, timePct)}</div>
       <div class="pr-pct"><b style="color:${rs.ink};">${pct==null?'—':pct+'%'}</b><span class="pr-st ${rs.cls}">${rs.label}</span></div>
-      <div class="pr-amt">ใช้ไป <b>${fmtNum(actualBudget,0)}</b> / ${fmtNum(planBudget,0)} บาท<br>${remain>=0 ? `เหลือ ${fmtNum(remain,0)} บาท` : `<span style="color:#b42323;">เกิน ${fmtNum(-remain,0)} บาท</span>`}</div>
+      <div class="pr-amt">ผลงาน <b>${fmtNum(actualBudget,0)}</b> / ${fmtNum(planBudget,0)} บาท<br>${remain>=0 ? `เหลือ ${fmtNum(remain,0)} บาท` : `<span style="color:#b42323;">เกิน ${fmtNum(-remain,0)} บาท</span>`}<br><span style="color:var(--ink-400);">จ่ายจริง ${fmtNum(sums[code].cost,0)} บาท</span></div>
     </div>
     ${subTable}`;
   }).join('');
 
   document.getElementById('bmm-body-wrap').innerHTML = cards || `<div style="padding:30px;text-align:center;color:var(--ink-400);">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div>`;
+}
+/* ราคาต่อหน่วยตามแผนของแขวง: งบแผน ÷ ปริมาณแผน ของรหัสงาน+หน่วยเดียวกันในปีงบนั้น (สร้างใหม่ทุกครั้งที่วาดตาราง) */
+let __bmmRate = {};
+function bmmBuildRateCache(fySub){
+  __bmmRate = {};
+  fySub.filter(e=>e.kind==='plan').forEach(e=>{
+    const k = e.code+'|'+(e.unit||'');
+    const r = __bmmRate[k] || (__bmmRate[k] = {qty:0, budget:0});
+    r.qty += e.qty||0; r.budget += bmmBudget(e);
+  });
+}
+function bmmRateOf(e){
+  const r = __bmmRate[e.code+'|'+(e.unit||'')];
+  return r && r.qty>0 ? r.budget/r.qty : 0;
+}
+function bmmPlanHasCode(code){ return Object.keys(__bmmRate).some(k=>k.split('|')[0]===code); }
+/* มูลค่าของรายการ: แผน = งบแผน ; ผล = ปริมาณ × ราคาตามแผน (ไม่มีราคาในแผน → ใช้ค่าใช้จ่ายจริง) */
+function bmmValueOf(e){
+  if(e.kind==='plan') return bmmBudget(e);
+  const rate = bmmRateOf(e);
+  return rate ? (e.qty||0)*rate : bmmBudget(e);
 }
 /* สถานะเทียบ % ผลงานกับ % เวลาที่ผ่านไปของปีงบ (ยอมคลาด 10 จุด) */
 function bmmStatusOf(pct, plan, actual, timePct){
@@ -7370,7 +7430,69 @@ function unitCostStandardSectionHtml(code){
     ${body}
   </div>`;
 }
+/* แท็บย่อย "ราคาแขวง (อ้างอิง)": ราคาต่อหน่วยที่แขวงกำหนด = งบแผน ÷ ปริมาณแผน ของปีงบที่เลือก (จาก bmmEntries แผน)
+   เปลี่ยนปีงบที่ตัวกรองรวม → ราคาเปลี่ยนตามแผนของปีนั้นเอง ; เทียบกับค่างานจริงเฉลี่ยทั้งปีงบ เฉพาะรหัสที่หน่วยตรงกัน */
+let __ucTab = 'real';
+function setUcTab(t){
+  __ucTab = t;
+  document.querySelectorAll('.uc-tab').forEach(b=>b.classList.toggle('active', b.dataset.uctab===t));
+  document.getElementById('ucref-wrap').classList.toggle('hidden', t!=='ref');
+  document.getElementById('unitcost-wrap').classList.toggle('hidden', t==='ref');
+  const fb = document.getElementById('unitcost-foot-block'); if(fb) fb.classList.toggle('hidden', t==='ref');
+  renderUnitCostReport();
+}
+function renderUcRefTable(){
+  const body = document.getElementById('ucref-body'); if(!body) return;
+  const fy = +(document.getElementById('g-fy')||{}).value || fyOfDate(TODAY.toISOString().slice(0,10));
+  const ctx = document.getElementById('unitcost-ctx'); if(ctx) ctx.textContent = '· ปีงบประมาณ ' + fy + ' (ตามแผนที่แขวงอนุมัติ)';
+  const plans = {};
+  bmmEntries.filter(e=>e.kind==='plan' && e.fy===fy && e.level==='sub').forEach(e=>{
+    const k = e.code+'|'+(e.unit||'');
+    const p = plans[k] || (plans[k] = {code:e.code, name:e.name, unit:e.unit||'', qty:0, budget:0});
+    p.qty += e.qty||0; p.budget += bmmBudget(e);
+  });
+  const rows = Object.values(plans).sort((a,b)=>a.code.localeCompare(b.code,'th'));
+  if(!rows.length){
+    body.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--ink-400);">ยังไม่มีแผนงานของปีงบประมาณ ${fy} — บันทึกแผนที่หน้า "แผน-ผลงาน" ก่อน ราคาจะแสดงที่นี่อัตโนมัติ</td></tr>`;
+    return;
+  }
+  /* ค่างานจริงเฉลี่ยทั้งปีงบ ต่อรหัส+หน่วย (สูตรเดียวกับแท็บจากงานจริง) */
+  const real = {};
+  dailyWorkOrders.forEach(d=>{
+    if(d.qtyPending || !(d.qty>0) || !d.date || fyOfDate(d.date)!==fy) return;
+    const k = d.code+'|'+(d.unit||'');
+    const r = real[k] || (real[k] = {qty:0, total:0});
+    r.qty += d.qty; r.total += (d.material||0)+(d.labor||0)+(d.rent||0)+(d.fuel||0);
+  });
+  let lastMain = null;
+  body.innerHTML = rows.map(p=>{
+    const rate = p.qty>0 ? p.budget/p.qty : 0;
+    const job = findJob(p.code);
+    const r = real[p.code+'|'+p.unit];
+    const realRate = r && r.qty>0 ? r.total/r.qty : null;
+    const otherUnit = !r && Object.keys(real).some(k=>k.split('|')[0]===p.code);
+    let cmp = '<span class="ucref-diff na">ยังไม่มีงานจริง</span>';
+    if(realRate!=null && rate>0){
+      const d = Math.round((realRate/rate-1)*100);
+      cmp = `<span class="ucref-diff ${d>0?'hi':'lo'}">${d>0?'สูงกว่า':'ต่ำกว่า'} ${Math.abs(d)}%</span>`;
+    } else if(otherUnit) cmp = '<span class="ucref-diff na" title="หน่วยในใบสั่งการไม่ตรงกับหน่วยในแผน จึงเทียบกันไม่ได้">หน่วยไม่ตรงแผน</span>';
+    const mc = bmmMainCodeOf(p.code);
+    const head = mc && mc!==lastMain ? `<tr><td colspan="6" style="background:var(--paper-50);font-family:'Kanit',sans-serif;font-weight:600;color:var(--navy-900);text-align:left;">${esc(mc)} · ${esc(bmmMainName(mc))}</td></tr>` : '';
+    lastMain = mc || lastMain;
+    return head + `<tr>
+      <td><span class="bmm-code">${esc(p.code)}</span> ${esc(job ? job.name : p.name)}<div class="bmm-sub">หน่วย: ${esc(p.unit||'—')}</div></td>
+      <td class="num"><b style="font-size:14px;">${fmtNum(rate,2)}</b> บาท/${esc(p.unit||'หน่วย')}</td>
+      <td class="num">${fmtQtyShort(p.qty)}</td>
+      <td class="num">${fmtMoney(p.budget)}</td>
+      <td class="num">${realRate==null ? '—' : fmtNum(realRate,2)}</td>
+      <td style="text-align:center;">${cmp}</td>
+    </tr>`;
+  }).join('') + `<tr class="bmm-total-row"><td style="text-align:left;">รวม ${rows.length} รหัสงาน</td><td></td><td></td><td class="num">${fmtMoney(rows.reduce((s,p)=>s+p.budget,0))}</td><td></td><td></td></tr>`;
+}
 function renderUnitCostReport(){
+  const t = document.getElementById('unitcost-title');
+  if(t) t.textContent = __ucTab==='ref' ? 'ราคาต่อหน่วยของแขวง (ข้อมูลอ้างอิง)' : 'ค่างานต่อหน่วยเฉลี่ย (จากงานจริง)';
+  if(__ucTab==='ref'){ renderUcRefTable(); return; }
   const body = document.getElementById('unitcost-body');
   if(!body) return;
   const rows = unitCostReportRows();
