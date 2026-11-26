@@ -1281,6 +1281,17 @@ function setAlertAssignee(id, label){
   __alertState[id].assignee = val.trim();
   saveAlertState(); renderAlerts();
 }
+/* รายการในการ์ดแจ้งเตือน: แสดง n รายการแรก ที่เหลือซ่อนไว้ กดปุ่ม "ดูทั้งหมด" เพื่อเปิด/ย่อ (เพิ่ม 26 พ.ย. 2569) */
+function alMore(items, n, unit){
+  const rest = items.slice(n);
+  if(!rest.length) return items.join('');
+  return items.slice(0,n).join('') + `<div class="al-more hidden">${rest.join('')}</div><button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px;" data-n="${rest.length}" data-u="${esc(unit)}" onclick="alToggleMore(this)">ดูทั้งหมด (อีก ${rest.length} ${esc(unit)})</button>`;
+}
+function alToggleMore(btn){
+  const box = btn.previousElementSibling; if(!box) return;
+  const open = !box.classList.toggle('hidden');
+  btn.textContent = open ? 'ย่อรายการ' : `ดูทั้งหมด (อีก ${btn.dataset.n} ${btn.dataset.u})`;
+}
 function alertRowHTML(o){
   const st = __alertState[o.id] || {};
   const done = o.checklist && st.doneFor === o.checkKey;
@@ -1308,18 +1319,32 @@ function computeAlerts(){
   yItems.forEach(it=>out.yellow.push({id:it.id, task:it.task, detail:it.detail, checklist:true, checkKey:(it.cycle || it.due), dueIso:it.due, dd:it.dd, pillHTML:`<span class="pill pill-warn">${it.dd===0?'วันนี้':'อีก '+it.dd+' วัน'}</span>`}));
   // คำร้องทุกข์ค้างเกิน 7 วัน
   const oldC = D.complaints.filter(c=>c.status!=='ดำเนินการแล้วเสร็จ' && c.date && daysUntil(c.date)<=-7);
-  if(oldC.length) out.blue.push({id:'complaints-old', noAssign:true, task:'คำร้องทุกข์ค้างดำเนินการเกิน 7 วัน', detailHTML: oldC.slice(0,5).map(c=>`• ${esc(c.subject||'(ไม่ระบุเรื่อง)')} (${-daysUntil(c.date)} วัน)`).join('<br>') + (oldC.length>5?`<br>และอีก ${oldC.length-5} เรื่อง`:''), pillHTML:`<span class="pill pill-warn">${oldC.length} เรื่อง</span>`});
+  if(oldC.length) out.blue.push({id:'complaints-old', noAssign:true, task:'คำร้องทุกข์ค้างดำเนินการเกิน 7 วัน', detailHTML: alMore(oldC.map(c=>`<div>• ${esc(c.subject||'(ไม่ระบุเรื่อง)')} (${-daysUntil(c.date)} วัน)</div>`), 5, 'เรื่อง'), pillHTML:`<span class="pill pill-warn">${oldC.length} เรื่อง</span>`});
   // บุคลากรใกล้เกษียณ (ภายใน 1 ปี)
   const near = activeStaff().map(s=>({s, rd:retirementDate(s)})).filter(x=>x.rd && daysUntil(x.rd)>=0 && daysUntil(x.rd)<=365);
-  if(near.length) out.blue.push({id:'retire', noAssign:true, task:'บุคลากรใกล้เกษียณอายุราชการ (ภายใน 1 ปี)', detailHTML: near.map(x=>`• ${esc(x.s.name)} — ${fmtDate(x.rd)}`).join('<br>'), pillHTML:`<span class="pill pill-neutral">${near.length} คน</span>`});
+  if(near.length) out.blue.push({id:'retire', noAssign:true, task:'บุคลากรใกล้เกษียณอายุราชการ (ภายใน 1 ปี)', detailHTML: alMore(near.map(x=>`<div>• ${esc(x.s.name)} — ${fmtDate(x.rd)}</div>`), 6, 'คน'), pillHTML:`<span class="pill pill-neutral">${near.length} คน</span>`});
   // วัสดุต่ำกว่าจุดสั่งซื้อ
   const low = materialsView().filter(m=>m.accountType==='ในบัญชี' && matStatus(m)==='low');
-  if(low.length) out.blue.push({id:'mat-low', noAssign:true, task:'วัสดุในบัญชีต่ำกว่าจุดสั่งซื้อ', detailHTML: low.slice(0,6).map(m=>`• ${esc(m.name)} คงเหลือ ${m.stock.toLocaleString('th-TH')} ${esc(m.unit)}`).join('<br>') + (low.length>6?`<br>และอีก ${low.length-6} รายการ`:''), pillHTML:`<span class="pill pill-neutral">${low.length} รายการ</span>`});
+  if(low.length) out.blue.push({id:'mat-low', noAssign:true, task:'วัสดุในบัญชีต่ำกว่าจุดสั่งซื้อ', detailHTML: alMore(low.map(m=>`<div>• ${esc(m.name)} คงเหลือ ${m.stock.toLocaleString('th-TH')} ${esc(m.unit)}</div>`), 6, 'รายการ'), pillHTML:`<span class="pill pill-neutral">${low.length} รายการ</span>`});
   // งานสัญญา (เพิ่ม 17 ต.ค. 2569 — ข้อมูลอยู่ที่ระบบที่ 2 แท็บ "งานสัญญา"): ค้ำประกันใกล้หมด / สัญญาใกล้สิ้นสุด
   const cts = (D.contracts||[]).filter(c=>c.status!=='ยกเลิกสัญญา');
   const ctIso = v => String(v||'').slice(0,10);
-  const ctName = c => esc(((c.contractNo||'')+' '+(c.name||'(ไม่ระบุชื่อ)')).trim());
-  const ctList = (arr, key) => arr.slice(0,5).map(x=>`• ${ctName(x.c)} (เหลือ ${x[key]} วัน)`).join('<br>') + (arr.length>5?`<br>และอีก ${arr.length-5} สัญญา`:'');
+  // แสดงสัญญาแบบ 2 บรรทัด (แก้ 26 พ.ย. 2569): บรรทัด 1 = รย.XX/XXXX · ประเภทงาน · ทล. ตอน กม.–กม. · ปริมาณงาน / บรรทัด 2 = ข้อความเตือน
+  const ctKm = v => { v = Math.round((Number(v)||0)*1000)/1000; const w = Math.floor(v+1e-9); return w+'+'+String(Math.round((v-w)*1000)).padStart(3,'0'); };
+  const ctRanges = c => { let r = c.rangesJson; if(typeof r==='string'){ try{ r = JSON.parse(r); }catch(e){ r = []; } } return Array.isArray(r) ? r : []; };
+  const ctHead = c => {
+    const rs = ctRanges(c), parts = [];
+    parts.push(esc(c.contractNo || '(ไม่ระบุเลขสัญญา)'));
+    if(c.workType) parts.push('งาน'+esc(c.workType));
+    if(rs.length){
+      const rt = rs.slice(0,2).map(r=>`ทล.${esc(r.route)}${r.controlNo?' ตอน '+esc(r.controlNo):''} กม.${ctKm(r.k1)}–${ctKm(r.k2)}${!c.workQty && r.qty?' ('+esc(r.qty)+')':''}`).join(' , ');
+      parts.push(rt + (rs.length>2?` +อีก ${rs.length-2} ช่วง`:''));
+    } else if(c.name) parts.push(esc(String(c.name).length>60 ? String(c.name).slice(0,60)+'…' : c.name));
+    if(c.workQty) parts.push('ปริมาณ '+esc(c.workQty));
+    return parts.join(' · ');
+  };
+  const ctItem = (c, msg) => `<div style="margin-top:4px;"><div style="color:var(--ink-900);font-weight:500;">• ${ctHead(c)}</div><div style="padding-left:12px;">${msg}</div></div>`;
+  const ctList = (arr, key) => alMore(arr.map(x=>ctItem(x.c, `สิ้นสุดสัญญา ${fmtDate(ctIso(x.c.endDate))} (เหลือ ${x[key]} วัน)`)), 5, 'สัญญา');
   // บวกเดือนแบบปฏิทิน (เหมือน ctAddMonths ในระบบที่ 2)
   const ctAddM = (iso, n) => { const [y,m,d] = iso.split('-').map(Number); const r = new Date(y, m-1+n, Math.min(d, new Date(y, m-1+n+1, 0).getDate())); return r.getFullYear()+'-'+String(r.getMonth()+1).padStart(2,'0')+'-'+String(r.getDate()).padStart(2,'0'); };
   const todayIso = todayISO();
@@ -1335,15 +1360,15 @@ function computeAlerts(){
     return r ? {c, m:r.m, d:daysUntil(r.date)} : null;
   }).filter(Boolean).sort((a,b)=>a.d-b.d);
   const reflOver = reflAll.filter(x=>x.d<0);
-  if(reflOver.length) out.red.push({id:'ct-refl-over', noAssign:true, task:'เลยกำหนดวัดค่าสะท้อนแสง — ยังไม่บันทึกวันที่วัดแล้ว', detailHTML: reflOver.slice(0,5).map(x=>`• ${ctName(x.c)} — รอบ ${x.m} เดือน (เลยมา ${-x.d} วัน)`).join('<br>') + (reflOver.length>5?`<br>และอีก ${reflOver.length-5} สัญญา`:''), pillHTML:`<span class="pill pill-danger">${reflOver.length} สัญญา</span>`});
+  if(reflOver.length) out.red.push({id:'ct-refl-over', noAssign:true, task:'เลยกำหนดวัดค่าสะท้อนแสง — ยังไม่บันทึกวันที่วัดแล้ว', detailHTML: alMore(reflOver.map(x=>ctItem(x.c, `วัดค่าสะท้อนแสง รอบ ${x.m} เดือน (เลยมา ${-x.d} วัน)`)), 5, 'สัญญา'), pillHTML:`<span class="pill pill-danger">${reflOver.length} สัญญา</span>`});
   const reflDue = reflAll.filter(x=>x.d>=0 && x.d<=30);
   const endSoon = cts.filter(c=>c.status!=='ระงับงาน' && !ctIso(c.deliveryDate) && ctIso(c.endDate) && (!ctIso(c.startDate) || daysUntil(ctIso(c.startDate))<=0) && daysUntil(ctIso(c.endDate))>=0 && daysUntil(ctIso(c.endDate))<=60)
     .map(c=>({c, d:daysUntil(ctIso(c.endDate))})).sort((a,b)=>a.d-b.d);
-  const wList = arr => arr.slice(0,5).map(x=>`• ${ctName(x.c)} — คืนค้ำ ${fmtDate(ctIso(x.c.warrantyEnd))} (ภายใน ${x.m} เดือน · เหลือ ${x.d} วัน)`).join('<br>') + (arr.length>5?`<br>และอีก ${arr.length-5} สัญญา`:'');
+  const wList = arr => alMore(arr.map(x=>ctItem(x.c, `คืนค้ำประกัน ${fmtDate(ctIso(x.c.warrantyEnd))} (ภายใน ${x.m} เดือน · เหลือ ${x.d} วัน)`)), 5, 'สัญญา');
   if(w30.length) out.red.push({id:'ct-warr-30', noAssign:true, task:'ครบกำหนดคืนค้ำประกันภายใน 1 เดือน — ควรตรวจความเสียหายก่อนคืนค้ำประกัน', detailHTML:wList(w30), pillHTML:`<span class="pill pill-danger">${w30.length} สัญญา</span>`});
   if(endSoon.length) out.blue.push({id:'ct-end-60', noAssign:true, task:'สัญญาใกล้สิ้นสุด (ภายใน 60 วัน)', detailHTML:ctList(endSoon,'d'), pillHTML:`<span class="pill pill-neutral">${endSoon.length} สัญญา</span>`});
   if(w90.length) out.blue.push({id:'ct-warr-90', noAssign:true, task:'ใกล้ครบกำหนดคืนค้ำประกัน (ภายใน 3 / 2 เดือน)', detailHTML:wList(w90), pillHTML:`<span class="pill pill-warn">${w90.length} สัญญา</span>`});
-  if(reflDue.length) out.blue.push({id:'ct-refl-30', noAssign:true, task:'ครบกำหนดวัดค่าสะท้อนแสง (ภายใน 30 วัน)', detailHTML: reflDue.slice(0,5).map(x=>`• ${ctName(x.c)} — รอบ ${x.m} เดือน (เหลือ ${x.d} วัน)`).join('<br>') + (reflDue.length>5?`<br>และอีก ${reflDue.length-5} สัญญา`:''), pillHTML:`<span class="pill pill-neutral">${reflDue.length} สัญญา</span>`});
+  if(reflDue.length) out.blue.push({id:'ct-refl-30', noAssign:true, task:'ครบกำหนดวัดค่าสะท้อนแสง (ภายใน 30 วัน)', detailHTML: alMore(reflDue.map(x=>ctItem(x.c, `วัดค่าสะท้อนแสง รอบ ${x.m} เดือน (เหลือ ${x.d} วัน)`)), 5, 'สัญญา'), pillHTML:`<span class="pill pill-neutral">${reflDue.length} สัญญา</span>`});
   return out;
 }
 function renderAlerts(){
