@@ -291,6 +291,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .alert-row:last-child{margin-bottom:0;}
   .alert-row .a-task{font-weight:600;color:var(--ink-900);}
   .alert-row .a-detail{color:var(--ink-600);font-size:12px;}
+  .alert-row.a-wide{display:block;}
+  .alert-row.a-wide .a-head{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .alert-row.a-wide > .a-detail{margin-top:4px;}
   /* รายการสัญญาในแจ้งเตือน (26 พ.ย. 2569): บรรทัด 1 ข้อมูลงาน · บรรทัด 2 ข้อความเตือน */
   .ct-a{margin-top:6px;padding:6px 10px;border-left:3px solid var(--ink-400);background:#f6f7f9;border-radius:0 6px 6px 0;}
   .ct-a.t-red{border-left-color:var(--danger);} .ct-a.t-amber{border-left-color:var(--amber-400);} .ct-a.t-blue{border-left-color:var(--navy-700);}
@@ -307,6 +310,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ct-a-fu{display:flex;align-items:center;justify-content:space-between;gap:10px;}
   .ct-a-fu .lv-red{font-weight:700;color:var(--danger);} .ct-a-fu .lv-amber{font-weight:700;color:#b7791f;} .ct-a-fu .lv-blue{font-weight:700;color:var(--navy-700);}
   .ct-a-btn{flex:none;}
+  .ct-a-l2 .navy{font-weight:700;color:var(--navy-700);}
   .dot-red{width:9px;height:9px;border-radius:50%;background:var(--danger);display:inline-block;flex-shrink:0;}
   .dot-yellow{width:9px;height:9px;border-radius:50%;background:var(--amber-400);display:inline-block;flex-shrink:0;}
   .dot-blue{width:9px;height:9px;border-radius:50%;background:var(--navy-700);display:inline-block;flex-shrink:0;}
@@ -1343,7 +1347,7 @@ function setAlertAssignee(id, label){
 function alMore(items, n, unit){
   const rest = items.slice(n);
   if(!rest.length) return items.join('');
-  return items.slice(0,n).join('') + `<div class="al-more hidden">${rest.join('')}</div><button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px;" data-n="${rest.length}" data-u="${esc(unit)}" onclick="alToggleMore(this)">ดูทั้งหมด (อีก ${rest.length} ${esc(unit)})</button>`;
+  return items.slice(0,n).join('') + `<div class="al-rest hidden">${rest.join('')}</div><button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px;" data-n="${rest.length}" data-u="${esc(unit)}" onclick="alToggleMore(this)">ดูทั้งหมด (อีก ${rest.length} ${esc(unit)})</button>`;
 }
 function alToggleMore(btn){
   const box = btn.previousElementSibling; if(!box) return;
@@ -1362,6 +1366,8 @@ function alertRowHTML(o){
   const assignee = st.assignee || '';
   const asg = o.noAssign ? '' : `<span class="a-assignee${assignee?' filled':''}" onclick="setAlertAssignee('${jsArg(o.id)}','${safeLabel}')">${assignee ? '👤 '+esc(assignee) : '+ มอบหมาย'}</span>`;
   const when = o.dueIso ? `<span class="al-date">${esc(String(fmtDate(o.dueIso)).split(' ').slice(0,2).join(' '))}</span>` : '';
+  // การ์ดที่มีรายการย่อย (สัญญา คำร้อง บุคลากร วัสดุ): หัวข้อ + จำนวนรวมอยู่บรรทัดเดียวกัน รายการด้านล่างเต็มความกว้าง (แก้ 26 พ.ย. 2569)
+  if(o.detailHTML) return `<div class="alert-row a-wide${done?' a-done':''}"><div class="a-head"><div class="a-left">${when}<div class="a-task">${esc(o.task)}</div></div><div class="a-right">${asg}${o.pillHTML}${check ? '<span class="a-act">'+check+'</span>' : ''}</div></div><div class="a-detail">${o.detailHTML}</div></div>`;
   return `<div class="alert-row${done?' a-done':''}"><div class="a-left">${when}<div><div class="a-task">${esc(o.task)}</div><div class="a-detail">${o.detailHTML || esc(o.detail)}</div></div></div><div class="a-right">${asg}${o.pillHTML}${check ? '<span class="a-act">'+check+'</span>' : ''}</div></div>`;
 }
 function computeAlerts(){
@@ -1410,8 +1416,15 @@ function computeAlerts(){
   const canFU = !!(window.CTFollow && CTFollow.canEdit());
   const fuItem = (c, x) => {
     const btn = canFU && c.id ? `<button type="button" class="btn btn-ghost btn-sm ct-a-btn" onclick="ctFollowOpen('${jsArg(c.id)}')">บันทึก</button>` : '';
-    return `<div class="ct-a t-${x.level}"><div class="ct-a-l1">${ctHead(c)}</div><div class="ct-a-l2 ct-a-fu"><span><span class="lv-${x.level}">${esc(x.text)}</span> · ${esc(x.sub)}</span>${btn}</div></div>`;
+    return `<div class="ct-a t-${x.level}"><div class="ct-a-l1">${ctHead(c)}</div><div class="ct-a-l2 ct-a-fu"><span><span class="lv-${x.level}">${esc(x.text)}</span> · ${fuEmph(x.sub, x.level)}</span>${btn}</div></div>`;
   };
+  // เน้นข้อความบรรทัด 2: วันที่ตัวหนา · จำนวนวัน (เหลือ/เลยมา/อีก N วัน) สีตามระดับเตือน (แดง/ส้ม/กรมท่า)
+  const TH_MON = 'ม\\.ค\\.|ก\\.พ\\.|มี\\.ค\\.|เม\\.ย\\.|พ\\.ค\\.|มิ\\.ย\\.|ก\\.ค\\.|ส\\.ค\\.|ก\\.ย\\.|ต\\.ค\\.|พ\\.ย\\.|ธ\\.ค\\.';
+  const reDate = new RegExp('(\\d{1,2} (?:' + TH_MON + ') \\d{2})', 'g');
+  function fuEmph(s, lv){
+    const cls = lv==='red' ? 'hot' : lv==='amber' ? 'warm' : 'navy';
+    return esc(s).replace(reDate, '<b>$1</b>').replace(/((?:เหลือ|เลยมา|อีก) \d+ วัน|วันนี้)/g, `<span class="${cls}">$1</span>`);
+  }
   const fuCard = (id, task, arr, group, pillCls) => {
     if(!arr.length) return;
     out[group].push({id, noAssign:true, task, detailHTML: alMore(arr.sort((a,b)=>(a.x.d??0)-(b.x.d??0)).map(o=>fuItem(o.c, o.x)), 5, 'สัญญา'), pillHTML:`<span class="pill ${pillCls}">${arr.length} สัญญา</span>`});
