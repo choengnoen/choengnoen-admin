@@ -364,6 +364,22 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ct-next.hot{color:var(--danger);} .ct-next.warm{color:#b7791f;} .ct-next.blue{color:var(--navy-700,#1c4b73);} .ct-next.ok{color:var(--success,#1c8a53);} .ct-next.cool{color:var(--ink-600);}
   .ct-next-sub{font-size:11.5px;color:var(--ink-600);white-space:nowrap;margin-top:1px;}
   .ct-st{font-size:10.5px;color:var(--ink-400);margin-top:3px;}
+  /* จัดตารางรอบ 2 (26 พ.ย. 2569): ความกว้างคอลัมน์คงที่ · ป้ายประเภท/พื้นที่ย้ายไปใต้เลขสัญญา · ทุกบรรทัดไม่ตัดกลางคำ เกินให้ ... */
+  #ct-table{table-layout:fixed;width:100%;min-width:1040px;}
+  #ct-table col.c-no{width:128px;} #ct-table col.c-amt{width:136px;} #ct-table col.c-date{width:104px;} #ct-table col.c-next{width:290px;}
+  #ct-table td{vertical-align:top;padding-top:12px;padding-bottom:12px;}
+  #ct-table td.num{font-variant-numeric:tabular-nums;}
+  #ct-table th.num{text-align:right;}
+  .ct-no{font-weight:700;white-space:nowrap;font-size:14px;color:var(--navy-900,#0a2540);}
+  .ct-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+  .ct-chips .ct-type,.ct-chips .ct-area{font-size:10.5px;}
+  .ct-line{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ct-line.l-rt{font-size:13.5px;color:var(--ink-900);} .ct-line.l-rt b{color:var(--navy-900,#0a2540);}
+  .ct-line.l-km{font-size:12.5px;color:var(--ink-600);margin-top:1px;}
+  .ct-line.l-name{font-size:12.5px;color:var(--ink-600);margin-top:4px;}
+  .ct-line.l-by{font-size:12px;color:var(--ink-400);}
+  #ct-table .ct-next{white-space:normal;}
+  #ct-table .ct-next-sub{white-space:normal;line-height:1.45;}
   #ct-kpi .routine-kpi-item.ct-k{cursor:pointer;border-radius:8px;transition:background .15s;}
   #ct-kpi .routine-kpi-item.ct-k:hover{background:rgba(255,255,255,.06);}
   #ct-kpi .routine-kpi-item.ct-k.active{background:rgba(242,169,48,.18);box-shadow:inset 0 -3px 0 #f2a930;}
@@ -1408,8 +1424,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             <div class="tab" data-cttab="warranty">ในระยะค้ำประกัน</div>
             <div class="tab" data-cttab="done">สิ้นสุดแล้ว</div>
           </div>
-          <div class="table-wrap"><table>
-            <thead><tr><th>เลขที่สัญญา</th><th>งาน / สายทาง / ผู้รับจ้าง</th><th>เงินค่างาน (บาท)</th><th>สิ้นสุดสัญญา</th><th>คืนค้ำประกัน</th><th>ขั้นถัดไป</th></tr></thead>
+          <div class="table-wrap"><table id="ct-table">
+            <colgroup><col class="c-no"><col><col class="c-amt"><col class="c-date"><col class="c-date"><col class="c-next"></colgroup>
+            <thead><tr><th>เลขที่สัญญา</th><th>สายทาง / โครงการ / ผู้รับจ้าง</th><th class="num">เงินค่างาน (บาท)</th><th>สิ้นสุดสัญญา</th><th>คืนค้ำประกัน</th><th>ขั้นถัดไป</th></tr></thead>
             <tbody id="ct-body"></tbody>
           </table></div>
           <div class="legend-block" id="ct-foot-block">
@@ -3545,17 +3562,27 @@ function ctCellMain(c){
   const secOf = r => ctSecInfo(r);
   const secTxt = r => { const s = secOf(r); return s.name ? ' ตอน '+s.name : (s.controlNo ? ' ตอน '+s.controlNo : ''); };
   const rTxt = r => `ทล.${r.route}${secTxt(r)} กม.${kmFmt(r.k1)} - กม.${kmFmt(r.k2)}`;
-  const type = c.workType ? `<span class="ct-type ${c.workType==='ไฟฟ้า'?'ty-elec':c.workType==='ผิวทาง'?'ty-pave':''}">งาน${esc(c.workType)}</span>` : '';
-  let rt = '<span class="ct-route empty">— ไม่ระบุช่วง —</span>';
+  // จัดรอบ 2: บรรทัด 1 สายทาง+ตอน · บรรทัด 2 ช่วง กม.+ปริมาณ · บรรทัด 3 ชื่อโครงการ · บรรทัด 4 ผู้รับจ้าง (ทุกบรรทัดยาวเกินให้ ...)
+  const qty = String(c.workQty || (rs.length===1 ? rs[0].qty : '') || '').replace(/\s+/g,' ').replace(/\(\s+/g,'(').replace(/\s+\)/g,')').trim();
+  let html;
   if(rs.length){
-    const r = rs[0];
-    rt = `<span class="ct-rt" title="${esc(rs.map(rTxt).join(' , '))}"><b>ทล.${esc(r.route)}</b>${esc(secTxt(r))} กม.${kmFmt(r.k1)} - กม.${kmFmt(r.k2)}${rs.length>1?` · +อีก ${rs.length-1} ช่วง`:''}</span>`;
+    const r = rs[0], all = rs.map(rTxt).join('\n');
+    const km = `กม.${kmFmt(r.k1)} – ${kmFmt(r.k2)}${rs.length>1?` · และอีก ${rs.length-1} ช่วง`:''}${qty?' · '+esc(qty):''}`;
+    html = `<div class="ct-line l-rt" title="${esc(all)}"><b>ทล.${esc(r.route)}</b>${esc(secTxt(r))}</div>`
+         + `<div class="ct-line l-km" title="${esc(all)}">${km}</div>`;
+  } else {
+    html = `<div class="ct-line l-rt ct-route empty">— ไม่ระบุช่วง —</div>` + (qty ? `<div class="ct-line l-km">${esc(qty)}</div>` : '');
   }
-  const qty = c.workQty || (rs.length===1 ? rs[0].qty : '');
+  return html
+    + `<div class="ct-line l-name" title="${esc(c.name)}">${esc(c.name)||'—'}</div>`
+    + (c.contractor ? `<div class="ct-line l-by" title="${esc(c.contractor)}">${esc(c.contractor)}</div>` : '');
+}
+/* ป้ายประเภทงาน + ในพื้นที่/นอกพื้นที่ (แสดงใต้เลขที่สัญญา) */
+function ctChips(c){
+  const area = ctArea(c);
+  const type = c.workType ? `<span class="ct-type ${c.workType==='ไฟฟ้า'?'ty-elec':c.workType==='ผิวทาง'?'ty-pave':''}">งาน${esc(c.workType)}</span>` : '';
   const areaChip = ['in','part','out'].includes(area.key) ? `<span class="ct-area ${area.key}" title="${esc(area.text)}">${area.label}</span>` : '';
-  return `<div class="ct-l1">${type}${rt}${qty?`<span class="ct-qty">· ${esc(qty)}</span>`:''}${areaChip}</div>`
-    + `<div class="ct-name2" title="${esc(c.name)}">${esc(c.name)||'—'}</div>`
-    + (c.contractor ? `<div class="ct-by" title="${esc(c.contractor)}">${esc(c.contractor)}</div>` : '');
+  return type||areaChip ? `<div class="ct-chips">${type}${areaChip}</div>` : '';
 }
 /* นับวันถอยหลังใต้วันที่: hotAt/warmAt = จำนวนวันที่เริ่มเป็นสีแดง/ส้ม */
 function ctCountdown(d, hotAt, warmAt){
@@ -3657,7 +3684,7 @@ function renderContracts(){
     const wHint = st.key==='warranty' ? ctCountdown(dW, 30, 90) : '';
     const endPast = dEnd!==null && dEnd<0, wPast = dW!==null && dW<0;
     return `<tr data-ct="${esc(c.id)}" onclick="openContractDetail('${jsArg(c.id)}')" title="กดเพื่อดูรายละเอียด">
-      <td style="white-space:nowrap;font-weight:700;">${esc(c.contractNo)||'—'}</td>
+      <td><div class="ct-no">${esc(c.contractNo)||'—'}</div>${ctChips(c)}</td>
       <td>${ctCellMain(c)}</td>
       <td class="num">${c.amount?fmtNum(c.amount,2):'—'}</td>
       <td style="white-space:nowrap;"${endPast?' class="ct-past"':''}>${fmtDateShort(c.endDate)}${endHint}</td>
