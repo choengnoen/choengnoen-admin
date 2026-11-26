@@ -361,7 +361,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ct-cd.hot{color:var(--danger);font-weight:700;} .ct-cd.warm{color:#b7791f;font-weight:600;} .ct-cd.cool{color:var(--ink-400);}
   td.ct-past{color:var(--ink-400);}
   .ct-next{font-weight:600;font-size:13px;white-space:nowrap;}
-  .ct-next.hot{color:var(--danger);} .ct-next.warm{color:#b7791f;} .ct-next.ok{color:var(--success,#1c8a53);} .ct-next.cool{color:var(--ink-600);}
+  .ct-next.hot{color:var(--danger);} .ct-next.warm{color:#b7791f;} .ct-next.blue{color:var(--navy-700,#1c4b73);} .ct-next.ok{color:var(--success,#1c8a53);} .ct-next.cool{color:var(--ink-600);}
   .ct-next-sub{font-size:11.5px;color:var(--ink-600);white-space:nowrap;margin-top:1px;}
   .ct-st{font-size:10.5px;color:var(--ink-400);margin-top:3px;}
   #ct-kpi .routine-kpi-item.ct-k{cursor:pointer;border-radius:8px;transition:background .15s;}
@@ -1019,6 +1019,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="dsel.js"></script>
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="s2"></script>
+<script src="contract-followup.js?v=20261126"></script>
 <script src="labor-calc.js?v=20261026"></script>
 <script src="emoji-img.js" defer></script>
 <script src="modal-standard.js" defer></script><script src="req-star.js" defer></script><script src="btn-standard.js?v=20261103c" defer></script><script src="table-scroll-standard.js?v=20261024" defer></script>
@@ -1395,6 +1396,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
                 <div style="display:flex;gap:8px;margin-left:auto;">
                   <button type="button" class="img-copy-btn" id="ct-detail-copy" title="คัดลอกหน้าต่างนี้เป็นรูป แล้วกด Ctrl+V วางใน LINE / Word" aria-label="คัดลอกหน้าต่างนี้เป็นรูป" onclick="copyContractImage(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg></button>
                   <button class="btn btn-ghost" onclick="closeContractDetail()">ปิด</button>
+                  <button class="btn btn-ghost" data-ic="cal" id="ct-detail-follow" onclick="ctOpenFollowUp(ctDetailId)">บันทึกการติดตาม</button>
                   <button class="btn btn-primary" data-ic="pen" id="ct-detail-edit" onclick="const id=ctDetailId;closeContractDetail();openContractForm(id)">แก้ไข</button>
                 </div>
               </div>
@@ -3260,6 +3262,8 @@ function ctFromApi(row){
     refl12Done:String(row.refl12Done||'').slice(0,10), refl24Done:String(row.refl24Done||'').slice(0,10),
     signDate:String(row.signDate||'').slice(0,10), durationDays:Number(row.durationDays)||'', penaltyPerDay:Number(row.penaltyPerDay)||0,
     committee:row.committee||'', negotiateDate:String(row.negotiateDate||'').slice(0,10), notifyDate:String(row.notifyDate||'').slice(0,10),
+    reflNotify12:String(row.reflNotify12||'').slice(0,10), reflNotify24:String(row.reflNotify24||'').slice(0,10),
+    damageCheckDate:String(row.damageCheckDate||'').slice(0,10), damageResult:row.damageResult||'',
     ranges: ranges.map(r=>({route:String(r.route==null?'':r.route), controlNo:String(r.controlNo||''), k1:Number(r.k1)||0, k2:Number(r.k2)||0, qty:String(r.qty||'')})) };
 }
 function ctToApi(c){
@@ -3270,6 +3274,7 @@ function ctToApi(c){
     refl12Done:c.refl12Done||'', refl24Done:c.refl24Done||'',
     signDate:c.signDate||'', durationDays:c.durationDays===''?'':c.durationDays, penaltyPerDay:c.penaltyPerDay||0,
     committee:c.committee||'', negotiateDate:c.negotiateDate||'', notifyDate:c.notifyDate||'',
+    reflNotify12:c.reflNotify12||'', reflNotify24:c.reflNotify24||'', damageCheckDate:c.damageCheckDate||'', damageResult:c.damageResult||'',
     rangesJson:c.ranges };
 }
 /* บวกเดือนแบบปฏิทิน (31 ม.ค. + 1 เดือน = 28/29 ก.พ.) */
@@ -3409,11 +3414,17 @@ function openContractDetail(id){
     card('ค้ำประกัน และวัดค่าสะท้อนแสง',
       kv('ประเภทงาน', c.workType ? 'งาน'+esc(c.workType) : dash) + kv('กำหนดค้ำประกัน', c.warrantyYears ? c.warrantyYears+' ปี' : dash) +
       kv('คืนค้ำประกัน', d(c.warrantyEnd) + (wa ? ` <span style="color:${wa.months===1?'var(--danger)':'#b7791f'};font-weight:600;">⚠ ภายใน ${wa.months} เดือน (เหลือ ${wa.days} วัน)</span>` : c.warrantyEnd && c.warrantyEnd < today ? ' <span style="color:var(--success);">· ครบกำหนดแล้ว</span>' : '')) +
-      kv('วัดค่าสะท้อนแสง', refl)) +
+      kv('วัดค่าสะท้อนแสง', refl) +
+      // ติดตามสัญญา (26 พ.ย. 2569): วันแจ้งแขวง / ตรวจความเสียหาย — บันทึกได้ทั้งผู้บริหารและเจ้าหน้าที่ ผ่านปุ่ม "บันทึกการติดตาม"
+      (c.reflectNeeded ? kv('แจ้งแขวง (ขอวัดค่าสะท้อนแสง)', `รอบ 12 ด.: ${c.reflNotify12 ? d(c.reflNotify12) : dash}<br>รอบ 24 ด.: ${c.reflNotify24 ? d(c.reflNotify24) : dash}`) : '') +
+      kv('ตรวจความเสียหาย', c.damageCheckDate ? d(c.damageCheckDate) + (c.damageResult ? ' · ' + esc(CTFollow.RESULTS[c.damageResult]||c.damageResult) : '') : dash) +
+      (()=>{ const r = CTFollow.refl(c), g = CTFollow.damage(c); const items = [r, g].filter(x=>x && x.level);
+             return items.length ? kv('ต้องติดตาม', items.map(x=>`<span style="color:${x.level==='red'?'var(--danger)':x.level==='amber'?'#b7791f':'var(--navy-700,#1c4b73)'};font-weight:600;">${x.text}</span> <span style="color:var(--ink-600);font-size:12px;">${x.sub}</span>`).join('<br>')) : ''; })()) +
     (hasExtra ? card('สถานะพิเศษและหมายเหตุ', (c.negotiateDate ? kv('ต่อรองเป็นที่ยุติ', d(c.negotiateDate)) : '') + (c.notifyDate ? kv('แจ้งทำสัญญา', d(c.notifyDate)) : '') + (c.status ? kv('สถานะพิเศษ', esc(c.status)) : '') + (c.note ? kv('หมายเหตุ', esc(c.note).replace(/\n/g,'<br>')) : ''), true) : '') +
     `</div>`;
   document.getElementById('ct-detail-actions').style.display = isAdmin() ? 'flex' : 'none';
   document.getElementById('ct-detail-edit').style.display = isAdmin() ? '' : 'none';
+  document.getElementById('ct-detail-follow').style.display = (window.CTFollow && CTFollow.canEdit() && (c.warrantyEnd || (c.reflectNeeded && c.deliveryDate))) ? '' : 'none';
   document.getElementById('ct-detail-overlay').classList.remove('hidden');
 }
 /* ปุ่ม "คัดลอกรูป" (ทุกคนใช้ได้): วาดโมดัลเป็นรูป PNG ครบทุกส่วน (ไม่ตัดส่วนที่ต้องเลื่อน ไม่มีปุ่ม) แล้วใส่คลิปบอร์ด
@@ -3547,21 +3558,36 @@ function ctNextStep(c, st){
   if(st.key==='cancel') return {text:'ยกเลิกสัญญา', sub:'', tone:'cool', rank:1e7};
   if(st.key==='hold') return {text:'ระงับงาน', sub:c.endDate?'สิ้นสุดสัญญา '+fmtDateShort(c.endDate):'', tone:'warm', rank:5e4};
   const tone = (d, hot, warm) => d<0 || d<=hot ? 'hot' : d<=warm ? 'warm' : 'cool';
-  const ev = [];
-  if(st.key==='pending'){ const d = ctDaysTo(c.startDate); ev.push({text:'รอเริ่มงาน', sub:`เริ่ม ${fmtDateShort(c.startDate)} · อีก ${d} วัน`, tone:tone(d,-1,7), rank:d}); }
+  const ev = []; // แต่ละเหตุการณ์ {text, sub, tone, d}
+  if(st.key==='pending'){ const d = ctDaysTo(c.startDate); ev.push({text:'รอเริ่มงาน', sub:`เริ่ม ${fmtDateShort(c.startDate)} · อีก ${d} วัน`, tone:tone(d,-1,7), d}); }
   if(st.key==='running' || st.key==='unknown'){
     const d = ctDaysTo(c.endDate);
-    ev.push(d===null ? {text:'รอส่งงาน', sub:'ยังไม่ระบุวันสิ้นสุด', tone:'cool', rank:1e5}
-                     : {text:'รอส่งงาน', sub:`ภายใน ${fmtDateShort(c.endDate)} · เหลือ ${d} วัน`, tone:tone(d,15,60), rank:d});
+    ev.push(d===null ? {text:'รอส่งงาน', sub:'ยังไม่ระบุวันสิ้นสุด', tone:'cool', d:null}
+                     : {text:'รอส่งงาน', sub:`ภายใน ${fmtDateShort(c.endDate)} · เหลือ ${d} วัน`, tone:tone(d,15,60), d});
   }
   if(c.deliveryDate && !c.acceptDate && ctDaysTo(c.deliveryDate) <= 0 && ctDaysTo(c.deliveryDate) >= -60)
-    ev.push({text:'รอตรวจรับ', sub:`ส่งงาน ${fmtDateShort(c.deliveryDate)}`, tone:'warm', rank:0});
-  const n = ctNextRefl(c);
-  if(n) ev.push({text:n.days<0?'เลยกำหนดวัดค่าสะท้อนแสง':'วัดค่าสะท้อนแสง', sub:`รอบ ${n.months} เดือน · ${fmtDateShort(n.date)} · ${n.days<0?'เลยมา '+(-n.days):'อีก '+n.days} วัน`, tone:tone(n.days,30,60), rank:n.days});
-  const dW = ctDaysTo(c.warrantyEnd);
-  if(st.key==='warranty' && dW!==null && dW>=0) ev.push({text:'คืนค้ำประกัน', sub:`${fmtDateShort(c.warrantyEnd)} · อีก ${dW} วัน`, tone:tone(dW,30,90), rank:dW});
+    ev.push({text:'รอตรวจรับ', sub:`ส่งงาน ${fmtDateShort(c.deliveryDate)}`, tone:'warm', d:0});
+  // วัดค่าสะท้อนแสง / ตรวจความเสียหาย: เกณฑ์อยู่ใน contract-followup.js (ใช้ร่วมกับหน้าแจ้งเตือน)
+  const lvTone = {red:'hot', amber:'warm', blue:'blue'};
+  [CTFollow.refl(c), CTFollow.damage(c)].forEach(x=>{
+    if(!x || (x.done && !x.level && x.d==null)) return; // วัดค่าสะท้อนแสงครบแล้ว ไม่ต้องแสดง
+    ev.push({text:x.text, sub:x.sub, tone: x.level ? lvTone[x.level] : (x.done ? 'ok' : 'cool'), d:x.d});
+  });
   if(!ev.length) return st.key==='done' ? {text:'✓ ครบทุกขั้นแล้ว', sub:'', tone:'ok', rank:1e6} : {text:'—', sub:'', tone:'cool', rank:1e5};
+  // ความด่วน: แดง > ส้ม > ฟ้า > ปกติ แล้วจึงดูจำนวนวันที่เหลือ
+  const ORDER = {hot:0, warm:1, blue:2, cool:3, ok:4};
+  ev.forEach(e=>{ e.rank = ORDER[e.tone]*10000 + (e.d==null ? 5000 : Math.max(-4999, Math.min(4999, e.d))); });
   return ev.sort((a,b)=>a.rank-b.rank)[0];
+}
+/* บันทึกการติดตาม (วันแจ้งแขวง / ตรวจความเสียหาย) — หน้าต่างอยู่ใน contract-followup.js ใช้ร่วมกับหน้าแจ้งเตือน */
+function ctOpenFollowUp(id){
+  const c = contractsList.find(x=>String(x.id)===String(id)); if(!c) return;
+  CTFollow.open(c, f=>{
+    Object.assign(c, f);
+    renderContracts();
+    if(String(ctDetailId)===String(id)) openContractDetail(id);
+    showSuccessModal('บันทึกการติดตามเรียบร้อย');
+  });
 }
 /* ตัวกรองด่วนจากแถบสรุปด้านบน (กดซ้ำ = ยกเลิก · กดแท็บ = ยกเลิก) */
 let ctQuick = '';
@@ -3586,8 +3612,9 @@ function renderContracts(){
   const running = withSt.filter(x=>x.st.key==='running'), warranty = withSt.filter(x=>x.st.key==='warranty');
   const endSoon = running.filter(x=>{ const d=ctDaysTo(x.c.endDate); return d!==null && d<=60; });
   const warrSoon = withSt.filter(x=>ctWarrAlert(x.c)).sort((a,b)=>a.c.warrantyEnd.localeCompare(b.c.warrantyEnd));
-  const reflSoon = withSt.filter(x=>x.st.key!=='cancel' && (ctNextRefl(x.c)||{days:99}).days<=30);
-  const reflOver = reflSoon.filter(x=>ctReflOverdue(x.c).length).length;
+  // วัดค่าสะท้อนแสงที่ต้องติดตาม (เตรียม/ต้องแจ้งแขวง, รอเขตมาวัด, เลยกำหนด) — เกณฑ์ใน contract-followup.js
+  const reflSoon = withSt.filter(x=>x.st.key!=='cancel' && (CTFollow.refl(x.c)||{}).level);
+  const reflOver = reflSoon.filter(x=>CTFollow.refl(x.c).level==='red').length;
   const sumAmt = running.reduce((s,x)=>s+(x.c.amount||0),0);
   const kpi = (key,label,val,sub)=>`<div class="routine-kpi-item ct-k${ctQuick===key?' active':''}" role="button" tabindex="0" title="กดเพื่อกรองตาราง" onclick="ctSetQuick('${key}')"><div class="kpi-label">${label}</div><div class="kpi-val">${val}</div><div class="kpi-sub">${sub}</div></div>`;
   document.getElementById('ct-kpi').innerHTML =
@@ -3595,7 +3622,7 @@ function renderContracts(){
     kpi('warranty','ในระยะค้ำประกัน', warranty.length+' สัญญา', 'พ้นสัญญาแล้ว ยังอยู่ในค้ำประกัน') + '<div class="routine-kpi-div"></div>' +
     kpi('end60','สิ้นสุดสัญญาภายใน 60 วัน', endSoon.length+' สัญญา', endSoon.length?esc(endSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี') + '<div class="routine-kpi-div"></div>' +
     kpi('warr90','คืนค้ำประกันภายใน 3 เดือน', warrSoon.length+' สัญญา', warrSoon.length?esc(warrSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี') + '<div class="routine-kpi-div"></div>' +
-    kpi('refl','วัดค่าสะท้อนแสง ใกล้ถึง / เลยกำหนด', reflSoon.length+' สัญญา', reflSoon.length?(reflOver?'<span style="color:var(--danger);">เลยกำหนด '+reflOver+' สัญญา</span> · ':'')+esc(reflSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี');
+    kpi('refl','วัดค่าสะท้อนแสง ต้องติดตาม', reflSoon.length+' สัญญา', reflSoon.length?(reflOver?'<span style="color:var(--danger);">ด่วน '+reflOver+' สัญญา</span> · ':'')+esc(reflSoon.slice(0,2).map(x=>x.c.contractNo||x.c.name).join(', ')):'ไม่มี');
   const quickSets = {running, warranty, end60:endSoon, warr90:warrSoon, refl:reflSoon};
   const ctKey = c=> Number(c.fiscalYear) || fyKey(c.startDate);
   const ctFy = statFyFilter('ct-fy', contractsList.map(ctKey));
@@ -3634,7 +3661,8 @@ function renderContracts(){
       <li>ในระยะค้ำประกัน = ส่งงาน/ตรวจรับแล้ว แต่ยังไม่ถึงวันคืนค้ำประกัน</li>
       <li>แจ้งเตือนคืนค้ำประกันล่วงหน้า 3 / 2 / 1 เดือน</li>
       <li>วัดค่าสะท้อนแสง 12 และ 24 เดือน นับจากวันส่งงาน</li>
-      <li>ขั้นถัดไป = สิ่งที่ต้องทำต่อที่ใกล้ที่สุด (รอส่งงาน / รอตรวจรับ / วัดค่าสะท้อนแสง / คืนค้ำประกัน)</li>
+      <li>ขั้นถัดไป = สิ่งที่ต้องทำต่อที่ด่วนที่สุด (รอส่งงาน / รอตรวจรับ / แจ้งแขวงขอวัดค่าสะท้อนแสง / ตรวจความเสียหาย / คืนค้ำประกัน)</li>
+      <li>วัดค่าสะท้อนแสง: เตรียมแจ้งแขวงก่อน 60 วัน · ต้องแจ้งแขวงก่อน 45 วัน · ตรวจความเสียหาย: ทุก 6 เดือน และก่อนคืนค้ำ 3 / 2 / 1 เดือน</li>
       <li>ในพื้นที่ / บางส่วน / นอกพื้นที่ = ระบบเทียบช่วง กม. ของสัญญากับช่วงที่หมวดดูแลให้เอง</li>
       <li>เพิ่ม/แก้/ลบได้เฉพาะผู้มีสิทธิ์แก้ไขส่วนงานที่ 2</li>
     </ol>`;
@@ -3993,7 +4021,9 @@ async function saveContract(){
     refl12Done:r12, refl24Done:r24,
     signDate:sign, durationDays: g('ct-days') ? Number(g('ct-days')) : '', penaltyPerDay: ctNum(g('ct-penalty')),
     committee:cm.text, negotiateDate:prev.negotiateDate||'', notifyDate:prev.notifyDate||'',
-    status:prev.status||'', note:g('ct-note'), ranges
+    status:prev.status||'', note:g('ct-note'), ranges,
+    // ช่องติดตามสัญญา (บันทึกผ่านปุ่ม "บันทึกการติดตาม") — ฟอร์มนี้ไม่มีช่องเหล่านี้ จึงคงค่าเดิมไว้
+    reflNotify12:prev.reflNotify12||'', reflNotify24:prev.reflNotify24||'', damageCheckDate:prev.damageCheckDate||'', damageResult:prev.damageResult||''
   };
   const saveBtn = document.getElementById('ct-save-btn'), cancelBtn = document.getElementById('ct-cancel-btn');
   const orig = saveBtn.textContent;

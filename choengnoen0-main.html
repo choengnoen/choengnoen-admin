@@ -304,6 +304,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .ct-a-l2 b{color:var(--ink-900);}
   .ct-a-l2 .hot{font-weight:700;color:var(--danger);} .ct-a-l2 .warm{font-weight:700;color:#b7791f;}
   .ct-a-more{margin-top:6px;font-size:12px;color:var(--ink-600);}
+  .ct-a-fu{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .ct-a-fu .lv-red{font-weight:700;color:var(--danger);} .ct-a-fu .lv-amber{font-weight:700;color:#b7791f;} .ct-a-fu .lv-blue{font-weight:700;color:var(--navy-700);}
+  .ct-a-btn{flex:none;}
   .dot-red{width:9px;height:9px;border-radius:50%;background:var(--danger);display:inline-block;flex-shrink:0;}
   .dot-yellow{width:9px;height:9px;border-radius:50%;background:var(--amber-400);display:inline-block;flex-shrink:0;}
   .dot-blue{width:9px;height:9px;border-radius:50%;background:var(--navy-700);display:inline-block;flex-shrink:0;}
@@ -596,6 +599,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
 <script src="dsel.js"></script>
 <script src="fy-picker.js"></script>
 <script src="firebase-layer.js" data-page="main"></script>
+<script src="contract-followup.js?v=20261126"></script>
 <script src="labor-calc.js?v=20261026"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
 <script src="emoji-img.js" defer></script>
@@ -1322,6 +1326,11 @@ function toggleAlertDone(id, key){
   if(__alertState[id].doneFor === key) delete __alertState[id].doneFor; else __alertState[id].doneFor = key;
   saveAlertState(); renderAlerts();
 }
+/* ปุ่ม "บันทึก" ในแจ้งเตือนงานสัญญา → หน้าต่างบันทึกวันแจ้งแขวง / ตรวจความเสียหาย (contract-followup.js) */
+function ctFollowOpen(id){
+  const c = (D.contracts||[]).find(x=>String(x.id)===String(id)); if(!c || !window.CTFollow) return;
+  CTFollow.open(c, f=>{ Object.assign(c, f); renderAll(); showToast('บันทึกการติดตามสัญญาเรียบร้อย'); });
+}
 function setAlertAssignee(id, label){
   const cur = (__alertState[id] && __alertState[id].assignee) || '';
   const val = prompt('ระบุผู้รับผิดชอบสำหรับ "'+label+'":', cur);
@@ -1396,30 +1405,32 @@ function computeAlerts(){
   const ctItem = (c, msg, tone) => `<div class="ct-a t-${tone||'blue'}"><div class="ct-a-l1">${ctHead(c)}</div><div class="ct-a-l2">${msg}</div></div>`;
   const ctDays = (d, hot) => `<span class="${hot?'hot':'warm'}">${d<0?'เลยมา '+(-d):'เหลือ '+d} วัน</span>`;
   const ctList = (arr, key) => alMore(arr.map(x=>ctItem(x.c, `สิ้นสุดสัญญา <b>${fmtDate(ctIso(x.c.endDate))}</b> · ${ctDays(x[key], x[key]<=15)}`, x[key]<=15?'red':'amber')), 5, 'สัญญา');
-  // บวกเดือนแบบปฏิทิน (เหมือน ctAddMonths ในระบบที่ 2)
-  const ctAddM = (iso, n) => { const [y,m,d] = iso.split('-').map(Number); const r = new Date(y, m-1+n, Math.min(d, new Date(y, m-1+n+1, 0).getDate())); return r.getFullYear()+'-'+String(r.getMonth()+1).padStart(2,'0')+'-'+String(r.getDate()).padStart(2,'0'); };
-  const todayIso = todayISO();
-  // คืนค้ำประกัน: แจ้งเตือนล่วงหน้า 3 / 2 / 1 เดือน ก่อนวันครบกำหนดคืนค้ำประกัน
-  const warrLv = cts.map(c=>{
-    const w = ctIso(c.warrantyEnd); if(!w || todayIso > w) return null;
-    const m = [1,2,3].find(m=>todayIso >= ctAddM(w,-m)); return m ? {c, m, d:daysUntil(w)} : null;
-  }).filter(Boolean).sort((a,b)=>a.d-b.d);
-  const w30 = warrLv.filter(x=>x.m===1), w90 = warrLv.filter(x=>x.m>1);
-  // วัดค่าสะท้อนแสง รอบ 12 / 24 เดือน ถัดจากวันส่งงาน — เตือนก่อน 30 วัน และเตือนต่อ "เลยกำหนด" จนกว่าจะบันทึกวันที่วัดแล้ว (refl12Done/refl24Done)
-  const reflAll = cts.filter(c=>(c.reflectNeeded===true||c.reflectNeeded==='true') && ctIso(c.deliveryDate)).map(c=>{
-    const r = [12,24].map(m=>({m, date:ctAddM(ctIso(c.deliveryDate), m)})).find(r=>!ctIso(c['refl'+r.m+'Done']));
-    return r ? {c, m:r.m, d:daysUntil(r.date)} : null;
-  }).filter(Boolean).sort((a,b)=>a.d-b.d);
-  const reflOver = reflAll.filter(x=>x.d<0);
-  if(reflOver.length) out.red.push({id:'ct-refl-over', noAssign:true, task:'เลยกำหนดวัดค่าสะท้อนแสง — ยังไม่บันทึกวันที่วัดแล้ว', detailHTML: alMore(reflOver.map(x=>ctItem(x.c, `วัดค่าสะท้อนแสง <b>รอบ ${x.m} เดือน</b> · ${ctDays(x.d, true)}`, 'red')), 5, 'สัญญา'), pillHTML:`<span class="pill pill-danger">${reflOver.length} สัญญา</span>`});
-  const reflDue = reflAll.filter(x=>x.d>=0 && x.d<=30);
+  // ติดตามสัญญาหลังรับพื้นที่คืน (26 พ.ย. 2569): วัดค่าสะท้อนแสง (แจ้งแขวง) / ตรวจความเสียหาย — เกณฑ์อยู่ใน contract-followup.js
+  // แต่ละรายการมีปุ่ม "บันทึก" (ผู้บริหารหรือเจ้าหน้าที่) เปิดหน้าต่างบันทึกวันแจ้งแขวง / วันตรวจ / ผลตรวจ
+  const canFU = !!(window.CTFollow && CTFollow.canEdit());
+  const fuItem = (c, x) => {
+    const btn = canFU && c.id ? `<button type="button" class="btn btn-ghost btn-sm ct-a-btn" onclick="ctFollowOpen('${jsArg(c.id)}')">บันทึก</button>` : '';
+    return `<div class="ct-a t-${x.level}"><div class="ct-a-l1">${ctHead(c)}</div><div class="ct-a-l2 ct-a-fu"><span><span class="lv-${x.level}">${esc(x.text)}</span> · ${esc(x.sub)}</span>${btn}</div></div>`;
+  };
+  const fuCard = (id, task, arr, group, pillCls) => {
+    if(!arr.length) return;
+    out[group].push({id, noAssign:true, task, detailHTML: alMore(arr.sort((a,b)=>(a.x.d??0)-(b.x.d??0)).map(o=>fuItem(o.c, o.x)), 5, 'สัญญา'), pillHTML:`<span class="pill ${pillCls}">${arr.length} สัญญา</span>`});
+  };
+  const rf = [], dm = [];
+  if(window.CTFollow) cts.forEach(c=>{
+    const r = CTFollow.refl(c), g = CTFollow.damage(c);
+    if(r && r.level) rf.push({c, x:r});
+    if(g && g.level) dm.push({c, x:g});
+  });
+  fuCard('ct-refl-red', 'วัดค่าสะท้อนแสง — ต้องแจ้งแขวง / เลยกำหนดวัด', rf.filter(o=>o.x.level==='red'), 'red', 'pill-danger');
+  fuCard('ct-dmg-red', 'ตรวจความเสียหายก่อนคืนค้ำประกัน (เหลือไม่เกิน 1 เดือน)', dm.filter(o=>o.x.level==='red'), 'red', 'pill-danger');
   const endSoon = cts.filter(c=>c.status!=='ระงับงาน' && !ctIso(c.deliveryDate) && ctIso(c.endDate) && (!ctIso(c.startDate) || daysUntil(ctIso(c.startDate))<=0) && daysUntil(ctIso(c.endDate))>=0 && daysUntil(ctIso(c.endDate))<=60)
     .map(c=>({c, d:daysUntil(ctIso(c.endDate))})).sort((a,b)=>a.d-b.d);
-  const wList = arr => alMore(arr.map(x=>ctItem(x.c, `คืนค้ำประกัน <b>${fmtDate(ctIso(x.c.warrantyEnd))}</b> · ภายใน ${x.m} เดือน · ${ctDays(x.d, x.m===1)}`, x.m===1?'red':'amber')), 5, 'สัญญา');
-  if(w30.length) out.red.push({id:'ct-warr-30', noAssign:true, task:'ครบกำหนดคืนค้ำประกันภายใน 1 เดือน — ควรตรวจความเสียหายก่อนคืนค้ำประกัน', detailHTML:wList(w30), pillHTML:`<span class="pill pill-danger">${w30.length} สัญญา</span>`});
   if(endSoon.length) out.blue.push({id:'ct-end-60', noAssign:true, task:'สัญญาใกล้สิ้นสุด (ภายใน 60 วัน)', detailHTML:ctList(endSoon,'d'), pillHTML:`<span class="pill pill-neutral">${endSoon.length} สัญญา</span>`});
-  if(w90.length) out.blue.push({id:'ct-warr-90', noAssign:true, task:'ใกล้ครบกำหนดคืนค้ำประกัน (ภายใน 3 / 2 เดือน)', detailHTML:wList(w90), pillHTML:`<span class="pill pill-warn">${w90.length} สัญญา</span>`});
-  if(reflDue.length) out.blue.push({id:'ct-refl-30', noAssign:true, task:'ครบกำหนดวัดค่าสะท้อนแสง (ภายใน 30 วัน)', detailHTML: alMore(reflDue.map(x=>ctItem(x.c, `วัดค่าสะท้อนแสง <b>รอบ ${x.m} เดือน</b> · ${ctDays(x.d, x.d<=7)}`, x.d<=7?'red':'amber')), 5, 'สัญญา'), pillHTML:`<span class="pill pill-neutral">${reflDue.length} สัญญา</span>`});
+  fuCard('ct-refl-prep', 'เตรียมทำหนังสือแจ้งแขวง ขอวัดค่าสะท้อนแสง (ภายใน 60 วัน)', rf.filter(o=>o.x.level==='amber'), 'blue', 'pill-warn');
+  fuCard('ct-dmg-amber', 'ตรวจความเสียหาย — ใกล้ถึงกำหนด / เลยรอบ', dm.filter(o=>o.x.level==='amber'), 'blue', 'pill-warn');
+  fuCard('ct-refl-wait', 'แจ้งแขวงแล้ว รอเขตชลบุรีมาวัดค่าสะท้อนแสง', rf.filter(o=>o.x.level==='blue'), 'blue', 'pill-neutral');
+  fuCard('ct-dmg-blue', 'ตรวจความเสียหาย — วางแผน / ตามรอบ 6 เดือน / รอผู้รับจ้างซ่อม', dm.filter(o=>o.x.level==='blue'), 'blue', 'pill-neutral');
   return out;
 }
 function renderAlerts(){
