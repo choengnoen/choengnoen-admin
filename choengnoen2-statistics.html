@@ -368,8 +368,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   #ct-table{table-layout:fixed;width:100%;min-width:1040px;}
   #ct-table col.c-no{width:128px;} #ct-table col.c-amt{width:136px;} #ct-table col.c-date{width:104px;} #ct-table col.c-next{width:290px;}
   #ct-table td{vertical-align:top;padding-top:12px;padding-bottom:12px;}
-  #ct-table td.num{font-variant-numeric:tabular-nums;}
-  #ct-table th.num{text-align:right;}
+  /* เงินค่างาน: หัวคอลัมน์และตัวเลขชิดขวาแนวเดียวกัน (หลักหน่วยตรงกันทุกแถว) */
+  #ct-table td.num,#ct-table th.num{text-align:right;padding-right:22px;}
+  #ct-table td.num{font-variant-numeric:tabular-nums;white-space:nowrap;}
   .ct-no{font-weight:700;white-space:nowrap;font-size:14px;color:var(--navy-900,#0a2540);}
   .ct-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
   .ct-chips .ct-type,.ct-chips .ct-area{font-size:10.5px;}
