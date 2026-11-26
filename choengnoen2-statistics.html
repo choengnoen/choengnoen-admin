@@ -3520,8 +3520,15 @@ function ctArea(c){
   if(total-inside<=CT_KM_TOL*rs.length) return {key:'in', label:'ในพื้นที่', text:'ในพื้นที่หมวดทั้งหมด', cls:'pill-ok'};
   return {key:'part', label:'บางส่วน', text:`ในพื้นที่หมวดบางส่วน ${inside.toFixed(3)} จาก ${total.toFixed(3)} กม.`, cls:'pill-warn'};
 }
+/* ชื่อตอนควบคุมของช่วง (เลขตอนที่บันทึกไว้ หรือหาจาก กม.) → {controlNo, name} — ชื่อมาจากรายการตอนทั้งแขวง (ctSections) */
+function ctSecInfo(r){
+  const ctl = r.controlNo || (ctSectionAt(r.route, r.k1)||{}).controlNo || '';
+  const s = ctl ? ctSections().find(x=>x.routeNo===String(r.route) && x.controlNo===ctl) : null;
+  return {controlNo:ctl, name:(s && s.section) || ''};
+}
 function ctRangeText(c){
-  return (c.ranges||[]).map(r=>`ทล.${esc(r.route)} กม.${kmFmt(r.k1)} – ${kmFmt(r.k2)}${r.qty?' · '+esc(r.qty):''}`).join('<br>') || '<span style="color:var(--ink-400);">— ไม่ระบุช่วง —</span>';
+  return (c.ranges||[]).map(r=>{ const s = ctSecInfo(r);
+    return `ทล.${esc(r.route)}${s.name?' ตอน '+esc(s.name):s.controlNo?' ตอน '+esc(s.controlNo):''} กม.${kmFmt(r.k1)} - กม.${kmFmt(r.k2)}${r.qty?' · '+esc(r.qty):''}`; }).join('<br>') || '<span style="color:var(--ink-400);">— ไม่ระบุช่วง —</span>';
 }
 /* ช่องตาราง: แสดงบรรทัดเดียว เฉพาะช่วงแรก ที่เหลือบอกจำนวน (รายการครบอยู่ในโมดัลรายละเอียด) */
 function ctRangeCell(c){
@@ -3534,13 +3541,15 @@ function ctRangeCell(c){
 /* ช่องหลัก: บรรทัด 1 = ประเภทงาน · ทล. ตอน กม. · ปริมาณ · พื้นที่ / บรรทัด 2 = ชื่อโครงการ (สีเทา 1 บรรทัด) / บรรทัด 3 = ผู้รับจ้าง */
 function ctCellMain(c){
   const rs = c.ranges||[], area = ctArea(c);
-  const ctlOf = r => r.controlNo || (ctSectionAt(r.route, r.k1)||{}).controlNo || '';
-  const rTxt = r => `ทล.${r.route}${ctlOf(r)?' ตอน '+ctlOf(r):''} กม.${kmFmt(r.k1)}–${kmFmt(r.k2)}`;
+  // ตอน = ชื่อตอนควบคุม (หาไม่ได้ใช้เลขตอน) · กม. แบบ "กม.0+000 - กม.0+500" (แก้ 26 พ.ย. 2569)
+  const secOf = r => ctSecInfo(r);
+  const secTxt = r => { const s = secOf(r); return s.name ? ' ตอน '+s.name : (s.controlNo ? ' ตอน '+s.controlNo : ''); };
+  const rTxt = r => `ทล.${r.route}${secTxt(r)} กม.${kmFmt(r.k1)} - กม.${kmFmt(r.k2)}`;
   const type = c.workType ? `<span class="ct-type ${c.workType==='ไฟฟ้า'?'ty-elec':c.workType==='ผิวทาง'?'ty-pave':''}">งาน${esc(c.workType)}</span>` : '';
   let rt = '<span class="ct-route empty">— ไม่ระบุช่วง —</span>';
   if(rs.length){
-    const r = rs[0], ctl = ctlOf(r);
-    rt = `<span class="ct-rt" title="${esc(rs.map(rTxt).join(' , '))}"><b>ทล.${esc(r.route)}</b>${ctl?' ตอน '+esc(ctl):''} กม.${kmFmt(r.k1)}–${kmFmt(r.k2)}${rs.length>1?` · +อีก ${rs.length-1} ช่วง`:''}</span>`;
+    const r = rs[0];
+    rt = `<span class="ct-rt" title="${esc(rs.map(rTxt).join(' , '))}"><b>ทล.${esc(r.route)}</b>${esc(secTxt(r))} กม.${kmFmt(r.k1)} - กม.${kmFmt(r.k2)}${rs.length>1?` · +อีก ${rs.length-1} ช่วง`:''}</span>`;
   }
   const qty = c.workQty || (rs.length===1 ? rs[0].qty : '');
   const areaChip = ['in','part','out'].includes(area.key) ? `<span class="ct-area ${area.key}" title="${esc(area.text)}">${area.label}</span>` : '';

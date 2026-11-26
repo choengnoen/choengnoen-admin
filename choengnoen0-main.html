@@ -344,6 +344,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .al-ev .al-main{flex:1 1 220px;min-width:0;}
   .al-ev .al-act{display:flex;gap:6px;align-items:center;}
   .al-date{font-family:'Kanit',sans-serif;font-weight:600;font-size:12px;color:var(--ink-600);background:var(--paper-100);border-radius:8px;padding:4px 8px;min-width:64px;text-align:center;flex-shrink:0;white-space:nowrap;}
+  /* การ์ดใบลารออนุมัติ — วันที่อยู่บน เน้นชัด (26 พ.ย. 69) */
+  .lv-ev .al-main{display:flex;flex-direction:column;gap:6px;}
+  .lv-when{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .lv-date{font-family:'Kanit',sans-serif;font-weight:600;font-size:15px;color:var(--navy-900);border-left:4px solid var(--danger);padding-left:8px;line-height:1.2;}
+  .lv-days{font-family:'Kanit',sans-serif;font-weight:600;font-size:13px;color:#fff;background:var(--danger);border-radius:20px;padding:1px 10px;}
+  .lv-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lv-line b{font-size:14.5px;}
+  .lv-sub{font-size:13px;color:var(--ink-600);padding-left:10px;border-left:1px solid var(--line);}
   .al-more{font-size:13px;color:var(--navy-700);font-weight:600;background:none;border:none;padding:4px 2px;font-family:'Kanit',sans-serif;cursor:pointer;}
   .al-empty{font-size:13.5px;color:var(--ink-400);padding:2px 0 6px;}
   .tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:9px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;margin-left:6px;font-family:'Kanit',sans-serif;vertical-align:middle;}
@@ -971,6 +979,11 @@ async function loadAll(){
     return;
   }
   renderAll();
+  // ชื่อตอนควบคุมในแจ้งเตือนงานสัญญา: โหลดฐานข้อมูลกลาง (CNMaster) ครั้งเดียว เสร็จแล้ววาดแจ้งเตือนใหม่ — โหลดไม่ได้ก็แสดงเลขตอนตามเดิม
+  if(!window.CNMaster && FBL.masterRoutesReady && !loadAll.__masterAsked){
+    loadAll.__masterAsked = true;
+    FBL.masterRoutesReady().then(()=>{ if(window.CNMaster) renderAlerts(); }).catch(()=>{});
+  }
 }
 
 /* ---------- กำลังพลวันนี้ ---------- */
@@ -993,11 +1006,10 @@ function renderLeaveApprovals(){
   document.getElementById('leave-approve-count').textContent = __pendingLeaves.length + ' รายการ';
   const shown = __pendingLeaves.slice(0, __leaveShow);
   document.getElementById('leave-approve-list').innerHTML = shown.map((r,i)=>`
-    <div class="al-ev">
-      <span class="al-date">${esc(String(fmtDate(r.from)).split(' ').slice(0,2).join(' '))}</span>
+    <div class="al-ev lv-ev">
       <div class="al-main">
-        <b>${esc(r.name)}</b> <span class="pill pill-warn">${esc(/^ลา/.test(r.type||'')?r.type:'ลา'+(r.type||''))}</span> <span class="pill pill-danger" style="font-size:13px;font-weight:700;">${esc(r.days)} วัน</span>${(()=>{ const n = r.from ? daysUntil(String(r.from).slice(0,10)) : 0; return n>0 ? ` <span class="pill pill-in" title="วันเริ่มลายังมาไม่ถึง">🗓 ลาล่วงหน้า · อีก ${n} วัน</span>` : ''; })()}
-        <div class="muted small">${fmtDate(r.from)}${r.to&&r.to!==r.from?' – '+fmtDate(r.to):''}${r.cover?' · ผู้ปฏิบัติงานแทน '+esc(r.cover):''}${r.reason?' · '+esc(r.reason):''}</div>
+        <div class="lv-when"><span class="lv-date">${esc(fmtDate(r.from))}${r.to&&r.to!==r.from?' – '+esc(fmtDate(r.to)):''}</span><span class="lv-days">${esc(r.days)} วัน</span>${(()=>{ const n = r.from ? daysUntil(String(r.from).slice(0,10)) : 0; return n>0 ? `<span class="pill pill-in" title="วันเริ่มลายังมาไม่ถึง">ลาล่วงหน้า · อีก ${n} วัน</span>` : ''; })()}</div>
+        <div class="lv-line"><b>${esc(r.name)}</b><span class="pill pill-warn">${esc(/^ลา/.test(r.type||'')?r.type:'ลา'+(r.type||''))}</span>${r.reason?`<span class="lv-sub">${esc(r.reason)}</span>`:''}${r.cover?`<span class="lv-sub">แทน: ${esc(r.cover)}</span>`:''}</div>
       </div>
       <div class="al-act">
         <button type="button" class="btn btn-ok btn-sm" data-ic="check" onclick="decideLeave(${i},'approved')">อนุมัติ</button>
@@ -1401,7 +1413,10 @@ function computeAlerts(){
     parts.push(`<span class="ct-a-no">${esc(c.contractNo || '(ไม่ระบุเลขสัญญา)')}</span>`);
     if(c.workType) parts.push(`<span class="ct-a-type ${c.workType==='ไฟฟ้า'?'ty-elec':c.workType==='ผิวทาง'?'ty-pave':''}">งาน${esc(c.workType)}</span>`);
     if(rs.length){
-      const rt = rs.slice(0,2).map(r=>`<b>ทล.${esc(r.route)}</b>${r.controlNo?' ตอน '+esc(r.controlNo):''} กม.${ctKm(r.k1)}–${ctKm(r.k2)}${!c.workQty && r.qty?' ('+esc(r.qty)+')':''}`).join(' , ');
+      // ตอน = ชื่อตอนควบคุมจากฐานกลาง (หาไม่ได้ใช้เลขตอน) · กม. แบบ "กม.0+000 - กม.0+500" (แก้ 26 พ.ย. 2569)
+      const sec = r => { const s = window.CTFollow ? CTFollow.section(r.route, r.controlNo, r.k1) : {controlNo:String(r.controlNo||''), name:''};
+        return s.name ? ` <span title="ตอนควบคุม ${esc(s.controlNo)}">ตอน ${esc(s.name)}</span>` : (s.controlNo ? ' ตอน '+esc(s.controlNo) : ''); };
+      const rt = rs.slice(0,2).map(r=>`<b>ทล.${esc(r.route)}</b>${sec(r)} กม.${ctKm(r.k1)} - กม.${ctKm(r.k2)}${!c.workQty && r.qty?' ('+esc(r.qty)+')':''}`).join(' , ');
       parts.push(`<span class="ct-a-rt">${rt}${rs.length>2?` +อีก ${rs.length-2} ช่วง`:''}</span>`);
     } else if(c.name) parts.push(`<span>${esc(String(c.name).length>60 ? String(c.name).slice(0,60)+'…' : c.name)}</span>`);
     if(c.workQty) parts.push(`<span class="ct-a-qty">ปริมาณ ${esc(c.workQty)}</span>`);

@@ -218,5 +218,25 @@
     if(mb && inf){ const p = parseFloat(getComputedStyle(mb).paddingTop) || 0; inf.style.top = (-p) + 'px'; inf.style.marginTop = (-p) + 'px'; inf.style.paddingTop = (p + 2) + 'px'; }
   }
 
-  window.CTFollow = { refl, damage, open, canEdit, RESULTS, fd, todayIso };
+  /* ชื่อตอนควบคุมจากฐานข้อมูลกลาง (CNMaster — ทั้งแขวงก่อน แล้วจึงสายทางของหมวด) (เพิ่ม 26 พ.ย. 2569)
+     route = เลขทางหลวง · controlNo = เลขตอน (ว่างได้) · km = กม. (กิโลเมตร ใช้หาตอนเมื่อสัญญาเดิมไม่ได้เก็บเลขตอน)
+     คืนค่า {controlNo, name} — หาไม่ได้ = name ว่าง (หน้าเว็บแสดงเลขตอนแทน) */
+  function section(route, controlNo, km){
+    const M = window.CNMaster, out = {controlNo:String(controlNo||''), name:''};
+    if(!M) return out;
+    let list = [];
+    try{ list = [].concat(M.districtRoutes ? M.districtRoutes() : [], M.routes ? M.routes() : []); }catch(e){ return out; }
+    const rt = String(route==null?'':route);
+    let hit = out.controlNo ? list.find(r=>String(r.highway)===rt && String(r.controlNo||'')===out.controlNo) : null;
+    if(!hit && km!=null && !isNaN(km)){
+      const m = Number(km)*1000;
+      hit = list.find(r=>String(r.highway)===rt && (r.kmRanges||[]).some(p=>m >= p[0]-2 && m <= p[1]+2));
+    }
+    if(hit){ out.name = String(hit.section||''); if(!out.controlNo) out.controlNo = String(hit.controlNo||''); }
+    return out;
+  }
+  // กม. แบบ "กม.12+345" (รับค่าเป็นกิโลเมตร)
+  function km(v){ v = Math.round((Number(v)||0)*1000)/1000; const w = Math.floor(v+1e-9); return 'กม.'+w+'+'+pad(Math.round((v-w)*1000)).padStart(3,'0'); }
+
+  window.CTFollow = { refl, damage, open, canEdit, RESULTS, fd, todayIso, section, km };
 })();
