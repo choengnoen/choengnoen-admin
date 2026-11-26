@@ -257,6 +257,38 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
   .bmm-main-chevron{display:inline-block;transition:transform .15s;color:var(--ink-400);width:14px;}
   .bmm-main-chevron.open{transform:rotate(90deg);}
   .bmm-main-row{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--paper-100);}
+  /* แผน-ผลงาน แบบอ่านง่าย (26 พ.ย. 2569): ภาพรวมบน + แถวหมวดพร้อมเส้น "ควรถึง" ตามเวลาที่ผ่านไป */
+  .pr-over{padding:16px 20px 6px;}
+  .pr-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .pr-kpi{background:var(--paper-50);border:1px solid var(--line);border-radius:10px;padding:10px 14px;}
+  .pr-kpi .k{font-size:12px;color:var(--ink-600);}
+  .pr-kpi .v{font-family:'Kanit',sans-serif;font-weight:700;font-size:20px;color:var(--navy-900);line-height:1.3;font-variant-numeric:tabular-nums;}
+  .pr-kpi .s{font-size:11.5px;color:var(--ink-400);}
+  .pr-track{position:relative;height:12px;border-radius:7px;background:var(--paper-100);}
+  .pr-fill{position:absolute;left:0;top:0;bottom:0;border-radius:7px;}
+  .pr-mark{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--navy-900);border-radius:1px;}
+  .pr-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-600);margin:12px 0 4px;align-items:center;}
+  .pr-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px;}
+  .pr-legend .lm{width:2px;height:12px;background:var(--navy-900);border-radius:1px;}
+  .pr-row{display:grid;grid-template-columns:14px minmax(220px,1.3fr) minmax(140px,1.4fr) 128px minmax(170px,1fr);gap:14px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--paper-100);cursor:pointer;}
+  .pr-row:hover{background:#fbfbfa;}
+  .pr-name{font-family:'Kanit',sans-serif;font-weight:600;color:var(--navy-900);line-height:1.35;}
+  .pr-name .c{color:var(--ink-400);font-weight:500;margin-right:4px;}
+  .pr-subc{font-size:11.5px;color:var(--ink-400);margin-top:2px;}
+  .pr-pct{text-align:right;}
+  .pr-pct b{font-family:'Kanit',sans-serif;font-size:19px;display:block;line-height:1.2;}
+  .pr-st{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+  .pr-st.ok{background:#e3f4ea;color:#1f7a45;} .pr-st.slow{background:#fdf0dc;color:#a35a00;}
+  .pr-st.over{background:#fde4e4;color:#b42323;} .pr-st.fast{background:#e2ecf6;color:var(--navy-800);}
+  .pr-st.none{background:var(--paper-100);color:var(--ink-600);}
+  .pr-amt{text-align:right;font-size:12.5px;color:var(--ink-600);font-variant-numeric:tabular-nums;line-height:1.5;}
+  .pr-amt b{color:var(--navy-900);}
+  @media (max-width:860px){
+    .pr-kpis{grid-template-columns:repeat(2,1fr);}
+    .pr-row{grid-template-columns:14px 1fr auto;grid-template-areas:"ch nm pc" "ch br br" "ch am am";row-gap:8px;}
+    .pr-row>.pr-ch{grid-area:ch;align-self:start;} .pr-row>.pr-nm{grid-area:nm;} .pr-row>.pr-pct{grid-area:pc;}
+    .pr-row>.pr-track{grid-area:br;} .pr-row>.pr-amt{grid-area:am;text-align:left;}
+  }
 
   /* ข้อมูลอ้างอิงงาน: list ซ้าย + การ์ดรายละเอียด/UNIT COST ขวา */
   .refdata-layout{display:flex;gap:16px;align-items:flex-start;padding:0 20px 20px;}
@@ -1755,7 +1787,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
               <select id="bmm-fy" class="edit-input" style="display:none;" onchange="renderBmmTable()"></select>
             </div>
           </div>
-          <div id="bmm-summary" style="padding:10px 20px 0 20px;font-size:12.5px;color:var(--ink-600);"></div>
+          <div id="bmm-summary" style="font-size:12.5px;color:var(--ink-600);border-bottom:1px solid var(--paper-100);"></div>
 
           <div id="bmm-form-overlay" class="modal-overlay hidden no-print">
             <div class="modal-box bmm-modal-box">
@@ -1845,7 +1877,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
           <div class="table-wrap table-wrap-sticky" id="bmm-body-wrap" style="background:#fff;"></div>
           <div class="legend-block" id="bmm-foot-block">
             <button type="button" class="legend-dot-btn no-print" id="bmm-foot-toggle" onclick="__toggleNote('bmm-foot',this)" aria-expanded="false" title="แสดง/ซ่อนหมายเหตุ">⋮</button>
-            <div class="foot-note" id="bmm-foot" style="display:none;background:transparent;border-top:none;">แสดงเป็นหมวดงานหลัก 6 หมวด พร้อมแถบเทียบผล/แผนงบประมาณ (ไม่ขึ้นกับตัวกรอง "แผน+ผล/เฉพาะแผน/เฉพาะผล") — กดหมวดใดเพื่อขยายดูรหัสงานย่อยที่อยู่ใต้หมวดนั้น ตัวกรองแผน/ผลมีผลเฉพาะตารางย่อยที่ขยายออกมาและแถวสรุปท้ายสุดเท่านั้น<br>แถวสรุป "รวมแผน"/"รวมผล" ท้ายสุดคือยอดรวมทั้งหมดของปีงบประมาณ/ตัวกรองที่เลือก</div>
+            <div class="foot-note" id="bmm-foot" style="display:none;background:transparent;border-top:none;">แถบสีคือเงินที่ใช้ไปเทียบงบตามแผนทั้งปี เส้นตั้งสีเข้มคือจุดที่ควรถึงตามเวลาที่ผ่านไปของปีงบ — ผลงานต่ำกว่าเส้นเกิน 10% = ช้ากว่าเวลา, สูงกว่าเกิน 10% = เร็วกว่าเวลา, เกิน 100% = เกินแผน<br>ผลงานรวมยอดเดือนที่ปิดแล้ว และยอดคำนวณสดจากใบสั่งการรายวันของเดือนที่ยังไม่ปิด — กดหมวดเพื่อดูรหัสงานย่อย ตัวเลือก "มุมมอง" มีผลกับตารางรหัสงานย่อยเท่านั้น</div>
           </div>
         </div>
       </div>
@@ -4365,9 +4397,33 @@ function renderBmmTable(){
   const actualMain = bmmAggregateToMain(fySub.filter(e=>e.kind==='actual'));
   const mainCodes = Array.from(new Set([...planMain.map(m=>m.code), ...actualMain.map(m=>m.code)])).sort((a,b)=>a.localeCompare(b,'th'));
 
-  document.getElementById('bmm-summary').textContent = mainCodes.length
-    ? `พบ ${mainCodes.length} หมวดงานหลัก (ปีงบ ${fy})`
-    : 'ไม่พบข้อมูลตามเงื่อนไขที่เลือก';
+  /* เวลาที่ผ่านไปของปีงบ (%) — ใช้เป็นเส้น "ควรถึง" เทียบกับ % ผลงาน */
+  const fyStart = new Date(fy-544, 9, 1), fyEnd = new Date(fy-543, 9, 1);
+  const timePct = Math.max(0, Math.min(100, (TODAY - fyStart) / (fyEnd - fyStart) * 100));
+  const totPlan = planMain.reduce((s,m)=>s+bmmBudget(m),0);
+  const totActual = actualMain.reduce((s,m)=>s+bmmBudget(m),0);
+  const totPct = totPlan>0 ? Math.round(totActual/totPlan*100) : null;
+  const asOf = TODAY < fyEnd ? TODAY : new Date(fyEnd - 864e5);
+  const asOfTxt = `${asOf.getDate()} ${THAI_MONTHS_FULL[asOf.getMonth()]} ${asOf.getFullYear()+543}`;
+  const st = bmmStatusOf(totPct, totPlan, totActual, timePct);
+
+  document.getElementById('bmm-summary').innerHTML = mainCodes.length ? `
+    <div class="pr-over">
+      <div class="pr-kpis">
+        <div class="pr-kpi"><div class="k">งบตามแผน ปีงบ ${fy}</div><div class="v">${fmtNum(totPlan,0)}</div><div class="s">บาท · ${mainCodes.length} หมวดงาน</div></div>
+        <div class="pr-kpi"><div class="k">ผลงาน (ใช้ไปแล้ว)</div><div class="v">${fmtNum(totActual,0)}</div><div class="s">บาท · ถึง ${asOfTxt}</div></div>
+        <div class="pr-kpi"><div class="k">คงเหลือตามแผน</div><div class="v" style="${totPlan-totActual<0?'color:#b42323;':''}">${fmtNum(totPlan-totActual,0)}</div><div class="s">บาท</div></div>
+        <div class="pr-kpi"><div class="k">ความก้าวหน้า</div><div class="v">${totPct==null?'—':totPct+'%'} <span class="pr-st ${st.cls}" style="vertical-align:4px;">${st.label}</span></div><div class="s">เวลาผ่านไป ${Math.round(timePct)}% ของปี</div></div>
+      </div>
+      <div class="pr-track" style="margin-top:14px;">${bmmBarInner(totPct, st, timePct)}</div>
+      <div class="pr-legend">
+        <span><i class="lm"></i>ควรถึงตามเวลา (${Math.round(timePct)}%)</span>
+        <span><i style="background:#2e9e5b"></i>ตามเวลา</span>
+        <span><i style="background:var(--amber-400)"></i>ช้ากว่าเวลา</span>
+        <span><i style="background:var(--navy-700)"></i>เร็วกว่าเวลา</span>
+        <span><i style="background:#d64545"></i>เกินแผน</span>
+      </div>
+    </div>` : `<div style="padding:10px 0 0;">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div>`;
 
   const cards = mainCodes.map(code=>{
     const plan = planMain.find(m=>m.code===code);
@@ -4375,8 +4431,9 @@ function renderBmmTable(){
     const planBudget = plan ? bmmBudget(plan) : 0;
     const actualBudget = actual ? bmmBudget(actual) : 0;
     const pct = planBudget>0 ? Math.round(actualBudget/planBudget*100) : null;
-    const low = pct!=null && pct<50;
-    const barWidth = pct==null ? 0 : Math.min(pct,100);
+    const rs = bmmStatusOf(pct, planBudget, actualBudget, timePct);
+    const subCount = new Set(fySub.filter(e=>bmmMainCodeOf(e.code)===code).map(e=>e.code)).size;
+    const remain = planBudget - actualBudget;
     const expanded = __bmmExpandedMain===code;
     const subOfThis = subRows.filter(e=>bmmMainCodeOf(e.code)===code)
       .slice().sort((a,b)=> a.code.localeCompare(b.code,'th') || (a.unit||'').localeCompare(b.unit||'','th') || (a.kind==='plan'?-1:1));
@@ -4391,25 +4448,32 @@ function renderBmmTable(){
       </div>`;
     }
     return `
-    <div class="bmm-main-row" onclick="toggleBmmMain('${jsArg(code)}')">
-      <span class="bmm-main-chevron ${expanded?'open':''}">▸</span>
-      <div style="width:260px;flex-shrink:0;">
-        <div style="font-family:'Kanit',sans-serif;font-weight:600;color:var(--navy-900);">${esc(code)} · ${esc(bmmMainName(code))}</div>
-        <div style="font-size:10.5px;color:var(--ink-400);margin-top:2px;">${subOfThis.length} รายการย่อย (ตามตัวกรอง)</div>
+    <div class="pr-row" onclick="toggleBmmMain('${jsArg(code)}')" title="กดเพื่อดูรหัสงานย่อย">
+      <span class="pr-ch bmm-main-chevron ${expanded?'open':''}">▸</span>
+      <div class="pr-nm">
+        <div class="pr-name"><span class="c">${esc(code)}</span>${esc(bmmMainName(code))}</div>
+        <div class="pr-subc">${subCount} รหัสงาน</div>
       </div>
-      <div class="bmm-progress-track" style="flex:1;">
-        <div class="bmm-progress-fill" style="width:${barWidth}%;background:${low?'var(--amber-400)':'var(--orange-500)'};"></div>
-      </div>
-      <div style="width:90px;text-align:right;flex-shrink:0;font-family:'Kanit',sans-serif;font-weight:700;color:${low?'var(--orange-600)':'var(--navy-900)'};">${pct==null?'—':pct+'%'}</div>
-      <div style="width:260px;text-align:right;flex-shrink:0;font-size:11.5px;color:var(--ink-600);">ผล ${fmtNum(actualBudget,0)} / แผน ${fmtNum(planBudget,0)} บาท</div>
+      <div class="pr-track">${bmmBarInner(pct, rs, timePct)}</div>
+      <div class="pr-pct"><b style="color:${rs.ink};">${pct==null?'—':pct+'%'}</b><span class="pr-st ${rs.cls}">${rs.label}</span></div>
+      <div class="pr-amt">ใช้ไป <b>${fmtNum(actualBudget,0)}</b> / ${fmtNum(planBudget,0)} บาท<br>${remain>=0 ? `เหลือ ${fmtNum(remain,0)} บาท` : `<span style="color:#b42323;">เกิน ${fmtNum(-remain,0)} บาท</span>`}</div>
     </div>
     ${subTable}`;
   }).join('');
 
-  const totals = subRows.length ? (bmmTotalsRowHtml(subRows,'plan','รวมแผน',true) + bmmTotalsRowHtml(subRows,'actual','รวมผล',true)) : '';
-  const totalsHtml = subRows.length ? `<div style="padding:14px 20px;border-top:2px solid var(--line);"><table class="bmm-inner-table"><thead>${bmmTheadHtml(true)}</thead><tbody>${totals}</tbody></table></div>` : '';
-
-  document.getElementById('bmm-body-wrap').innerHTML = (cards || `<div style="padding:30px;text-align:center;color:var(--ink-400);">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div>`) + totalsHtml;
+  document.getElementById('bmm-body-wrap').innerHTML = cards || `<div style="padding:30px;text-align:center;color:var(--ink-400);">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div>`;
+}
+/* สถานะเทียบ % ผลงานกับ % เวลาที่ผ่านไปของปีงบ (ยอมคลาด 10 จุด) */
+function bmmStatusOf(pct, plan, actual, timePct){
+  if(!(plan>0)) return actual>0 ? {cls:'over', label:'ไม่มีแผน', bar:'#d64545', ink:'#b42323'} : {cls:'none', label:'ยังไม่มีข้อมูล', bar:'transparent', ink:'var(--ink-400)'};
+  if(pct>100) return {cls:'over', label:'เกินแผน', bar:'#d64545', ink:'#b42323'};
+  if(pct < timePct-10) return {cls:'slow', label:'ช้ากว่าเวลา', bar:'var(--amber-400)', ink:'#a35a00'};
+  if(pct > timePct+10) return {cls:'fast', label:'เร็วกว่าเวลา', bar:'var(--navy-700)', ink:'var(--navy-800)'};
+  return {cls:'ok', label:'ตามเวลา', bar:'#2e9e5b', ink:'#1f7a45'};
+}
+function bmmBarInner(pct, st, timePct){
+  const w = pct==null ? 0 : Math.min(pct,100);
+  return `<div class="pr-fill" style="width:${w}%;background:${st.bar};"></div><div class="pr-mark" style="left:calc(${timePct.toFixed(1)}% - 1px);" title="ควรถึงตามเวลา ${Math.round(timePct)}%"></div>`;
 }
 /* บันทึกแผน/ผลรายเดือน — floating modal, รองรับทั้งเพิ่มรายการใหม่และแก้ไขรายการเดิม
    (ระหว่างปีงบประมาณอาจมีการรับงบประมาณเพิ่มเติมจากแขวง จึงมักต้องปรับแก้ไขแผนของหมวด) */
