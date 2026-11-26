@@ -316,7 +316,7 @@
     const st = document.createElement('style'); st.id = 'doh-imp-css';
     st.textContent = `
       .dohi-box{width:96%;padding:0;}
-      .dohi-head{background:var(--modal-head-bg,radial-gradient(1100px 420px at 15% -30%,#4b5563 0%,#111827 70%));border-bottom:none;padding:18px 20px;border-radius:0;display:flex;align-items:center;gap:12px;}
+      .dohi-head{background:var(--modal-head-bg,radial-gradient(1100px 420px at 15% -30%,#1c4b73 0%,#0a2540 70%,#071b30 100%));border-bottom:none;padding:18px 20px;border-radius:0;display:flex;align-items:center;gap:12px;}
       .dohi-head h3{color:#fff;font-family:'Kanit',sans-serif;font-size:15.5px;margin:0;}
       .dohi-head-icon{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
       .dohi-head-icon svg{width:19px;height:19px;}
