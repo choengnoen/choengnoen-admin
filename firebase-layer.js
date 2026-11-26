@@ -446,6 +446,14 @@
     );
   }
 
+  // กันค้าง: ถ้าคำสั่งไม่จบภายในเวลาที่กำหนด ให้ถือว่าล้มเหลว (code 'fbl-timeout') แทนการรอไม่มีกำหนด
+  // (หลังออกจากระบบอัตโนมัติ + ล้างแคช บางครั้งฐานข้อมูลในเครื่องเปิดค้าง ทำให้คำสั่งอ่าน/ล็อกอินไม่ตอบกลับเลย)
+  function withTimeout(p, ms, msg) {
+    return Promise.race([p, new Promise(function (_, rej) {
+      setTimeout(function () { const e = new Error(msg || 'เชื่อมต่อฐานข้อมูลช้าผิดปกติ กรุณาลองใหม่'); e.code = 'fbl-timeout'; rej(e); }, ms);
+    })]);
+  }
+
   let loginNames = null;   // [{username, name}]
   async function fetchLoginNames() {
     const snap = await db.collection('login_directory').get();
@@ -464,6 +472,8 @@
   }
 
   async function showLogin(message) {
+    // ฟอร์มล็อกอินขึ้นอยู่แล้ว (เช่น ตัวกันค้างวาดไว้ก่อน) → ไม่วาดซ้ำ ไม่ให้ชื่อ/รหัสที่กำลังพิมพ์หาย
+    if (!message && gateEl && !gateEl.classList.contains('hidden') && document.getElementById('fbl-login-btn')) return;
     // มีรายชื่อในแคช = เคยมีเจ้าของระบบแล้ว → วาดฟอร์มทันที แล้วอัปเดตรายชื่อเบื้องหลังสำหรับครั้งหน้า
     // ไม่มีแคช → ถามเซิร์ฟเวอร์ 2 อย่างพร้อมกัน (เดิมถามทีละอย่าง ทำให้รอนาน)
     let names = loginNames || readCachedLoginNames();
@@ -471,10 +481,11 @@
       loginNames = names;
       fetchLoginNames().catch(function () { /* ข้าม */ });
     } else {
-      const res = await Promise.all([
+      // รอเซิร์ฟเวอร์ไม่เกิน 5 วินาที — ช้ากว่านั้นให้ขึ้นฟอร์มแบบพิมพ์ชื่อเองไปก่อน (ไม่ค้างหน้า "กำลังตรวจสอบ...")
+      const res = await withTimeout(Promise.all([
         db.collection('config').doc('bootstrap').get().then(function (s) { return s.exists; }, function () { return true; }), // อ่านไม่ได้ → ถือว่ามีแล้ว
         loadLoginNames()
-      ]);
+      ]), 5000).catch(function () { return [true, []]; });
       if (!res[0]) { showBootstrap(); return; }
       names = res[1];
     }
@@ -538,6 +549,12 @@
         await FBL.login(u.value, p.value);
         // onAuthStateChanged จะจัดการต่อ (โหลดสิทธิ์แล้วรีเฟรชหน้า)
       } catch (e) {
+        if (e && e.code === 'fbl-timeout') {
+          // ฐานข้อมูลในเครื่องค้าง — โหลดหน้าใหม่ให้เอง (แทนการให้ผู้ใช้กด F5 ซ้ำๆ)
+          err.textContent = 'การเชื่อมต่อค้าง กำลังโหลดหน้าใหม่...';
+          setTimeout(function () { location.reload(); }, 1500);
+          return;
+        }
         err.textContent = e.message;
         btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
         p.value = ''; p.focus();
@@ -862,7 +879,7 @@
   onDomReady(function () {
     injectBase();
     if (!FBL.user) ensureGate(); // ยังไม่มีแคช → ปิดหน้าไว้ก่อนระหว่างรอตรวจสถานะล็อกอิน
-    if (!FBL.user) gateCard('<div class="fbl-note" style="text-align:center">กำลังตรวจสอบการเข้าสู่ระบบ...</div>');
+    if (!FBL.user) gateCard('<div class="fbl-note fbl-checking" style="text-align:center">กำลังตรวจสอบการเข้าสู่ระบบ...</div>');
     else if (!FBL.canView(FBL.page)) showDenied();
     else { applyNav(FBL.user); injectUserMenu(); }
   });
@@ -871,12 +888,16 @@
   // กันหน้าค้างที่ "กำลังตรวจสอบการเข้าสู่ระบบ..." ตลอดไป — บางครั้ง Firebase ตรวจสถานะล็อกอินช้าผิดปกติ (เช่น iframe ช่วยซิงก์สถานะโหลดไม่ทัน)
   // ทำให้ onAuthStateChanged ไม่ยิงเลยจนกว่าจะรีเฟรชหน้าใหม่ จึงตั้งเวลาไว้ ถ้ายังไม่มีผลภายใน 6 วินาที ให้ขึ้นฟอร์มล็อกอินแทนไปก่อน
   // (ถ้าจริงๆ ยังล็อกอินค้างอยู่ ตัวจัดการด้านล่างจะตรวจพบภายหลังแล้วรีเฟรชหน้าให้เองเมื่อสถานะมาถึง)
-  let authSeen = false;
+  // 26 พ.ย. 2569: เดิมเช็กแค่ "Firebase ตอบหรือยัง" — แต่บางครั้ง Firebase ตอบแล้วไปค้างตอนอ่านข้อมูลผู้ใช้ (หลังออกจากระบบอัตโนมัติ)
+  // ตัวกันค้างจึงข้ามไปและหน้าค้างเหมือนเดิม → เปลี่ยนเป็นดูจากหน้าจอจริง: ครบ 6 วินาทีแล้วยังเป็น "กำลังตรวจสอบ..." อยู่ ให้ขึ้นฟอร์มล็อกอิน
   setTimeout(function () {
-    if (!authSeen && !FBL.user) onDomReady(function () { showLogin('ตรวจสอบสถานะล็อกอินช้ากว่าปกติ กรุณาเข้าสู่ระบบอีกครั้ง'); });
+    onDomReady(function () {
+      if (gateEl && !gateEl.classList.contains('hidden') && gateEl.querySelector('.fbl-checking')) {
+        showLogin('ตรวจสอบสถานะล็อกอินช้ากว่าปกติ กรุณาเข้าสู่ระบบอีกครั้ง');
+      }
+    });
   }, 6000);
   auth.onAuthStateChanged(async function (u) {
-    authSeen = true;
     if (suppressAuthEvents) return;
     if (!u) {
       const hadUser = !!FBL.user;
@@ -892,8 +913,11 @@
     if (cached && cached.uid === u.uid && FBL.user && FBL.user.uid === u.uid) readyResolve(FBL.user);
     try {
       let d = null;
-      try { d = await db.collection('team').doc(u.uid).get({ source: 'server' }); }
-      catch (e) { d = await db.collection('team').doc(u.uid).get(); } // ออฟไลน์ → ใช้แคช
+      // ไม่มีโปรไฟล์ในแคช (หน้าขึ้น "กำลังตรวจสอบ..." อยู่) → จำกัดเวลารอ ไม่ให้ค้างไม่มีกำหนด
+      // มีแคช → หน้าใช้งานได้อยู่แล้ว รอเซิร์ฟเวอร์ได้ตามปกติ (ไม่จำกัดเวลา เพื่อไม่เด้งผู้ใช้ออกตอนเน็ตช้า)
+      const lim = function (p, ms) { return FBL.user ? p : withTimeout(p, ms); };
+      try { d = await lim(db.collection('team').doc(u.uid).get({ source: 'server' }), 8000); }
+      catch (e) { d = await lim(db.collection('team').doc(u.uid).get(), 4000); } // ออฟไลน์ → ใช้แคช
       if (!d.exists || d.data().active === false) {
         await auth.signOut();
         FBL.user = null; writeCachedProfile(null); writeLegacySession();
@@ -925,11 +949,11 @@
   FBL.login = async function (username, password) {
     const un = normUsername(username);
     let dir;
-    try { dir = await db.collection('login_directory').doc(docKey(un)).get(); }
-    catch (e) { throw new Error(thErr(e)); }
+    try { dir = await withTimeout(db.collection('login_directory').doc(docKey(un)).get(), 15000); }
+    catch (e) { if (e.code === 'fbl-timeout') throw e; throw new Error(thErr(e)); }
     if (!dir.exists) throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
-    try { await auth.signInWithEmailAndPassword(dir.data().email, password); }
-    catch (e) { throw new Error(thErr(e)); }
+    try { await withTimeout(auth.signInWithEmailAndPassword(dir.data().email, password), 20000); }
+    catch (e) { if (e.code === 'fbl-timeout') throw e; throw new Error(thErr(e)); }
   };
 
   FBL.logout = async function () {
