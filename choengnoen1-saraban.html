@@ -650,6 +650,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </h2>
             <div class="toolbar">
               <div class="search-box">🔍 <input id="staff-search" placeholder="ค้นหาชื่อ / ชื่อเล่น"></div>
+              <button class="btn btn-ghost" id="btn-staff-xlsx" data-tip="ดาวน์โหลดรายชื่อเจ้าหน้าที่ที่ปฏิบัติงานอยู่ (Excel)" onclick="exportActiveStaffExcel()">Excel</button>
               <button class="btn btn-primary" data-ic="plus" onclick="openAddStaff()">เพิ่มเจ้าหน้าที่</button>
             </div>
           </div>
@@ -1969,6 +1970,61 @@ function renderStaff(){
   html += restIdx.map(rowHTML).join('');
   body.innerHTML = html || '<tr><td colspan="5" style="text-align:center;color:var(--ink-400);padding:20px;">ไม่พบรายการ</td></tr>';
   document.getElementById('staff-foot').textContent = `ปฏิบัติงาน ${activeStaff().length} · ลาออก ${staff.length-activeStaff().length} (คงข้อมูลไว้ตรวจสอบ) · ทั้งหมด ${staff.length} คน` + (isAdmin()?' · โหมดแก้ไข: เปิด':' · โหมดแก้ไข: ปิด (ดูอย่างเดียว)');
+}
+
+/* ---------- ดาวน์โหลดรายชื่อเจ้าหน้าที่ที่ปฏิบัติงานอยู่ปัจจุบัน (status='ok') เป็น Excel ----------
+   ลำดับ: ผู้บริหารหมวด (หัวหน้า → ผู้ช่วย) แล้วตามประเภท ข้าราชการ > ลูกจ้างประจำ > พนักงานราชการ > ลูกจ้างชั่วคราว
+   ใช้ SheetJS ตัวเดียวกับหน้า main (โหลดเมื่อกดปุ่มครั้งแรกเท่านั้น) */
+function __loadXLSX(){
+  if(typeof XLSX!=='undefined') return Promise.resolve();
+  return new Promise((ok, fail)=>{
+    const sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    sc.onload = ()=> typeof XLSX!=='undefined' ? ok() : fail(new Error('no XLSX'));
+    sc.onerror = ()=> fail(new Error('load failed'));
+    document.head.appendChild(sc);
+  });
+}
+async function exportActiveStaffExcel(){
+  const btn = document.getElementById('btn-staff-xlsx');
+  const list = activeStaff().slice();
+  if(!list.length){ alert('ยังไม่มีรายชื่อเจ้าหน้าที่ที่ปฏิบัติงานอยู่'); return; }
+  const orig = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = 'กำลังสร้างไฟล์...'; }
+  try{
+    await __loadXLSX();
+  }catch(e){
+    alert('โหลดไลบรารี Excel ไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
+    if(btn){ btn.disabled = false; btn.textContent = orig; }
+    return;
+  }
+  try{
+    const rank = s=>{ const r = execRoleOfStaff(s); return r==='head' ? 0 : r==='assist' ? 1 : 2; };
+    const tier = s=>{ const i = PTYPE_ORDER.indexOf(s.ptype); return i===-1 ? PTYPE_ORDER.length : i; };
+    list.sort((a,b)=> rank(a)-rank(b) || tier(a)-tier(b));
+    const today = __fmtDateBE(__todayISO());
+    const head = ['ลำดับ','ชื่อ-สกุล','ตำแหน่ง','ประเภทบุคลากร'];
+    const rows = list.map((s,i)=> [i+1, s.name||'', s.role||'', s.ptype||'']);
+    const count = PTYPE_ORDER.map(p=>`${p} ${list.filter(s=>s.ptype===p).length}`).join(' · ');
+    const aoa = [
+      ['รายชื่อเจ้าหน้าที่ หมวดทางหลวงเชิงเนิน (ปฏิบัติงานอยู่ปัจจุบัน)'],
+      [`ข้อมูล ณ วันที่ ${today} · รวม ${list.length} คน (${count})`],
+      [],
+      head,
+      ...rows
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{wch:6},{wch:32},{wch:32},{wch:18}];
+    ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:head.length-1}},{s:{r:1,c:0},e:{r:1,c:head.length-1}}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'รายชื่อเจ้าหน้าที่');
+    XLSX.writeFile(wb, `รายชื่อเจ้าหน้าที่-ปฏิบัติงาน-${__todayISO()}.xlsx`);
+  }catch(err){
+    console.error(err);
+    alert('สร้างไฟล์ Excel ไม่สำเร็จ: ' + err.message);
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = orig; }
+  }
 }
 
 /* ============================================================
