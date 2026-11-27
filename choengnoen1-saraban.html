@@ -650,7 +650,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--paper-50);color:var(--ink
             </h2>
             <div class="toolbar">
               <div class="search-box">🔍 <input id="staff-search" placeholder="ค้นหาชื่อ / ชื่อเล่น"></div>
-              <button class="btn btn-ghost" id="btn-staff-xlsx" data-tip="ดาวน์โหลดรายชื่อเจ้าหน้าที่ที่ปฏิบัติงานอยู่ (Excel)" onclick="exportActiveStaffExcel()">Excel</button>
+              <button class="btn btn-ghost btn-ic" id="btn-staff-xlsx" data-ic="down" data-tip="ดาวน์โหลดรายชื่อเจ้าหน้าที่ปัจจุบัน (Excel)" aria-label="ดาวน์โหลดรายชื่อเจ้าหน้าที่ปัจจุบัน (Excel)" onclick="exportActiveStaffExcel()"></button>
               <button class="btn btn-primary" data-ic="plus" onclick="openAddStaff()">เพิ่มเจ้าหน้าที่</button>
             </div>
           </div>
@@ -1386,6 +1386,7 @@ function __staffFormHTML(p, s, isAdd){
           <label><input type="radio" name="${p}-dutyopt" id="${p}-guard" ${g?'checked':''} onchange="__toggleGuardStart('${p}')">ยาม (ทำงานวันเสาร์)</label>
         </div></div>
         <div class="f-row c2"><label>เริ่มปฏิบัติหน้าที่ยามตั้งแต่วันที่</label><input type="date" class="edit-input" id="${p}-dutystart" value="${v(s.dutyStart)}" ${g?'':'disabled'}></div>
+        <div class="f-row c4"><label>หน้าที่ที่ได้รับมอบหมาย</label><input class="edit-input" id="${p}-dutynote" value="${v(s.dutyNote)}" maxlength="60" placeholder="เช่น พขร. รถ 44, ปฏิบัติงานในสำนักงาน, จ้างตามวุฒิ ปวส."></div>
         <div class="f-row c2" id="${p}-w-start"><label>วันที่เริ่มงาน</label><input type="date" class="edit-input" id="${p}-startdate" value="${v(s.startDate)}"></div>
         <div class="f-row c2" id="${p}-w-resign"><label>วันที่ลาออก (มีผลตั้งแต่วันที่)</label><input type="date" class="edit-input" id="${p}-resigndate" value="${v(s.resignedDate)}"></div>
         <div class="f-row c2" id="${p}-w-rate"><label>อัตราค่าจ้าง/วัน (บาท)</label><input type="number" class="edit-input" id="${p}-rate" value="${v(!rh.length ? s.rate : (!rh[0].from ? rh[0].rate : ''))}" placeholder="เช่น 400"></div>
@@ -1958,7 +1959,7 @@ function renderStaff(){
     const eRole = execRoleOfStaff(s);
     return `<tr class="${eRole?'exec-row '+eRole:''}" style="cursor:pointer;" ondblclick="openStaffDetail(${i})" title="ดับเบิ้ลคลิกเพื่อดูรายละเอียด">
       <td><div class="person">${ptypeBadge(s.ptype)}<div><div class="p-name">${esc(s.name)}</div>${s.nickname?`<div class="p-sub">(${esc(s.nickname)})</div>`:''}</div></div></td>
-      <td>${s.role?esc(s.role):'<span style="color:var(--ink-400);font-size:12.5px">ยังไม่ระบุ</span>'}${s.duty?` <span class="pill pill-warn" style="font-size:10.5px;"${__isGuard(s)?` title="จ้างรวมวันเสาร์${s.dutyStart?' ตั้งแต่ '+fmtDate(s.dutyStart):''}"`:''}>ปฏิบัติหน้าที่${esc(s.duty)}${__isGuard(s)?' (ส.)':''}</span>`:''}${(()=>{const el=__leaveEligibleDate(s); if(!el || TODAY.toISOString().slice(0,10)>=el) return ''; return ` <span class="pill pill-danger" style="font-size:10.5px;" title="ยังไม่มีสิทธิ์ลาถึง ${fmtDate(el)}">🔒 ทดลองงาน</span>`;})()}${(()=>{const ri=__retirementInfo(s); if(!ri || s.status!=='ok') return ''; return ri.status==='overdue' ? ` <span class="pill pill-danger" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ</span>` : ` <span class="pill pill-warn" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ</span>`;})()}</td>
+      <td>${s.role?esc(s.role):'<span style="color:var(--ink-400);font-size:12.5px">ยังไม่ระบุ</span>'}${s.duty?` <span class="pill pill-warn" style="font-size:10.5px;"${__isGuard(s)?` title="จ้างรวมวันเสาร์${s.dutyStart?' ตั้งแต่ '+fmtDate(s.dutyStart):''}"`:''}>ปฏิบัติหน้าที่${esc(s.duty)}${__isGuard(s)?' (ส.)':''}</span>`:''}${s.dutyNote?` <span class="pill pill-neutral" style="font-size:10.5px;">${esc(s.dutyNote)}</span>`:''}${(()=>{const el=__leaveEligibleDate(s); if(!el || TODAY.toISOString().slice(0,10)>=el) return ''; return ` <span class="pill pill-danger" style="font-size:10.5px;" title="ยังไม่มีสิทธิ์ลาถึง ${fmtDate(el)}">🔒 ทดลองงาน</span>`;})()}${(()=>{const ri=__retirementInfo(s); if(!ri || s.status!=='ok') return ''; return ri.status==='overdue' ? ` <span class="pill pill-danger" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุเมื่อ ${fmtDate(ri.date)}">⏳ ถึงกำหนดเกษียณ</span>` : ` <span class="pill pill-warn" style="font-size:10.5px;" title="ครบกำหนดเกษียณอายุ ${fmtDate(ri.date)}">⏳ ใกล้เกษียณอายุ</span>`;})()}</td>
       <td><span class="pill pill-neutral">${esc(s.ptype)}</span></td>
       <td style="white-space:nowrap;">${s.phone?esc(__fmtPhone(s.phone)):''}</td>      <td>${__staffStatusPill(s)}</td>
     </tr>`;
@@ -1974,56 +1975,89 @@ function renderStaff(){
 
 /* ---------- ดาวน์โหลดรายชื่อเจ้าหน้าที่ที่ปฏิบัติงานอยู่ปัจจุบัน (status='ok') เป็น Excel ----------
    ลำดับ: ผู้บริหารหมวด (หัวหน้า → ผู้ช่วย) แล้วตามประเภท ข้าราชการ > ลูกจ้างประจำ > พนักงานราชการ > ลูกจ้างชั่วคราว
-   ใช้ SheetJS ตัวเดียวกับหน้า main (โหลดเมื่อกดปุ่มครั้งแรกเท่านั้น) */
-function __loadXLSX(){
-  if(typeof XLSX!=='undefined') return Promise.resolve();
+   รูปแบบตามไฟล์ตัวอย่างที่ผู้ใช้จัดเอง (27 พ.ย. 2569): TH SarabunPSK 18 ทั้งแผ่น, หัวเรื่อง 2 บรรทัดผสานเซลล์ A:D,
+   ตารางมีเส้นขอบบาง, คอลัมน์ลำดับและหัวตารางจัดกึ่งกลาง ; ตำแหน่ง = ตำแหน่งทางราชการ + (หน.หมวด)/(ผช.หมวด) + (ยาม) + (หน้าที่ที่ได้รับมอบหมาย)
+   ใช้ ExcelJS (SheetJS รุ่นฟรีเขียนฟอนต์/เส้นขอบไม่ได้) โหลดเมื่อกดปุ่มครั้งแรกเท่านั้น */
+function __loadExcelJS(){
+  if(typeof ExcelJS!=='undefined') return Promise.resolve();
   return new Promise((ok, fail)=>{
     const sc = document.createElement('script');
-    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-    sc.onload = ()=> typeof XLSX!=='undefined' ? ok() : fail(new Error('no XLSX'));
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+    sc.onload = ()=> typeof ExcelJS!=='undefined' ? ok() : fail(new Error('no ExcelJS'));
     sc.onerror = ()=> fail(new Error('load failed'));
     document.head.appendChild(sc);
   });
+}
+const EXEC_ROLE_ABBR = {head:'หน.หมวด', assist:'ผช.หมวด'};
+function __staffPosText(s){
+  const r = execRoleOfStaff(s);
+  const tags = [];
+  if(r) tags.push(EXEC_ROLE_ABBR[r]);
+  if(__isGuard(s)) tags.push('ยาม');
+  else if(s.duty) tags.push(String(s.duty).trim());       // หน้าที่พิเศษแบบเก่า (ข้อมูลเดิม) ที่ไม่ใช่ยาม
+  if(s.dutyNote) tags.push(String(s.dutyNote).trim());
+  const base = String(s.role||'').trim();
+  return [base, ...tags.filter(Boolean).map(t=>`(${t})`)].filter(Boolean).join(' ');
 }
 async function exportActiveStaffExcel(){
   const btn = document.getElementById('btn-staff-xlsx');
   const list = activeStaff().slice();
   if(!list.length){ alert('ยังไม่มีรายชื่อเจ้าหน้าที่ที่ปฏิบัติงานอยู่'); return; }
-  const orig = btn ? btn.textContent : '';
-  if(btn){ btn.disabled = true; btn.textContent = 'กำลังสร้างไฟล์...'; }
+  if(btn) btn.disabled = true;   // ปุ่มเป็นไอคอน — ปิดปุ่มชั่วคราวระหว่างสร้างไฟล์ ไม่เปลี่ยนข้อความ (ไม่งั้นไอคอนหาย)
   try{
-    await __loadXLSX();
+    await __loadExcelJS();
   }catch(e){
     alert('โหลดไลบรารี Excel ไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
-    if(btn){ btn.disabled = false; btn.textContent = orig; }
+    if(btn) btn.disabled = false;
     return;
   }
   try{
+    // ลำดับตามระบบ: ผู้บริหาร (หัวหน้า → ผู้ช่วย) แล้วตามประเภท — ภายในกลุ่มคงลำดับเดิมในฐานข้อมูล (sort เสถียร)
     const rank = s=>{ const r = execRoleOfStaff(s); return r==='head' ? 0 : r==='assist' ? 1 : 2; };
     const tier = s=>{ const i = PTYPE_ORDER.indexOf(s.ptype); return i===-1 ? PTYPE_ORDER.length : i; };
     list.sort((a,b)=> rank(a)-rank(b) || tier(a)-tier(b));
     const today = __fmtDateBE(__todayISO());
-    const head = ['ลำดับ','ชื่อ-สกุล','ตำแหน่ง','ประเภทบุคลากร'];
-    const rows = list.map((s,i)=> [i+1, s.name||'', s.role||'', s.ptype||'']);
     const count = PTYPE_ORDER.map(p=>`${p} ${list.filter(s=>s.ptype===p).length}`).join(' · ');
-    const aoa = [
-      ['รายชื่อเจ้าหน้าที่ หมวดทางหลวงเชิงเนิน (ปฏิบัติงานอยู่ปัจจุบัน)'],
-      [`ข้อมูล ณ วันที่ ${today} · รวม ${list.length} คน (${count})`],
-      [],
-      head,
-      ...rows
-    ];
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws['!cols'] = [{wch:6},{wch:32},{wch:32},{wch:18}];
-    ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:head.length-1}},{s:{r:1,c:0},e:{r:1,c:head.length-1}}];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'รายชื่อเจ้าหน้าที่');
-    XLSX.writeFile(wb, `รายชื่อเจ้าหน้าที่-ปฏิบัติงาน-${__todayISO()}.xlsx`);
+
+    const FONT = {name:'TH SarabunPSK', size:18};
+    const THIN = {style:'thin', color:{argb:'FF000000'}};
+    const BORDER = {top:THIN, left:THIN, bottom:THIN, right:THIN};
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('รายชื่อเจ้าหน้าที่', {
+      properties:{defaultRowHeight:23},
+      pageSetup:{paperSize:9, orientation:'portrait', fitToPage:true, fitToWidth:1, fitToHeight:0,
+        margins:{left:0.7, right:0.7, top:0.75, bottom:0.75, header:0.3, footer:0.3}}
+    });
+    ws.columns = [{width:6.84},{width:32.84},{width:32.84},{width:18.84}];
+    ws.addRow(['รายชื่อเจ้าหน้าที่ หมวดทางหลวงเชิงเนิน (ปฏิบัติงานอยู่ปัจจุบัน)']);
+    ws.addRow([`ข้อมูล ณ วันที่ ${today} · รวม ${list.length} คน (${count})`]);
+    ws.addRow([]);
+    ws.mergeCells('A1:D1'); ws.mergeCells('A2:D2');
+    ws.addRow(['ลำดับ','ชื่อ-สกุล','ตำแหน่ง','ประเภทบุคลากร']);
+    list.forEach((s,i)=> ws.addRow([i+1, s.name||'', __staffPosText(s), s.ptype||'']));
+    ws.eachRow({includeEmpty:true}, (row, rn)=>{
+      row.height = 23;
+      for(let c=1; c<=4; c++){
+        const cell = row.getCell(c);
+        cell.font = FONT;
+        if(rn>=4){
+          cell.border = BORDER;
+          cell.alignment = {vertical:'middle', horizontal:(rn===4 || c===1) ? 'center' : 'left'};
+        }
+      }
+    });
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `รายชื่อเจ้าหน้าที่-ปฏิบัติงาน-${__todayISO()}.xlsx`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
   }catch(err){
     console.error(err);
     alert('สร้างไฟล์ Excel ไม่สำเร็จ: ' + err.message);
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = orig; }
+    if(btn) btn.disabled = false;
   }
 }
 
@@ -2211,7 +2245,8 @@ function __staffDetailViewHTML(s){
   const dutyPill = __isGuard(s)
     ? ` <span class="pill pill-warn">ปฏิบัติหน้าที่ยาม · จ้างรวมวันเสาร์${s.dutyStart?' ตั้งแต่ '+fmtDate(s.dutyStart):''}</span>`
     : (s.duty ? ` <span class="pill pill-warn">ปฏิบัติหน้าที่${esc(s.duty)}</span>` : '');
-  const posVal = ((s.role?esc(s.role):'') + dutyPill + retirePill).trim();
+  const notePill = s.dutyNote ? ` <span class="pill pill-neutral">${esc(s.dutyNote)}</span>` : '';
+  const posVal = ((s.role?esc(s.role):'') + dutyPill + notePill + retirePill).trim();
   const el = __leaveEligibleDate(s);
   const startVal = s.startDate ? fmtDate(s.startDate) + (el ? (TODAY.toISOString().slice(0,10) < el ? ` <span class="pill pill-warn">ยังไม่มีสิทธิ์ลา (ถึง ${fmtDate(el)})</span>` : ' <span class="pill pill-ok">มีสิทธิ์ลาแล้ว</span>') : '') : '';
   // อัตราที่มีผลวันนี้ + ประวัติการปรับ (ถ้ามี)
@@ -2373,6 +2408,7 @@ async function saveStaffDetail(){
   const sdGuard = document.getElementById('sd-guard').checked;
   s.duty = sdGuard ? 'ยาม' : (__isGuard(before) ? null : (before.duty || null)); // หน้าที่พิเศษอื่นที่ไม่ใช่ยาม (ข้อมูลเก่า) คงไว้ตามเดิม
   s.dutyStart = sdGuard ? (document.getElementById('sd-dutystart').value || null) : null;
+  s.dutyNote = document.getElementById('sd-dutynote').value.trim() || null; // ข้อความประกอบตำแหน่ง (แยกจาก duty ที่ใช้คิดค่าจ้างยาม)
   s.ptype = document.getElementById('sd-ptype').value;
   s.status = document.getElementById('sd-status').value;
   if(s.status==='retired'){ if(!s.retiredDate) s.retiredDate = (__retirementDate(s) || TODAY.toISOString().slice(0,10)); }
@@ -2458,6 +2494,7 @@ async function submitAddStaff(){
     role: document.getElementById('as-role').value.trim(),
     duty: document.getElementById('as-guard').checked ? 'ยาม' : null,
     dutyStart: document.getElementById('as-guard').checked ? (document.getElementById('as-dutystart').value || null) : null,
+    dutyNote: document.getElementById('as-dutynote').value.trim() || null,
     ptype: document.getElementById('as-ptype').value,
     rate: rc.rate,
     rateHistory: rc.hist,
@@ -3376,6 +3413,8 @@ function lvnTop(F, nm, s, subject, whoLabel){
   /* วันที่หัวใบลา = วันที่บันทึกรายการ (LV_FILED) ; ไม่มี/ผิดรูปแบบ (ใบลาเก่า, ใบยกเลิกวันลา) = วันนี้ */
   const fd = LV_FILED ? new Date(LV_FILED+'T00:00:00') : null;
   const td = (fd && !isNaN(fd)) ? fd : TODAY, rl = lvRoleLevel(s.role), Y = F.y;
+  /* เรียน: ตำแหน่ง "คนงาน" เรียน ชม.ขท.เชิงเนิน ; ตำแหน่งอื่นเรียน ผอ.ขท.ระยอง */
+  const toWho = String(s.role||'').trim()==='คนงาน' ? 'ชม.ขท.เชิงเนิน' : 'ผอ.ขท.ระยอง';
   let h = '';
   h += lvTitle(nx(F.cx), ny(Y.title), F.title);
   h += lvLead(nx(F.wx), ny(Y.wr), LVN_R-nx(F.wx), '(เขียนที่)') + lvV(nx(F.wx)+41.8, LVN_R, ny(Y.wr), 'หมวดทางหลวงเชิงเนิน', {lead:2});
@@ -3387,14 +3426,14 @@ function lvnTop(F, nm, s, subject, whoLabel){
     h += lvRow(LVN_R-w, ny(Y.dt), w, ['วันที่',{v:lvTh(td.getDate()),fix:fd},' เดือน',{v:THAI_MONTH_FULL[td.getMonth()],fix:fm},' พ.ศ.',{v:lvTh(td.getFullYear()+543)}]);
     /* เรื่อง / เรียน: หัวข้อ + เว้นวรรค 2 ครั้ง */
     h += lvT(LVN_L, ny(Y.sub), 'เรื่อง  '+esc(subject));
-    h += lvT(LVN_L, ny(Y.to), 'เรียน  ผอ.ขท.ระยอง');
+    h += lvT(LVN_L, ny(Y.to), 'เรียน  '+toWho);
   } else {
   const dx = nx(F.dx||489);
   h += lvLead(dx, ny(Y.dt), 38, 'วันที่') + lvLead(dx+41.4, ny(Y.dt), 118, 'เดือน') + lvLead(dx+163.6, ny(Y.dt), LVN_R-dx-163.6, 'พ.ศ.');
   h += lvV(dx+19, dx+38, ny(Y.dt), lvTh(td.getDate()), {center:1}) + lvV(dx+64, dx+157, ny(Y.dt), THAI_MONTH_FULL[td.getMonth()], {center:1}) + lvV(dx+183, LVN_R, ny(Y.dt), lvTh(td.getFullYear()+543), {center:1});
   /* เรื่อง / เรียน: ข้อความพิมพ์ไว้แล้ว ไม่มีเส้นจุดต่อท้าย และเริ่มที่แนวเดียวกัน (เว้นวรรคเท่ากัน) */
   h += lvT(LVN_L, ny(Y.sub), 'เรื่อง') + lvT(LVN_L+34, ny(Y.sub), esc(subject));
-  h += lvT(LVN_L, ny(Y.to), 'เรียน') + lvT(LVN_L+34, ny(Y.to), 'ผอ.ขท.ระยอง');
+  h += lvT(LVN_L, ny(Y.to), 'เรียน') + lvT(LVN_L+34, ny(Y.to), toWho);
   }
   const mx = nx(243), tx = nx(F.tx);
   h += lvRow(mx, ny(Y.me), tx-2.6-mx, [whoLabel||'ข้าพเจ้า', {v:nm}]);
